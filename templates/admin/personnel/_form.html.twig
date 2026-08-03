@@ -1,0 +1,23 @@
+{{ form_start(form) }}
+<div class="row">
+    <div class="col-md-4">{{ form_row(form.matricule) }}</div>
+    <div class="col-md-4">{{ form_row(form.nom) }}</div>
+    <div class="col-md-4">{{ form_row(form.prenom) }}</div>
+    <div class="col-md-4">{{ form_row(form.sexe) }}</div>
+    <div class="col-md-4">{{ form_row(form.dateNaissance) }}</div>
+    <div class="col-md-4">{{ form_row(form.service) }}</div>
+    <div class="col-md-4">{{ form_row(form.fonction) }}</div>
+    <div class="col-md-4">{{ form_row(form.grade) }}</div>
+    <div class="col-md-4">{{ form_row(form.typeContrat) }}</div>
+    <div class="col-md-4">{{ form_row(form.dateEmbauche) }}</div>
+    <div class="col-md-4">{{ form_row(form.statut) }}</div>
+    <div class="col-md-4">{{ form_row(form.telephone) }}</div>
+    <div class="col-md-4">{{ form_row(form.email) }}</div>
+    <div class="col-md-8">{{ form_row(form.adresse) }}</div>
+    <div class="col-12">{{ form_row(form.observations) }}</div>
+</div>
+<div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Enregistrer</button>
+    <a href="{{ path('admin_personnel_index') }}" class="btn btn-outline-secondary">Annuler</a>
+</div>
+{{ form_end(form) }}

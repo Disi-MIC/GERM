@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ vehicule.immatriculation }} — GERM{% endblock %}
+{% block page_title %}Fiche véhicule{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">{{ vehicule.marque }} {{ vehicule.modele }} — {{ vehicule.immatriculation }}</h5>
+    <div>
+        <a href="{{ path('admin_vehicule_edit', {id: vehicule.id}) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{{ path('admin_vehicule_index') }}" class="btn btn-outline-secondary btn-sm">Retour</a>
+    </div>
+</div>
+
+<div class="card stat-card p-4">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Type</dt><dd class="col-sm-9">{{ vehicule.type ? vehicule.type.libelle : '-' }}</dd>
+        <dt class="col-sm-3">Numéro de châssis</dt><dd class="col-sm-9">{{ vehicule.numeroChassis|default('-') }}</dd>
+        <dt class="col-sm-3">Carburant</dt><dd class="col-sm-9">{{ vehicule.carburant ? vehicule.carburant.label : '-' }}</dd>
+        <dt class="col-sm-3">Kilométrage</dt><dd class="col-sm-9">{{ vehicule.kilometrage|default('-') }}</dd>
+        <dt class="col-sm-3">Service / Direction</dt><dd class="col-sm-9">{{ vehicule.service }}</dd>
+        <dt class="col-sm-3">Chauffeur affecté</dt><dd class="col-sm-9">{{ vehicule.chauffeurAffecte ? vehicule.chauffeurAffecte.nomComplet : 'Non affecté' }}</dd>
+        <dt class="col-sm-3">Date d'acquisition</dt><dd class="col-sm-9">{{ vehicule.dateAcquisition ? vehicule.dateAcquisition|date('d/m/Y') : '-' }}</dd>
+        <dt class="col-sm-3">Valeur d'acquisition</dt><dd class="col-sm-9">{{ vehicule.valeurAcquisition|default('-') }}</dd>
+        <dt class="col-sm-3">Assurance jusqu'au</dt><dd class="col-sm-9">{{ vehicule.assuranceJusquau ? vehicule.assuranceJusquau|date('d/m/Y') : '-' }}</dd>
+        <dt class="col-sm-3">Visite technique jusqu'au</dt><dd class="col-sm-9">{{ vehicule.visiteTechniqueJusquau ? vehicule.visiteTechniqueJusquau|date('d/m/Y') : '-' }}</dd>
+        <dt class="col-sm-3">État</dt><dd class="col-sm-9">{{ vehicule.etat.libelle }}</dd>
+        <dt class="col-sm-3">Observations</dt><dd class="col-sm-9">{{ vehicule.observations|default('-')|nl2br }}</dd>
+    </dl>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}GERM — Ministère{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; }
+        .germ-sidebar {
+            min-height: 100vh;
+            width: 250px;
+            background: #1c2b45;
+            color: #cfd7e6;
+        }
+        .germ-sidebar .brand {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: .5px;
+        }
+        .germ-sidebar a {
+            color: #cfd7e6;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .6rem 1rem;
+            border-radius: .4rem;
+            margin: .1rem .6rem;
+        }
+        .germ-sidebar a:hover, .germ-sidebar a.active {
+            background: #2c3e63;
+            color: #fff;
+        }
+        .germ-topbar {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .germ-main { flex: 1; min-width: 0; }
+        .stat-card { border: none; border-radius: .8rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    </style>
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+{% if app.user %}
+    <div class="d-flex">
+        <nav class="germ-sidebar d-flex flex-column py-3">
+            <div class="brand px-3 pb-3 fs-5">
+                <i class="bi bi-bank2"></i> GERM
+                <div class="small fw-normal text-white-50">Min. de la Communication</div>
+            </div>
+            <a href="{{ path('admin_dashboard') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard' ? 'active' }}">
+                <i class="bi bi-speedometer2"></i> Tableau de bord
+            </a>
+            <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources</div>
+            <a href="{{ path('admin_personnel_index') }}" class="{{ 'admin_personnel' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-people"></i> Personnel
+            </a>
+            <a href="{{ path('admin_materiel_index') }}" class="{{ 'admin_materiel' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-pc-display"></i> Parc informatique
+            </a>
+            <a href="{{ path('admin_vehicule_index') }}" class="{{ 'admin_vehicule' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-truck"></i> Parc automobile
+            </a>
+            <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Administration</div>
+            <a href="{{ path('admin_direction_index') }}" class="{{ 'admin_direction' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-building"></i> Directions
+            </a>
+            <a href="{{ path('admin_service_index') }}" class="{{ 'admin_service' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-diagram-3"></i> Services
+            </a>
+            <a href="{{ path('admin_agent_index') }}" class="{{ 'admin_agent' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-person-badge"></i> Comptes agents
+            </a>
+            <a href="{{ path('admin_liste_valeur_categories') }}" class="{{ 'admin_liste_valeur' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-list-check"></i> Listes de valeurs
+            </a>
+        </nav>
+        <div class="germ-main d-flex flex-column">
+            <header class="germ-topbar d-flex justify-content-between align-items-center px-4 py-2">
+                <div class="fw-semibold">{% block page_title %}Superadmin{% endblock %}</div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted small">{{ app.user.nom }} {{ app.user.prenom }}</span>
+                    <a href="{{ path('app_logout') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-box-arrow-right"></i> Déconnexion
+                    </a>
+                </div>
+            </header>
+            <main class="p-4">
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ label == 'success' ? 'success' : (label == 'error' ? 'danger' : label) }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+                {% block body %}{% endblock %}
+            </main>
+        </div>
+    </div>
+{% else %}
+    {% block full_body %}{% endblock %}
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

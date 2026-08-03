@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau service — GERM{% endblock %}
+{% block page_title %}Nouveau service{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    {{ include('admin/service/_form.html.twig') }}
+</div>
+{% endblock %}

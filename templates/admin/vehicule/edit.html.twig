@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ vehicule.immatriculation }} — GERM{% endblock %}
+{% block page_title %}Modifier le véhicule{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4">
+    {{ include('admin/vehicule/_form.html.twig') }}
+</div>
+{% endblock %}

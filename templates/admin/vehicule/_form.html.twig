@@ -1,0 +1,23 @@
+{{ form_start(form) }}
+<div class="row">
+    <div class="col-md-4">{{ form_row(form.immatriculation) }}</div>
+    <div class="col-md-4">{{ form_row(form.type) }}</div>
+    <div class="col-md-4">{{ form_row(form.etat) }}</div>
+    <div class="col-md-4">{{ form_row(form.marque) }}</div>
+    <div class="col-md-4">{{ form_row(form.modele) }}</div>
+    <div class="col-md-4">{{ form_row(form.numeroChassis) }}</div>
+    <div class="col-md-4">{{ form_row(form.carburant) }}</div>
+    <div class="col-md-4">{{ form_row(form.kilometrage) }}</div>
+    <div class="col-md-4">{{ form_row(form.service) }}</div>
+    <div class="col-md-4">{{ form_row(form.chauffeurAffecte) }}</div>
+    <div class="col-md-4">{{ form_row(form.dateAcquisition) }}</div>
+    <div class="col-md-4">{{ form_row(form.valeurAcquisition) }}</div>
+    <div class="col-md-4">{{ form_row(form.assuranceJusquau) }}</div>
+    <div class="col-md-4">{{ form_row(form.visiteTechniqueJusquau) }}</div>
+    <div class="col-12">{{ form_row(form.observations) }}</div>
+</div>
+<div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Enregistrer</button>
+    <a href="{{ path('admin_vehicule_index') }}" class="btn btn-outline-secondary">Annuler</a>
+</div>
+{{ form_end(form) }}

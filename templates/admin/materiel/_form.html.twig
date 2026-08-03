@@ -1,0 +1,22 @@
+{{ form_start(form) }}
+<div class="row">
+    <div class="col-md-4">{{ form_row(form.numeroInventaire) }}</div>
+    <div class="col-md-4">{{ form_row(form.type) }}</div>
+    <div class="col-md-4">{{ form_row(form.etat) }}</div>
+    <div class="col-md-4">{{ form_row(form.marque) }}</div>
+    <div class="col-md-4">{{ form_row(form.modele) }}</div>
+    <div class="col-md-4">{{ form_row(form.numeroSerie) }}</div>
+    <div class="col-md-4">{{ form_row(form.service) }}</div>
+    <div class="col-md-4">{{ form_row(form.affecteA) }}</div>
+    <div class="col-md-4">{{ form_row(form.fournisseur) }}</div>
+    <div class="col-md-4">{{ form_row(form.dateAcquisition) }}</div>
+    <div class="col-md-4">{{ form_row(form.valeurAcquisition) }}</div>
+    <div class="col-md-4">{{ form_row(form.garantieJusquau) }}</div>
+    <div class="col-12">{{ form_row(form.specifications) }}</div>
+    <div class="col-12">{{ form_row(form.observations) }}</div>
+</div>
+<div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Enregistrer</button>
+    <a href="{{ path('admin_materiel_index') }}" class="btn btn-outline-secondary">Annuler</a>
+</div>
+{{ form_end(form) }}

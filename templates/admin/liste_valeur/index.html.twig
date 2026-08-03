@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ categorie.label }} — GERM{% endblock %}
+{% block page_title %}{{ categorie.label }}{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between mb-3">
+    <a href="{{ path('admin_liste_valeur_categories') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Listes de valeurs</a>
+    <a href="{{ path('admin_liste_valeur_new', {categorie: categorie.value}) }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle valeur</a>
+</div>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Code</th>
+            <th>Libellé</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for valeur in valeurs %}
+            <tr>
+                <td>{{ valeur.code }}</td>
+                <td>{{ valeur.libelle }}</td>
+                <td><span class="badge text-bg-{{ valeur.actif ? 'success' : 'secondary' }}">{{ valeur.actif ? 'Actif' : 'Inactif' }}</span></td>
+                <td class="text-end">
+                    <a href="{{ path('admin_liste_valeur_edit', {categorie: categorie.value, id: valeur.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="{{ path('admin_liste_valeur_delete', {categorie: categorie.value, id: valeur.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette valeur ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete-liste-valeur-' ~ valeur.id) }}">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-4">Aucune valeur enregistrée.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ materiel.numeroInventaire }} — GERM{% endblock %}
+{% block page_title %}Modifier le matériel{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4">
+    {{ include('admin/materiel/_form.html.twig') }}
+</div>
+{% endblock %}

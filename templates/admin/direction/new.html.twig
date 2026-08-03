@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle direction — GERM{% endblock %}
+{% block page_title %}Nouvelle direction{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    {{ include('admin/direction/_form.html.twig') }}
+</div>
+{% endblock %}

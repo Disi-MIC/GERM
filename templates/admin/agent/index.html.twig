@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Comptes agents — GERM{% endblock %}
+{% block page_title %}Comptes agents (accès à l'application){% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ path('admin_agent_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouveau compte</a>
+</div>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Nom complet</th>
+            <th>Email</th>
+            <th>Rôles</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for agent in agents %}
+            <tr>
+                <td>{{ agent.nomComplet }}</td>
+                <td>{{ agent.email }}</td>
+                <td>
+                    {% for role in agent.roles %}
+                        <span class="badge text-bg-light border">{{ role|replace({'ROLE_': ''}) }}</span>
+                    {% endfor %}
+                </td>
+                <td><span class="badge text-bg-{{ agent.actif ? 'success' : 'secondary' }}">{{ agent.actif ? 'Actif' : 'Inactif' }}</span></td>
+                <td class="text-end">
+                    <a href="{{ path('admin_agent_edit', {id: agent.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="{{ path('admin_agent_delete', {id: agent.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce compte ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete-agent-' ~ agent.id) }}">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aucun compte agent enregistré.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ personnel.nomComplet }} — GERM{% endblock %}
+{% block page_title %}Fiche personnel{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">{{ personnel.nomComplet }}</h5>
+    <div>
+        <a href="{{ path('admin_personnel_edit', {id: personnel.id}) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{{ path('admin_personnel_index') }}" class="btn btn-outline-secondary btn-sm">Retour</a>
+    </div>
+</div>
+
+<div class="card stat-card p-4">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Matricule</dt><dd class="col-sm-9">{{ personnel.matricule }}</dd>
+        <dt class="col-sm-3">Sexe</dt><dd class="col-sm-9">{{ personnel.sexe ? personnel.sexe.label : '-' }}</dd>
+        <dt class="col-sm-3">Date de naissance</dt><dd class="col-sm-9">{{ personnel.dateNaissance ? personnel.dateNaissance|date('d/m/Y') : '-' }}</dd>
+        <dt class="col-sm-3">Service / Direction</dt><dd class="col-sm-9">{{ personnel.service }}</dd>
+        <dt class="col-sm-3">Fonction</dt><dd class="col-sm-9">{{ personnel.fonction }}</dd>
+        <dt class="col-sm-3">Grade</dt><dd class="col-sm-9">{{ personnel.grade|default('-') }}</dd>
+        <dt class="col-sm-3">Type de contrat</dt><dd class="col-sm-9">{{ personnel.typeContrat ? personnel.typeContrat.libelle : '-' }}</dd>
+        <dt class="col-sm-3">Date d'embauche</dt><dd class="col-sm-9">{{ personnel.dateEmbauche ? personnel.dateEmbauche|date('d/m/Y') : '-' }}</dd>
+        <dt class="col-sm-3">Statut</dt><dd class="col-sm-9">{{ personnel.statut.label }}</dd>
+        <dt class="col-sm-3">Téléphone</dt><dd class="col-sm-9">{{ personnel.telephone|default('-') }}</dd>
+        <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ personnel.email|default('-') }}</dd>
+        <dt class="col-sm-3">Adresse</dt><dd class="col-sm-9">{{ personnel.adresse|default('-') }}</dd>
+        <dt class="col-sm-3">Observations</dt><dd class="col-sm-9">{{ personnel.observations|default('-')|nl2br }}</dd>
+    </dl>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-md-6">
+        <div class="card stat-card p-3">
+            <h6><i class="bi bi-pc-display"></i> Matériel informatique affecté</h6>
+            {% if personnel.materiels is empty %}
+                <p class="text-muted small mb-0">Aucun matériel affecté.</p>
+            {% else %}
+                <ul class="list-unstyled mb-0">
+                    {% for m in personnel.materiels %}
+                        <li><a href="{{ path('admin_materiel_show', {id: m.id}) }}">{{ m.marque }} {{ m.modele }} — {{ m.numeroInventaire }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card p-3">
+            <h6><i class="bi bi-truck"></i> Véhicules affectés</h6>
+            {% if personnel.vehicules is empty %}
+                <p class="text-muted small mb-0">Aucun véhicule affecté.</p>
+            {% else %}
+                <ul class="list-unstyled mb-0">
+                    {% for v in personnel.vehicules %}
+                        <li><a href="{{ path('admin_vehicule_show', {id: v.id}) }}">{{ v.marque }} {{ v.modele }} — {{ v.immatriculation }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

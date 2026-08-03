@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "geomic360-frontend",
+      "runtimeExecutable": "/opt/homebrew/bin/npm",
+      "runtimeArgs": ["run", "start", "--prefix", "/Users/alassanetambedou/Desktop/projets_mincom/GeoMiC360/frontend"],
+      "port": 4200
+    }
+  ]
+}

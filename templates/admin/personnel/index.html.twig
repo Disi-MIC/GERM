@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Personnel — GERM{% endblock %}
+{% block page_title %}Gestion du personnel{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form class="d-flex" method="get">
+        <input type="search" name="q" value="{{ q }}" class="form-control me-2" placeholder="Rechercher (nom, matricule, fonction...)">
+        <button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+    </form>
+    <a href="{{ path('admin_personnel_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouvel agent</a>
+</div>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Matricule</th>
+            <th>Nom complet</th>
+            <th>Fonction</th>
+            <th>Service</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for personnel in personnels %}
+            <tr>
+                <td>{{ personnel.matricule }}</td>
+                <td>{{ personnel.nomComplet }}</td>
+                <td>{{ personnel.fonction }}</td>
+                <td>{{ personnel.service }}</td>
+                <td><span class="badge text-bg-{{ personnel.statut.value == 'actif' ? 'success' : 'secondary' }}">{{ personnel.statut.label }}</span></td>
+                <td class="text-end">
+                    <a href="{{ path('admin_personnel_show', {id: personnel.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                    <a href="{{ path('admin_personnel_edit', {id: personnel.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="{{ path('admin_personnel_delete', {id: personnel.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette fiche ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete-personnel-' ~ personnel.id) }}">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Aucun agent enregistré.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

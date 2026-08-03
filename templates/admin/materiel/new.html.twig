@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau matériel — GERM{% endblock %}
+{% block page_title %}Nouveau matériel informatique{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4">
+    {{ include('admin/materiel/_form.html.twig') }}
+</div>
+{% endblock %}
