@@ -2,7 +2,7 @@ homepage:
     path: /
     controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
     defaults:
-        route: admin_dashboard
+        route: admin_dashboard_personnel
         permanent: false
 
 controllers:

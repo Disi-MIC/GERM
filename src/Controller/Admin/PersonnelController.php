@@ -3,6 +3,8 @@
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
+use App\Entity\Enum\TypeMouvementCarriere;
+use App\Entity\HistoriqueAffectation;
 use App\Entity\Personnel;
 use App\Form\PersonnelType;
 use App\Repository\PersonnelRepository;
@@ -34,6 +36,16 @@ class PersonnelController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $em->persist($personnel);
+
+            $nomination = new HistoriqueAffectation();
+            $nomination->setPersonnel($personnel);
+            $nomination->setService($personnel->getService());
+            $nomination->setFonction($personnel->getFonction());
+            $nomination->setGrade($personnel->getGrade());
+            $nomination->setTypeMouvement(TypeMouvementCarriere::NOMINATION);
+            $nomination->setDateEffet($personnel->getDateEmbauche() ?? new \DateTimeImmutable());
+            $em->persist($nomination);
+
             $em->flush();
 
             $this->addFlash('success', 'Fiche personnel créée avec succès.');
@@ -79,9 +91,13 @@ class PersonnelController extends AbstractController
     public function delete(Request $request, Personnel $personnel, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete-personnel-'.$personnel->getId(), $request->request->get('_token'))) {
-            $em->remove($personnel);
-            $em->flush();
-            $this->addFlash('success', 'Fiche personnel supprimée.');
+            if (!$personnel->getHistoriqueAffectations()->isEmpty()) {
+                $this->addFlash('danger', 'Impossible de supprimer cette fiche : elle a un historique de carrière.');
+            } else {
+                $em->remove($personnel);
+                $em->flush();
+                $this->addFlash('success', 'Fiche personnel supprimée.');
+            }
         }
 
         return $this->redirectToRoute('admin_personnel_index');

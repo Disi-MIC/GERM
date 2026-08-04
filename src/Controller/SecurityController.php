@@ -13,7 +13,7 @@ class SecurityController extends AbstractController
     {
         // Si déjà connecté, direction le dashboard
         if ($this->getUser()) {
-            return $this->redirectToRoute('admin_dashboard');
+            return $this->redirectToRoute('admin_dashboard_personnel');
         }
 
         $error = $authenticationUtils->getLastAuthenticationError();

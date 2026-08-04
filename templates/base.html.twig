@@ -50,12 +50,22 @@
                 <i class="bi bi-bank2"></i> GERM
                 <div class="small fw-normal text-white-50">Min. de la Communication</div>
             </div>
-            <a href="{{ path('admin_dashboard') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard' ? 'active' }}">
-                <i class="bi bi-speedometer2"></i> Tableau de bord
+            <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
+            <a href="{{ path('admin_dashboard_personnel') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_personnel' ? 'active' }}">
+                <i class="bi bi-speedometer2"></i> Personnel
+            </a>
+            <a href="{{ path('admin_dashboard_materiel') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_materiel' ? 'active' }}">
+                <i class="bi bi-speedometer2"></i> Informatique
+            </a>
+            <a href="{{ path('admin_dashboard_vehicule') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_vehicule' ? 'active' }}">
+                <i class="bi bi-speedometer2"></i> Parc automobile
             </a>
             <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources</div>
             <a href="{{ path('admin_personnel_index') }}" class="{{ 'admin_personnel' in app.request.attributes.get('_route') ? 'active' }}">
                 <i class="bi bi-people"></i> Personnel
+            </a>
+            <a href="{{ path('admin_carriere_index') }}" class="{{ 'admin_carriere' in app.request.attributes.get('_route') ? 'active' }}">
+                <i class="bi bi-clock-history"></i> Gestion des carrières
             </a>
             <a href="{{ path('admin_materiel_index') }}" class="{{ 'admin_materiel' in app.request.attributes.get('_route') ? 'active' }}">
                 <i class="bi bi-pc-display"></i> Parc informatique

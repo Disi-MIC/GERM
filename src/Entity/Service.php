@@ -51,11 +51,15 @@ class Service
     #[ORM\OneToMany(mappedBy: 'service', targetEntity: Vehicule::class)]
     private Collection $vehicules;
 
+    #[ORM\OneToMany(mappedBy: 'service', targetEntity: HistoriqueAffectation::class)]
+    private Collection $historiqueAffectations;
+
     public function __construct()
     {
         $this->personnels = new ArrayCollection();
         $this->materiels = new ArrayCollection();
         $this->vehicules = new ArrayCollection();
+        $this->historiqueAffectations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -145,6 +149,14 @@ class Service
     public function getVehicules(): Collection
     {
         return $this->vehicules;
+    }
+
+    /**
+     * @return Collection<int, HistoriqueAffectation>
+     */
+    public function getHistoriqueAffectations(): Collection
+    {
+        return $this->historiqueAffectations;
     }
 
     public function __toString(): string

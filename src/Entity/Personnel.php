@@ -87,6 +87,10 @@ class Personnel
     #[ORM\OneToMany(mappedBy: 'chauffeurAffecte', targetEntity: Vehicule::class)]
     private Collection $vehicules;
 
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: HistoriqueAffectation::class)]
+    #[ORM\OrderBy(['dateEffet' => 'DESC'])]
+    private Collection $historiqueAffectations;
+
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $observations = null;
 
@@ -100,6 +104,7 @@ class Personnel
     {
         $this->materiels = new ArrayCollection();
         $this->vehicules = new ArrayCollection();
+        $this->historiqueAffectations = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -319,6 +324,14 @@ class Personnel
     public function getVehicules(): Collection
     {
         return $this->vehicules;
+    }
+
+    /**
+     * @return Collection<int, HistoriqueAffectation>
+     */
+    public function getHistoriqueAffectations(): Collection
+    {
+        return $this->historiqueAffectations;
     }
 
     public function getObservations(): ?string

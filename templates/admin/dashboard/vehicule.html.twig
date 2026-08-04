@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord Parc automobile — GERM{% endblock %}
+{% block page_title %}Tableau de bord — Parc automobile{% endblock %}
+
+{% block body %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <div class="text-muted small">Parc automobile</div>
+            <div class="fs-3 fw-bold">{{ nb_vehicules }}</div>
+            <a href="{{ path('admin_vehicule_index') }}" class="small">Voir la liste →</a>
+        </div>
+    </div>
+</div>
+
+<div class="card stat-card p-3">
+    <h6 class="mb-3"><i class="bi bi-exclamation-triangle text-warning"></i> Échéances véhicules (assurance / visite technique)</h6>
+    {% if echeances_vehicules is empty %}
+        <p class="text-muted small mb-0">Aucune échéance proche.</p>
+    {% else %}
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Véhicule</th><th>Immatriculation</th><th>Assurance</th><th>Visite technique</th></tr></thead>
+            <tbody>
+            {% for v in echeances_vehicules %}
+                <tr>
+                    <td><a href="{{ path('admin_vehicule_show', {id: v.id}) }}">{{ v.marque }} {{ v.modele }}</a></td>
+                    <td>{{ v.immatriculation }}</td>
+                    <td>{{ v.assuranceJusquau ? v.assuranceJusquau|date('d/m/Y') : '-' }}</td>
+                    <td>{{ v.visiteTechniqueJusquau ? v.visiteTechniqueJusquau|date('d/m/Y') : '-' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}

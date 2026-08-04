@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord Informatique — GERM{% endblock %}
+{% block page_title %}Tableau de bord — Parc informatique{% endblock %}
+
+{% block body %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <div class="text-muted small">Parc informatique</div>
+            <div class="fs-3 fw-bold">{{ nb_materiels }}</div>
+            <a href="{{ path('admin_materiel_index') }}" class="small">Voir la liste →</a>
+        </div>
+    </div>
+</div>
+
+<div class="card stat-card p-3">
+    <h6 class="mb-3"><i class="bi bi-exclamation-triangle text-warning"></i> Garanties matériel expirant sous 30 jours</h6>
+    {% if garanties_expirant is empty %}
+        <p class="text-muted small mb-0">Aucune échéance proche.</p>
+    {% else %}
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Matériel</th><th>N° inventaire</th><th>Garantie jusqu'au</th></tr></thead>
+            <tbody>
+            {% for m in garanties_expirant %}
+                <tr>
+                    <td><a href="{{ path('admin_materiel_show', {id: m.id}) }}">{{ m.marque }} {{ m.modele }}</a></td>
+                    <td>{{ m.numeroInventaire }}</td>
+                    <td>{{ m.garantieJusquau ? m.garantieJusquau|date('d/m/Y') : '-' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}

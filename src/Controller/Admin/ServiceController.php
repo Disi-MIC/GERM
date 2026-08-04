@@ -70,8 +70,8 @@ class ServiceController extends AbstractController
     public function delete(Request $request, Service $service, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete-service-'.$service->getId(), $request->request->get('_token'))) {
-            if (!$service->getPersonnels()->isEmpty() || !$service->getMateriels()->isEmpty() || !$service->getVehicules()->isEmpty()) {
-                $this->addFlash('danger', 'Impossible de supprimer ce service : du personnel, du matériel ou des véhicules y sont encore rattachés.');
+            if (!$service->getPersonnels()->isEmpty() || !$service->getMateriels()->isEmpty() || !$service->getVehicules()->isEmpty() || !$service->getHistoriqueAffectations()->isEmpty()) {
+                $this->addFlash('danger', 'Impossible de supprimer ce service : du personnel, du matériel, des véhicules ou un historique de carrière y sont encore rattachés.');
             } else {
                 $em->remove($service);
                 $em->flush();

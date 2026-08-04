@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau mouvement — {{ personnel.nomComplet }} — GERM{% endblock %}
+{% block page_title %}Nouveau mouvement de carrière — {{ personnel.nomComplet }}{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    {{ include('admin/carriere/_mouvement_form.html.twig') }}
+</div>
+{% endblock %}

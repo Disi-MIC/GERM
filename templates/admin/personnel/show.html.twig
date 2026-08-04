@@ -30,6 +30,41 @@
     </dl>
 </div>
 
+<div class="card stat-card p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="bi bi-clock-history"></i> Historique de carrière</h6>
+        <a href="{{ path('admin_personnel_mouvement_new', {id: personnel.id}) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Nouveau mouvement</a>
+    </div>
+    {% if personnel.historiqueAffectations is empty %}
+        <p class="text-muted small mb-0">Aucun mouvement enregistré.</p>
+    {% else %}
+        {% set courant = personnel.historiqueAffectations|first %}
+        <table class="table table-sm mb-0 align-middle">
+            <thead><tr><th>Date d'effet</th><th>Type</th><th>Service</th><th>Fonction</th><th>Grade</th><th>N° décision</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for mouvement in personnel.historiqueAffectations %}
+                <tr>
+                    <td>{{ mouvement.dateEffet|date('d/m/Y') }}</td>
+                    <td>{{ mouvement.typeMouvement.label }}</td>
+                    <td>{{ mouvement.service }}</td>
+                    <td>{{ mouvement.fonction }}</td>
+                    <td>{{ mouvement.grade|default('-') }}</td>
+                    <td>{{ mouvement.numeroDecision|default('-') }}</td>
+                    <td class="text-end">
+                        {% if mouvement.id != courant.id %}
+                            <form method="post" action="{{ path('admin_carriere_delete', {id: mouvement.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce mouvement ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete-mouvement-' ~ mouvement.id) }}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
 <div class="row g-3 mt-1">
     <div class="col-md-6">
         <div class="card stat-card p-3">
