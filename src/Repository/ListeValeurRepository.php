@@ -29,4 +29,9 @@ class ListeValeurRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findOneByCategorieAndCode(CategorieListeValeur $categorie, string $code): ?ListeValeur
+    {
+        return $this->findOneBy(['categorie' => $categorie, 'code' => $code]);
+    }
 }

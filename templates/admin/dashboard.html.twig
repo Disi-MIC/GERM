@@ -4,6 +4,32 @@
 {% block page_title %}Tableau de bord superadmin{% endblock %}
 
 {% block body %}
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-4">
+        <label class="form-label small text-muted mb-1">Filtrer par direction</label>
+        <select name="direction" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Toutes les directions</option>
+            {% for d in directions %}
+                <option value="{{ d.id }}" {{ filtre_direction and filtre_direction.id == d.id ? 'selected' }}>{{ d.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small text-muted mb-1">Filtrer par service</label>
+        <select name="service" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Tous les services</option>
+            {% for s in services %}
+                <option value="{{ s.id }}" {{ filtre_service and filtre_service.id == s.id ? 'selected' }}>{{ s.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% if filtre_direction or filtre_service %}
+        <div class="col-md-2">
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
+        </div>
+    {% endif %}
+</form>
+
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card stat-card p-3">
@@ -72,6 +98,67 @@
                             <td>{{ v.immatriculation }}</td>
                             <td>{{ v.assuranceJusquau ? v.assuranceJusquau|date('d/m/Y') : '-' }}</td>
                             <td>{{ v.visiteTechniqueJusquau ? v.visiteTechniqueJusquau|date('d/m/Y') : '-' }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-md-6">
+        <div class="card stat-card p-3">
+            <h6 class="mb-3"><i class="bi bi-bar-chart"></i> Répartition par sexe et par direction</h6>
+            {% if repartition_par_direction is empty %}
+                <p class="text-muted small mb-0">Aucune donnée pour ce filtre.</p>
+            {% else %}
+                <table class="table table-sm mb-0 align-middle">
+                    <thead><tr><th>Direction</th><th>Hommes</th><th>Femmes</th><th>Total</th><th style="width:30%">Répartition</th></tr></thead>
+                    <tbody>
+                    {% for nom, counts in repartition_par_direction %}
+                        {% set total = counts.M + counts.F %}
+                        <tr>
+                            <td>{{ nom }}</td>
+                            <td>{{ counts.M }}</td>
+                            <td>{{ counts.F }}</td>
+                            <td>{{ total }}</td>
+                            <td>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" style="width: {{ total ? (counts.M / total * 100) : 0 }}%"></div>
+                                    <div class="progress-bar bg-danger" style="width: {{ total ? (counts.F / total * 100) : 0 }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card p-3">
+            <h6 class="mb-3"><i class="bi bi-bar-chart"></i> Répartition par sexe et par service</h6>
+            {% if repartition_par_service is empty %}
+                <p class="text-muted small mb-0">Aucune donnée pour ce filtre.</p>
+            {% else %}
+                <table class="table table-sm mb-0 align-middle">
+                    <thead><tr><th>Service</th><th>Hommes</th><th>Femmes</th><th>Total</th><th style="width:30%">Répartition</th></tr></thead>
+                    <tbody>
+                    {% for nom, counts in repartition_par_service %}
+                        {% set total = counts.M + counts.F %}
+                        <tr>
+                            <td>{{ nom }}</td>
+                            <td>{{ counts.M }}</td>
+                            <td>{{ counts.F }}</td>
+                            <td>{{ total }}</td>
+                            <td>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" style="width: {{ total ? (counts.M / total * 100) : 0 }}%"></div>
+                                    <div class="progress-bar bg-danger" style="width: {{ total ? (counts.F / total * 100) : 0 }}%"></div>
+                                </div>
+                            </td>
                         </tr>
                     {% endfor %}
                     </tbody>

@@ -9,7 +9,10 @@
         <input type="search" name="q" value="{{ q }}" class="form-control me-2" placeholder="Rechercher (n° inventaire, marque, modèle...)">
         <button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
     </form>
-    <a href="{{ path('admin_materiel_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouveau matériel</a>
+    <div class="d-flex gap-2">
+        <a href="{{ path('admin_import_upload', {type: 'materiel'}) }}" class="btn btn-outline-secondary"><i class="bi bi-upload"></i> Importer</a>
+        <a href="{{ path('admin_materiel_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouveau matériel</a>
+    </div>
 </div>
 
 <div class="card stat-card">

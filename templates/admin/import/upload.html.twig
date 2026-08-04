@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Import — {{ type.label }} — GERM{% endblock %}
+{% block page_title %}Import — {{ type.label }}{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{{ path(type.indexRoute) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
+    <a href="{{ path('admin_import_template', {type: type.value}) }}" class="btn btn-outline-primary"><i class="bi bi-download"></i> Télécharger un modèle</a>
+</div>
+
+<div class="card stat-card p-3 mb-4">
+    <h6 class="mb-3">Colonnes attendues</h6>
+    <table class="table table-sm mb-0">
+        <thead><tr><th>Colonne</th><th>Description</th><th>Obligatoire</th></tr></thead>
+        <tbody>
+        {% for column in columns %}
+            <tr>
+                <td><code>{{ column.key }}</code></td>
+                <td>{{ column.label }}</td>
+                <td>{{ column.required ? 'Oui' : 'Non' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card stat-card p-3 mb-4" style="max-width: 600px;">
+    <h6 class="mb-3">Importer un fichier</h6>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="_token" value="{{ csrf_token('import-' ~ type.value) }}">
+        <input type="file" name="file" accept=".csv,.xlsx" class="form-control mb-3" required>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importer</button>
+    </form>
+</div>
+
+{% if report %}
+    <div class="card stat-card p-3">
+        <h6 class="mb-3">Résultat de l'import</h6>
+
+        {% if report.globalError %}
+            <div class="alert alert-danger">{{ report.globalError }}</div>
+        {% else %}
+            <div class="d-flex gap-2 mb-3">
+                <span class="badge text-bg-success">{{ report.created }} créé(s)</span>
+                <span class="badge text-bg-secondary">{{ report.skippedExisting }} ignoré(s) (déjà existant)</span>
+                <span class="badge text-bg-danger">{{ report.errors }} en erreur</span>
+            </div>
+
+            {% if report.rowResults is not empty %}
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Ligne</th><th>Statut</th><th>Message</th></tr></thead>
+                    <tbody>
+                    {% for row in report.rowResults %}
+                        <tr>
+                            <td>{{ row.lineNumber }}</td>
+                            <td>
+                                {% if row.status.name == 'SKIPPED_EXISTING' %}
+                                    <span class="badge text-bg-secondary">Ignoré</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">Erreur</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ row.message }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
