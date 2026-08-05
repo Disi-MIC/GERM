@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Cartes professionnelles — GERM{% endblock %}
+{% block page_title %}Cartes professionnelles{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ path('admin_carte_professionnelle_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle carte</a>
+</div>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Agent</th>
+            <th>Numéro</th>
+            <th>Date de délivrance</th>
+            <th>Date d'expiration</th>
+            <th>Statut</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for carte in cartes %}
+            <tr>
+                <td><a href="{{ path('admin_personnel_show', {id: carte.personnel.id}) }}">{{ carte.personnel.nomComplet }}</a></td>
+                <td>{{ carte.numero }}</td>
+                <td>{{ carte.dateDelivrance|date('d/m/Y') }}</td>
+                <td>{{ carte.dateExpiration|date('d/m/Y') }}</td>
+                <td>
+                    <span class="badge text-bg-{{ carte.statutAffiche.badgeClass }}">{{ carte.statutAffiche.label }}</span>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aucune carte enregistrée.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

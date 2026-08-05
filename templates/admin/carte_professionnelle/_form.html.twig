@@ -1,0 +1,19 @@
+{{ form_start(form) }}
+{% if form.personnel is defined %}{{ form_row(form.personnel) }}{% endif %}
+{{ form_row(form.numero) }}
+{{ form_row(form.dateDelivrance) }}
+{{ form_row(form.dateExpiration) }}
+{{ form_row(form.statut) }}
+{{ form_row(form.observations) }}
+{% if carte is defined and carte.cheminFichier %}
+    <div class="mb-3">
+        <div class="form-label small text-muted mb-1">Fichier actuel</div>
+        <a href="{{ path('admin_piece_carte_download', {id: carte.id}) }}" class="d-block"><i class="bi bi-paperclip"></i> {{ carte.nomOriginal }}</a>
+    </div>
+{% endif %}
+{{ form_row(form.fichier) }}
+<div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Enregistrer</button>
+    <a href="{{ cancel_path }}" class="btn btn-outline-secondary">Annuler</a>
+</div>
+{{ form_end(form) }}

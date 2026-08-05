@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Traiter la demande — {{ demande.personnel.nomComplet }} — GERM{% endblock %}
+{% block page_title %}Traiter la demande de décision{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    <dl class="row mb-3">
+        <dt class="col-sm-4">Agent</dt><dd class="col-sm-8">{{ demande.personnel.nomComplet }}</dd>
+        <dt class="col-sm-4">Dernière décision</dt>
+        <dd class="col-sm-8">
+            {% if demande.numeroDerniereDecision or demande.dateDerniereDecision %}
+                {{ demande.numeroDerniereDecision|default('-') }}
+                {% if demande.dateDerniereDecision %} ({{ demande.dateDerniereDecision|date('d/m/Y') }}){% endif %}
+            {% else %}
+                -
+            {% endif %}
+        </dd>
+        <dt class="col-sm-4">Motif</dt><dd class="col-sm-8">{{ demande.motif|default('-') }}</dd>
+        <dt class="col-sm-4">Pièces justificatives</dt>
+        <dd class="col-sm-8">
+            {% for piece in demande.pieces %}
+                <a href="{{ path('admin_piece_decision_download', {id: piece.id}) }}" class="d-block"><i class="bi bi-paperclip"></i> {{ piece.nomOriginal }}</a>
+            {% else %}
+                -
+            {% endfor %}
+        </dd>
+    </dl>
+
+    <form method="post">
+        <input type="hidden" name="_token" value="{{ csrf_token('traiter-demande-decision-' ~ demande.id) }}">
+
+        <div class="border rounded p-3 mb-3">
+            <p class="small text-muted mb-2">Champs requis uniquement si vous approuvez la demande :</p>
+            <div class="mb-2">
+                <label for="numero_decision" class="form-label">Numéro de décision</label>
+                <input type="text" name="numero_decision" id="numero_decision" class="form-control">
+            </div>
+            <div class="mb-2">
+                <label for="date_decision" class="form-label">Date d'octroi</label>
+                <input type="date" name="date_decision" id="date_decision" class="form-control">
+            </div>
+            <div class="mb-0">
+                <label for="date_expiration" class="form-label">Date d'expiration</label>
+                <input type="date" name="date_expiration" id="date_expiration" class="form-control">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
+            <textarea name="commentaire" id="commentaire" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" name="decision" value="approuver" class="btn btn-success"><i class="bi bi-check-lg"></i> Approuver</button>
+            <button type="submit" name="decision" value="refuser" class="btn btn-danger"><i class="bi bi-x-lg"></i> Refuser</button>
+            <a href="{{ path('admin_demande_decision_index') }}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

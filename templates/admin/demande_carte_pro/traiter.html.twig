@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Traiter la demande — {{ demande.personnel.nomComplet }} — GERM{% endblock %}
+{% block page_title %}Traiter la demande de carte professionnelle{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    <dl class="row mb-3">
+        <dt class="col-sm-4">Agent</dt><dd class="col-sm-8">{{ demande.personnel.nomComplet }}</dd>
+        <dt class="col-sm-4">Type</dt><dd class="col-sm-8">{{ demande.typeDemande.label }}</dd>
+        <dt class="col-sm-4">Carte concernée</dt>
+        <dd class="col-sm-8">{{ demande.carteReference ? demande.carteReference.numero ~ ' (expire le ' ~ demande.carteReference.dateExpiration|date('d/m/Y') ~ ')' : '-' }}</dd>
+        <dt class="col-sm-4">Motif</dt><dd class="col-sm-8">{{ demande.motif|default('-') }}</dd>
+        <dt class="col-sm-4">Pièce justificative</dt>
+        <dd class="col-sm-8">
+            {% if demande.cheminFichier %}
+                <a href="{{ path('admin_piece_carte_pro_download', {id: demande.id}) }}" class="d-block"><i class="bi bi-paperclip"></i> {{ demande.nomOriginal }}</a>
+            {% else %}
+                -
+            {% endif %}
+        </dd>
+    </dl>
+
+    <form method="post">
+        <input type="hidden" name="_token" value="{{ csrf_token('traiter-demande-carte-pro-' ~ demande.id) }}">
+
+        <div class="border rounded p-3 mb-3">
+            <p class="small text-muted mb-2">Champs requis uniquement si vous approuvez la demande :</p>
+            <div class="mb-2">
+                <label for="numero" class="form-label">Numéro de carte</label>
+                <input type="text" name="numero" id="numero" class="form-control">
+            </div>
+            <div class="mb-2">
+                <label for="date_delivrance" class="form-label">Date de délivrance</label>
+                <input type="date" name="date_delivrance" id="date_delivrance" class="form-control">
+            </div>
+            <div class="mb-0">
+                <label for="date_expiration" class="form-label">Date d'expiration</label>
+                <input type="date" name="date_expiration" id="date_expiration" class="form-control">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
+            <textarea name="commentaire" id="commentaire" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" name="decision" value="approuver" class="btn btn-success"><i class="bi bi-check-lg"></i> Approuver</button>
+            <button type="submit" name="decision" value="refuser" class="btn btn-danger"><i class="bi bi-x-lg"></i> Refuser</button>
+            <a href="{{ path('admin_demande_carte_pro_index') }}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

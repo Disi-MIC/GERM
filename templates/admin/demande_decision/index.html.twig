@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Demandes de décision — GERM{% endblock %}
+{% block page_title %}Demandes de décision{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ path('admin_demande_decision_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle demande</a>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Agent</label>
+        <select name="personnel" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Tous les agents</option>
+            {% for p in personnels %}
+                <option value="{{ p.id }}" {{ filtre_personnel and filtre_personnel.id == p.id ? 'selected' }}>{{ p.nomComplet }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Statut</label>
+        <select name="statut" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Tous les statuts</option>
+            {% for s in statuts %}
+                <option value="{{ s.value }}" {{ filtre_statut and filtre_statut == s ? 'selected' }}>{{ s.label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% if filtre_personnel or filtre_statut %}
+        <div class="col-md-2">
+            <a href="{{ path('admin_demande_decision_index') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
+        </div>
+    {% endif %}
+</form>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Agent</th>
+            <th>Dernière décision</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for demande in demandes %}
+            <tr>
+                <td><a href="{{ path('admin_personnel_show', {id: demande.personnel.id}) }}">{{ demande.personnel.nomComplet }}</a></td>
+                <td>
+                    {% if demande.numeroDerniereDecision or demande.dateDerniereDecision %}
+                        {{ demande.numeroDerniereDecision|default('-') }}
+                        {% if demande.dateDerniereDecision %} ({{ demande.dateDerniereDecision|date('d/m/Y') }}){% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge text-bg-{{ demande.statut.value == 'approuvee' ? 'success' : (demande.statut.value == 'refusee' ? 'danger' : 'warning') }}">{{ demande.statut.label }}</span>
+                </td>
+                <td class="text-end">
+                    {% if demande.enAttente %}
+                        <a href="{{ path('admin_demande_decision_traiter', {id: demande.id}) }}" class="btn btn-sm btn-primary">Traiter</a>
+                        <form method="post" action="{{ path('admin_demande_decision_delete', {id: demande.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette demande ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete-demande-decision-' ~ demande.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-4">Aucune demande enregistrée.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

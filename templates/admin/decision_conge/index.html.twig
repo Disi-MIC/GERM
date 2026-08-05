@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Décisions de congé — GERM{% endblock %}
+{% block page_title %}Décisions de congé{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ path('admin_decision_conge_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle décision</a>
+</div>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Agent</th>
+            <th>Numéro</th>
+            <th>Date d'octroi</th>
+            <th>Date d'expiration</th>
+            <th>Statut</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for decision in decisions %}
+            <tr>
+                <td><a href="{{ path('admin_personnel_show', {id: decision.personnel.id}) }}">{{ decision.personnel.nomComplet }}</a></td>
+                <td>{{ decision.numeroDecision }}</td>
+                <td>{{ decision.dateDecision|date('d/m/Y') }}</td>
+                <td>{{ decision.dateExpiration|date('d/m/Y') }}</td>
+                <td>
+                    <span class="badge text-bg-{{ decision.valide ? 'success' : 'secondary' }}">{{ decision.valide ? 'Valide' : 'Expirée' }}</span>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aucune décision enregistrée.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

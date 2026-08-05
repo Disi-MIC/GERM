@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier congé — {{ personnel.nomComplet }} — GERM{% endblock %}
+{% block page_title %}Modifier le congé — {{ personnel.nomComplet }}{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    {{ include('admin/conge/_form.html.twig') }}
+</div>
+{% endblock %}

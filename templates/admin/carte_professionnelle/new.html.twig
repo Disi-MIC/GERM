@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ personnel is defined ? 'Nouvelle carte professionnelle — ' ~ personnel.nomComplet : 'Nouvelle carte professionnelle' }} — GERM{% endblock %}
+{% block page_title %}{{ personnel is defined ? 'Nouvelle carte professionnelle — ' ~ personnel.nomComplet : 'Nouvelle carte professionnelle' }}{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    {{ include('admin/carte_professionnelle/_form.html.twig') }}
+</div>
+{% endblock %}

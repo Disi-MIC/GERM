@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ personnel is defined ? 'Nouvelle demande de décision — ' ~ personnel.nomComplet : 'Nouvelle demande de décision' }} — GERM{% endblock %}
+{% block page_title %}{{ personnel is defined ? 'Nouvelle demande de décision — ' ~ personnel.nomComplet : 'Nouvelle demande de décision' }}{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    {{ include('admin/demande_decision/_form.html.twig') }}
+</div>
+{% endblock %}

@@ -91,6 +91,30 @@ class Personnel
     #[ORM\OrderBy(['dateEffet' => 'DESC'])]
     private Collection $historiqueAffectations;
 
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: CarteProfessionnelle::class)]
+    #[ORM\OrderBy(['dateDelivrance' => 'DESC'])]
+    private Collection $cartesProfessionnelles;
+
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: DemandeCartePro::class)]
+    #[ORM\OrderBy(['createdAt' => 'DESC'])]
+    private Collection $demandesCartePro;
+
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: Conge::class)]
+    #[ORM\OrderBy(['dateDebut' => 'DESC'])]
+    private Collection $conges;
+
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: DemandeJouissance::class)]
+    #[ORM\OrderBy(['createdAt' => 'DESC'])]
+    private Collection $demandesJouissance;
+
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: DecisionConge::class)]
+    #[ORM\OrderBy(['dateDecision' => 'DESC'])]
+    private Collection $decisionsConge;
+
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: DemandeDecision::class)]
+    #[ORM\OrderBy(['createdAt' => 'DESC'])]
+    private Collection $demandesDecision;
+
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $observations = null;
 
@@ -105,6 +129,12 @@ class Personnel
         $this->materiels = new ArrayCollection();
         $this->vehicules = new ArrayCollection();
         $this->historiqueAffectations = new ArrayCollection();
+        $this->cartesProfessionnelles = new ArrayCollection();
+        $this->demandesCartePro = new ArrayCollection();
+        $this->conges = new ArrayCollection();
+        $this->demandesJouissance = new ArrayCollection();
+        $this->decisionsConge = new ArrayCollection();
+        $this->demandesDecision = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -332,6 +362,54 @@ class Personnel
     public function getHistoriqueAffectations(): Collection
     {
         return $this->historiqueAffectations;
+    }
+
+    /**
+     * @return Collection<int, CarteProfessionnelle>
+     */
+    public function getCartesProfessionnelles(): Collection
+    {
+        return $this->cartesProfessionnelles;
+    }
+
+    /**
+     * @return Collection<int, DemandeCartePro>
+     */
+    public function getDemandesCartePro(): Collection
+    {
+        return $this->demandesCartePro;
+    }
+
+    /**
+     * @return Collection<int, Conge>
+     */
+    public function getConges(): Collection
+    {
+        return $this->conges;
+    }
+
+    /**
+     * @return Collection<int, DemandeJouissance>
+     */
+    public function getDemandesJouissance(): Collection
+    {
+        return $this->demandesJouissance;
+    }
+
+    /**
+     * @return Collection<int, DecisionConge>
+     */
+    public function getDecisionsConge(): Collection
+    {
+        return $this->decisionsConge;
+    }
+
+    /**
+     * @return Collection<int, DemandeDecision>
+     */
+    public function getDemandesDecision(): Collection
+    {
+        return $this->demandesDecision;
     }
 
     public function getObservations(): ?string

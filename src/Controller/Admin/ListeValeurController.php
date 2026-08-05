@@ -24,14 +24,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_SUPERADMIN')]
 class ListeValeurController extends AbstractController
 {
-    #[Route('', name: 'categories', methods: ['GET'])]
-    public function categories(): Response
-    {
-        return $this->render('admin/liste_valeur/categories.html.twig', [
-            'categories' => CategorieListeValeur::cases(),
-        ]);
-    }
-
     #[Route('/{categorie}', name: 'index', methods: ['GET'])]
     public function index(CategorieListeValeur $categorie, ListeValeurRepository $repository): Response
     {

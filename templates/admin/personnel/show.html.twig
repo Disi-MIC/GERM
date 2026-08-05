@@ -65,6 +65,217 @@
     {% endif %}
 </div>
 
+<div class="card stat-card p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="bi bi-person-vcard"></i> Cartes professionnelles</h6>
+        <a href="{{ path('admin_personnel_carte_professionnelle_new', {id: personnel.id}) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle carte</a>
+    </div>
+    {% if personnel.cartesProfessionnelles is empty %}
+        <p class="text-muted small mb-0">Aucune carte enregistrée.</p>
+    {% else %}
+        <table class="table table-sm mb-0 align-middle">
+            <thead><tr><th>Numéro</th><th>Date de délivrance</th><th>Date d'expiration</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for carte in personnel.cartesProfessionnelles %}
+                <tr>
+                    <td>{{ carte.numero }}</td>
+                    <td>{{ carte.dateDelivrance|date('d/m/Y') }}</td>
+                    <td>{{ carte.dateExpiration|date('d/m/Y') }}</td>
+                    <td>
+                        <span class="badge text-bg-{{ carte.statutAffiche.badgeClass }}">{{ carte.statutAffiche.label }}</span>
+                    </td>
+                    <td class="text-end">
+                        {% if carte.cheminFichier %}
+                            <a href="{{ path('admin_piece_carte_download', {id: carte.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></a>
+                        {% endif %}
+                        <a href="{{ path('admin_carte_professionnelle_edit', {id: carte.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{{ path('admin_carte_professionnelle_delete', {id: carte.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette carte ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete-carte-professionnelle-' ~ carte.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+<div class="card stat-card p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="bi bi-envelope-paper"></i> Demandes de carte professionnelle</h6>
+        <a href="{{ path('admin_personnel_demande_carte_pro_new', {id: personnel.id}) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle demande</a>
+    </div>
+    {% if personnel.demandesCartePro is empty %}
+        <p class="text-muted small mb-0">Aucune demande enregistrée.</p>
+    {% else %}
+        <table class="table table-sm mb-0 align-middle">
+            <thead><tr><th>Type</th><th>Carte concernée</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for demande in personnel.demandesCartePro %}
+                <tr>
+                    <td>{{ demande.typeDemande.label }}</td>
+                    <td>{{ demande.carteReference ? demande.carteReference.numero : '-' }}</td>
+                    <td>
+                        <span class="badge text-bg-{{ demande.statut.value == 'approuvee' ? 'success' : (demande.statut.value == 'refusee' ? 'danger' : 'warning') }}">{{ demande.statut.label }}</span>
+                    </td>
+                    <td class="text-end">
+                        {% if demande.enAttente %}
+                            <a href="{{ path('admin_demande_carte_pro_traiter', {id: demande.id}) }}" class="btn btn-sm btn-primary">Traiter</a>
+                            <form method="post" action="{{ path('admin_demande_carte_pro_delete', {id: demande.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette demande ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete-demande-carte-pro-' ~ demande.id) }}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+<div class="card stat-card p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="bi bi-file-earmark-check"></i> Décisions de congé</h6>
+        <a href="{{ path('admin_personnel_decision_conge_new', {id: personnel.id}) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle décision</a>
+    </div>
+    {% if personnel.decisionsConge is empty %}
+        <p class="text-muted small mb-0">Aucune décision enregistrée.</p>
+    {% else %}
+        <table class="table table-sm mb-0 align-middle">
+            <thead><tr><th>Numéro</th><th>Date d'octroi</th><th>Date d'expiration</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for decision in personnel.decisionsConge %}
+                <tr>
+                    <td>{{ decision.numeroDecision }}</td>
+                    <td>{{ decision.dateDecision|date('d/m/Y') }}</td>
+                    <td>{{ decision.dateExpiration|date('d/m/Y') }}</td>
+                    <td>
+                        <span class="badge text-bg-{{ decision.valide ? 'success' : 'secondary' }}">{{ decision.valide ? 'Valide' : 'Expirée' }}</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ path('admin_decision_conge_edit', {id: decision.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{{ path('admin_decision_conge_delete', {id: decision.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette décision ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete-decision-conge-' ~ decision.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+<div class="card stat-card p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="bi bi-envelope-paper-heart"></i> Demandes de décision</h6>
+        <a href="{{ path('admin_personnel_demande_decision_new', {id: personnel.id}) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle demande</a>
+    </div>
+    {% if personnel.demandesDecision is empty %}
+        <p class="text-muted small mb-0">Aucune demande enregistrée.</p>
+    {% else %}
+        <table class="table table-sm mb-0 align-middle">
+            <thead><tr><th>Dernière décision</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for demande in personnel.demandesDecision %}
+                <tr>
+                    <td>
+                        {% if demande.numeroDerniereDecision or demande.dateDerniereDecision %}
+                            {{ demande.numeroDerniereDecision|default('-') }}
+                            {% if demande.dateDerniereDecision %} ({{ demande.dateDerniereDecision|date('d/m/Y') }}){% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge text-bg-{{ demande.statut.value == 'approuvee' ? 'success' : (demande.statut.value == 'refusee' ? 'danger' : 'warning') }}">{{ demande.statut.label }}</span>
+                    </td>
+                    <td class="text-end">
+                        {% if demande.enAttente %}
+                            <a href="{{ path('admin_demande_decision_traiter', {id: demande.id}) }}" class="btn btn-sm btn-primary">Traiter</a>
+                            <form method="post" action="{{ path('admin_demande_decision_delete', {id: demande.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette demande ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete-demande-decision-' ~ demande.id) }}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+<div class="card stat-card p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="bi bi-calendar-event"></i> Congés</h6>
+        <a href="{{ path('admin_personnel_conge_new', {id: personnel.id}) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Nouveau congé</a>
+    </div>
+    {% if personnel.conges is empty %}
+        <p class="text-muted small mb-0">Aucun congé enregistré.</p>
+    {% else %}
+        <table class="table table-sm mb-0 align-middle">
+            <thead><tr><th>Type</th><th>Du</th><th>Au</th><th>Durée</th><th>Motif</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for conge in personnel.conges %}
+                <tr>
+                    <td>{{ conge.type.label }}</td>
+                    <td>{{ conge.dateDebut|date('d/m/Y') }}</td>
+                    <td>{{ conge.dateFin|date('d/m/Y') }}</td>
+                    <td>{{ conge.duree }} j.</td>
+                    <td>{{ conge.motif|default('-') }}</td>
+                    <td class="text-end">
+                        <a href="{{ path('admin_conge_edit', {id: conge.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{{ path('admin_conge_delete', {id: conge.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer ce congé ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete-conge-' ~ conge.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+<div class="card stat-card p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="bi bi-envelope-paper"></i> Demandes de jouissance</h6>
+        <a href="{{ path('admin_personnel_demande_jouissance_new', {id: personnel.id}) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle demande</a>
+    </div>
+    {% if personnel.demandesJouissance is empty %}
+        <p class="text-muted small mb-0">Aucune demande enregistrée.</p>
+    {% else %}
+        <table class="table table-sm mb-0 align-middle">
+            <thead><tr><th>Type</th><th>Du</th><th>Au</th><th>Décision</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            {% for demande in personnel.demandesJouissance %}
+                <tr>
+                    <td>{{ demande.type.label }}</td>
+                    <td>{{ demande.dateDebut|date('d/m/Y') }}</td>
+                    <td>{{ demande.dateFin|date('d/m/Y') }}</td>
+                    <td>{{ demande.decision ? demande.decision.numeroDecision : '-' }}</td>
+                    <td>
+                        <span class="badge text-bg-{{ demande.statut.value == 'approuvee' ? 'success' : (demande.statut.value == 'refusee' ? 'danger' : 'warning') }}">{{ demande.statut.label }}</span>
+                    </td>
+                    <td class="text-end">
+                        {% if demande.enAttente %}
+                            <a href="{{ path('admin_demande_jouissance_traiter', {id: demande.id}) }}" class="btn btn-sm btn-primary">Traiter</a>
+                            <form method="post" action="{{ path('admin_demande_jouissance_delete', {id: demande.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette demande ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete-demande-jouissance-' ~ demande.id) }}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
 <div class="row g-3 mt-1">
     <div class="col-md-6">
         <div class="card stat-card p-3">

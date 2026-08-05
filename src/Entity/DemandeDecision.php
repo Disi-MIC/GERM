@@ -1,0 +1,188 @@
+<?php
+
+namespace App\Entity;
+
+use App\Entity\Enum\StatutDemande;
+use App\Repository\DemandeDecisionRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * Demande de décision de congé : pour un agent qui n'en a jamais eu, ou dont la
+ * dernière a expiré/atteint son terme. Approuver crée la DecisionConge correspondante ;
+ * refuser la laisse comme trace, sans décision créée.
+ */
+#[ORM\Entity(repositoryClass: DemandeDecisionRepository::class)]
+#[ORM\Table(name: 'demande_decision')]
+class DemandeDecision
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Personnel::class, inversedBy: 'demandesDecision')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
+    private ?Personnel $personnel = null;
+
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $dateDerniereDecision = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $numeroDerniereDecision = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $motif = null;
+
+    #[ORM\Column(length: 20, enumType: StatutDemande::class)]
+    private StatutDemande $statut = StatutDemande::EN_ATTENTE;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $dateTraitement = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $commentaireTraitement = null;
+
+    #[ORM\ManyToOne(targetEntity: DecisionConge::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?DecisionConge $decisionCreee = null;
+
+    #[ORM\OneToMany(mappedBy: 'demande', targetEntity: PieceJustificativeDecision::class, cascade: ['persist'], orphanRemoval: true)]
+    private Collection $pieces;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    public function __construct()
+    {
+        $this->pieces = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getPersonnel(): ?Personnel
+    {
+        return $this->personnel;
+    }
+
+    public function setPersonnel(?Personnel $personnel): static
+    {
+        $this->personnel = $personnel;
+
+        return $this;
+    }
+
+    public function getDateDerniereDecision(): ?\DateTimeImmutable
+    {
+        return $this->dateDerniereDecision;
+    }
+
+    public function setDateDerniereDecision(?\DateTimeImmutable $dateDerniereDecision): static
+    {
+        $this->dateDerniereDecision = $dateDerniereDecision;
+
+        return $this;
+    }
+
+    public function getNumeroDerniereDecision(): ?string
+    {
+        return $this->numeroDerniereDecision;
+    }
+
+    public function setNumeroDerniereDecision(?string $numeroDerniereDecision): static
+    {
+        $this->numeroDerniereDecision = $numeroDerniereDecision;
+
+        return $this;
+    }
+
+    public function getMotif(): ?string
+    {
+        return $this->motif;
+    }
+
+    public function setMotif(?string $motif): static
+    {
+        $this->motif = $motif;
+
+        return $this;
+    }
+
+    public function getStatut(): StatutDemande
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(StatutDemande $statut): static
+    {
+        $this->statut = $statut;
+
+        return $this;
+    }
+
+    public function getDateTraitement(): ?\DateTimeImmutable
+    {
+        return $this->dateTraitement;
+    }
+
+    public function setDateTraitement(?\DateTimeImmutable $dateTraitement): static
+    {
+        $this->dateTraitement = $dateTraitement;
+
+        return $this;
+    }
+
+    public function getCommentaireTraitement(): ?string
+    {
+        return $this->commentaireTraitement;
+    }
+
+    public function setCommentaireTraitement(?string $commentaireTraitement): static
+    {
+        $this->commentaireTraitement = $commentaireTraitement;
+
+        return $this;
+    }
+
+    public function getDecisionCreee(): ?DecisionConge
+    {
+        return $this->decisionCreee;
+    }
+
+    public function setDecisionCreee(?DecisionConge $decisionCreee): static
+    {
+        $this->decisionCreee = $decisionCreee;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, PieceJustificativeDecision>
+     */
+    public function getPieces(): Collection
+    {
+        return $this->pieces;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function isEnAttente(): bool
+    {
+        return StatutDemande::EN_ATTENTE === $this->statut;
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('Demande de décision — %s', $this->personnel?->getNomComplet() ?? '');
+    }
+}

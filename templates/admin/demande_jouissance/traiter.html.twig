@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Traiter la demande — {{ demande.personnel.nomComplet }} — GERM{% endblock %}
+{% block page_title %}Traiter la demande de jouissance{% endblock %}
+
+{% block body %}
+<div class="card stat-card p-4" style="max-width: 600px;">
+    <dl class="row mb-3">
+        <dt class="col-sm-4">Agent</dt><dd class="col-sm-8">{{ demande.personnel.nomComplet }}</dd>
+        <dt class="col-sm-4">Type</dt><dd class="col-sm-8">{{ demande.type.label }}</dd>
+        <dt class="col-sm-4">Décision</dt><dd class="col-sm-8">{{ demande.decision ? demande.decision.numeroDecision ~ ' (expire le ' ~ demande.decision.dateExpiration|date('d/m/Y') ~ ')' : '-' }}</dd>
+        <dt class="col-sm-4">Du</dt><dd class="col-sm-8">{{ demande.dateDebut|date('d/m/Y') }}</dd>
+        <dt class="col-sm-4">Au</dt><dd class="col-sm-8">{{ demande.dateFin|date('d/m/Y') }}</dd>
+        <dt class="col-sm-4">Motif</dt><dd class="col-sm-8">{{ demande.motif|default('-') }}</dd>
+        <dt class="col-sm-4">Pièces justificatives</dt>
+        <dd class="col-sm-8">
+            {% for piece in demande.pieces %}
+                <a href="{{ path('admin_piece_jouissance_download', {id: piece.id}) }}" class="d-block"><i class="bi bi-paperclip"></i> {{ piece.nomOriginal }}</a>
+            {% else %}
+                -
+            {% endfor %}
+        </dd>
+    </dl>
+
+    <form method="post">
+        <input type="hidden" name="_token" value="{{ csrf_token('traiter-demande-jouissance-' ~ demande.id) }}">
+        <div class="mb-3">
+            <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
+            <textarea name="commentaire" id="commentaire" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" name="decision" value="approuver" class="btn btn-success"><i class="bi bi-check-lg"></i> Approuver</button>
+            <button type="submit" name="decision" value="refuser" class="btn btn-danger"><i class="bi bi-x-lg"></i> Refuser</button>
+            <a href="{{ path('admin_demande_jouissance_index') }}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

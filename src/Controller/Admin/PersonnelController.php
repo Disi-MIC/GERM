@@ -91,8 +91,16 @@ class PersonnelController extends AbstractController
     public function delete(Request $request, Personnel $personnel, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete-personnel-'.$personnel->getId(), $request->request->get('_token'))) {
-            if (!$personnel->getHistoriqueAffectations()->isEmpty()) {
-                $this->addFlash('danger', 'Impossible de supprimer cette fiche : elle a un historique de carrière.');
+            if (
+                !$personnel->getHistoriqueAffectations()->isEmpty()
+                || !$personnel->getConges()->isEmpty()
+                || !$personnel->getDemandesJouissance()->isEmpty()
+                || !$personnel->getDecisionsConge()->isEmpty()
+                || !$personnel->getDemandesDecision()->isEmpty()
+                || !$personnel->getCartesProfessionnelles()->isEmpty()
+                || !$personnel->getDemandesCartePro()->isEmpty()
+            ) {
+                $this->addFlash('danger', 'Impossible de supprimer cette fiche : elle a un historique de carrière, des congés, des décisions, des demandes de congé, des cartes professionnelles ou des demandes de carte professionnelle enregistrées.');
             } else {
                 $em->remove($personnel);
                 $em->flush();

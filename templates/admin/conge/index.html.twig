@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des congés — GERM{% endblock %}
+{% block page_title %}Gestion des congés{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ path('admin_conge_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouveau congé</a>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Agent</label>
+        <select name="personnel" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Tous les agents</option>
+            {% for p in personnels %}
+                <option value="{{ p.id }}" {{ filtre_personnel and filtre_personnel.id == p.id ? 'selected' }}>{{ p.nomComplet }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Type de congé</label>
+        <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Tous les types</option>
+            {% for t in types %}
+                <option value="{{ t.value }}" {{ filtre_type and filtre_type == t ? 'selected' }}>{{ t.label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">Du</label>
+        <input type="date" name="date_debut" value="{{ date_debut }}" class="form-control form-control-sm" onchange="this.form.submit()">
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">Au</label>
+        <input type="date" name="date_fin" value="{{ date_fin }}" class="form-control form-control-sm" onchange="this.form.submit()">
+    </div>
+    {% if filtre_personnel or filtre_type or date_debut or date_fin %}
+        <div class="col-md-2">
+            <a href="{{ path('admin_conge_index') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
+        </div>
+    {% endif %}
+</form>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Agent</th>
+            <th>Type</th>
+            <th>Du</th>
+            <th>Au</th>
+            <th>Durée</th>
+            <th>Motif</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for conge in conges %}
+            <tr>
+                <td><a href="{{ path('admin_personnel_show', {id: conge.personnel.id}) }}">{{ conge.personnel.nomComplet }}</a></td>
+                <td>{{ conge.type.label }}</td>
+                <td>{{ conge.dateDebut|date('d/m/Y') }}</td>
+                <td>{{ conge.dateFin|date('d/m/Y') }}</td>
+                <td>{{ conge.duree }} j.</td>
+                <td>{{ conge.motif|default('-') }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Aucun congé enregistré.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

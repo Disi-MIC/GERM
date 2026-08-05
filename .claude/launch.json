@@ -6,6 +6,12 @@
       "runtimeExecutable": "/opt/homebrew/bin/npm",
       "runtimeArgs": ["run", "start", "--prefix", "/Users/alassanetambedou/Desktop/projets_mincom/GeoMiC360/frontend"],
       "port": 4200
+    },
+    {
+      "name": "germ",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "127.0.0.1:8000", "-t", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
+      "port": 8000
     }
   ]
 }
