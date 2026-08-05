@@ -13,10 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('ROLE_SUPERADMIN')]
 class DashboardController extends AbstractController
 {
     #[Route('/admin', name: 'admin_dashboard_personnel', methods: ['GET'])]
+    #[IsGranted('ROLE_RH_PERSONNEL')]
     public function personnel(
         Request $request,
         PersonnelRepository $personnelRepository,
@@ -66,6 +66,7 @@ class DashboardController extends AbstractController
     }
 
     #[Route('/admin/dashboard/informatique', name: 'admin_dashboard_materiel', methods: ['GET'])]
+    #[IsGranted('ROLE_SUPERADMIN')]
     public function materiel(MaterielInformatiqueRepository $materielRepository): Response
     {
         return $this->render('admin/dashboard/materiel.html.twig', [
@@ -75,11 +76,23 @@ class DashboardController extends AbstractController
     }
 
     #[Route('/admin/dashboard/parc-auto', name: 'admin_dashboard_vehicule', methods: ['GET'])]
+    #[IsGranted('ROLE_SUPERADMIN')]
     public function vehicule(VehiculeRepository $vehiculeRepository): Response
     {
         return $this->render('admin/dashboard/vehicule.html.twig', [
             'nb_vehicules' => $vehiculeRepository->count([]),
             'echeances_vehicules' => $vehiculeRepository->findEcheancesProches(30),
         ]);
+    }
+
+    /**
+     * Page d'atterrissage pour un compte n'ayant aucun rôle métier RH
+     * (uniquement ROLE_AGENT) — évite un 403 immédiat après connexion.
+     */
+    #[Route('/admin/aucun-acces', name: 'admin_no_access', methods: ['GET'])]
+    #[IsGranted('ROLE_AGENT')]
+    public function noAccess(): Response
+    {
+        return $this->render('admin/dashboard/no_access.html.twig');
     }
 }

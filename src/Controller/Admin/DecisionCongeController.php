@@ -19,7 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * d'une demande de décision, ou directement pour enregistrer une décision papier
  * antérieure à l'application.
  */
-#[IsGranted('ROLE_SUPERADMIN')]
+#[IsGranted('ROLE_RH_CONGE')]
 class DecisionCongeController extends AbstractController
 {
     #[Route('/admin/decisions-conge', name: 'admin_decision_conge_index', methods: ['GET'])]

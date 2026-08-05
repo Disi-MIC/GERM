@@ -29,7 +29,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * Approuver crée la CarteProfessionnelle correspondante, sans modifier automatiquement
  * le statut de l'éventuelle ancienne carte référencée (laissé à l'admin).
  */
-#[IsGranted('ROLE_SUPERADMIN')]
+#[IsGranted('ROLE_RH_CARTE_PRO')]
 class DemandeCarteProController extends AbstractController
 {
     #[Route('/admin/demandes-carte-pro', name: 'admin_demande_carte_pro_index', methods: ['GET'])]

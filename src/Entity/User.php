@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -22,6 +24,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const ROLE_AGENT = 'ROLE_AGENT';
     public const ROLE_ADMIN = 'ROLE_ADMIN';
     public const ROLE_SUPERADMIN = 'ROLE_SUPERADMIN';
+    public const ROLE_ADMIN_RH = 'ROLE_ADMIN_RH';
+    public const ROLE_RH_PERSONNEL = 'ROLE_RH_PERSONNEL';
+    public const ROLE_RH_CONGE = 'ROLE_RH_CONGE';
+    public const ROLE_RH_CARTE_PRO = 'ROLE_RH_CARTE_PRO';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -59,9 +65,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(mappedBy: 'user', targetEntity: Personnel::class)]
     private ?Personnel $personnel = null;
 
+    #[ORM\OneToMany(mappedBy: 'delegataire', targetEntity: Delegation::class)]
+    private Collection $delegationsRecues;
+
+    #[ORM\OneToMany(mappedBy: 'delegant', targetEntity: Delegation::class)]
+    private Collection $delegationsAccordees;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->delegationsRecues = new ArrayCollection();
+        $this->delegationsAccordees = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -95,6 +109,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
+
+        foreach ($this->delegationsRecues as $delegation) {
+            if ($delegation->estActive()) {
+                $roles[] = $delegation->getRoleDelegue()->value;
+            }
+        }
+
         // Chaque agent a au minimum le rôle ROLE_AGENT
         $roles[] = self::ROLE_AGENT;
 
@@ -189,5 +210,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function isSuperAdmin(): bool
     {
         return in_array(self::ROLE_SUPERADMIN, $this->getRoles(), true);
+    }
+
+    /**
+     * @return Collection<int, Delegation>
+     */
+    public function getDelegationsRecues(): Collection
+    {
+        return $this->delegationsRecues;
+    }
+
+    /**
+     * @return Collection<int, Delegation>
+     */
+    public function getDelegationsAccordees(): Collection
+    {
+        return $this->delegationsAccordees;
     }
 }

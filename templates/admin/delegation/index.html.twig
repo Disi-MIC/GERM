@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Délégations — GERM{% endblock %}
+{% block page_title %}Délégations de rôle{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ path('admin_delegation_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle délégation</a>
+</div>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Délégant</th>
+            <th>Délégataire</th>
+            <th>Rôle délégué</th>
+            <th>Du</th>
+            <th>Au</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for delegation in delegations %}
+            <tr>
+                <td>{{ delegation.delegant.nomComplet }}</td>
+                <td>{{ delegation.delegataire.nomComplet }}</td>
+                <td>{{ delegation.roleDelegue.label }}</td>
+                <td>{{ delegation.dateDebut|date('d/m/Y') }}</td>
+                <td>{{ delegation.dateFin|date('d/m/Y') }}</td>
+                <td>
+                    <span class="badge text-bg-{{ delegation.statutAffiche.badgeClass }}">{{ delegation.statutAffiche.label }}</span>
+                </td>
+                <td class="text-end">
+                    {% if delegation.statut.value != 'revoquee' %}
+                        <form method="post" action="{{ path('admin_delegation_revoke', {id: delegation.id}) }}" class="d-inline" onsubmit="return confirm('Révoquer cette délégation ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('revoke-delegation-' ~ delegation.id) }}">
+                            <button class="btn btn-sm btn-outline-danger">Révoquer</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">Aucune délégation enregistrée.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

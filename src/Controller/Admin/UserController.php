@@ -79,9 +79,13 @@ class UserController extends AbstractController
     public function delete(Request $request, User $user, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete-agent-'.$user->getId(), $request->request->get('_token'))) {
-            $em->remove($user);
-            $em->flush();
-            $this->addFlash('success', 'Compte agent supprimé.');
+            if (!$user->getDelegationsRecues()->isEmpty() || !$user->getDelegationsAccordees()->isEmpty()) {
+                $this->addFlash('danger', 'Impossible de supprimer ce compte : il est impliqué dans une ou plusieurs délégations de rôle.');
+            } else {
+                $em->remove($user);
+                $em->flush();
+                $this->addFlash('success', 'Compte agent supprimé.');
+            }
         }
 
         return $this->redirectToRoute('admin_agent_index');

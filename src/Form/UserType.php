@@ -31,6 +31,10 @@ class UserType extends AbstractType
                 'choices' => [
                     'Agent' => User::ROLE_AGENT,
                     'Administrateur' => User::ROLE_ADMIN,
+                    'Administrateur RH' => User::ROLE_ADMIN_RH,
+                    'Gestion du personnel' => User::ROLE_RH_PERSONNEL,
+                    'Gestion des congés' => User::ROLE_RH_CONGE,
+                    'Gestion des cartes professionnelles' => User::ROLE_RH_CARTE_PRO,
                     'Super administrateur' => User::ROLE_SUPERADMIN,
                 ],
                 'multiple' => true,

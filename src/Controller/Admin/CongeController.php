@@ -18,7 +18,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Gestion des congés du personnel.
  */
-#[IsGranted('ROLE_SUPERADMIN')]
+#[IsGranted('ROLE_RH_CONGE')]
 class CongeController extends AbstractController
 {
     #[Route('/admin/conges', name: 'admin_conge_index', methods: ['GET'])]

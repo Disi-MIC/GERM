@@ -23,7 +23,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * renouvellement crée une nouvelle ligne, aucune autre ressource n'en dépend
  * donc la suppression ne nécessite pas de garde-fou d'utilisation.
  */
-#[IsGranted('ROLE_SUPERADMIN')]
+#[IsGranted('ROLE_RH_CARTE_PRO')]
 class CarteProfessionnelleController extends AbstractController
 {
     #[Route('/admin/cartes-professionnelles', name: 'admin_carte_professionnelle_index', methods: ['GET'])]

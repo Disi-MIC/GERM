@@ -19,7 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * Gestion des carrières : journal des mouvements (nominations, mutations, promotions)
  * des agents du Ministère.
  */
-#[IsGranted('ROLE_SUPERADMIN')]
+#[IsGranted('ROLE_RH_PERSONNEL')]
 class CarriereController extends AbstractController
 {
     #[Route('/admin/carrieres', name: 'admin_carriere_index', methods: ['GET'])]

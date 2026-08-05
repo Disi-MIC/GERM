@@ -69,91 +69,117 @@
                 <i class="bi bi-bank2"></i> GERM
                 <div class="small fw-normal text-white-50">Min. de la Communication</div>
             </div>
-            <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
-            <a href="{{ path('admin_dashboard_personnel') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_personnel' ? 'active' }}">
-                <i class="bi bi-speedometer2"></i> Personnel
-            </a>
-            <a href="{{ path('admin_dashboard_materiel') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_materiel' ? 'active' }}">
-                <i class="bi bi-speedometer2"></i> Informatique
-            </a>
-            <a href="{{ path('admin_dashboard_vehicule') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_vehicule' ? 'active' }}">
-                <i class="bi bi-speedometer2"></i> Parc automobile
-            </a>
             {% set route = app.request.attributes.get('_route') %}
             {% set categorie_actuelle = app.request.attributes.get('categorie') %}
             {% set personnel_active = 'admin_personnel' in route or 'admin_carriere' in route or categorie_actuelle == 'type-contrat' %}
             {% set conge_active = 'admin_conge' in route or 'admin_decision_conge' in route or 'admin_demande_decision' in route or 'admin_demande_jouissance' in route %}
             {% set carte_active = 'admin_carte_professionnelle' in route or 'admin_demande_carte_pro' in route %}
-            {% set rh_active = personnel_active or conge_active or carte_active %}
+            {% set delegation_active = 'admin_delegation' in route %}
+            {% set rh_active = personnel_active or conge_active or carte_active or delegation_active %}
             {% set informatique_active = 'admin_materiel' in route or categorie_actuelle in ['type-materiel', 'etat-materiel'] %}
             {% set vehicule_active = 'admin_vehicule' in route or categorie_actuelle in ['type-vehicule', 'etat-vehicule'] %}
-            <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources</div>
 
-            <a href="#submenuRH" class="submenu-toggle {{ rh_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ rh_active ? 'true' : 'false' }}" aria-controls="submenuRH">
-                <span><i class="bi bi-diagram-3"></i> Ressources Humaines</span>
-                <i class="bi bi-chevron-down"></i>
-            </a>
-            <div class="collapse submenu {{ rh_active ? 'show' }}" id="submenuRH">
-                <a href="#submenuPersonnel" class="submenu-toggle {{ personnel_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ personnel_active ? 'true' : 'false' }}" aria-controls="submenuPersonnel">
-                    <span><i class="bi bi-people"></i> Personnel</span>
+            {% if is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_SUPERADMIN') %}
+                <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
+            {% endif %}
+            {% if is_granted('ROLE_RH_PERSONNEL') %}
+                <a href="{{ path('admin_dashboard_personnel') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_personnel' ? 'active' }}">
+                    <i class="bi bi-speedometer2"></i> Personnel
+                </a>
+            {% endif %}
+            {% if is_granted('ROLE_SUPERADMIN') %}
+                <a href="{{ path('admin_dashboard_materiel') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_materiel' ? 'active' }}">
+                    <i class="bi bi-speedometer2"></i> Informatique
+                </a>
+                <a href="{{ path('admin_dashboard_vehicule') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_vehicule' ? 'active' }}">
+                    <i class="bi bi-speedometer2"></i> Parc automobile
+                </a>
+            {% endif %}
+
+            {% if is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CONGE') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_SUPERADMIN') %}
+                <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources</div>
+            {% endif %}
+
+            {% if is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CONGE') or is_granted('ROLE_RH_CARTE_PRO') %}
+                <a href="#submenuRH" class="submenu-toggle {{ rh_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ rh_active ? 'true' : 'false' }}" aria-controls="submenuRH">
+                    <span><i class="bi bi-diagram-3"></i> Ressources Humaines</span>
                     <i class="bi bi-chevron-down"></i>
                 </a>
-                <div class="collapse submenu {{ personnel_active ? 'show' }}" id="submenuPersonnel">
-                    <a href="{{ path('admin_personnel_index') }}" class="{{ 'admin_personnel' in route ? 'active' }}">Personnel</a>
-                    <a href="{{ path('admin_carriere_index') }}" class="{{ 'admin_carriere' in route ? 'active' }}">Gestion des carrières</a>
-                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-contrat'}) }}" class="{{ categorie_actuelle == 'type-contrat' ? 'active' }}">Types de contrat</a>
-                </div>
+                <div class="collapse submenu {{ rh_active ? 'show' }}" id="submenuRH">
+                    {% if is_granted('ROLE_RH_PERSONNEL') %}
+                        <a href="#submenuPersonnel" class="submenu-toggle {{ personnel_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ personnel_active ? 'true' : 'false' }}" aria-controls="submenuPersonnel">
+                            <span><i class="bi bi-people"></i> Personnel</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse submenu {{ personnel_active ? 'show' }}" id="submenuPersonnel">
+                            <a href="{{ path('admin_personnel_index') }}" class="{{ 'admin_personnel' in route ? 'active' }}">Personnel</a>
+                            <a href="{{ path('admin_carriere_index') }}" class="{{ 'admin_carriere' in route ? 'active' }}">Gestion des carrières</a>
+                            <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-contrat'}) }}" class="{{ categorie_actuelle == 'type-contrat' ? 'active' }}">Types de contrat</a>
+                        </div>
+                    {% endif %}
 
-                <a href="#submenuConge" class="submenu-toggle {{ conge_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ conge_active ? 'true' : 'false' }}" aria-controls="submenuConge">
-                    <span><i class="bi bi-calendar-event"></i> Congés</span>
+                    {% if is_granted('ROLE_RH_CONGE') %}
+                        <a href="#submenuConge" class="submenu-toggle {{ conge_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ conge_active ? 'true' : 'false' }}" aria-controls="submenuConge">
+                            <span><i class="bi bi-calendar-event"></i> Congés</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse submenu {{ conge_active ? 'show' }}" id="submenuConge">
+                            <a href="{{ path('admin_conge_index') }}" class="{{ 'admin_conge' in route ? 'active' }}">Gestion des congés</a>
+                            <a href="{{ path('admin_decision_conge_index') }}" class="{{ 'admin_decision_conge' in route ? 'active' }}">Décisions de congé</a>
+                            <a href="{{ path('admin_demande_decision_index') }}" class="{{ 'admin_demande_decision' in route ? 'active' }}">Demandes de décision</a>
+                            <a href="{{ path('admin_demande_jouissance_index') }}" class="{{ 'admin_demande_jouissance' in route ? 'active' }}">Demandes de jouissance</a>
+                        </div>
+                    {% endif %}
+
+                    {% if is_granted('ROLE_RH_CARTE_PRO') %}
+                        <a href="#submenuCartePro" class="submenu-toggle {{ carte_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ carte_active ? 'true' : 'false' }}" aria-controls="submenuCartePro">
+                            <span><i class="bi bi-person-vcard"></i> Cartes professionnelles</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse submenu {{ carte_active ? 'show' }}" id="submenuCartePro">
+                            <a href="{{ path('admin_carte_professionnelle_index') }}" class="{{ 'admin_carte_professionnelle' in route ? 'active' }}">Cartes professionnelles</a>
+                            <a href="{{ path('admin_demande_carte_pro_index') }}" class="{{ 'admin_demande_carte_pro' in route ? 'active' }}">Demandes de carte professionnelle</a>
+                        </div>
+                    {% endif %}
+
+                    {% if is_granted('ROLE_ADMIN_RH') %}
+                        <a href="{{ path('admin_delegation_index') }}" class="{{ delegation_active ? 'active' }}">Délégations</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if is_granted('ROLE_SUPERADMIN') %}
+                <a href="#submenuInformatique" class="submenu-toggle {{ informatique_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ informatique_active ? 'true' : 'false' }}" aria-controls="submenuInformatique">
+                    <span><i class="bi bi-pc-display"></i> Informatique</span>
                     <i class="bi bi-chevron-down"></i>
                 </a>
-                <div class="collapse submenu {{ conge_active ? 'show' }}" id="submenuConge">
-                    <a href="{{ path('admin_conge_index') }}" class="{{ 'admin_conge' in route ? 'active' }}">Gestion des congés</a>
-                    <a href="{{ path('admin_decision_conge_index') }}" class="{{ 'admin_decision_conge' in route ? 'active' }}">Décisions de congé</a>
-                    <a href="{{ path('admin_demande_decision_index') }}" class="{{ 'admin_demande_decision' in route ? 'active' }}">Demandes de décision</a>
-                    <a href="{{ path('admin_demande_jouissance_index') }}" class="{{ 'admin_demande_jouissance' in route ? 'active' }}">Demandes de jouissance</a>
+                <div class="collapse submenu {{ informatique_active ? 'show' }}" id="submenuInformatique">
+                    <a href="{{ path('admin_materiel_index') }}" class="{{ 'admin_materiel' in route ? 'active' }}">Parc informatique</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-materiel'}) }}" class="{{ categorie_actuelle == 'type-materiel' ? 'active' }}">Types de matériel</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'etat-materiel'}) }}" class="{{ categorie_actuelle == 'etat-materiel' ? 'active' }}">États du matériel</a>
                 </div>
 
-                <a href="#submenuCartePro" class="submenu-toggle {{ carte_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ carte_active ? 'true' : 'false' }}" aria-controls="submenuCartePro">
-                    <span><i class="bi bi-person-vcard"></i> Cartes professionnelles</span>
+                <a href="#submenuVehicule" class="submenu-toggle {{ vehicule_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ vehicule_active ? 'true' : 'false' }}" aria-controls="submenuVehicule">
+                    <span><i class="bi bi-truck"></i> Parc automobile</span>
                     <i class="bi bi-chevron-down"></i>
                 </a>
-                <div class="collapse submenu {{ carte_active ? 'show' }}" id="submenuCartePro">
-                    <a href="{{ path('admin_carte_professionnelle_index') }}" class="{{ 'admin_carte_professionnelle' in route ? 'active' }}">Cartes professionnelles</a>
-                    <a href="{{ path('admin_demande_carte_pro_index') }}" class="{{ 'admin_demande_carte_pro' in route ? 'active' }}">Demandes de carte professionnelle</a>
+                <div class="collapse submenu {{ vehicule_active ? 'show' }}" id="submenuVehicule">
+                    <a href="{{ path('admin_vehicule_index') }}" class="{{ 'admin_vehicule' in route ? 'active' }}">Parc automobile</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-vehicule'}) }}" class="{{ categorie_actuelle == 'type-vehicule' ? 'active' }}">Types de véhicule</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'etat-vehicule'}) }}" class="{{ categorie_actuelle == 'etat-vehicule' ? 'active' }}">États des véhicules</a>
                 </div>
-            </div>
 
-            <a href="#submenuInformatique" class="submenu-toggle {{ informatique_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ informatique_active ? 'true' : 'false' }}" aria-controls="submenuInformatique">
-                <span><i class="bi bi-pc-display"></i> Informatique</span>
-                <i class="bi bi-chevron-down"></i>
-            </a>
-            <div class="collapse submenu {{ informatique_active ? 'show' }}" id="submenuInformatique">
-                <a href="{{ path('admin_materiel_index') }}" class="{{ 'admin_materiel' in route ? 'active' }}">Parc informatique</a>
-                <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-materiel'}) }}" class="{{ categorie_actuelle == 'type-materiel' ? 'active' }}">Types de matériel</a>
-                <a href="{{ path('admin_liste_valeur_index', {categorie: 'etat-materiel'}) }}" class="{{ categorie_actuelle == 'etat-materiel' ? 'active' }}">États du matériel</a>
-            </div>
-
-            <a href="#submenuVehicule" class="submenu-toggle {{ vehicule_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ vehicule_active ? 'true' : 'false' }}" aria-controls="submenuVehicule">
-                <span><i class="bi bi-truck"></i> Parc automobile</span>
-                <i class="bi bi-chevron-down"></i>
-            </a>
-            <div class="collapse submenu {{ vehicule_active ? 'show' }}" id="submenuVehicule">
-                <a href="{{ path('admin_vehicule_index') }}" class="{{ 'admin_vehicule' in route ? 'active' }}">Parc automobile</a>
-                <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-vehicule'}) }}" class="{{ categorie_actuelle == 'type-vehicule' ? 'active' }}">Types de véhicule</a>
-                <a href="{{ path('admin_liste_valeur_index', {categorie: 'etat-vehicule'}) }}" class="{{ categorie_actuelle == 'etat-vehicule' ? 'active' }}">États des véhicules</a>
-            </div>
-            <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Administration</div>
-            <a href="{{ path('admin_direction_index') }}" class="{{ 'admin_direction' in route ? 'active' }}">
-                <i class="bi bi-building"></i> Directions
-            </a>
-            <a href="{{ path('admin_service_index') }}" class="{{ 'admin_service' in route ? 'active' }}">
-                <i class="bi bi-diagram-3"></i> Services
-            </a>
-            <a href="{{ path('admin_agent_index') }}" class="{{ 'admin_agent' in route ? 'active' }}">
-                <i class="bi bi-person-badge"></i> Comptes agents
-            </a>
+                <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Administration</div>
+                <a href="{{ path('admin_direction_index') }}" class="{{ 'admin_direction' in route ? 'active' }}">
+                    <i class="bi bi-building"></i> Directions
+                </a>
+                <a href="{{ path('admin_service_index') }}" class="{{ 'admin_service' in route ? 'active' }}">
+                    <i class="bi bi-diagram-3"></i> Services
+                </a>
+                <a href="{{ path('admin_agent_index') }}" class="{{ 'admin_agent' in route ? 'active' }}">
+                    <i class="bi bi-person-badge"></i> Comptes agents
+                </a>
+            {% endif %}
         </nav>
         <div class="germ-main d-flex flex-column">
             <header class="germ-topbar d-flex justify-content-between align-items-center px-4 py-2">
