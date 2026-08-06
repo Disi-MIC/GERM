@@ -36,7 +36,6 @@ class CarteProfessionnelle
 
     #[ORM\Column(type: 'date_immutable')]
     #[Assert\NotNull(message: "La date d'expiration est obligatoire.")]
-    #[Assert\GreaterThan(propertyPath: 'dateDelivrance', message: "La date d'expiration doit être postérieure à la date de délivrance.")]
     private ?\DateTimeImmutable $dateExpiration = null;
 
     #[ORM\Column(length: 20, enumType: StatutCarteProfessionnelle::class)]
@@ -50,6 +49,9 @@ class CarteProfessionnelle
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $nomOriginal = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cheminQrCode = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -96,6 +98,7 @@ class CarteProfessionnelle
     public function setDateDelivrance(?\DateTimeImmutable $dateDelivrance): static
     {
         $this->dateDelivrance = $dateDelivrance;
+        $this->dateExpiration = $dateDelivrance?->modify('+5 years');
 
         return $this;
     }
@@ -103,13 +106,6 @@ class CarteProfessionnelle
     public function getDateExpiration(): ?\DateTimeImmutable
     {
         return $this->dateExpiration;
-    }
-
-    public function setDateExpiration(?\DateTimeImmutable $dateExpiration): static
-    {
-        $this->dateExpiration = $dateExpiration;
-
-        return $this;
     }
 
     public function getStatut(): StatutCarteProfessionnelle
@@ -160,6 +156,18 @@ class CarteProfessionnelle
         return $this;
     }
 
+    public function getCheminQrCode(): ?string
+    {
+        return $this->cheminQrCode;
+    }
+
+    public function setCheminQrCode(?string $cheminQrCode): static
+    {
+        $this->cheminQrCode = $cheminQrCode;
+
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
@@ -177,11 +185,17 @@ class CarteProfessionnelle
             ];
         }
 
-        if (null !== $this->dateExpiration && $this->dateExpiration >= new \DateTimeImmutable('today')) {
-            return ['label' => 'Valide', 'badgeClass' => 'success'];
+        $today = new \DateTimeImmutable('today');
+
+        if (null === $this->dateExpiration || $this->dateExpiration < $today) {
+            return ['label' => 'Expirée', 'badgeClass' => 'secondary'];
         }
 
-        return ['label' => 'Expirée', 'badgeClass' => 'secondary'];
+        if ($this->dateExpiration <= $today->modify('+60 days')) {
+            return ['label' => 'Expire bientôt', 'badgeClass' => 'warning'];
+        }
+
+        return ['label' => 'Valide', 'badgeClass' => 'success'];
     }
 
     public function __toString(): string

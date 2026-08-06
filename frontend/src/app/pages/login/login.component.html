@@ -1,0 +1,41 @@
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+  <div class="card p-4 shadow-sm" style="max-width: 400px; width: 100%;">
+    <div class="text-center mb-4">
+      <i class="bi bi-bank2 fs-2"></i>
+      <h5 class="mt-2 mb-0">GERM</h5>
+      <div class="text-muted small">Gestion des Ressources du Ministère</div>
+    </div>
+
+    @if (error) {
+      <div class="alert alert-danger py-2 small">{{ error }}</div>
+    }
+
+    <form (ngSubmit)="submit()">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          class="form-control"
+          [(ngModel)]="email"
+          required
+        />
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="form-control"
+          [(ngModel)]="password"
+          required
+        />
+      </div>
+      <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
+        Se connecter
+      </button>
+    </form>
+  </div>
+</div>

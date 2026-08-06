@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    {# Toile plus grande que la carte : la carte flotte à l'intérieur, loin des
+       bords de la toile, pour éviter un bug de rendu de dompdf qui insère une
+       page blanche quand un bloc est dimensionné exactement comme la page.
+       La carte est ensuite recadrée à sa taille réelle (CR80/ID-1) lors de la
+       fusion recto+verso (voir CarteProfessionnellePdfGenerator::fusionnerFaces). #}
+    @page { margin: 0; size: 258.65pt 169.02pt; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; }
+
+    .page {
+        position: absolute;
+        top: 8pt;
+        left: 8pt;
+        width: 242.65pt;
+        height: 153.02pt;
+        border: 1.5pt solid #00853F;
+        border-radius: 8pt;
+        overflow: hidden;
+    }
+
+    .filigrane {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100pt;
+        margin-left: -50pt;
+        margin-top: -50pt;
+        opacity: 0.08;
+    }
+
+    .entete { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
+    .entete td { vertical-align: middle; padding: 2pt 6pt 1pt; }
+    .entete .logo-cell { width: 34pt; }
+    .entete .logo-cell img { width: 30pt; height: auto; }
+    .entete .texte-cell { text-align: center; font-size: 6.5pt; line-height: 1.2; }
+    .entete .texte-cell .republique { font-weight: bold; font-size: 7.5pt; }
+    .entete .texte-cell .ministere { font-size: 6.3pt; font-weight: bold; margin-top: 1pt; }
+    .entete .drapeau-cell { width: 20pt; text-align: right; }
+    .entete .drapeau-cell img { width: 16pt; height: auto; }
+
+    .corps { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
+    .corps td { vertical-align: middle; padding: 1pt 6pt; }
+
+    .nom { font-size: 11pt; font-weight: bold; margin: 1pt 0 3pt; }
+    .champ { font-size: 6.3pt; color: #666666; font-weight: bold; margin-top: 2.5pt; }
+    .champ .valeur { font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #111111; font-weight: bold; }
+
+    .colonne-photo { width: 62pt; text-align: center; vertical-align: top !important; padding-top: 4pt !important; }
+    .photo {
+        width: 50pt; height: 50pt; border-radius: 50%; object-fit: cover;
+        border: 2pt solid #7fb2e5;
+    }
+    .photo-placeholder {
+        width: 50pt; height: 50pt; border-radius: 50%; border: 2pt solid #7fb2e5;
+        background: #eeeeee; display: inline-block;
+    }
+
+    .colonne-qr { position: absolute; bottom: 5pt; right: 10pt; z-index: 1; }
+    .colonne-qr img { width: 32pt; height: 32pt; border: 2pt solid #7fb2e5; padding: 2pt; background: #ffffff; }
+
+    /* Verso */
+    .colonne-dates { position: absolute; top: 28pt; left: 8pt; z-index: 1; }
+    .colonne-dates .ligne { margin-top: 1pt; line-height: 1.1; }
+    .colonne-dates .label { font-size: 6.3pt; color: #666666; font-weight: bold; }
+    .colonne-dates .valeur { font-family: Helvetica, Arial, sans-serif; font-size: 7.5pt; font-weight: bold; color: #111111; }
+
+    .colonne-cachets { position: absolute; top: 30pt; right: 6pt; text-align: center; z-index: 1; }
+    .colonne-cachets .tampons { position: relative; height: 50pt; width: 100pt; }
+    .colonne-cachets .tampons img.stamp { position: absolute; top: 0; left: 18pt; width: 50pt; opacity: 0.9; }
+    .colonne-cachets .tampons img.cachet { position: absolute; top: 14pt; left: 44pt; width: 56pt; opacity: 0.9; }
+    .colonne-cachets img.signature { width: 34pt; margin-top: 2pt; }
+
+    .pied-verso {
+        position: absolute;
+        bottom: 4pt;
+        left: 8pt;
+        right: 8pt;
+        text-align: center;
+        z-index: 1;
+    }
+    .pied-verso .contact { font-size: 5pt; color: #444444; border-top: 0.5pt solid #cccccc; padding-top: 1.5pt; }
+    .pied-verso .propriete { font-size: 4.7pt; color: #888888; margin-top: 0.5pt; }
+</style>
+</head>
+<body>
+{% if face == 'recto' %}
+    <div class="page recto">
+        {% if filigraneDataUri %}<img src="{{ filigraneDataUri }}" class="filigrane" alt="">{% endif %}
+
+        <table class="entete">
+            <tr>
+                <td class="logo-cell">
+                    {% if logoMiniDataUri %}<img src="{{ logoMiniDataUri }}" alt="MINCOM">{% endif %}
+                </td>
+                <td class="texte-cell">
+                    <div class="republique">RÉPUBLIQUE DU SÉNÉGAL</div>
+                    <div class="ministere">Ministère de l'Industrie et du Commerce</div>
+                </td>
+                <td class="drapeau-cell">
+                    {% if flagDataUri %}<img src="{{ flagDataUri }}" alt="Drapeau">{% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <table class="corps">
+            <tr>
+                <td>
+                    <div class="nom">{{ personnel.nomComplet }}</div>
+                    <div class="champ">Matricule :<br><span class="valeur">{{ personnel.matricule }}</span></div>
+                    <div class="champ">Fonction :<br><span class="valeur">{{ personnel.fonction }}</span></div>
+                    <div class="champ">Service :<br><span class="valeur">{{ personnel.service ? personnel.service.nom : '-' }}</span></div>
+                </td>
+                <td class="colonne-photo">
+                    {% if photoDataUri %}
+                        <img src="{{ photoDataUri }}" class="photo" alt="Photo">
+                    {% else %}
+                        <div class="photo-placeholder"></div>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <div class="colonne-qr">
+            {% if qrCodeDataUri %}<img src="{{ qrCodeDataUri }}" alt="QR">{% endif %}
+        </div>
+    </div>
+{% else %}
+    <div class="page verso">
+        {% if filigraneDataUri %}<img src="{{ filigraneDataUri }}" class="filigrane" alt="">{% endif %}
+
+        <table class="entete">
+            <tr>
+                <td class="logo-cell">
+                    {% if logoMiniDataUri %}<img src="{{ logoMiniDataUri }}" alt="MINCOM">{% endif %}
+                </td>
+                <td class="texte-cell">
+                    <div class="republique">RÉPUBLIQUE DU SÉNÉGAL</div>
+                    <div class="ministere">Ministère de l'Industrie et du Commerce</div>
+                </td>
+                <td class="drapeau-cell">
+                    {% if flagDataUri %}<img src="{{ flagDataUri }}" alt="Drapeau">{% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <div class="colonne-dates">
+            <div class="ligne"><span class="label">N° :</span><br><span class="valeur">{{ carte.numero }}</span></div>
+            <div class="ligne"><span class="label">Date de Délivrance :</span><br><span class="valeur">{{ carte.dateDelivrance|date('d-m-Y') }}</span></div>
+            <div class="ligne"><span class="label">Date d'Expiration :</span><br><span class="valeur">{{ carte.dateExpiration|date('d-m-Y') }}</span></div>
+            <div class="ligne"><span class="label">Durée Validité :</span><br><span class="valeur">5 ans</span></div>
+        </div>
+
+        <div class="colonne-cachets">
+            <div class="tampons">
+                {% if stampDataUri %}<img src="{{ stampDataUri }}" class="stamp" alt="">{% endif %}
+                {% if cachetDataUri %}<img src="{{ cachetDataUri }}" class="cachet" alt="">{% endif %}
+            </div>
+            {% if signDataUri %}<img src="{{ signDataUri }}" class="signature" alt="">{% endif %}
+        </div>
+
+        <div class="pied-verso">
+            <div class="contact">Tél : 33 869 21 29 &nbsp;•&nbsp; disicommerce21@gmail.com &nbsp;•&nbsp; Spherex de Diamniadio</div>
+            <div class="propriete">La carte est la propriété du Ministère de l'Industrie et du Commerce.</div>
+        </div>
+    </div>
+{% endif %}
+</body>
+</html>

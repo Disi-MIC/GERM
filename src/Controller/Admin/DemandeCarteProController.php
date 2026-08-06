@@ -11,14 +11,15 @@ use App\Entity\Personnel;
 use App\Form\DemandeCarteProType;
 use App\Repository\DemandeCarteProRepository;
 use App\Repository\PersonnelRepository;
-use App\Service\PieceJustificativeUploader;
+use App\Service\CarteProfessionnellePdfGenerator;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormInterface;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -55,7 +56,7 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/demandes-carte-pro/new', name: 'admin_demande_carte_pro_new', methods: ['GET', 'POST'])]
-    public function newFromIndex(Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function newFromIndex(Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         $demande = new DemandeCartePro();
         $form = $this->createForm(DemandeCarteProType::class, $demande, ['include_personnel' => true]);
@@ -78,7 +79,7 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/personnel/{id}/demande-carte-pro/new', name: 'admin_personnel_demande_carte_pro_new', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         $demande = new DemandeCartePro();
         $demande->setPersonnel($personnel);
@@ -103,7 +104,7 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/demande-carte-pro/{id}/traiter', name: 'admin_demande_carte_pro_traiter', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function traiter(DemandeCartePro $demande, Request $request, EntityManagerInterface $em): Response
+    public function traiter(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfGenerator $pdfGenerator, FileStorage $uploader): Response
     {
         if (!$demande->isEnAttente()) {
             $this->addFlash('danger', 'Cette demande a déjà été traitée.');
@@ -124,10 +125,9 @@ class DemandeCarteProController extends AbstractController
             if ('approuver' === $decisionAction) {
                 $numero = trim((string) $request->request->get('numero'));
                 $dateDelivrance = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $request->request->get('date_delivrance')) ?: null;
-                $dateExpiration = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $request->request->get('date_expiration')) ?: null;
 
-                if ('' === $numero || null === $dateDelivrance || null === $dateExpiration || $dateExpiration <= $dateDelivrance) {
-                    $this->addFlash('danger', "Merci de renseigner un numéro et des dates valides (date d'expiration postérieure à la date de délivrance) pour approuver.");
+                if ('' === $numero || null === $dateDelivrance) {
+                    $this->addFlash('danger', 'Merci de renseigner un numéro et une date de délivrance valides pour approuver.');
 
                     return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
                 }
@@ -136,8 +136,13 @@ class DemandeCarteProController extends AbstractController
                 $nouvelleCarte->setPersonnel($demande->getPersonnel());
                 $nouvelleCarte->setNumero($numero);
                 $nouvelleCarte->setDateDelivrance($dateDelivrance);
-                $nouvelleCarte->setDateExpiration($dateExpiration);
                 $nouvelleCarte->setStatut(StatutCarteProfessionnelle::VALIDE);
+                $resultat = $pdfGenerator->generate($nouvelleCarte);
+                $stockePdf = $uploader->storeContent($resultat['pdf'], 'carte-'.$nouvelleCarte->getNumero().'.pdf', 'pdf', 'carte-professionnelle');
+                $nouvelleCarte->setCheminFichier($stockePdf['path']);
+                $nouvelleCarte->setNomOriginal($stockePdf['originalName']);
+                $stockeQr = $uploader->storeContent($resultat['qrCode'], 'qr-'.$nouvelleCarte->getNumero().'.png', 'png', 'qr-codes');
+                $nouvelleCarte->setCheminQrCode($stockeQr['path']);
                 $em->persist($nouvelleCarte);
 
                 $demande->setCarteCreee($nouvelleCarte);
@@ -169,7 +174,7 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/demande-carte-pro/{id}/delete', name: 'admin_demande_carte_pro_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function delete(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function delete(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         if ($this->isCsrfTokenValid('delete-demande-carte-pro-'.$demande->getId(), $request->request->get('_token'))) {
             if (!$demande->isEnAttente()) {
@@ -188,19 +193,22 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/piece-justificative/carte-pro/{id}/download', name: 'admin_piece_carte_pro_download', requirements: ['id' => '\d+'])]
-    public function downloadPiece(DemandeCartePro $demande, PieceJustificativeUploader $uploader): BinaryFileResponse
+    public function downloadPiece(DemandeCartePro $demande, FileStorage $uploader): StreamedResponse
     {
         if (!$demande->getCheminFichier()) {
             throw $this->createNotFoundException();
         }
 
-        $response = new BinaryFileResponse($uploader->absolutePath($demande->getCheminFichier()));
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $demande->getNomOriginal() ?? 'piece-justificative');
+        $response = new StreamedResponse(function () use ($uploader, $demande) {
+            fpassthru($uploader->readStream($demande->getCheminFichier()));
+        });
+        $response->headers->set('Content-Type', $uploader->mimeType($demande->getCheminFichier()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $demande->getNomOriginal() ?? 'piece-justificative'));
 
         return $response;
     }
 
-    private function attacherFichier(FormInterface $form, DemandeCartePro $demande, PieceJustificativeUploader $uploader): void
+    private function attacherFichier(FormInterface $form, DemandeCartePro $demande, FileStorage $uploader): void
     {
         $file = $form->get('fichier')->getData();
 

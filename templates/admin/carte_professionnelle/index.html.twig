@@ -4,7 +4,26 @@
 {% block page_title %}Cartes professionnelles{% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-end mb-3">
+<div class="row g-3 mb-4">
+    {% for label, badge in {'Valide': 'success', 'Expire bientôt': 'warning', 'Expirée': 'secondary', 'Perdue': 'danger', 'Volée': 'danger', 'Annulée': 'secondary'} %}
+        <div class="col-6 col-md-2">
+            <a href="{{ path('admin_carte_professionnelle_index', filtre_statut_affiche == label ? {} : {statut_affiche: label}) }}" class="text-decoration-none">
+                <div class="card stat-card p-3 text-center {{ filtre_statut_affiche == label ? 'border border-' ~ badge : '' }}">
+                    <div class="fs-4 fw-bold text-{{ badge }}">{{ compteurs[label] }}</div>
+                    <div class="small text-muted">{{ label }}</div>
+                </div>
+            </a>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        {% if filtre_statut_affiche %}
+            <span class="text-muted small">Filtré sur « {{ filtre_statut_affiche }} »</span>
+            <a href="{{ path('admin_carte_professionnelle_index') }}" class="small ms-2">Réinitialiser</a>
+        {% endif %}
+    </div>
     <a href="{{ path('admin_carte_professionnelle_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nouvelle carte</a>
 </div>
 

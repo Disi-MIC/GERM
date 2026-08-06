@@ -13,6 +13,15 @@
 </div>
 
 <div class="card stat-card p-4">
+    <div class="d-flex gap-4 mb-3">
+        {% if personnel.photo %}
+            <img src="{{ path('admin_personnel_photo', {id: personnel.id}) }}" alt="Photo de {{ personnel.nomComplet }}" class="rounded" style="width: 120px; height: 120px; object-fit: cover;">
+        {% else %}
+            <div class="rounded bg-secondary-subtle d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                <i class="bi bi-person-fill text-secondary" style="font-size: 3.5rem;"></i>
+            </div>
+        {% endif %}
+    </div>
     <dl class="row mb-0">
         <dt class="col-sm-3">Matricule</dt><dd class="col-sm-9">{{ personnel.matricule }}</dd>
         <dt class="col-sm-3">Sexe</dt><dd class="col-sm-9">{{ personnel.sexe ? personnel.sexe.label : '-' }}</dd>

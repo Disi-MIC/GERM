@@ -2,71 +2,104 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Entity\Enum\Sexe;
 use App\Entity\Enum\StatutPersonnel;
 use App\Repository\PersonnelRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Fiche RH d'un agent du Ministère (ressource "Personnel").
+ *
+ * Exposée à la fois en Twig (admin superadmin) et en API (frontend Angular,
+ * rôle ROLE_RH_PERSONNEL) — deux interfaces sur la même entité, préfixes
+ * d'URL différents (/admin/personnel vs /api/personnel). La suppression
+ * n'est volontairement pas exposée côté API : le garde-fou métier de
+ * PersonnelController::delete() (historique, congés, décisions, cartes...)
+ * n'a pas encore d'équivalent en API Platform.
  */
 #[ORM\Entity(repositoryClass: PersonnelRepository::class)]
 #[ORM\Table(name: 'personnel')]
 #[ORM\UniqueConstraint(name: 'UNIQ_PERSONNEL_MATRICULE', columns: ['matricule'])]
+#[ApiResource(
+    operations: [new GetCollection(), new Get(), new Post(), new Put()],
+    security: "is_granted('ROLE_RH_PERSONNEL')",
+    normalizationContext: ['groups' => ['api:read']],
+    denormalizationContext: ['groups' => ['api:write']],
+)]
 class Personnel
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 30)]
     #[Assert\NotBlank]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $matricule = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 1, enumType: Sexe::class)]
+    #[Groups(['api:read', 'api:write'])]
     private ?Sexe $sexe = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateNaissance = null;
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $fonction = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $grade = null;
 
     #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le type de contrat est obligatoire.')]
+    #[Groups(['api:read', 'api:write'])]
     private ?ListeValeur $typeContrat = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateEmbauche = null;
 
     #[ORM\Column(length: 20, enumType: StatutPersonnel::class)]
+    #[Groups(['api:read', 'api:write'])]
     private ?StatutPersonnel $statut = StatutPersonnel::ACTIF;
 
     #[ORM\Column(length: 30, nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $telephone = null;
 
     #[ORM\Column(length: 180, nullable: true)]
     #[Assert\Email]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $email = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $adresse = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -75,6 +108,7 @@ class Personnel
     #[ORM\ManyToOne(targetEntity: Service::class, inversedBy: 'personnels')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le service/direction est obligatoire.')]
+    #[Groups(['api:read', 'api:write'])]
     private ?Service $service = null;
 
     #[ORM\OneToOne(inversedBy: 'personnel', targetEntity: User::class)]
@@ -116,12 +150,15 @@ class Personnel
     private Collection $demandesDecision;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $observations = null;
 
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
@@ -179,6 +216,7 @@ class Personnel
         return $this;
     }
 
+    #[Groups(['api:read'])]
     public function getNomComplet(): string
     {
         return trim(sprintf('%s %s', $this->prenom, $this->nom));

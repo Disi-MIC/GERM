@@ -13,6 +13,21 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
+        # Firewall dédié à l'API consommée par le frontend Angular (rôles RH).
+        # Authentification par cookie de session (comme "main"), pas de JWT :
+        # json_login pose le cookie de session au login, réutilisé ensuite par
+        # chaque requête XHR/fetch grâce à withCredentials côté Angular.
+        api:
+            pattern: ^/api
+            lazy: true
+            provider: app_user_provider
+            json_login:
+                check_path: api_login
+                username_path: email
+                password_path: password
+            logout:
+                path: api_logout
+
         main:
             lazy: true
             provider: app_user_provider
@@ -38,6 +53,8 @@ security:
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: ROLE_AGENT }
         - { path: ^/admin, roles: ROLE_AGENT }
 
 when@test:

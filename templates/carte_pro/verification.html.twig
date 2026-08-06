@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vérification de carte professionnelle — MINCOM</title>
+    <style>
+        body {
+            font-family: -apple-system, Helvetica, Arial, sans-serif;
+            background: #f4f6f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        .card {
+            background: #fff;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,.15);
+            padding: 2rem;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.9rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        .badge-success { background: #d1e7dd; color: #0f5132; }
+        .badge-warning { background: #fff3cd; color: #664d03; }
+        .badge-secondary { background: #e2e3e5; color: #41464b; }
+        .badge-danger { background: #f8d7da; color: #842029; }
+        dl { text-align: left; margin-top: 1.5rem; }
+        dt { font-size: 0.8rem; color: #666; text-transform: uppercase; margin-top: 0.75rem; }
+        dd { font-size: 1rem; font-weight: 600; margin: 0; }
+        .invalide { color: #842029; font-weight: 600; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h5>Ministère de l'Industrie et du Commerce</h5>
+        {% if carte %}
+            <span class="badge badge-{{ carte.statutAffiche.badgeClass }}">{{ carte.statutAffiche.label }}</span>
+            <dl>
+                <dt>Titulaire</dt>
+                <dd>{{ carte.personnel.nomComplet }}</dd>
+                <dt>Fonction</dt>
+                <dd>{{ carte.personnel.fonction }}</dd>
+                <dt>Date d'expiration</dt>
+                <dd>{{ carte.dateExpiration|date('d/m/Y') }}</dd>
+            </dl>
+        {% else %}
+            <p class="invalide">Carte non reconnue.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

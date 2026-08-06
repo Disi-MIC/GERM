@@ -1,0 +1,104 @@
+<h5 class="mb-3">{{ personnelId ? 'Modifier' : 'Nouvel' }} agent</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else {
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Matricule</label>
+        <input type="text" class="form-control" formControlName="matricule" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nom</label>
+        <input type="text" class="form-control" formControlName="nom" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Prénom</label>
+        <input type="text" class="form-control" formControlName="prenom" />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Sexe</label>
+        <select class="form-select" formControlName="sexe">
+          <option value="M">Homme</option>
+          <option value="F">Femme</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Date de naissance</label>
+        <input type="date" class="form-control" formControlName="dateNaissance" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Service</label>
+        <select class="form-select" formControlName="service">
+          <option [ngValue]="null">Sélectionner...</option>
+          @for (service of services; track service.id) {
+            <option [ngValue]="service.id">{{ service.nom }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Fonction</label>
+        <input type="text" class="form-control" formControlName="fonction" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Grade</label>
+        <input type="text" class="form-control" formControlName="grade" />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Type de contrat</label>
+        <select class="form-select" formControlName="typeContrat">
+          <option [ngValue]="null">Sélectionner...</option>
+          @for (type of typesContrat; track type.id) {
+            <option [ngValue]="type.id">{{ type.libelle }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Date d'embauche</label>
+        <input type="date" class="form-control" formControlName="dateEmbauche" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Statut</label>
+        <select class="form-select" formControlName="statut">
+          <option value="actif">Actif</option>
+          <option value="en_conge">En congé</option>
+          <option value="suspendu">Suspendu</option>
+          <option value="retraite">Retraité</option>
+          <option value="demissionnaire">Démissionnaire</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Téléphone</label>
+        <input type="text" class="form-control" formControlName="telephone" />
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" formControlName="email" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Adresse</label>
+        <textarea class="form-control" rows="2" formControlName="adresse"></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Observations</label>
+        <textarea class="form-control" rows="3" formControlName="observations"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="saving">
+        <i class="bi bi-check-lg"></i> Enregistrer
+      </button>
+      <a routerLink="/personnel" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+  </form>
+}

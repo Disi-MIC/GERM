@@ -1,0 +1,13 @@
+api_platform:
+    title: GERM API
+    version: 1.0.0
+    # JSON simple (pas JSON-LD/Hydra) pour rester léger côté client Angular.
+    formats:
+        json: ['application/json']
+    defaults:
+        # Authentification par cookie de session (firewall "api"), pas par
+        # jeton : les ressources ne peuvent donc pas être "stateless" (ce
+        # réglage empêcherait toute lecture de la session côté sécurité).
+        stateless: false
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin', 'Cookie']

@@ -12,13 +12,13 @@ use App\Entity\PieceJustificativeJouissance;
 use App\Form\DemandeJouissanceType;
 use App\Repository\DemandeJouissanceRepository;
 use App\Repository\PersonnelRepository;
-use App\Service\PieceJustificativeUploader;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -67,7 +67,7 @@ class DemandeJouissanceController extends AbstractController
     }
 
     #[Route('/admin/demandes-jouissance/new', name: 'admin_demande_jouissance_new', methods: ['GET', 'POST'])]
-    public function newFromIndex(Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function newFromIndex(Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         $demande = new DemandeJouissance();
         $form = $this->createForm(DemandeJouissanceType::class, $demande, ['include_personnel' => true]);
@@ -90,7 +90,7 @@ class DemandeJouissanceController extends AbstractController
     }
 
     #[Route('/admin/personnel/{id}/demande-jouissance/new', name: 'admin_personnel_demande_jouissance_new', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         $demande = new DemandeJouissance();
         $demande->setPersonnel($personnel);
@@ -171,7 +171,7 @@ class DemandeJouissanceController extends AbstractController
     }
 
     #[Route('/admin/demande-jouissance/{id}/delete', name: 'admin_demande_jouissance_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function delete(DemandeJouissance $demande, Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function delete(DemandeJouissance $demande, Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         if ($this->isCsrfTokenValid('delete-demande-jouissance-'.$demande->getId(), $request->request->get('_token'))) {
             if (!$demande->isEnAttente()) {
@@ -190,15 +190,18 @@ class DemandeJouissanceController extends AbstractController
     }
 
     #[Route('/admin/piece-justificative/jouissance/{id}/download', name: 'admin_piece_jouissance_download', requirements: ['id' => '\d+'])]
-    public function downloadPiece(PieceJustificativeJouissance $piece, PieceJustificativeUploader $uploader): BinaryFileResponse
+    public function downloadPiece(PieceJustificativeJouissance $piece, FileStorage $uploader): StreamedResponse
     {
-        $response = new BinaryFileResponse($uploader->absolutePath($piece->getCheminFichier()));
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $piece->getNomOriginal());
+        $response = new StreamedResponse(function () use ($uploader, $piece) {
+            fpassthru($uploader->readStream($piece->getCheminFichier()));
+        });
+        $response->headers->set('Content-Type', $uploader->mimeType($piece->getCheminFichier()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $piece->getNomOriginal()));
 
         return $response;
     }
 
-    private function attacherPieces(FormInterface $form, DemandeJouissance $demande, PieceJustificativeUploader $uploader, EntityManagerInterface $em): void
+    private function attacherPieces(FormInterface $form, DemandeJouissance $demande, FileStorage $uploader, EntityManagerInterface $em): void
     {
         foreach (['pieceJustificative1', 'pieceJustificative2'] as $champ) {
             $file = $form->get($champ)->getData();

@@ -11,14 +11,14 @@ use App\Entity\PieceJustificativeDecision;
 use App\Form\DemandeDecisionType;
 use App\Repository\DemandeDecisionRepository;
 use App\Repository\PersonnelRepository;
-use App\Service\PieceJustificativeUploader;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormInterface;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -53,7 +53,7 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/admin/demandes-decision/new', name: 'admin_demande_decision_new', methods: ['GET', 'POST'])]
-    public function newFromIndex(Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function newFromIndex(Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         $demande = new DemandeDecision();
         $form = $this->createForm(DemandeDecisionType::class, $demande, ['include_personnel' => true]);
@@ -76,7 +76,7 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/admin/personnel/{id}/demande-decision/new', name: 'admin_personnel_demande_decision_new', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         $demande = new DemandeDecision();
         $demande->setPersonnel($personnel);
@@ -166,7 +166,7 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/admin/demande-decision/{id}/delete', name: 'admin_demande_decision_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function delete(DemandeDecision $demande, Request $request, EntityManagerInterface $em, PieceJustificativeUploader $uploader): Response
+    public function delete(DemandeDecision $demande, Request $request, EntityManagerInterface $em, FileStorage $uploader): Response
     {
         if ($this->isCsrfTokenValid('delete-demande-decision-'.$demande->getId(), $request->request->get('_token'))) {
             if (!$demande->isEnAttente()) {
@@ -185,15 +185,18 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/admin/piece-justificative/decision/{id}/download', name: 'admin_piece_decision_download', requirements: ['id' => '\d+'])]
-    public function downloadPiece(PieceJustificativeDecision $piece, PieceJustificativeUploader $uploader): BinaryFileResponse
+    public function downloadPiece(PieceJustificativeDecision $piece, FileStorage $uploader): StreamedResponse
     {
-        $response = new BinaryFileResponse($uploader->absolutePath($piece->getCheminFichier()));
-        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $piece->getNomOriginal());
+        $response = new StreamedResponse(function () use ($uploader, $piece) {
+            fpassthru($uploader->readStream($piece->getCheminFichier()));
+        });
+        $response->headers->set('Content-Type', $uploader->mimeType($piece->getCheminFichier()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $piece->getNomOriginal()));
 
         return $response;
     }
 
-    private function attacherPieces(FormInterface $form, DemandeDecision $demande, PieceJustificativeUploader $uploader, EntityManagerInterface $em): void
+    private function attacherPieces(FormInterface $form, DemandeDecision $demande, FileStorage $uploader, EntityManagerInterface $em): void
     {
         foreach (['pieceJustificative1', 'pieceJustificative2'] as $champ) {
             $file = $form->get($champ)->getData();

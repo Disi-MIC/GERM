@@ -2,33 +2,49 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ServiceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Service ou Direction du Ministère (ex: Direction des Systèmes d'Information,
  * Direction des Ressources Humaines, Direction de la Communication...).
+ *
+ * Exposé en lecture seule côté API (pilote Angular) : uniquement pour
+ * peupler le sélecteur "Service" du formulaire Personnel — la gestion
+ * complète des services reste Twig-only pour l'instant.
  */
 #[ORM\Entity(repositoryClass: ServiceRepository::class)]
 #[ORM\Table(name: 'service')]
+#[ApiResource(
+    operations: [new GetCollection(), new Get()],
+    security: "is_granted('ROLE_RH_PERSONNEL')",
+    normalizationContext: ['groups' => ['api:read']],
+)]
 class Service
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 20, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
+    #[Groups(['api:read'])]
     private ?string $code = null;
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 150)]
+    #[Groups(['api:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(type: 'text', nullable: true)]

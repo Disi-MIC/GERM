@@ -8,9 +8,13 @@ use App\Entity\HistoriqueAffectation;
 use App\Entity\Personnel;
 use App\Form\PersonnelType;
 use App\Repository\PersonnelRepository;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -28,13 +32,14 @@ class PersonnelController extends AbstractController
     }
 
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(Request $request, EntityManagerInterface $em, FileStorage $fileStorage): Response
     {
         $personnel = new Personnel();
         $form = $this->createForm(PersonnelType::class, $personnel);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->attacherPhoto($form, $personnel, $fileStorage);
             $em->persist($personnel);
 
             $nomination = new HistoriqueAffectation();
@@ -68,12 +73,13 @@ class PersonnelController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function edit(Request $request, Personnel $personnel, EntityManagerInterface $em): Response
+    public function edit(Request $request, Personnel $personnel, EntityManagerInterface $em, FileStorage $fileStorage): Response
     {
         $form = $this->createForm(PersonnelType::class, $personnel);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->attacherPhoto($form, $personnel, $fileStorage);
             $em->flush();
 
             $this->addFlash('success', 'Fiche personnel mise à jour.');
@@ -109,5 +115,37 @@ class PersonnelController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_personnel_index');
+    }
+
+    #[Route('/{id}/photo', name: 'photo', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function photo(Personnel $personnel, FileStorage $fileStorage): StreamedResponse
+    {
+        if (!$personnel->getPhoto()) {
+            throw $this->createNotFoundException();
+        }
+
+        $response = new StreamedResponse(function () use ($fileStorage, $personnel) {
+            fpassthru($fileStorage->readStream($personnel->getPhoto()));
+        });
+        $response->headers->set('Content-Type', $fileStorage->mimeType($personnel->getPhoto()));
+        $response->headers->set('Content-Disposition', 'inline');
+
+        return $response;
+    }
+
+    private function attacherPhoto(FormInterface $form, Personnel $personnel, FileStorage $fileStorage): void
+    {
+        $file = $form->get('photoFichier')->getData();
+
+        if (!$file instanceof UploadedFile) {
+            return;
+        }
+
+        if ($personnel->getPhoto()) {
+            $fileStorage->delete($personnel->getPhoto());
+        }
+
+        $stocke = $fileStorage->store($file, 'personnel-photos');
+        $personnel->setPhoto($stocke['path']);
     }
 }

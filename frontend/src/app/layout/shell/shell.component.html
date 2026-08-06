@@ -1,0 +1,33 @@
+<div class="d-flex">
+  <nav class="germ-sidebar d-flex flex-column py-3">
+    <div class="brand px-3 pb-3 fs-5">
+      <i class="bi bi-bank2"></i> GERM
+      <div class="small fw-normal text-white-50">Min. de la Communication</div>
+    </div>
+
+    <div class="text-uppercase small text-white-50 px-3 pb-1">Ressources Humaines</div>
+
+    @if (auth.hasRole('ROLE_RH_PERSONNEL')) {
+      <a routerLink="/personnel" routerLinkActive="active">
+        <i class="bi bi-people"></i> Personnel
+      </a>
+    }
+  </nav>
+
+  <div class="germ-main d-flex flex-column flex-grow-1">
+    <header class="germ-topbar d-flex justify-content-between align-items-center px-4 py-2">
+      <div class="fw-semibold">GERM</div>
+      <div class="d-flex align-items-center gap-3">
+        @if (auth.currentUser(); as user) {
+          <span class="text-muted small">{{ user.prenom }} {{ user.nom }}</span>
+        }
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="logout()">
+          <i class="bi bi-box-arrow-right"></i> Déconnexion
+        </button>
+      </div>
+    </header>
+    <main class="p-4">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

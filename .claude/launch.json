@@ -12,6 +12,18 @@
       "runtimeExecutable": "php",
       "runtimeArgs": ["-S", "127.0.0.1:8000", "-t", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
       "port": 8000
+    },
+    {
+      "name": "germ-frontend",
+      "runtimeExecutable": "/opt/homebrew/bin/npm",
+      "runtimeArgs": ["run", "start", "--prefix", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/frontend"],
+      "port": 4200
+    },
+    {
+      "name": "germ-http",
+      "runtimeExecutable": "/opt/homebrew/bin/php",
+      "runtimeArgs": ["-S", "127.0.0.1:8010", "-t", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
+      "port": 8010
     }
   ]
 }
