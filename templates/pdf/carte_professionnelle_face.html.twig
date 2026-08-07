@@ -18,9 +18,22 @@
         left: 8pt;
         width: 242.65pt;
         height: 153.02pt;
-        border: 1.5pt solid #00853F;
-        border-radius: 8pt;
+        background: #ffffff;
         overflow: hidden;
+    }
+
+    {# Le cadre décoratif est légèrement en retrait du bord réel de la carte
+       (plutôt que collé pile dessus) : un border/border-radius CSS posé
+       exactement sur le bord de page ne s'affichait pas de façon fiable sur
+       tous les côtés une fois la carte recadrée à sa taille finale (voir
+       commentaire plus haut). En retrait de quelques points, la bordure fine
+       et arrondie s'affiche normalement, et le fond blanc reste bord-à-bord. #}
+    .cadre {
+        position: absolute;
+        top: 3pt; left: 3pt; right: 3pt; bottom: 3pt;
+        border: 1pt solid #00853F;
+        border-radius: 7pt;
+        z-index: 2;
     }
 
     .filigrane {
@@ -53,15 +66,15 @@
     .colonne-photo { width: 62pt; text-align: center; vertical-align: top !important; padding-top: 4pt !important; }
     .photo {
         width: 50pt; height: 50pt; border-radius: 50%; object-fit: cover;
-        border: 2pt solid #7fb2e5;
+        border: 2pt solid #00853F;
     }
     .photo-placeholder {
-        width: 50pt; height: 50pt; border-radius: 50%; border: 2pt solid #7fb2e5;
+        width: 50pt; height: 50pt; border-radius: 50%; border: 2pt solid #00853F;
         background: #eeeeee; display: inline-block;
     }
 
     .colonne-qr { position: absolute; bottom: 5pt; right: 10pt; z-index: 1; }
-    .colonne-qr img { width: 32pt; height: 32pt; border: 2pt solid #7fb2e5; padding: 2pt; background: #ffffff; }
+    .colonne-qr img { width: 32pt; height: 32pt; border: 2pt solid #00853F; padding: 2pt; background: #ffffff; }
 
     /* Verso */
     .colonne-dates { position: absolute; top: 28pt; left: 8pt; z-index: 1; }
@@ -74,6 +87,18 @@
     .colonne-cachets .tampons img.stamp { position: absolute; top: 0; left: 18pt; width: 50pt; opacity: 0.9; }
     .colonne-cachets .tampons img.cachet { position: absolute; top: 14pt; left: 44pt; width: 56pt; opacity: 0.9; }
     .colonne-cachets img.signature { width: 34pt; margin-top: 2pt; }
+    .colonne-cachets .en-attente {
+        width: 100pt;
+        height: 50pt;
+        border: 1pt dashed #b03030;
+        color: #b03030;
+        font-weight: bold;
+        font-size: 6.5pt;
+        text-transform: uppercase;
+        text-align: center;
+        line-height: 1.3;
+        padding: 15pt 6pt;
+    }
 
     .pied-verso {
         position: absolute;
@@ -90,6 +115,7 @@
 <body>
 {% if face == 'recto' %}
     <div class="page recto">
+        <div class="cadre"></div>
         {% if filigraneDataUri %}<img src="{{ filigraneDataUri }}" class="filigrane" alt="">{% endif %}
 
         <table class="entete">
@@ -131,6 +157,7 @@
     </div>
 {% else %}
     <div class="page verso">
+        <div class="cadre"></div>
         {% if filigraneDataUri %}<img src="{{ filigraneDataUri }}" class="filigrane" alt="">{% endif %}
 
         <table class="entete">
@@ -156,11 +183,15 @@
         </div>
 
         <div class="colonne-cachets">
-            <div class="tampons">
-                {% if stampDataUri %}<img src="{{ stampDataUri }}" class="stamp" alt="">{% endif %}
-                {% if cachetDataUri %}<img src="{{ cachetDataUri }}" class="cachet" alt="">{% endif %}
-            </div>
-            {% if signDataUri %}<img src="{{ signDataUri }}" class="signature" alt="">{% endif %}
+            {% if valideeParAdminRh %}
+                <div class="tampons">
+                    {% if stampDataUri %}<img src="{{ stampDataUri }}" class="stamp" alt="">{% endif %}
+                    {% if cachetDataUri %}<img src="{{ cachetDataUri }}" class="cachet" alt="">{% endif %}
+                </div>
+                {% if signDataUri %}<img src="{{ signDataUri }}" class="signature" alt="">{% endif %}
+            {% else %}
+                <div class="en-attente">En attente<br>de validation</div>
+            {% endif %}
         </div>
 
         <div class="pied-verso">

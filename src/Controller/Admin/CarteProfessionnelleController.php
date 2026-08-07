@@ -7,7 +7,7 @@ use App\Entity\CarteProfessionnelle;
 use App\Entity\Personnel;
 use App\Form\CarteProfessionnelleType;
 use App\Repository\CarteProfessionnelleRepository;
-use App\Service\CarteProfessionnellePdfGenerator;
+use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,8 +21,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * Cartes professionnelles des agents. Historisées : chaque délivrance ou
  * renouvellement crée une nouvelle ligne, aucune autre ressource n'en dépend
  * donc la suppression ne nécessite pas de garde-fou d'utilisation.
+ *
+ * Ce module est désormais géré côté Angular (voir src/Controller/Api/
+ * CarteProfessionnelleController.php) pour ROLE_RH_CARTE_PRO/ROLE_ADMIN_RH ;
+ * cette interface Twig reste accessible uniquement au superadmin, en secours.
  */
-#[IsGranted('ROLE_RH_CARTE_PRO')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class CarteProfessionnelleController extends AbstractController
 {
     #[Route('/admin/cartes-professionnelles', name: 'admin_carte_professionnelle_index', methods: ['GET'])]
@@ -36,27 +40,57 @@ class CarteProfessionnelleController extends AbstractController
             : $cartes;
 
         $compteurs = ['Valide' => 0, 'Expire bientôt' => 0, 'Expirée' => 0, 'Perdue' => 0, 'Volée' => 0, 'Annulée' => 0];
+        $enAttenteValidation = 0;
         foreach ($cartes as $c) {
             $label = $c->getStatutAffiche()['label'];
             $compteurs[$label] = ($compteurs[$label] ?? 0) + 1;
+            if (!$c->isValideeParAdminRh()) {
+                ++$enAttenteValidation;
+            }
         }
 
         return $this->render('admin/carte_professionnelle/index.html.twig', [
             'cartes' => $cartesAffichees,
             'compteurs' => $compteurs,
             'filtre_statut_affiche' => $filtre,
+            'en_attente_validation' => $enAttenteValidation,
         ]);
     }
 
+    #[Route('/admin/cartes-professionnelles/validation', name: 'admin_carte_professionnelle_validation', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN_RH')]
+    public function validation(CarteProfessionnelleRepository $carteRepository): Response
+    {
+        return $this->render('admin/carte_professionnelle/validation.html.twig', [
+            'cartes' => $carteRepository->findBy(['valideeParAdminRh' => false], ['createdAt' => 'ASC']),
+        ]);
+    }
+
+    #[Route('/admin/carte-professionnelle/{id}/valider', name: 'admin_carte_professionnelle_valider', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_ADMIN_RH')]
+    public function valider(CarteProfessionnelle $carte, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
+    {
+        if ($this->isCsrfTokenValid('valider-carte-professionnelle-'.$carte->getId(), $request->request->get('_token'))) {
+            /** @var \App\Entity\User $validateur */
+            $validateur = $this->getUser();
+            $carte->valider($validateur);
+            $pdfStockage->genererEtStocker($carte);
+            $em->flush();
+            $this->addFlash('success', 'Carte professionnelle validée : le cachet et la signature sont maintenant sur le PDF.');
+        }
+
+        return $this->redirectToRoute('admin_carte_professionnelle_validation');
+    }
+
     #[Route('/admin/cartes-professionnelles/new', name: 'admin_carte_professionnelle_new', methods: ['GET', 'POST'])]
-    public function newFromIndex(Request $request, EntityManagerInterface $em, CarteProfessionnellePdfGenerator $pdfGenerator, FileStorage $uploader): Response
+    public function newFromIndex(Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
     {
         $carte = new CarteProfessionnelle();
         $form = $this->createForm(CarteProfessionnelleType::class, $carte, ['include_personnel' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->genererEtStockerPdf($carte, $pdfGenerator, $uploader);
+            $pdfStockage->genererEtStocker($carte);
             $em->persist($carte);
             $em->flush();
 
@@ -72,7 +106,7 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/admin/personnel/{id}/carte-professionnelle/new', name: 'admin_personnel_carte_professionnelle_new', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfGenerator $pdfGenerator, FileStorage $uploader): Response
+    public function new(Personnel $personnel, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
     {
         $carte = new CarteProfessionnelle();
         $carte->setPersonnel($personnel);
@@ -80,7 +114,7 @@ class CarteProfessionnelleController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->genererEtStockerPdf($carte, $pdfGenerator, $uploader);
+            $pdfStockage->genererEtStocker($carte);
             $em->persist($carte);
             $em->flush();
 
@@ -97,13 +131,13 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/admin/carte-professionnelle/{id}/edit', name: 'admin_carte_professionnelle_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function edit(CarteProfessionnelle $carte, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfGenerator $pdfGenerator, FileStorage $uploader): Response
+    public function edit(CarteProfessionnelle $carte, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
     {
         $form = $this->createForm(CarteProfessionnelleType::class, $carte);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->genererEtStockerPdf($carte, $pdfGenerator, $uploader);
+            $pdfStockage->genererEtStocker($carte);
             $em->flush();
 
             $this->addFlash('success', 'Carte professionnelle mise à jour.');
@@ -131,8 +165,21 @@ class CarteProfessionnelleController extends AbstractController
             if ($carte->getCheminQrCode()) {
                 $uploader->delete($carte->getCheminQrCode());
             }
+
+            // Si c'est la dernière carte de l'agent, sa photo (partagée entre
+            // toutes ses cartes, y compris futures) n'a plus d'usage : on la
+            // supprime aussi. Si d'autres cartes subsistent, elle est conservée.
+            $derniereCarte = 1 === $personnel->getCartesProfessionnelles()->count();
+
             $em->remove($carte);
             $em->flush();
+
+            if ($derniereCarte && $personnel->getPhoto()) {
+                $uploader->delete($personnel->getPhoto());
+                $personnel->setPhoto(null);
+                $em->flush();
+            }
+
             $this->addFlash('success', 'Carte professionnelle supprimée.');
         }
 
@@ -156,33 +203,14 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/admin/carte-professionnelle/{id}/generer', name: 'admin_carte_professionnelle_generer', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function generer(CarteProfessionnelle $carte, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfGenerator $pdfGenerator, FileStorage $uploader): Response
+    public function generer(CarteProfessionnelle $carte, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
     {
         if ($this->isCsrfTokenValid('generer-carte-professionnelle-'.$carte->getId(), $request->request->get('_token'))) {
-            $this->genererEtStockerPdf($carte, $pdfGenerator, $uploader);
+            $pdfStockage->genererEtStocker($carte);
             $em->flush();
             $this->addFlash('success', 'PDF régénéré.');
         }
 
         return $this->redirectToRoute('admin_carte_professionnelle_index');
-    }
-
-    private function genererEtStockerPdf(CarteProfessionnelle $carte, CarteProfessionnellePdfGenerator $pdfGenerator, FileStorage $uploader): void
-    {
-        if ($carte->getCheminFichier()) {
-            $uploader->delete($carte->getCheminFichier());
-        }
-        if ($carte->getCheminQrCode()) {
-            $uploader->delete($carte->getCheminQrCode());
-        }
-
-        $resultat = $pdfGenerator->generate($carte);
-
-        $stockePdf = $uploader->storeContent($resultat['pdf'], 'carte-'.$carte->getNumero().'.pdf', 'pdf', 'carte-professionnelle');
-        $carte->setCheminFichier($stockePdf['path']);
-        $carte->setNomOriginal($stockePdf['originalName']);
-
-        $stockeQr = $uploader->storeContent($resultat['qrCode'], 'qr-'.$carte->getNumero().'.png', 'png', 'qr-codes');
-        $carte->setCheminQrCode($stockeQr['path']);
     }
 }

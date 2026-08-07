@@ -30,7 +30,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'personnel')]
 #[ORM\UniqueConstraint(name: 'UNIQ_PERSONNEL_MATRICULE', columns: ['matricule'])]
 #[ApiResource(
-    operations: [new GetCollection(), new Get(), new Post(), new Put()],
+    operations: [
+        // Liste accessible aussi à ROLE_RH_CARTE_PRO : sélection de l'agent
+        // dans les formulaires carte/demande de carte professionnelle (même
+        // accès qu'avait déjà ce rôle sur le sélecteur agent en Twig).
+        new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO')"),
+        new Get(),
+        new Post(),
+        new Put(),
+    ],
     security: "is_granted('ROLE_RH_PERSONNEL')",
     normalizationContext: ['groups' => ['api:read']],
     denormalizationContext: ['groups' => ['api:write']],

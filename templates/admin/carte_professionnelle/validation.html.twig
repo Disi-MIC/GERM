@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Validation des cartes — GERM{% endblock %}
+{% block page_title %}Validation des cartes professionnelles{% endblock %}
+
+{% block body %}
+<p class="text-muted">
+    Ces cartes ont été créées mais leur PDF ne comporte pas encore le cachet ni la signature de l'autorité.
+    Validez-les pour rendre le PDF officiel disponible.
+</p>
+
+<div class="card stat-card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+        <tr>
+            <th>Agent</th>
+            <th>Numéro</th>
+            <th>Date de délivrance</th>
+            <th>Créée le</th>
+            <th>PDF</th>
+            <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for carte in cartes %}
+            <tr>
+                <td><a href="{{ path('admin_personnel_show', {id: carte.personnel.id}) }}">{{ carte.personnel.nomComplet }}</a></td>
+                <td>{{ carte.numero }}</td>
+                <td>{{ carte.dateDelivrance|date('d/m/Y') }}</td>
+                <td>{{ carte.createdAt|date('d/m/Y H:i') }}</td>
+                <td>
+                    {% if carte.cheminFichier %}
+                        <a href="{{ path('admin_piece_carte_download', {id: carte.id}) }}"><i class="bi bi-file-earmark-pdf"></i> Voir le PDF</a>
+                    {% else %}
+                        <span class="text-muted small">-</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <form method="post" action="{{ path('admin_carte_professionnelle_valider', {id: carte.id}) }}" class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('valider-carte-professionnelle-' ~ carte.id) }}">
+                        <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Valider</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Aucune carte en attente de validation.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

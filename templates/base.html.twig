@@ -96,11 +96,11 @@
                 </a>
             {% endif %}
 
-            {% if is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CONGE') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_SUPERADMIN') %}
+            {% if is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CONGE') or is_granted('ROLE_SUPERADMIN') %}
                 <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources</div>
             {% endif %}
 
-            {% if is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CONGE') or is_granted('ROLE_RH_CARTE_PRO') %}
+            {% if is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CONGE') %}
                 <a href="#submenuRH" class="submenu-toggle {{ rh_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ rh_active ? 'true' : 'false' }}" aria-controls="submenuRH">
                     <span><i class="bi bi-diagram-3"></i> Ressources Humaines</span>
                     <i class="bi bi-chevron-down"></i>
@@ -131,14 +131,15 @@
                         </div>
                     {% endif %}
 
-                    {% if is_granted('ROLE_RH_CARTE_PRO') %}
+                    {% if is_granted('ROLE_SUPERADMIN') %}
                         <a href="#submenuCartePro" class="submenu-toggle {{ carte_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ carte_active ? 'true' : 'false' }}" aria-controls="submenuCartePro">
                             <span><i class="bi bi-person-vcard"></i> Cartes professionnelles</span>
                             <i class="bi bi-chevron-down"></i>
                         </a>
                         <div class="collapse submenu {{ carte_active ? 'show' }}" id="submenuCartePro">
-                            <a href="{{ path('admin_carte_professionnelle_index') }}" class="{{ 'admin_carte_professionnelle' in route ? 'active' }}">Cartes professionnelles</a>
+                            <a href="{{ path('admin_carte_professionnelle_index') }}" class="{{ route == 'admin_carte_professionnelle_index' ? 'active' }}">Cartes professionnelles</a>
                             <a href="{{ path('admin_demande_carte_pro_index') }}" class="{{ 'admin_demande_carte_pro' in route ? 'active' }}">Demandes de carte professionnelle</a>
+                            <a href="{{ path('admin_carte_professionnelle_validation') }}" class="{{ route == 'admin_carte_professionnelle_validation' ? 'active' }}">Validation des cartes</a>
                         </div>
                     {% endif %}
 

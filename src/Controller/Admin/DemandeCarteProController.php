@@ -11,7 +11,7 @@ use App\Entity\Personnel;
 use App\Form\DemandeCarteProType;
 use App\Repository\DemandeCarteProRepository;
 use App\Repository\PersonnelRepository;
-use App\Service\CarteProfessionnellePdfGenerator;
+use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormInterface;
@@ -29,8 +29,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * demandes sont saisies et traitées (approuvées/refusées) par le superadmin.
  * Approuver crée la CarteProfessionnelle correspondante, sans modifier automatiquement
  * le statut de l'éventuelle ancienne carte référencée (laissé à l'admin).
+ *
+ * Ce module est désormais géré côté Angular (voir src/Controller/Api/
+ * DemandeCarteProController.php) pour ROLE_RH_CARTE_PRO/ROLE_ADMIN_RH ;
+ * cette interface Twig reste accessible uniquement au superadmin, en secours.
  */
-#[IsGranted('ROLE_RH_CARTE_PRO')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class DemandeCarteProController extends AbstractController
 {
     #[Route('/admin/demandes-carte-pro', name: 'admin_demande_carte_pro_index', methods: ['GET'])]
@@ -104,7 +108,7 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/demande-carte-pro/{id}/traiter', name: 'admin_demande_carte_pro_traiter', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function traiter(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfGenerator $pdfGenerator, FileStorage $uploader): Response
+    public function traiter(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
     {
         if (!$demande->isEnAttente()) {
             $this->addFlash('danger', 'Cette demande a déjà été traitée.');
@@ -137,12 +141,7 @@ class DemandeCarteProController extends AbstractController
                 $nouvelleCarte->setNumero($numero);
                 $nouvelleCarte->setDateDelivrance($dateDelivrance);
                 $nouvelleCarte->setStatut(StatutCarteProfessionnelle::VALIDE);
-                $resultat = $pdfGenerator->generate($nouvelleCarte);
-                $stockePdf = $uploader->storeContent($resultat['pdf'], 'carte-'.$nouvelleCarte->getNumero().'.pdf', 'pdf', 'carte-professionnelle');
-                $nouvelleCarte->setCheminFichier($stockePdf['path']);
-                $nouvelleCarte->setNomOriginal($stockePdf['originalName']);
-                $stockeQr = $uploader->storeContent($resultat['qrCode'], 'qr-'.$nouvelleCarte->getNumero().'.png', 'png', 'qr-codes');
-                $nouvelleCarte->setCheminQrCode($stockeQr['path']);
+                $pdfStockage->genererEtStocker($nouvelleCarte);
                 $em->persist($nouvelleCarte);
 
                 $demande->setCarteCreee($nouvelleCarte);

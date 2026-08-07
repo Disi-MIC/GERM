@@ -12,6 +12,21 @@
         <i class="bi bi-people"></i> Personnel
       </a>
     }
+
+    @if (auth.hasRole('ROLE_RH_CARTE_PRO')) {
+      <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <i class="bi bi-person-vcard"></i> Cartes professionnelles
+      </a>
+      <a routerLink="/cartes-professionnelles/demandes" routerLinkActive="active">
+        <i class="bi bi-inbox"></i> Demandes de carte
+      </a>
+    }
+
+    @if (auth.hasRole('ROLE_ADMIN_RH')) {
+      <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active">
+        <i class="bi bi-patch-check"></i> Validation des cartes
+      </a>
+    }
   </nav>
 
   <div class="germ-main d-flex flex-column flex-grow-1">

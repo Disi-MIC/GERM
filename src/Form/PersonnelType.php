@@ -80,8 +80,8 @@ class PersonnelType extends AbstractType
                 'constraints' => [
                     new File(
                         maxSize: '5M',
-                        mimeTypes: ['image/jpeg', 'image/png'],
-                        mimeTypesMessage: 'Merci de déposer une photo au format JPEG ou PNG.',
+                        mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/avif'],
+                        mimeTypesMessage: 'Merci de déposer une photo dans un format image courant (JPEG, PNG, GIF, WEBP, BMP, AVIF).',
                     ),
                 ],
             ])

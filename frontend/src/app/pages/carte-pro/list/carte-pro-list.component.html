@@ -1,0 +1,90 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Cartes professionnelles</h5>
+  <div class="d-flex gap-2">
+    <a routerLink="/cartes-professionnelles/demandes" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-inbox"></i> Demandes
+    </a>
+    @if (auth.hasRole('ROLE_ADMIN_RH')) {
+      <a routerLink="/cartes-professionnelles/validation" class="btn btn-outline-warning btn-sm">
+        <i class="bi bi-patch-check"></i> Validation
+        @if (enAttenteValidation > 0) {
+          <span class="badge bg-warning text-dark ms-1">{{ enAttenteValidation }}</span>
+        }
+      </a>
+    }
+    <a routerLink="/cartes-professionnelles/new" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Nouvelle carte
+    </a>
+  </div>
+</div>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    @for (label of labelsCompteurs; track label) {
+      <button
+        type="button"
+        class="btn btn-sm"
+        [class.btn-outline-secondary]="filtreStatutAffiche !== label"
+        [class.btn-secondary]="filtreStatutAffiche === label"
+        (click)="filtrer(label)"
+      >
+        {{ label }} <span class="badge bg-light text-dark ms-1">{{ compteurs[label] }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Numéro</th>
+          <th>Agent</th>
+          <th>Délivrance</th>
+          <th>Expiration</th>
+          <th>Statut</th>
+          <th>Validation RH</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (carte of cartesAffichees; track carte.id) {
+          <tr>
+            <td>{{ carte.numero }}</td>
+            <td>{{ agentLabel(carte) }}</td>
+            <td>{{ carte.dateDelivrance | slice: 0 : 10 }}</td>
+            <td>{{ carte.dateExpiration | slice: 0 : 10 }}</td>
+            <td>
+              <span class="badge bg-{{ carte.statutAffiche?.badgeClass }}">{{ carte.statutAffiche?.label }}</span>
+            </td>
+            <td>
+              @if (carte.valideeParAdminRh) {
+                <span class="badge bg-success">Validée</span>
+              } @else {
+                <span class="badge bg-secondary">En attente</span>
+              }
+            </td>
+            <td class="text-end">
+              <a [routerLink]="['/cartes-professionnelles', carte.id]" class="btn btn-sm btn-outline-secondary" title="Aperçu">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a [routerLink]="['/cartes-professionnelles', carte.id, 'edit']" class="btn btn-sm btn-outline-primary" title="Modifier">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer" (click)="supprimer(carte)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">Aucune carte professionnelle.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

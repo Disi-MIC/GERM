@@ -20,6 +20,13 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./pages/personnel/personnel.routes').then((m) => m.PERSONNEL_ROUTES),
       },
+      {
+        path: 'cartes-professionnelles',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_RH_CARTE_PRO'] },
+        loadChildren: () =>
+          import('./pages/carte-pro/carte-pro.routes').then((m) => m.CARTE_PRO_ROUTES),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'personnel' },
     ],
   },

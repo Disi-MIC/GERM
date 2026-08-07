@@ -6,6 +6,7 @@ use App\Entity\CarteProfessionnelle;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\PngWriter;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
@@ -63,6 +64,7 @@ class CarteProfessionnellePdfGenerator
         $donneesCommunes = [
             'carte' => $carte,
             'personnel' => $personnel,
+            'valideeParAdminRh' => $carte->isValideeParAdminRh(),
             'photoDataUri' => $photoDataUri,
             'logoMiniDataUri' => $this->imageDataUri('logo-mini.png'),
             'filigraneDataUri' => $this->imageDataUri('logo-mincom.png'),
@@ -128,7 +130,17 @@ class CarteProfessionnellePdfGenerator
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
-        $result = (new Builder(writer: new PngWriter()))->build(data: $url, size: 200, margin: 5);
+        $logoPath = $this->projectDir.'/public/images/logo-mini.png';
+
+        $result = (new Builder(writer: new PngWriter()))->build(
+            data: $url,
+            size: 200,
+            margin: 5,
+            errorCorrectionLevel: ErrorCorrectionLevel::High,
+            logoPath: is_readable($logoPath) ? $logoPath : null,
+            logoResizeToWidth: 45,
+            logoResizeToHeight: 45,
+        );
 
         return $result->getString();
     }

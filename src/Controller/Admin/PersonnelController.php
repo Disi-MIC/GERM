@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -145,7 +146,31 @@ class PersonnelController extends AbstractController
             $fileStorage->delete($personnel->getPhoto());
         }
 
-        $stocke = $fileStorage->store($file, 'personnel-photos');
+        // Convertie en PNG quel que soit le format d'origine (JPEG, GIF, WEBP,
+        // BMP, AVIF...), pour garantir un rendu fiable partout où la photo est
+        // affichée ou intégrée (dont le PDF de la carte professionnelle).
+        $png = $this->convertirPhotoEnPng($file);
+        $stocke = $fileStorage->storeContent($png, 'photo.png', 'png', 'personnel-photos');
         $personnel->setPhoto($stocke['path']);
+    }
+
+    private function convertirPhotoEnPng(UploadedFile $file): string
+    {
+        $image = imagecreatefromstring(file_get_contents($file->getPathname()));
+
+        if (false === $image) {
+            throw new BadRequestHttpException("Ce fichier n'a pas pu être lu comme une image.");
+        }
+
+        imagepalettetotruecolor($image);
+        imagealphablending($image, true);
+        imagesavealpha($image, true);
+
+        ob_start();
+        imagepng($image);
+        $png = ob_get_clean();
+        imagedestroy($image);
+
+        return $png;
     }
 }
