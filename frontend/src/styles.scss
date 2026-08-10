@@ -1,1 +1,46 @@
-/* You can add global styles to this file, and also import other style files */
+// La police Inter (@fontsource/inter) est déclarée dans angular.json aux côtés de
+// bootstrap-icons.css plutôt qu'importée ici : un @import Sass d'un fichier .css est
+// laissé tel quel dans la sortie (règle Sass sur les imports CSS "purs"), ce qui casse
+// la résolution des chemins vers les fichiers de police une fois compilé.
+
+// Thème inspiré de Gentelella (https://gentelella.colorlib.com), appliqué via les
+// variables Sass de Bootstrap plutôt qu'en surchargeant le CSS compilé — les valeurs
+// reprennent les tokens de design de Gentelella v4 (src/scss/v4/_tokens.scss) : le
+// bleu-sarcelle signature, le fond gris-bleu clair, la palette sémantique et le rayon
+// de bordure compact d'un thème d'administration. Bootstrap est donc compilé depuis
+// sa source ici (voir angular.json, qui ne référence plus bootstrap.min.css) au lieu
+// d'être importé pré-compilé.
+
+$primary: #1abb9c;
+$secondary: #626d7d;
+$success: #2fb344;
+$info: #17a2b8;
+$warning: #f59f00;
+$danger: #d63939;
+$light: #f5f7fb;
+$dark: #1e2633;
+
+$body-bg: #f5f7fb;
+$body-color: #1e2633;
+$border-color: #e6e7eb;
+
+$font-family-sans-serif:
+  'Inter',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  sans-serif;
+$font-size-base: 0.875rem;
+
+$border-radius: 0.375rem;
+$border-radius-sm: 0.25rem;
+$border-radius-lg: 0.5rem;
+
+$box-shadow-sm: 0 2px 4px 0 rgba(30, 38, 51, 0.04);
+$box-shadow: 0 0 0 1px rgba(4, 32, 69, 0.08), 0 2px 4px 0 rgba(30, 38, 51, 0.04);
+
+$card-border-color: $border-color;
+$card-box-shadow: $box-shadow-sm;
+
+@import 'bootstrap/scss/bootstrap';
