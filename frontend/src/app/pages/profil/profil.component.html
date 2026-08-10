@@ -43,7 +43,7 @@
       <dd class="col-sm-8">{{ personnel.dateEmbauche ? (personnel.dateEmbauche | slice: 0 : 10) : 'Non renseignée' }}</dd>
 
       <dt class="col-sm-4">Statut</dt>
-      <dd class="col-sm-8">{{ labelsStatut[personnel.statut] }}</dd>
+      <dd class="col-sm-8"><span class="badge bg-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span></dd>
 
       <dt class="col-sm-4">Téléphone</dt>
       <dd class="col-sm-8">{{ personnel.telephone ?? 'Non renseigné' }}</dd>

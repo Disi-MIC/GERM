@@ -17,6 +17,14 @@ const LABELS_STATUT: Record<string, string> = {
   demissionnaire: 'Démissionnaire',
 };
 
+const BADGES_STATUT: Record<string, string> = {
+  actif: 'success',
+  en_conge: 'info',
+  suspendu: 'warning',
+  retraite: 'secondary',
+  demissionnaire: 'danger',
+};
+
 @Component({
   selector: 'app-profil',
   standalone: true,
@@ -60,5 +68,9 @@ export class ProfilComponent implements OnInit {
   typeContratLabel(): string {
     const type = this.personnel?.typeContrat;
     return type && typeof type !== 'string' ? type.libelle : '';
+  }
+
+  badgeClasseStatut(statut: string): string {
+    return BADGES_STATUT[statut] ?? 'secondary';
   }
 }

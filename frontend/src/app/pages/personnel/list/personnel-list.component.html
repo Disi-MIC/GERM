@@ -29,7 +29,7 @@
             <td>{{ personnel.nomComplet }}</td>
             <td>{{ personnel.fonction }}</td>
             <td>{{ serviceLabel(personnel) }}</td>
-            <td>{{ personnel.statut }}</td>
+            <td><span class="badge bg-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span></td>
             <td class="text-end">
               <a [routerLink]="['/personnel', personnel.id]" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-pencil"></i>
