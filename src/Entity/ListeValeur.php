@@ -12,18 +12,23 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Valeur d'une liste paramétrable (type de matériel, état, type de contrat...),
- * gérable depuis l'admin sans modification du code.
+ * Valeur d'une liste paramétrable (type de matériel, état, type de contrat,
+ * type de document...), gérable depuis l'admin sans modification du code.
  *
- * Exposée en lecture seule côté API (pilote Angular) : pour peupler le
- * sélecteur "Type de contrat" du formulaire Personnel (filtrer côté client
- * sur categorie === 'type-contrat', pas de filtre serveur pour ce pilote).
+ * Exposée en lecture seule côté API (pilote Angular) : pour peupler des
+ * sélecteurs (ex. "Type de contrat" du formulaire Personnel, "Type de
+ * document" du formulaire DocumentAdministratif), toujours filtrée côté
+ * client sur `categorie`, jamais côté serveur. Pagination désactivée : la
+ * collection reste petite (quelques dizaines de valeurs au total tous
+ * catégories confondues) et doit toujours être récupérée en entier pour ces
+ * sélecteurs — la pagination par défaut d'API Platform (30 éléments) tronquait
+ * silencieusement les catégories ajoutées après les 30 premières lignes.
  */
 #[ORM\Entity(repositoryClass: ListeValeurRepository::class)]
 #[ORM\Table(name: 'liste_valeur')]
 #[ORM\UniqueConstraint(name: 'UNIQ_LISTE_VALEUR_CAT_CODE', columns: ['categorie', 'code'])]
 #[ApiResource(
-    operations: [new GetCollection(), new Get()],
+    operations: [new GetCollection(paginationEnabled: false), new Get()],
     security: "is_granted('ROLE_RH_PERSONNEL')",
     normalizationContext: ['groups' => ['api:read']],
 )]

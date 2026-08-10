@@ -9,6 +9,7 @@ enum CategorieListeValeur: string
     case ETAT_MATERIEL = 'etat-materiel';
     case ETAT_VEHICULE = 'etat-vehicule';
     case TYPE_CONTRAT = 'type-contrat';
+    case TYPE_DOCUMENT = 'type-document';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum CategorieListeValeur: string
             self::ETAT_MATERIEL => 'États du matériel informatique',
             self::ETAT_VEHICULE => 'États des véhicules',
             self::TYPE_CONTRAT => 'Types de contrat',
+            self::TYPE_DOCUMENT => 'Types de document administratif',
         };
     }
 }

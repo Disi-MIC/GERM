@@ -6,6 +6,7 @@ import { CarteProfessionnelle } from '../../core/models/carte-professionnelle.mo
 import { Conge, DecisionConge, DemandeDecision, DemandeJouissance, TypeConge } from '../../core/models/conge.model';
 import { DashboardMe } from '../../core/models/dashboard-me.model';
 import { DemandeCartePro, TypeDemandeCartePro } from '../../core/models/demande-carte-pro.model';
+import { DocumentAdministratif } from '../../core/models/document-administratif.model';
 import { HistoriqueAffectation } from '../../core/models/historique-affectation.model';
 import { MaterielInformatique } from '../../core/models/materiel-informatique.model';
 import { Personnel } from '../../core/models/personnel.model';
@@ -91,6 +92,14 @@ export class ProfilApiService {
 
   getMesDemandesJouissance(): Observable<DemandeJouissance[]> {
     return this.http.get<DemandeJouissance[]>(`${API_BASE}/me/demandes-jouissance`);
+  }
+
+  getMesDocuments(): Observable<DocumentAdministratif[]> {
+    return this.http.get<DocumentAdministratif[]>(`${API_BASE}/me/documents-administratifs`);
+  }
+
+  documentFichierUrl(id: number): string {
+    return `${API_BASE}/me/documents-administratifs/${id}/fichier`;
   }
 
   /** Auto-service : la fiche personnel est toujours celle du compte connecté, jamais transmise par le client. */

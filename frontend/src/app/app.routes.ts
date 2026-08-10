@@ -80,6 +80,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'mon-espace/documents',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () =>
+          import('./pages/profil/documents/mes-documents.component').then((m) => m.MesDocumentsComponent),
+      },
+      {
         path: 'mon-espace/carte-professionnelle',
         canActivate: [roleGuard],
         data: { roles: ['ROLE_AGENT'] },
@@ -132,6 +139,15 @@ export const routes: Routes = [
         data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/carriere/carriere.routes').then((m) => m.CARRIERE_ROUTES),
+      },
+      {
+        path: 'documents-administratifs',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
+        loadChildren: () =>
+          import('./pages/documents-administratifs/documents-administratifs.routes').then(
+            (m) => m.DOCUMENTS_ADMINISTRATIFS_ROUTES,
+          ),
       },
       {
         path: 'conges',

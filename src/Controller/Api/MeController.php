@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
+use App\Entity\DocumentAdministratif;
 use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Notification;
 use App\Entity\Personnel;
@@ -11,6 +12,7 @@ use App\Entity\User;
 use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\CongeRepository;
 use App\Repository\DemandeCarteProRepository;
+use App\Repository\DocumentAdministratifRepository;
 use App\Repository\DemandeDecisionRepository;
 use App\Repository\DemandeJouissanceRepository;
 use App\Repository\HistoriqueAffectationRepository;
@@ -295,6 +297,37 @@ class MeController extends AbstractController
         $demandes = $personnel ? $repository->findBy(['personnel' => $personnel], ['createdAt' => 'DESC']) : [];
 
         return $this->json($demandes, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/me/documents-administratifs', name: 'api_me_documents_administratifs', methods: ['GET'])]
+    public function documentsAdministratifs(DocumentAdministratifRepository $repository): JsonResponse
+    {
+        $personnel = $this->personnelConnecte();
+        $documents = $personnel ? $repository->findBy(['personnel' => $personnel], ['createdAt' => 'DESC']) : [];
+
+        return $this->json($documents, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * Permet à l'agent de télécharger son propre document (même route que côté
+     * RH — Api/DocumentAdministratifController::fichier() — mais scoping par
+     * propriété plutôt que par rôle RH_PERSONNEL).
+     */
+    #[Route('/api/me/documents-administratifs/{id}/fichier', name: 'api_me_document_administratif_fichier', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function documentAdministratifFichier(DocumentAdministratif $document): StreamedResponse
+    {
+        $personnel = $this->personnelConnecte();
+        if (!$personnel || $document->getPersonnel() !== $personnel) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $response = new StreamedResponse(function () use ($document) {
+            fpassthru($this->fileStorage->readStream($document->getCheminFichier()));
+        });
+        $response->headers->set('Content-Type', $this->fileStorage->mimeType($document->getCheminFichier()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $document->getNomOriginal()));
+
+        return $response;
     }
 
     /**

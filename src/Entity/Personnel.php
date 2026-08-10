@@ -157,6 +157,10 @@ class Personnel
     #[ORM\OrderBy(['createdAt' => 'DESC'])]
     private Collection $demandesDecision;
 
+    #[ORM\OneToMany(mappedBy: 'personnel', targetEntity: DocumentAdministratif::class)]
+    #[ORM\OrderBy(['createdAt' => 'DESC'])]
+    private Collection $documentsAdministratifs;
+
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?string $observations = null;
@@ -180,6 +184,7 @@ class Personnel
         $this->demandesJouissance = new ArrayCollection();
         $this->decisionsConge = new ArrayCollection();
         $this->demandesDecision = new ArrayCollection();
+        $this->documentsAdministratifs = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -462,6 +467,14 @@ class Personnel
     public function getDemandesDecision(): Collection
     {
         return $this->demandesDecision;
+    }
+
+    /**
+     * @return Collection<int, DocumentAdministratif>
+     */
+    public function getDocumentsAdministratifs(): Collection
+    {
+        return $this->documentsAdministratifs;
     }
 
     public function getObservations(): ?string
