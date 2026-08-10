@@ -22,6 +22,15 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profil/profil.component').then((m) => m.ProfilComponent),
       },
       {
+        path: 'mon-espace/tableau-de-bord',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () =>
+          import('./pages/profil/dashboard/mon-tableau-de-bord.component').then(
+            (m) => m.MonTableauDeBordComponent,
+          ),
+      },
+      {
         path: 'mon-espace/carriere',
         canActivate: [roleGuard],
         data: { roles: ['ROLE_AGENT'] },
@@ -53,6 +62,24 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profil/conges/mes-conges.component').then((m) => m.MesCongesComponent),
       },
       {
+        path: 'mon-espace/conges/nouvelle-demande-decision',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () =>
+          import('./pages/profil/conges/nouvelle-demande-decision/nouvelle-demande-decision.component').then(
+            (m) => m.NouvelleDemandeDecisionComponent,
+          ),
+      },
+      {
+        path: 'mon-espace/conges/nouvelle-demande-jouissance',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () =>
+          import('./pages/profil/conges/nouvelle-demande-jouissance/nouvelle-demande-jouissance.component').then(
+            (m) => m.NouvelleDemandeJouissanceComponent,
+          ),
+      },
+      {
         path: 'mon-espace/carte-professionnelle',
         canActivate: [roleGuard],
         data: { roles: ['ROLE_AGENT'] },
@@ -62,29 +89,54 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'mon-espace/carte-professionnelle/nouvelle-demande',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () =>
+          import('./pages/profil/carte-professionnelle/nouvelle-demande/nouvelle-demande-carte-pro.component').then(
+            (m) => m.NouvelleDemandeCarteProComponent,
+          ),
+      },
+      {
+        // Doit rester après 'nouvelle-demande' ci-dessus : Angular route sur le
+        // premier segment qui matche, et ':id' matcherait sinon ce chemin statique.
+        path: 'mon-espace/carte-professionnelle/:id',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () =>
+          import('./pages/profil/carte-professionnelle/preview/ma-carte-preview.component').then(
+            (m) => m.MaCartePreviewComponent,
+          ),
+      },
+      {
         path: 'dashboard',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_RH_PERSONNEL'] },
+        // ROLE_ADMIN_RH inclus explicitement : la hiérarchie de rôles Symfony
+        // (ROLE_ADMIN_RH → RH_PERSONNEL/RH_CONGE/RH_CARTE_PRO) n'est appliquée
+        // que côté serveur, jamais côté Angular (AuthService.hasRole() ne lit
+        // que les rôles littéraux de /api/me) — le RH Admin doit donc être
+        // transversal, listé explicitement à côté de chaque rôle RH métier.
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
         component: DashboardComponent,
       },
       {
         path: 'personnel',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_RH_PERSONNEL'] },
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/personnel/personnel.routes').then((m) => m.PERSONNEL_ROUTES),
       },
       {
         path: 'carrieres',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_RH_PERSONNEL'] },
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/carriere/carriere.routes').then((m) => m.CARRIERE_ROUTES),
       },
       {
         path: 'conges',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_RH_CONGE'] },
+        data: { roles: ['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/conge/conge.routes').then((m) => m.CONGE_ROUTES),
       },

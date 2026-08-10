@@ -19,14 +19,47 @@
 
       @if (demande.nomOriginal) {
         <dt class="col-sm-4">Pièce justificative</dt>
-        <dd class="col-sm-8">{{ demande.nomOriginal }}</dd>
+        <dd class="col-sm-8">
+          {{ demande.nomOriginal }}
+          @if (pieceUrl(); as url) {
+            <a [href]="url" target="_blank" class="ms-2">
+              <i class="bi bi-eye"></i> Consulter
+            </a>
+          }
+        </dd>
       }
     </dl>
 
     @if (demande.enAttente) {
       @if (peutTransmettreOuRejeter()) {
         <div class="alert alert-info small">
-          Vérifiez la conformité de la pièce jointe, puis transmettez la demande au RH Admin (qui seul peut l'approuver), ou rejetez-la si les pièces ne sont pas conformes.
+          Vous êtes le premier niveau de contrôle : vérifiez la pièce jointe et les informations de l'agent avant de transmettre au RH Admin, ou rejetez la demande si elles ne sont pas conformes.
+        </div>
+
+        <div class="card bg-light border-0 mb-3">
+          <div class="card-body py-3">
+            <h6 class="card-title small text-uppercase text-muted mb-2">Contrôle avant transmission</h6>
+
+            @if (demande.nomOriginal) {
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="pieceVerifiee" [(ngModel)]="pieceVerifiee" [ngModelOptions]="{ standalone: true }" />
+                <label class="form-check-label" for="pieceVerifiee">
+                  J'ai consulté la pièce justificative et elle est conforme
+                </label>
+              </div>
+            } @else {
+              <div class="alert alert-warning small py-2 mb-2">
+                Aucune pièce justificative jointe à cette demande.
+              </div>
+            }
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="informationsVerifiees" [(ngModel)]="informationsVerifiees" [ngModelOptions]="{ standalone: true }" />
+              <label class="form-check-label" for="informationsVerifiees">
+                J'ai vérifié l'identité de l'agent et la cohérence du type de demande
+              </label>
+            </div>
+          </div>
         </div>
 
         <form [formGroup]="form">
@@ -38,7 +71,7 @@
           </div>
 
           <div class="mt-3 d-flex gap-2">
-            <button type="button" class="btn btn-primary" [disabled]="saving" (click)="transmettre()">
+            <button type="button" class="btn btn-primary" [disabled]="saving || !verificationComplete()" (click)="transmettre()">
               <i class="bi bi-send"></i> Transmettre au RH Admin
             </button>
             <button type="button" class="btn btn-danger" [disabled]="saving" (click)="rejeter()">
@@ -46,6 +79,9 @@
             </button>
             <a routerLink="/cartes-professionnelles/demandes" class="btn btn-outline-secondary">Annuler</a>
           </div>
+          @if (!verificationComplete()) {
+            <div class="form-text">Cochez les points de contrôle ci-dessus pour activer la transmission.</div>
+          }
         </form>
       } @else {
         <div class="alert alert-secondary small">

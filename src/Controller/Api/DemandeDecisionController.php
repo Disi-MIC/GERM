@@ -8,6 +8,7 @@ use App\Entity\DemandeDecision;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\PieceJustificativeDecision;
 use App\Service\FileStorage;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,6 +37,7 @@ class DemandeDecisionController extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
         private readonly FileStorage $fileStorage,
+        private readonly NotificationService $notificationService,
     ) {
     }
 
@@ -135,6 +137,13 @@ class DemandeDecisionController extends AbstractController
             $demande->setCommentaireTraitement($commentaire);
             $this->em->flush();
 
+            $this->notificationService->notifier(
+                $demande->getPersonnel()?->getUser(),
+                'Votre demande de décision de congé a été approuvée',
+                '/mon-espace/conges',
+                $commentaire,
+            );
+
             return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
         }
 
@@ -143,6 +152,13 @@ class DemandeDecisionController extends AbstractController
             $demande->setDateTraitement(new \DateTimeImmutable());
             $demande->setCommentaireTraitement($commentaire);
             $this->em->flush();
+
+            $this->notificationService->notifier(
+                $demande->getPersonnel()?->getUser(),
+                'Votre demande de décision de congé a été refusée',
+                '/mon-espace/conges',
+                $commentaire,
+            );
 
             return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
         }

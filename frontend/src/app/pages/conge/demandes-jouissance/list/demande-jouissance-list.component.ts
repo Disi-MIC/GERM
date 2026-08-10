@@ -27,10 +27,14 @@ const LABELS_TYPE: Record<string, string> = {
 })
 export class DemandeJouissanceListComponent implements OnInit {
   demandes: DemandeJouissance[] = [];
+  demandesAffichees: DemandeJouissance[] = [];
   loading = true;
   error: string | null = null;
+  filtreStatut: string | null = null;
+  compteurs: Record<string, number> = {};
   readonly labelsStatut = LABELS_STATUT;
   readonly labelsType = LABELS_TYPE;
+  readonly statuts = Object.keys(LABELS_STATUT);
 
   constructor(private readonly api: DemandeJouissanceApiService) {}
 
@@ -38,6 +42,8 @@ export class DemandeJouissanceListComponent implements OnInit {
     this.api.getAll().subscribe({
       next: (demandes) => {
         this.demandes = demandes;
+        this.recalculerCompteurs();
+        this.appliquerFiltre();
         this.loading = false;
       },
       error: () => {
@@ -45,6 +51,29 @@ export class DemandeJouissanceListComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  private recalculerCompteurs(): void {
+    const compteurs: Record<string, number> = {};
+    for (const statut of this.statuts) {
+      compteurs[statut] = 0;
+    }
+    for (const demande of this.demandes) {
+      const statut = demande.statut ?? '';
+      compteurs[statut] = (compteurs[statut] ?? 0) + 1;
+    }
+    this.compteurs = compteurs;
+  }
+
+  private appliquerFiltre(): void {
+    this.demandesAffichees = this.filtreStatut
+      ? this.demandes.filter((d) => d.statut === this.filtreStatut)
+      : this.demandes;
+  }
+
+  filtrer(statut: string): void {
+    this.filtreStatut = this.filtreStatut === statut ? null : statut;
+    this.appliquerFiltre();
   }
 
   agentLabel(demande: DemandeJouissance): string {

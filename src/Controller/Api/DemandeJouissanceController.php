@@ -8,6 +8,7 @@ use App\Entity\DemandeJouissance;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\PieceJustificativeJouissance;
 use App\Service\FileStorage;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,6 +37,7 @@ class DemandeJouissanceController extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
         private readonly FileStorage $fileStorage,
+        private readonly NotificationService $notificationService,
     ) {
     }
 
@@ -124,6 +126,13 @@ class DemandeJouissanceController extends AbstractController
             $demande->setCommentaireTraitement($commentaire);
             $this->em->flush();
 
+            $this->notificationService->notifier(
+                $demande->getPersonnel()?->getUser(),
+                'Votre demande de jouissance de congé a été approuvée',
+                '/mon-espace/conges',
+                $commentaire,
+            );
+
             return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
         }
 
@@ -132,6 +141,13 @@ class DemandeJouissanceController extends AbstractController
             $demande->setDateTraitement(new \DateTimeImmutable());
             $demande->setCommentaireTraitement($commentaire);
             $this->em->flush();
+
+            $this->notificationService->notifier(
+                $demande->getPersonnel()?->getUser(),
+                'Votre demande de jouissance de congé a été refusée',
+                '/mon-espace/conges',
+                $commentaire,
+            );
 
             return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
         }

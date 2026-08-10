@@ -1,5 +1,6 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CarteProfessionnelle } from '../../../core/models/carte-professionnelle.model';
 import { DemandeCartePro } from '../../../core/models/demande-carte-pro.model';
@@ -28,7 +29,7 @@ const LABELS_TYPE_DEMANDE: Record<string, string> = {
 @Component({
   selector: 'app-ma-carte-professionnelle',
   standalone: true,
-  imports: [SlicePipe],
+  imports: [SlicePipe, RouterLink],
   templateUrl: './ma-carte-professionnelle.component.html',
 })
 export class MaCarteProfessionnelleComponent implements OnInit {
@@ -61,6 +62,10 @@ export class MaCarteProfessionnelleComponent implements OnInit {
 
   badgeClasseCarte(statut: string): string {
     return statut === 'valide' ? 'success' : 'danger';
+  }
+
+  cartePdfTelechargerUrl(id: number): string {
+    return this.api.cartePdfTelechargerUrl(id);
   }
 
   badgeClasseDemande(statut: string | undefined): string {

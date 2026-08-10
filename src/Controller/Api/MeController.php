@@ -3,17 +3,26 @@
 namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
+use App\Entity\CarteProfessionnelle;
+use App\Entity\Enum\StatutCarteProfessionnelle;
+use App\Entity\Notification;
 use App\Entity\Personnel;
 use App\Entity\User;
 use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\CongeRepository;
 use App\Repository\DemandeCarteProRepository;
+use App\Repository\DemandeDecisionRepository;
+use App\Repository\DemandeJouissanceRepository;
 use App\Repository\HistoriqueAffectationRepository;
 use App\Repository\MaterielInformatiqueRepository;
+use App\Repository\NotificationRepository;
 use App\Repository\VehiculeRepository;
 use App\Service\FileStorage;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -30,6 +39,7 @@ class MeController extends AbstractController
 {
     public function __construct(
         private readonly FileStorage $fileStorage,
+        private readonly EntityManagerInterface $em,
     ) {
     }
 
@@ -78,6 +88,118 @@ class MeController extends AbstractController
         return $response;
     }
 
+    /**
+     * Résumé pour la rubrique "Mon tableau de bord" : compteurs d'activité
+     * (carrière/congés/parc affecté) et une vue unifiée des demandes en
+     * attente (carte pro/décision/jouissance confondues) avec leur état,
+     * plus une répartition globale par statut pour l'affichage interactif
+     * côté Angular. Toujours filtré sur la fiche Personnel du compte
+     * connecté ; renvoie des compteurs à zéro (pas d'erreur) si aucune
+     * fiche n'est liée, pour ne pas casser l'affichage du tableau de bord.
+     */
+    #[Route('/api/me/dashboard', name: 'api_me_dashboard', methods: ['GET'])]
+    public function dashboard(
+        HistoriqueAffectationRepository $historiqueRepository,
+        CongeRepository $congeRepository,
+        MaterielInformatiqueRepository $materielRepository,
+        VehiculeRepository $vehiculeRepository,
+        CarteProfessionnelleRepository $carteRepository,
+        DemandeCarteProRepository $demandeCarteRepository,
+        DemandeDecisionRepository $demandeDecisionRepository,
+        DemandeJouissanceRepository $demandeJouissanceRepository,
+    ): JsonResponse {
+        $personnel = $this->personnelConnecte();
+
+        if (!$personnel) {
+            return $this->json([
+                'carriere' => ['nbMouvements' => 0, 'dernierMouvement' => null],
+                'conges' => ['total' => 0, 'totalJours' => 0],
+                'materiels' => ['total' => 0],
+                'vehicules' => ['total' => 0],
+                'carteActive' => null,
+                'demandesEnAttente' => [],
+                'repartitionDemandes' => ['en_attente' => 0, 'transmise' => 0, 'approuvee' => 0, 'refusee' => 0],
+            ]);
+        }
+
+        $mouvements = $historiqueRepository->findBy(['personnel' => $personnel], ['dateEffet' => 'DESC']);
+        $conges = $congeRepository->findBy(['personnel' => $personnel]);
+        $materiels = $materielRepository->findBy(['affecteA' => $personnel]);
+        $vehicules = $vehiculeRepository->findBy(['chauffeurAffecte' => $personnel]);
+        $cartes = $carteRepository->findBy(['personnel' => $personnel], ['dateDelivrance' => 'DESC']);
+
+        $carteActive = null;
+        foreach ($cartes as $carte) {
+            if (StatutCarteProfessionnelle::VALIDE === $carte->getStatut()) {
+                $carteActive = $carte;
+                break;
+            }
+        }
+
+        $repartition = ['en_attente' => 0, 'transmise' => 0, 'approuvee' => 0, 'refusee' => 0];
+        $enAttente = [];
+
+        foreach ($demandeCarteRepository->findBy(['personnel' => $personnel]) as $demande) {
+            $statut = $demande->getStatut()->value;
+            ++$repartition[$statut];
+            if (\in_array($statut, ['en_attente', 'transmise'], true)) {
+                $enAttente[] = [
+                    'domaine' => 'carte_pro',
+                    'id' => $demande->getId(),
+                    'libelle' => 'Demande de carte professionnelle',
+                    'statut' => $statut,
+                    'createdAt' => $demande->getCreatedAt()?->format(\DATE_ATOM),
+                ];
+            }
+        }
+
+        foreach ($demandeDecisionRepository->findBy(['personnel' => $personnel]) as $demande) {
+            $statut = $demande->getStatut()->value;
+            ++$repartition[$statut];
+            if ('en_attente' === $statut) {
+                $enAttente[] = [
+                    'domaine' => 'decision',
+                    'id' => $demande->getId(),
+                    'libelle' => 'Demande de décision de congé',
+                    'statut' => $statut,
+                    'createdAt' => $demande->getCreatedAt()?->format(\DATE_ATOM),
+                ];
+            }
+        }
+
+        foreach ($demandeJouissanceRepository->findBy(['personnel' => $personnel]) as $demande) {
+            $statut = $demande->getStatut()->value;
+            ++$repartition[$statut];
+            if ('en_attente' === $statut) {
+                $enAttente[] = [
+                    'domaine' => 'jouissance',
+                    'id' => $demande->getId(),
+                    'libelle' => 'Demande de jouissance de congé',
+                    'statut' => $statut,
+                    'createdAt' => $demande->getCreatedAt()?->format(\DATE_ATOM),
+                ];
+            }
+        }
+
+        usort($enAttente, fn (array $a, array $b) => $b['createdAt'] <=> $a['createdAt']);
+
+        return $this->json([
+            'carriere' => [
+                'nbMouvements' => \count($mouvements),
+                'dernierMouvement' => $mouvements[0] ?? null,
+            ],
+            'conges' => [
+                'total' => \count($conges),
+                'totalJours' => array_sum(array_map(static fn ($c) => $c->getDuree() ?? 0, $conges)),
+            ],
+            'materiels' => ['total' => \count($materiels)],
+            'vehicules' => ['total' => \count($vehicules)],
+            'carteActive' => $carteActive,
+            'demandesEnAttente' => $enAttente,
+            'repartitionDemandes' => $repartition,
+        ], JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
     #[Route('/api/me/historique-affectations', name: 'api_me_historique_affectations', methods: ['GET'])]
     public function carriere(HistoriqueAffectationRepository $repository): JsonResponse
     {
@@ -105,6 +227,49 @@ class MeController extends AbstractController
         return $this->json($cartes, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
 
+    /**
+     * Permet à l'agent de consulter/télécharger sa propre carte validée (même
+     * routes que côté RH — Api/CarteProfessionnelleController::pdf()/
+     * pdfTelecharger() — mais scoping par propriété plutôt que par rôle
+     * RH_CARTE_PRO). `pdf` renvoie le PDF en "inline" pour l'aperçu intégré
+     * (iframe) ; `pdfTelecharger` force le téléchargement.
+     */
+    #[Route('/api/me/cartes-professionnelles/{id}/pdf', name: 'api_me_carte_professionnelle_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function cartePdf(CarteProfessionnelle $carte): StreamedResponse
+    {
+        return $this->streamCartePdf($carte, ResponseHeaderBag::DISPOSITION_INLINE);
+    }
+
+    #[Route('/api/me/cartes-professionnelles/{id}/pdf/telecharger', name: 'api_me_carte_professionnelle_pdf_telecharger', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function cartePdfTelecharger(CarteProfessionnelle $carte): StreamedResponse
+    {
+        return $this->streamCartePdf($carte, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
+    }
+
+    private function streamCartePdf(CarteProfessionnelle $carte, string $disposition): StreamedResponse
+    {
+        $personnel = $this->personnelConnecte();
+        if (!$personnel || $carte->getPersonnel() !== $personnel) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$carte->isValideeParAdminRh()) {
+            throw new AccessDeniedHttpException("La carte doit d'abord être validée par le RH Admin pour être consultable.");
+        }
+
+        if (!$carte->getCheminFichier()) {
+            throw $this->createNotFoundException();
+        }
+
+        $response = new StreamedResponse(function () use ($carte) {
+            fpassthru($this->fileStorage->readStream($carte->getCheminFichier()));
+        });
+        $response->headers->set('Content-Type', $this->fileStorage->mimeType($carte->getCheminFichier()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition($disposition, $carte->getNomOriginal() ?? 'carte-professionnelle'));
+
+        return $response;
+    }
+
     #[Route('/api/me/demandes-carte-pro', name: 'api_me_demandes_carte_pro', methods: ['GET'])]
     public function demandesCartePro(DemandeCarteProRepository $repository): JsonResponse
     {
@@ -112,6 +277,86 @@ class MeController extends AbstractController
         $demandes = $personnel ? $repository->findBy(['personnel' => $personnel], ['createdAt' => 'DESC']) : [];
 
         return $this->json($demandes, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/me/demandes-decision', name: 'api_me_demandes_decision', methods: ['GET'])]
+    public function demandesDecision(DemandeDecisionRepository $repository): JsonResponse
+    {
+        $personnel = $this->personnelConnecte();
+        $demandes = $personnel ? $repository->findBy(['personnel' => $personnel], ['createdAt' => 'DESC']) : [];
+
+        return $this->json($demandes, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/me/demandes-jouissance', name: 'api_me_demandes_jouissance', methods: ['GET'])]
+    public function demandesJouissance(DemandeJouissanceRepository $repository): JsonResponse
+    {
+        $personnel = $this->personnelConnecte();
+        $demandes = $personnel ? $repository->findBy(['personnel' => $personnel], ['createdAt' => 'DESC']) : [];
+
+        return $this->json($demandes, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * Alimente la cloche de notifications (menu déroulant) et les badges des
+     * rubriques du menu. `recentes` (plafonné) sert à l'affichage du menu
+     * déroulant ; `nonLues` (non plafonné) sert au compteur de la cloche et
+     * aux badges par rubrique, calculés côté frontend par préfixe de route
+     * sur `lien` — voir ShellComponent.
+     */
+    #[Route('/api/me/notifications', name: 'api_me_notifications', methods: ['GET'])]
+    public function notifications(NotificationRepository $repository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        return $this->json([
+            'recentes' => array_map($this->notificationVersTableau(...), $repository->findRecentes($user)),
+            'nonLues' => array_map($this->notificationVersTableau(...), $repository->findNonLues($user)),
+        ]);
+    }
+
+    #[Route('/api/me/notifications/{id}/lire', name: 'api_me_notification_lire', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function marquerNotificationLue(int $id, NotificationRepository $repository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        $notification = $repository->find($id);
+
+        if (!$notification || $notification->getDestinataire() !== $user) {
+            throw $this->createNotFoundException();
+        }
+
+        $notification->setLu(true);
+        $this->em->flush();
+
+        return $this->json(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/api/me/notifications/tout-lire', name: 'api_me_notifications_tout_lire', methods: ['POST'])]
+    public function marquerToutesNotificationsLues(NotificationRepository $repository): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        foreach ($repository->findNonLues($user) as $notification) {
+            $notification->setLu(true);
+        }
+        $this->em->flush();
+
+        return $this->json(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    private function notificationVersTableau(Notification $notification): array
+    {
+        return [
+            'id' => $notification->getId(),
+            'titre' => $notification->getTitre(),
+            'message' => $notification->getMessage(),
+            'lien' => $notification->getLien(),
+            'lu' => $notification->isLu(),
+            'createdAt' => $notification->getCreatedAt()?->format(\DATE_ATOM),
+        ];
     }
 
     #[Route('/api/me/materiels', name: 'api_me_materiels', methods: ['GET'])]

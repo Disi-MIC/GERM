@@ -3,28 +3,23 @@
   "configurations": [
     {
       "name": "geomic360-frontend",
-      "runtimeExecutable": "/opt/homebrew/bin/npm",
-      "runtimeArgs": ["run", "start", "--prefix", "/Users/alassanetambedou/Desktop/projets_mincom/GeoMiC360/frontend"],
-      "port": 4200
-    },
-    {
-      "name": "germ",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "php -S 127.0.0.1:$PORT -t /Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
-      "port": 8000,
+      "runtimeArgs": ["-c", "export PATH=\"/opt/homebrew/bin:$PATH\"; npm run start --prefix /Users/alassanetambedou/Desktop/projets_mincom/GeoMiC360/frontend -- --port $PORT"],
+      "port": 4200,
       "autoPort": true
     },
     {
-      "name": "germ-frontend",
-      "runtimeExecutable": "/opt/homebrew/bin/npm",
-      "runtimeArgs": ["run", "start", "--prefix", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/frontend"],
-      "port": 4200
-    },
-    {
-      "name": "germ-http",
+      "name": "germ",
       "runtimeExecutable": "/opt/homebrew/bin/php",
       "runtimeArgs": ["-S", "127.0.0.1:8010", "-t", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
       "port": 8010
+    },
+    {
+      "name": "germ-frontend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "export PATH=\"/opt/homebrew/bin:$PATH\"; npm run start --prefix /Users/alassanetambedou/Desktop/projets_mincom/GERM/frontend -- --port $PORT"],
+      "port": 4200,
+      "autoPort": true
     }
   ]
 }

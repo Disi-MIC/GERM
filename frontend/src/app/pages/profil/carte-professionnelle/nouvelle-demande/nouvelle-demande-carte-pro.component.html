@@ -1,0 +1,54 @@
+<h5 class="mb-3">Nouvelle demande de carte professionnelle</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else {
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Type de demande</label>
+        <select class="form-select" formControlName="typeDemande">
+          <option value="nouvelle">Nouvelle carte</option>
+          <option value="renouvellement">Renouvellement</option>
+          <option value="perte_vol">Perte ou vol</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Ma carte actuelle (obligatoire pour un renouvellement ou une perte/vol)</label>
+        <select class="form-select" formControlName="carteReference">
+          <option [ngValue]="null">Aucune (nouvelle carte)</option>
+          @for (carte of mesCartes; track carte.id) {
+            <option [ngValue]="carte.id">{{ carte.numero }} (expire le {{ carte.dateExpiration | slice: 0 : 10 }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Motif</label>
+        <textarea class="form-control" rows="3" formControlName="motif"></textarea>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">
+          {{ libellePiece() }}
+          @if (pieceObligatoire()) {
+            <span class="text-danger">*</span>
+          }
+        </label>
+        <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichierChange($event)" />
+      </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="saving">
+        <i class="bi bi-check-lg"></i> Enregistrer
+      </button>
+      <a routerLink="/mon-espace/carte-professionnelle" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+  </form>
+}

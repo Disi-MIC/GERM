@@ -13,6 +13,20 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    @for (statut of statuts; track statut) {
+      <button
+        type="button"
+        class="btn btn-sm"
+        [class.btn-outline-secondary]="filtreStatut !== statut"
+        [class.btn-secondary]="filtreStatut === statut"
+        (click)="filtrer(statut)"
+      >
+        {{ labelsStatut[statut] }} <span class="badge bg-light text-dark ms-1">{{ compteurs[statut] }}</span>
+      </button>
+    }
+  </div>
+
   <div class="card">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
@@ -24,7 +38,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (demande of demandes; track demande.id) {
+        @for (demande of demandesAffichees; track demande.id) {
           <tr>
             <td>{{ agentLabel(demande) }}</td>
             <td>

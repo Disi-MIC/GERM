@@ -46,9 +46,13 @@ class UserType extends AbstractType
             ])
             ->add('roles', ChoiceType::class, [
                 'label' => 'Rôle',
+                // 'ROLE_AGENT' et 'ROLE_ADMIN' sont volontairement absents : le
+                // premier est déjà accordé automatiquement à tout compte (voir
+                // User::getRoles()) et le second n'est vérifié nulle part dans
+                // l'application — les cocher ou non n'avait aucun effet, ce qui
+                // induisait en erreur quiconque configurait un compte. Ne
+                // laisser que les rôles qui changent réellement les accès.
                 'choices' => [
-                    'Agent' => User::ROLE_AGENT,
-                    'Administrateur' => User::ROLE_ADMIN,
                     'Administrateur RH' => User::ROLE_ADMIN_RH,
                     'Gestion du personnel' => User::ROLE_RH_PERSONNEL,
                     'Gestion des congés' => User::ROLE_RH_CONGE,
@@ -57,6 +61,7 @@ class UserType extends AbstractType
                 ],
                 'multiple' => true,
                 'expanded' => true,
+                'help' => "Un agent sans rôle coché conserve un accès de base (Mon espace : profil, carrière, congés, carte professionnelle...) sans rubrique RH.",
             ])
             ->add('actif', CheckboxType::class, ['label' => 'Compte actif', 'required' => false])
             ->add('plainPassword', PasswordType::class, [

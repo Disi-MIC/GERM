@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth.service';
 import { DemandeCartePro } from '../../../../core/models/demande-carte-pro.model';
@@ -15,7 +15,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-carte-pro-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink],
   templateUrl: './demande-carte-pro-traiter.component.html',
 })
 export class DemandeCarteProTraiterComponent implements OnInit {
@@ -24,6 +24,15 @@ export class DemandeCarteProTraiterComponent implements OnInit {
   saving = false;
   error: string | null = null;
   readonly labelsType = LABELS_TYPE;
+
+  /**
+   * Contrôle de premier niveau du RH Carte Pro avant transmission : il doit
+   * cocher explicitement qu'il a vérifié la pièce et les informations avant
+   * de pouvoir transmettre, plutôt que de transmettre en un clic sans
+   * vérification. Remis à zéro à chaque demande chargée (ngOnInit).
+   */
+  pieceVerifiee = false;
+  informationsVerifiees = false;
 
   form = this.fb.nonNullable.group({
     numero: [''],
@@ -75,8 +84,17 @@ export class DemandeCarteProTraiterComponent implements OnInit {
     return !!this.demande?.enAttente && this.auth.hasRole('ROLE_RH_CARTE_PRO');
   }
 
+  pieceUrl(): string | null {
+    return this.demande?.id ? this.api.pieceUrl(this.demande.id) : null;
+  }
+
+  /** Tant qu'une pièce est jointe, sa vérification (ouverture + lecture) est obligatoire avant transmission. */
+  verificationComplete(): boolean {
+    return (!this.demande?.nomOriginal || this.pieceVerifiee) && this.informationsVerifiees;
+  }
+
   transmettre(): void {
-    if (!this.demande?.id) {
+    if (!this.demande?.id || !this.verificationComplete()) {
       return;
     }
     this.saving = true;
@@ -101,7 +119,15 @@ export class DemandeCarteProTraiterComponent implements OnInit {
 
     this.saving = true;
     this.api.approuver(this.demande.id, raw.numero.trim(), raw.dateDelivrance, raw.commentaire || null).subscribe({
-      next: () => this.router.navigateByUrl('/cartes-professionnelles/demandes'),
+      // La demande approuvée porte désormais sa carte (créée ET validée en un
+      // seul geste par le serveur, cachet/signature déjà sur le PDF) : on va
+      // directement à son aperçu pour l'imprimer/télécharger, plutôt que de
+      // renvoyer vers la liste des demandes et faire chercher la carte à part.
+      next: (demande) => {
+        const carte = demande.carteCreee;
+        const carteId = carte && typeof carte !== 'string' ? carte.id : null;
+        this.router.navigateByUrl(carteId ? `/cartes-professionnelles/${carteId}` : '/cartes-professionnelles/demandes');
+      },
       error: (err) => {
         this.saving = false;
         this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'approbation de la demande.";

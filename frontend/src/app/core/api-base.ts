@@ -1,1 +1,3 @@
-export const API_BASE = 'http://localhost:8010/api';
+import { environment } from '../../environments/environment';
+
+export const API_BASE = environment.apiBase;

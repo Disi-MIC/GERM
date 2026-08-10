@@ -15,6 +15,20 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    @for (statut of statuts; track statut) {
+      <button
+        type="button"
+        class="btn btn-sm"
+        [class.btn-outline-secondary]="filtreStatut !== statut"
+        [class.btn-secondary]="filtreStatut === statut"
+        (click)="filtrer(statut)"
+      >
+        {{ labelsStatut[statut] }} <span class="badge bg-light text-dark ms-1">{{ compteurs[statut] }}</span>
+      </button>
+    }
+  </div>
+
   <div class="card">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
@@ -27,7 +41,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (demande of demandes; track demande.id) {
+        @for (demande of demandesAffichees; track demande.id) {
           <tr>
             <td>{{ agentLabel(demande) }}</td>
             <td>{{ labelsType[demande.typeDemande] }}</td>
@@ -37,22 +51,13 @@
             <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
             <td class="text-end">
               @if (peutTransmettreOuRejeter(demande)) {
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  [disabled]="acting === demande.id"
-                  (click)="transmettre(demande)"
+                <a
+                  [routerLink]="['/cartes-professionnelles/demandes', demande.id, 'traiter']"
+                  class="btn btn-sm btn-outline-primary"
+                  title="Vérifier la pièce et les informations avant de transmettre ou rejeter"
                 >
-                  <i class="bi bi-send"></i> Transmettre
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-danger"
-                  [disabled]="acting === demande.id"
-                  (click)="rejeter(demande)"
-                >
-                  <i class="bi bi-x-lg"></i> Rejeter
-                </button>
+                  <i class="bi bi-check2-square"></i> Contrôler
+                </a>
               }
               @if (peutTraiterTransmise(demande)) {
                 <a [routerLink]="['/cartes-professionnelles/demandes', demande.id, 'traiter']" class="btn btn-sm btn-outline-primary">
@@ -143,6 +148,13 @@
             }
           </dl>
         </div>
+        @if (carteDe(demande); as carte) {
+          <div class="modal-footer border-0 pt-0">
+            <a [href]="telechargerUrl(carte.id!)" target="_blank" class="btn btn-success btn-sm">
+              <i class="bi bi-download"></i> Télécharger le PDF
+            </a>
+          </div>
+        }
       }
     </div>
   </div>

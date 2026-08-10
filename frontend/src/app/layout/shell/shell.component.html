@@ -5,77 +5,114 @@
       <div class="small fw-normal text-white-50">Min. de la Communication</div>
     </div>
 
-    <div class="text-uppercase small text-white-50 px-3 pb-1">Mon espace</div>
-    <a routerLink="/profil" routerLinkActive="active">
-      <i class="bi bi-person-circle"></i> Mon profil
-    </a>
-    <a routerLink="/mon-espace/carriere" routerLinkActive="active">
-      <i class="bi bi-graph-up-arrow"></i> Ma carrière
-    </a>
-    <a routerLink="/mon-espace/parc-informatique" routerLinkActive="active">
-      <i class="bi bi-laptop"></i> Mon parc informatique
-    </a>
-    <a routerLink="/mon-espace/parc-automobile" routerLinkActive="active">
-      <i class="bi bi-truck"></i> Mon parc automobile
-    </a>
-    <a routerLink="/mon-espace/conges" routerLinkActive="active">
-      <i class="bi bi-calendar-event"></i> Mes congés
-    </a>
-    <a routerLink="/mon-espace/carte-professionnelle" routerLinkActive="active">
-      <i class="bi bi-person-vcard"></i> Ma carte professionnelle
-    </a>
-
-    @if (auth.hasRole('ROLE_RH_PERSONNEL')) {
-      <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Tableaux de bord</div>
-      <a routerLink="/dashboard" routerLinkActive="active">
-        <i class="bi bi-speedometer2"></i> Personnel
+    @if (!estEnAdministration()) {
+      <div class="text-uppercase small text-white-50 px-3 pb-1">Mon espace</div>
+      <a routerLink="/mon-espace/tableau-de-bord" routerLinkActive="active">
+        <i class="bi bi-speedometer2"></i> Mon tableau de bord
+      </a>
+      <a routerLink="/profil" routerLinkActive="active">
+        <i class="bi bi-person-circle"></i> Mon profil
+      </a>
+      <a routerLink="/mon-espace/carriere" routerLinkActive="active">
+        <i class="bi bi-graph-up-arrow"></i> Ma carrière
+      </a>
+      <a routerLink="/mon-espace/parc-informatique" routerLinkActive="active">
+        <i class="bi bi-laptop"></i> Mon parc informatique
+      </a>
+      <a routerLink="/mon-espace/parc-automobile" routerLinkActive="active">
+        <i class="bi bi-truck"></i> Mon parc automobile
+      </a>
+      <a routerLink="/mon-espace/conges" routerLinkActive="active">
+        <i class="bi bi-calendar-event"></i> Mes congés
+        @if (compteurNotifications('/mon-espace/conges'); as n) {
+          @if (n > 0) {
+            <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+          }
+        }
+      </a>
+      <a routerLink="/mon-espace/carte-professionnelle" routerLinkActive="active">
+        <i class="bi bi-person-vcard"></i> Ma carte professionnelle
+        @if (compteurNotifications('/mon-espace/carte-professionnelle'); as n) {
+          @if (n > 0) {
+            <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+          }
+        }
       </a>
     }
 
-    @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
-      <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources Humaines</div>
-    }
+    @if (estEnAdministration()) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
+        <a routerLink="/dashboard" routerLinkActive="active">
+          <i class="bi bi-speedometer2"></i> Personnel
+        </a>
+      }
 
-    @if (auth.hasRole('ROLE_RH_PERSONNEL')) {
-      <a routerLink="/personnel" routerLinkActive="active">
-        <i class="bi bi-people"></i> Personnel
-      </a>
-      <a routerLink="/carrieres" routerLinkActive="active">
-        <i class="bi bi-graph-up-arrow"></i> Gestion des carrières
-      </a>
-    }
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources Humaines</div>
+      }
 
-    @if (auth.hasRole('ROLE_RH_CONGE')) {
-      <a routerLink="/conges" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bi bi-calendar-event"></i> Gestion des congés
-      </a>
-      <a routerLink="/conges/decisions" routerLinkActive="active">
-        <i class="bi bi-file-earmark-text"></i> Décisions de congé
-      </a>
-      <a routerLink="/conges/demandes-decision" routerLinkActive="active">
-        <i class="bi bi-inbox"></i> Demandes de décision
-      </a>
-      <a routerLink="/conges/demandes-jouissance" routerLinkActive="active">
-        <i class="bi bi-inbox"></i> Demandes de jouissance
-      </a>
-    }
+      <!-- Le RH Admin est transversal : accès à tout ce qu'un agent RH métier
+           (Personnel/Congé/Carte Pro) fait, en plus de ses propres rubriques
+           (Validation des cartes, Délégations). Seule exception, volontaire :
+           Transmettre/Rejeter une demande de carte pro "en attente" reste
+           réservé au seul profil RH Carte Pro (séparation des tâches). -->
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/personnel" routerLinkActive="active">
+          <i class="bi bi-people"></i> Personnel
+        </a>
+        <a routerLink="/carrieres" routerLinkActive="active">
+          <i class="bi bi-graph-up-arrow"></i> Gestion des carrières
+        </a>
+      }
 
-    @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
-      <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bi bi-person-vcard"></i> Cartes professionnelles
-      </a>
-      <a routerLink="/cartes-professionnelles/demandes" routerLinkActive="active">
-        <i class="bi bi-inbox"></i> Demandes de carte
-      </a>
-    }
+      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/conges" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bi bi-calendar-event"></i> Gestion des congés
+        </a>
+        <a routerLink="/conges/decisions" routerLinkActive="active">
+          <i class="bi bi-file-earmark-text"></i> Décisions de congé
+        </a>
+        <a routerLink="/conges/demandes-decision" routerLinkActive="active">
+          <i class="bi bi-inbox"></i> Demandes de décision
+          @if (compteurNotifications('/conges/demandes-decision'); as n) {
+            @if (n > 0) {
+              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+            }
+          }
+        </a>
+        <a routerLink="/conges/demandes-jouissance" routerLinkActive="active">
+          <i class="bi bi-inbox"></i> Demandes de jouissance
+          @if (compteurNotifications('/conges/demandes-jouissance'); as n) {
+            @if (n > 0) {
+              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+            }
+          }
+        </a>
+      }
 
-    @if (auth.hasRole('ROLE_ADMIN_RH')) {
-      <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active">
-        <i class="bi bi-patch-check"></i> Validation des cartes
-      </a>
-      <a routerLink="/delegations" routerLinkActive="active">
-        <i class="bi bi-person-check"></i> Délégations
-      </a>
+      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bi bi-person-vcard"></i> Cartes professionnelles
+        </a>
+        <a routerLink="/cartes-professionnelles/demandes" routerLinkActive="active">
+          <i class="bi bi-inbox"></i> Demandes de carte
+          @if (compteurNotifications('/cartes-professionnelles/demandes'); as n) {
+            @if (n > 0) {
+              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+            }
+          }
+        </a>
+      }
+
+      @if (auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active">
+          <i class="bi bi-patch-check"></i> Validation des cartes
+        </a>
+        <a routerLink="/delegations" routerLinkActive="active">
+          <i class="bi bi-person-check"></i> Délégations
+        </a>
+      }
     }
   </nav>
 
@@ -83,6 +120,61 @@
     <header class="germ-topbar d-flex justify-content-between align-items-center px-4 py-2">
       <div class="fw-semibold">GERM</div>
       <div class="d-flex align-items-center gap-3">
+        @if (aAccesAdministration()) {
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="basculerVue()">
+            @if (estEnAdministration()) {
+              <i class="bi bi-person-workspace"></i> Mon espace
+            } @else {
+              <i class="bi bi-building-gear"></i> Administration
+            }
+          </button>
+        }
+        <div class="dropdown">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary position-relative"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            title="Notifications"
+          >
+            <i class="bi bi-bell"></i>
+            @if (notifications.nombreNonLues(); as n) {
+              @if (n > 0) {
+                <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle" style="font-size: 0.6rem;">
+                  {{ n }}
+                  <span class="visually-hidden">notifications non lues</span>
+                </span>
+              }
+            }
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-0" style="width: 340px; max-height: 420px; overflow-y: auto;">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+              <span class="fw-semibold small">Notifications</span>
+              @if (notifications.nombreNonLues() > 0) {
+                <button type="button" class="btn btn-link btn-sm p-0" (click)="toutMarquerLu()">Tout marquer comme lu</button>
+              }
+            </div>
+            @for (notif of notifications.recentes(); track notif.id) {
+              <button
+                type="button"
+                class="dropdown-item py-2 border-bottom"
+                style="white-space: normal;"
+                [class.bg-light]="!notif.lu"
+                (click)="ouvrirNotification(notif)"
+              >
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <span class="small" [class.fw-semibold]="!notif.lu">{{ notif.titre }}</span>
+                </div>
+                @if (notif.message) {
+                  <div class="text-muted small">{{ notif.message }}</div>
+                }
+                <div class="text-muted" style="font-size: 0.7rem;">{{ notif.createdAt | slice: 0 : 10 }}</div>
+              </button>
+            } @empty {
+              <div class="text-muted small text-center py-4">Aucune notification.</div>
+            }
+          </div>
+        </div>
         @if (auth.currentUser(); as user) {
           <span class="text-muted small">{{ user.prenom }} {{ user.nom }}</span>
         }

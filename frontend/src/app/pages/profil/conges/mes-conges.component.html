@@ -1,11 +1,22 @@
-<h5 class="mb-3">Mes congés</h5>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Mes congés</h5>
+  <div class="d-flex gap-2">
+    <a routerLink="/mon-espace/conges/nouvelle-demande-decision" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Demande de décision
+    </a>
+    <a routerLink="/mon-espace/conges/nouvelle-demande-jouissance" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Demande de jouissance
+    </a>
+  </div>
+</div>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <div class="card">
+  <h6 class="text-muted text-uppercase small mb-2">Congés pris</h6>
+  <div class="card mb-4">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -28,6 +39,90 @@
         } @empty {
           <tr>
             <td colspan="5" class="text-center text-muted py-4">Aucun congé enregistré.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h6 class="text-muted text-uppercase small mb-2">Mes décisions de congé valides</h6>
+  <div class="card mb-4">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Numéro</th>
+          <th>Date de décision</th>
+          <th>Expire le</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (decision of decisions; track decision.id) {
+          <tr>
+            <td>{{ decision.numeroDecision }}</td>
+            <td>{{ decision.dateDecision | slice: 0 : 10 }}</td>
+            <td>{{ decision.dateExpiration | slice: 0 : 10 }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="text-center text-muted py-4">Aucune décision de congé valide.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h6 class="text-muted text-uppercase small mb-2">Historique des demandes de décision</h6>
+  <div class="card mb-4">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Statut</th>
+          <th>Créée le</th>
+          <th>Traitée le</th>
+          <th>Commentaire</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (demande of demandesDecision; track demande.id) {
+          <tr>
+            <td><span class="badge bg-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span></td>
+            <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
+            <td>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</td>
+            <td>{{ demande.commentaireTraitement ?? '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="text-center text-muted py-4">Aucune demande de décision enregistrée.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h6 class="text-muted text-uppercase small mb-2">Historique des demandes de jouissance</h6>
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Type</th>
+          <th>Dates</th>
+          <th>Statut</th>
+          <th>Traitée le</th>
+          <th>Commentaire</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (demande of demandesJouissance; track demande.id) {
+          <tr>
+            <td>{{ labelsType[demande.type] }}</td>
+            <td>{{ demande.dateDebut | slice: 0 : 10 }} au {{ demande.dateFin | slice: 0 : 10 }}</td>
+            <td><span class="badge bg-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span></td>
+            <td>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</td>
+            <td>{{ demande.commentaireTraitement ?? '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">Aucune demande de jouissance enregistrée.</td>
           </tr>
         }
       </tbody>

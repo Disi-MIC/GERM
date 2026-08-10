@@ -11,6 +11,7 @@ use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\User;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -42,6 +43,7 @@ class DemandeCarteProController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly CarteProfessionnellePdfStockageService $pdfStockage,
         private readonly FileStorage $fileStorage,
+        private readonly NotificationService $notificationService,
     ) {
     }
 
@@ -54,6 +56,13 @@ class DemandeCarteProController extends AbstractController
 
         $demande->setStatut(StatutDemandeCartePro::TRANSMISE);
         $this->em->flush();
+
+        $this->notificationService->notifierRole(
+            User::ROLE_ADMIN_RH,
+            'Demande de carte professionnelle à valider',
+            '/cartes-professionnelles/demandes',
+            \sprintf('Le RH Carte Pro a transmis la demande de %s pour validation.', $demande->getPersonnel()?->getNomComplet()),
+        );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
@@ -75,6 +84,13 @@ class DemandeCarteProController extends AbstractController
         $demande->setDateTraitement(new \DateTimeImmutable());
         $demande->setCommentaireTraitement($data['commentaire'] ?? null);
         $this->em->flush();
+
+        $this->notificationService->notifier(
+            $demande->getPersonnel()?->getUser(),
+            'Votre demande de carte professionnelle a été rejetée',
+            '/mon-espace/carte-professionnelle',
+            $demande->getCommentaireTraitement(),
+        );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
@@ -122,6 +138,13 @@ class DemandeCarteProController extends AbstractController
         $demande->setDateTraitement(new \DateTimeImmutable());
         $demande->setCommentaireTraitement($data['commentaire'] ?? null);
         $this->em->flush();
+
+        $this->notificationService->notifier(
+            $demande->getPersonnel()?->getUser(),
+            'Votre carte professionnelle a été approuvée',
+            '/mon-espace/carte-professionnelle',
+            'Votre carte professionnelle est validée et téléchargeable.',
+        );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
