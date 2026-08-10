@@ -41,7 +41,12 @@
     </div>
 
     <div class="col-12">
-      <label class="form-label">Pièce justificative (ex. déclaration de perte/vol)</label>
+      <label class="form-label">
+        {{ libellePiece() }}
+        @if (pieceObligatoire()) {
+          <span class="text-danger">*</span>
+        }
+      </label>
       <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichierChange($event)" />
     </div>
   </div>

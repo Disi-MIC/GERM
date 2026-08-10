@@ -2,18 +2,28 @@
 
 namespace App\Controller;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
     #[Route('/login', name: 'app_login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
-    {
-        // Si déjà connecté, direction le dashboard
+    public function login(
+        AuthenticationUtils $authenticationUtils,
+        AuthorizationCheckerInterface $authorizationChecker,
+        #[Autowire('%env(FRONTEND_URL)%')] string $frontendUrl,
+    ): Response {
+        // Si déjà connecté, direction le tableau de bord si superadmin (seul
+        // rôle gardant un accès Twig), sinon directement le frontend Angular —
+        // même logique qu'un ternaire dans
+        // LoginFormAuthenticator::urlApresConnexion().
         if ($this->getUser()) {
-            return $this->redirectToRoute('admin_dashboard_personnel');
+            return $authorizationChecker->isGranted('ROLE_SUPERADMIN')
+                ? $this->redirectToRoute('admin_dashboard_personnel')
+                : $this->redirect($frontendUrl);
         }
 
         $error = $authenticationUtils->getLastAuthenticationError();

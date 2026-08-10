@@ -1,0 +1,47 @@
+<h5 class="mb-3">Ma carrière</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Date d'effet</th>
+          <th>Mouvement</th>
+          <th>Service</th>
+          <th>Fonction</th>
+          <th>Grade</th>
+          <th>Décision</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (mouvement of mouvements; track mouvement.id) {
+          <tr>
+            <td>{{ mouvement.dateEffet | slice: 0 : 10 }}</td>
+            <td><span class="badge text-bg-light border">{{ labelsTypeMouvement[mouvement.typeMouvement] }}</span></td>
+            <td>{{ serviceLabel(mouvement) }}</td>
+            <td>{{ mouvement.fonction }}</td>
+            <td>{{ mouvement.grade ?? '—' }}</td>
+            <td>
+              @if (mouvement.numeroDecision) {
+                {{ mouvement.numeroDecision }}
+                @if (mouvement.dateDecision) {
+                  <span class="text-muted small">({{ mouvement.dateDecision | slice: 0 : 10 }})</span>
+                }
+              } @else {
+                —
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Aucun mouvement de carrière enregistré.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

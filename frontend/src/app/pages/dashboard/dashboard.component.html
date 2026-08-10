@@ -1,0 +1,82 @@
+<h5 class="mb-3">Tableau de bord — Personnel</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else if (data) {
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card p-3">
+        <div class="text-muted small">Total personnel</div>
+        <div class="fs-3 fw-bold">{{ data.nbPersonnel }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3">
+        <div class="text-muted small">Total services</div>
+        <div class="fs-3 fw-bold">{{ data.nbServices }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small">Filtrer par direction</label>
+      <select class="form-select" [(ngModel)]="filtreDirection" (ngModelChange)="onFiltreChange()">
+        <option [ngValue]="null">Toutes</option>
+        @for (d of data.directions; track d.id) {
+          <option [ngValue]="d.id">{{ d.nom }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small">Filtrer par service</label>
+      <select class="form-select" [(ngModel)]="filtreService" (ngModelChange)="onFiltreChange()">
+        <option [ngValue]="null">Tous</option>
+        @for (s of data.services; track s.id) {
+          <option [ngValue]="s.id">{{ s.nom }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <h6>Répartition par direction</h6>
+        @for (entry of data.parDirection | keyvalue; track entry.key) {
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small">
+              <span>{{ entry.key }}</span>
+              <span>{{ entry.value.M }} H / {{ entry.value.F }} F</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar bg-primary" [style.width.%]="pourcentage(entry.value.M, entry.value.F)"></div>
+              <div class="progress-bar bg-info" [style.width.%]="100 - pourcentage(entry.value.M, entry.value.F)"></div>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card p-3">
+        <h6>Répartition par service</h6>
+        @for (entry of data.parService | keyvalue; track entry.key) {
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small">
+              <span>{{ entry.key }}</span>
+              <span>{{ entry.value.M }} H / {{ entry.value.F }} F</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar bg-primary" [style.width.%]="pourcentage(entry.value.M, entry.value.F)"></div>
+              <div class="progress-bar bg-info" [style.width.%]="100 - pourcentage(entry.value.M, entry.value.F)"></div>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </div>
+    </div>
+  </div>
+}

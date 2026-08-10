@@ -1,0 +1,57 @@
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (demande) {
+  <h5 class="mb-3">Traiter la demande de décision — {{ agentLabel() }}</h5>
+
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  <div class="card p-4" style="max-width: 700px;">
+    <dl class="row mb-3">
+      @if (demande.numeroDerniereDecision) {
+        <dt class="col-sm-4">Dernière décision connue</dt>
+        <dd class="col-sm-8">{{ demande.numeroDerniereDecision }}</dd>
+      }
+      @if (demande.motif) {
+        <dt class="col-sm-4">Motif</dt>
+        <dd class="col-sm-8">{{ demande.motif }}</dd>
+      }
+      @if (demande.pieces && demande.pieces.length > 0) {
+        <dt class="col-sm-4">Pièces jointes</dt>
+        <dd class="col-sm-8">{{ demande.pieces.length }} fichier(s)</dd>
+      }
+    </dl>
+
+    <form [formGroup]="form">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Numéro de décision (si approbation)</label>
+          <input type="text" class="form-control" formControlName="numero_decision" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date d'octroi (si approbation)</label>
+          <input type="date" class="form-control" formControlName="date_decision" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date d'expiration (si approbation)</label>
+          <input type="date" class="form-control" formControlName="date_expiration" />
+        </div>
+        <div class="col-12">
+          <label class="form-label">Commentaire</label>
+          <textarea class="form-control" rows="3" formControlName="commentaire"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <button type="button" class="btn btn-success" [disabled]="saving" (click)="approuver()">
+          <i class="bi bi-check-lg"></i> Approuver
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="saving" (click)="refuser()">
+          <i class="bi bi-x-lg"></i> Refuser
+        </button>
+        <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Annuler</a>
+      </div>
+    </form>
+  </div>
+}

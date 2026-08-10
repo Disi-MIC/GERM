@@ -14,6 +14,7 @@
         <tr>
             <th>Nom complet</th>
             <th>Email</th>
+            <th>Fiche agent liée</th>
             <th>Rôles</th>
             <th>Statut</th>
             <th class="text-end">Actions</th>
@@ -24,6 +25,13 @@
             <tr>
                 <td>{{ agent.nomComplet }}</td>
                 <td>{{ agent.email }}</td>
+                <td>
+                    {% if agent.personnel %}
+                        {{ agent.personnel.nomComplet }}
+                    {% else %}
+                        <span class="text-muted small">Non liée{{ 'ROLE_SUPERADMIN' in agent.roles ? '' : ' — compte invalide' }}</span>
+                    {% endif %}
+                </td>
                 <td>
                     {% for role in agent.roles %}
                         <span class="badge text-bg-light border">{{ role|replace({'ROLE_': ''}) }}</span>
@@ -39,7 +47,7 @@
                 </td>
             </tr>
         {% else %}
-            <tr><td colspan="5" class="text-center text-muted py-4">Aucun compte agent enregistré.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">Aucun compte agent enregistré.</td></tr>
         {% endfor %}
         </tbody>
     </table>

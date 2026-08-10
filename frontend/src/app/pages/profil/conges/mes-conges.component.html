@@ -1,0 +1,36 @@
+<h5 class="mb-3">Mes congés</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Type</th>
+          <th>Date début</th>
+          <th>Date fin</th>
+          <th>Durée</th>
+          <th>Motif</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (conge of conges; track conge.id) {
+          <tr>
+            <td><span class="badge text-bg-light border">{{ labelsType[conge.type] }}</span></td>
+            <td>{{ conge.dateDebut | slice: 0 : 10 }}</td>
+            <td>{{ conge.dateFin | slice: 0 : 10 }}</td>
+            <td>{{ conge.duree }} j</td>
+            <td>{{ conge.motif ?? '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">Aucun congé enregistré.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

@@ -27,7 +27,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * libre-service, ces demandes sont saisies et traitées (approuvées/refusées) par
  * le superadmin. Approuver crée la DecisionConge correspondante.
  */
-#[IsGranted('ROLE_RH_CONGE')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class DemandeDecisionController extends AbstractController
 {
     #[Route('/admin/demandes-decision', name: 'admin_demande_decision_index', methods: ['GET'])]

@@ -5,10 +5,16 @@ namespace App\Entity;
 use App\Entity\Enum\Carburant;
 use App\Repository\VehiculeRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Élément du parc automobile du Ministère.
+ *
+ * Pas de #[ApiResource] : la gestion complète reste Twig-only (superadmin),
+ * mais les champs non sensibles (hors valeur d'acquisition) portent
+ * #[Groups(['api:read'])] pour la vue en lecture seule "Mon parc automobile"
+ * exposée au chauffeur affecté via src/Controller/Api/MeController.php.
  */
 #[ORM\Entity(repositoryClass: VehiculeRepository::class)]
 #[ORM\Table(name: 'vehicule')]
@@ -18,54 +24,67 @@ class Vehicule
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 20)]
     #[Assert\NotBlank]
+    #[Groups(['api:read'])]
     private ?string $immatriculation = null;
 
     #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le type de véhicule est obligatoire.')]
+    #[Groups(['api:read'])]
     private ?ListeValeur $type = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
+    #[Groups(['api:read'])]
     private ?string $marque = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
+    #[Groups(['api:read'])]
     private ?string $modele = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['api:read'])]
     private ?string $numeroChassis = null;
 
     #[ORM\Column(length: 20, enumType: Carburant::class, nullable: true)]
+    #[Groups(['api:read'])]
     private ?Carburant $carburant = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $dateAcquisition = null;
 
     #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
     private ?string $valeurAcquisition = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['api:read'])]
     private ?int $kilometrage = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $assuranceJusquau = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $visiteTechniqueJusquau = null;
 
     #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: "L'état est obligatoire.")]
+    #[Groups(['api:read'])]
     private ?ListeValeur $etat = null;
 
     #[ORM\ManyToOne(targetEntity: Service::class, inversedBy: 'vehicules')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le service/direction est obligatoire.')]
+    #[Groups(['api:read'])]
     private ?Service $service = null;
 
     #[ORM\ManyToOne(targetEntity: Personnel::class, inversedBy: 'vehicules')]
@@ -73,9 +92,11 @@ class Vehicule
     private ?Personnel $chauffeurAffecte = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
     private ?string $observations = null;
 
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]

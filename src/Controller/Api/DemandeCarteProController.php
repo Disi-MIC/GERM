@@ -6,7 +6,9 @@ use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
 use App\Entity\DemandeCartePro;
 use App\Entity\Enum\StatutCarteProfessionnelle;
-use App\Entity\Enum\StatutDemande;
+use App\Entity\Enum\StatutDemandeCartePro;
+use App\Entity\Enum\TypeDemandeCartePro;
+use App\Entity\User;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,12 +21,19 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Traitement des demandes de carte professionnelle côté frontend Angular :
- * approuver (crée la CarteProfessionnelle correspondante) ou refuser, ainsi
- * que la pièce justificative associée. La création simple d'une demande passe
- * par l'opération Post native d'API Platform (aucun effet de bord) ; seul le
- * traitement, qui crée une carte, reste une action dédiée — même logique que
- * DemandeCarteProController::traiter() côté Twig.
+ * Traitement des demandes de carte professionnelle côté frontend Angular,
+ * ainsi que la pièce justificative associée. La création simple d'une
+ * demande passe par l'opération Post native d'API Platform (aucun effet de
+ * bord) ; le traitement reste une action dédiée, en trois étapes désormais :
+ *
+ *  - transmettre() : le RH Carte Pro vérifie les pièces et transmet au RH
+ *    Admin (aucune carte créée à ce stade) ;
+ *  - rejeter() : possible par le RH Carte Pro (avant transmission) ou par le
+ *    RH Admin (après transmission, filet de sécurité) ;
+ *  - approuver() : réservé au RH Admin, uniquement depuis l'état "transmise"
+ *    — crée la CarteProfessionnelle ET la valide dans la foulée (cachet/
+ *    signature déjà présents), les deux relevant désormais exclusivement de
+ *    son rôle.
  */
 #[IsGranted('ROLE_RH_CARTE_PRO')]
 class DemandeCarteProController extends AbstractController
@@ -36,54 +45,85 @@ class DemandeCarteProController extends AbstractController
     ) {
     }
 
-    #[Route('/api/demandes-carte-pro/{id}/traiter', name: 'api_demande_carte_pro_traiter', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function traiter(DemandeCartePro $demande, Request $request): JsonResponse
+    #[Route('/api/demandes-carte-pro/{id}/transmettre', name: 'api_demande_carte_pro_transmettre', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function transmettre(DemandeCartePro $demande): JsonResponse
     {
         if (!$demande->isEnAttente()) {
+            return $this->json(['errors' => ['statut' => 'Cette demande a déjà été transmise ou traitée.']], JsonResponse::HTTP_CONFLICT);
+        }
+
+        $demande->setStatut(StatutDemandeCartePro::TRANSMISE);
+        $this->em->flush();
+
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/demandes-carte-pro/{id}/rejeter', name: 'api_demande_carte_pro_rejeter', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function rejeter(DemandeCartePro $demande, Request $request): JsonResponse
+    {
+        if ($demande->isTransmise()) {
+            // Une fois transmise, seul le RH Admin peut encore rejeter (filet
+            // de sécurité) — le RH Carte Pro ne peut plus revenir dessus.
+            $this->denyAccessUnlessGranted('ROLE_ADMIN_RH');
+        } elseif (!$demande->isEnAttente()) {
             return $this->json(['errors' => ['statut' => 'Cette demande a déjà été traitée.']], JsonResponse::HTTP_CONFLICT);
         }
 
         $data = json_decode($request->getContent(), true) ?? [];
-        $decision = $data['decision'] ?? null;
-        $commentaire = $data['commentaire'] ?? null;
 
-        if ('approuver' === $decision) {
-            $numero = trim((string) ($data['numero'] ?? ''));
-            $dateDelivrance = isset($data['dateDelivrance'])
-                ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateDelivrance']) ?: null
-                : null;
+        $demande->setStatut(StatutDemandeCartePro::REFUSEE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $demande->setCommentaireTraitement($data['commentaire'] ?? null);
+        $this->em->flush();
 
-            if ('' === $numero || null === $dateDelivrance) {
-                return $this->json(['errors' => ['numero' => 'Merci de renseigner un numéro et une date de délivrance valides pour approuver.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
-            }
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
 
-            $nouvelleCarte = new CarteProfessionnelle();
-            $nouvelleCarte->setPersonnel($demande->getPersonnel());
-            $nouvelleCarte->setNumero($numero);
-            $nouvelleCarte->setDateDelivrance($dateDelivrance);
-            $nouvelleCarte->setStatut(StatutCarteProfessionnelle::VALIDE);
-            $this->pdfStockage->genererEtStocker($nouvelleCarte);
-            $this->em->persist($nouvelleCarte);
-
-            $demande->setCarteCreee($nouvelleCarte);
-            $demande->setStatut(StatutDemande::APPROUVEE);
-            $demande->setDateTraitement(new \DateTimeImmutable());
-            $demande->setCommentaireTraitement($commentaire);
-            $this->em->flush();
-
-            return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    #[Route('/api/demandes-carte-pro/{id}/approuver', name: 'api_demande_carte_pro_approuver', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_ADMIN_RH')]
+    public function approuver(DemandeCartePro $demande, Request $request): JsonResponse
+    {
+        if (!$demande->isTransmise()) {
+            return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être transmise par le RH Carte Pro avant de pouvoir être approuvée."]], JsonResponse::HTTP_CONFLICT);
         }
 
-        if ('refuser' === $decision) {
-            $demande->setStatut(StatutDemande::REFUSEE);
-            $demande->setDateTraitement(new \DateTimeImmutable());
-            $demande->setCommentaireTraitement($commentaire);
-            $this->em->flush();
-
-            return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+        // Pièce justificative obligatoire pour une nouvelle carte (prise de
+        // service ou contrat selon que l'agent a un matricule) ou un
+        // renouvellement (copie de l'ancienne carte) — la perte/vol reste
+        // libre, comme avant.
+        if (\in_array($demande->getTypeDemande(), [TypeDemandeCartePro::NOUVELLE, TypeDemandeCartePro::RENOUVELLEMENT], true) && null === $demande->getCheminFichier()) {
+            return $this->json(['errors' => ['fichier' => 'Merci de joindre la pièce justificative avant d\'approuver cette demande.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        return $this->json(['errors' => ['decision' => 'Décision invalide : "approuver" ou "refuser" attendu.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        $data = json_decode($request->getContent(), true) ?? [];
+        $numero = trim((string) ($data['numero'] ?? ''));
+        $dateDelivrance = isset($data['dateDelivrance'])
+            ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateDelivrance']) ?: null
+            : null;
+
+        if ('' === $numero || null === $dateDelivrance) {
+            return $this->json(['errors' => ['numero' => 'Merci de renseigner un numéro et une date de délivrance valides pour approuver.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        /** @var User $validateur */
+        $validateur = $this->getUser();
+
+        $nouvelleCarte = new CarteProfessionnelle();
+        $nouvelleCarte->setPersonnel($demande->getPersonnel());
+        $nouvelleCarte->setNumero($numero);
+        $nouvelleCarte->setDateDelivrance($dateDelivrance);
+        $nouvelleCarte->setStatut(StatutCarteProfessionnelle::VALIDE);
+        $nouvelleCarte->valider($validateur);
+        $this->pdfStockage->genererEtStocker($nouvelleCarte);
+        $this->em->persist($nouvelleCarte);
+
+        $demande->setCarteCreee($nouvelleCarte);
+        $demande->setStatut(StatutDemandeCartePro::APPROUVEE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $demande->setCommentaireTraitement($data['commentaire'] ?? null);
+        $this->em->flush();
+
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
 
     #[Route('/api/demandes-carte-pro/{id}/piece', name: 'api_demande_carte_pro_piece_upload', methods: ['POST'], requirements: ['id' => '\d+'])]

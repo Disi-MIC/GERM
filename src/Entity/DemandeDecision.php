@@ -2,58 +2,85 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Enum\StatutDemande;
 use App\Repository\DemandeDecisionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Demande de décision de congé : pour un agent qui n'en a jamais eu, ou dont la
  * dernière a expiré/atteint son terme. Approuver crée la DecisionConge correspondante ;
  * refuser la laisse comme trace, sans décision créée.
+ *
+ * Exposée en lecture seule côté API : les écritures (dont le traitement
+ * approuver/refuser, qui crée la DecisionConge) passent par
+ * src/Controller/Api/DemandeDecisionController.php.
  */
 #[ORM\Entity(repositoryClass: DemandeDecisionRepository::class)]
 #[ORM\Table(name: 'demande_decision')]
+#[ApiResource(
+    operations: [
+        new GetCollection(uriTemplate: '/demandes-decision', order: ['createdAt' => 'DESC']),
+        new Get(uriTemplate: '/demandes-decision/{id}'),
+    ],
+    security: "is_granted('ROLE_RH_CONGE')",
+    normalizationContext: ['groups' => ['api:read']],
+)]
 class DemandeDecision
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Personnel::class, inversedBy: 'demandesDecision')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
+    #[Groups(['api:read', 'api:write'])]
     private ?Personnel $personnel = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateDerniereDecision = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $numeroDerniereDecision = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $motif = null;
 
     #[ORM\Column(length: 20, enumType: StatutDemande::class)]
+    #[Groups(['api:read'])]
     private StatutDemande $statut = StatutDemande::EN_ATTENTE;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $dateTraitement = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
     private ?string $commentaireTraitement = null;
 
     #[ORM\ManyToOne(targetEntity: DecisionConge::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['api:read'])]
     private ?DecisionConge $decisionCreee = null;
 
     #[ORM\OneToMany(mappedBy: 'demande', targetEntity: PieceJustificativeDecision::class, cascade: ['persist'], orphanRemoval: true)]
+    #[Groups(['api:read'])]
     private Collection $pieces;
 
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
@@ -176,6 +203,7 @@ class DemandeDecision
         return $this->createdAt;
     }
 
+    #[Groups(['api:read'])]
     public function isEnAttente(): bool
     {
         return StatutDemande::EN_ATTENTE === $this->statut;

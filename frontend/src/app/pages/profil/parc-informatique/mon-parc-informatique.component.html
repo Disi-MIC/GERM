@@ -1,0 +1,38 @@
+<h5 class="mb-3">Mon parc informatique</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>N° inventaire</th>
+          <th>Type</th>
+          <th>Marque / Modèle</th>
+          <th>N° série</th>
+          <th>État</th>
+          <th>Garantie jusqu'au</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (materiel of materiels; track materiel.id) {
+          <tr>
+            <td>{{ materiel.numeroInventaire }}</td>
+            <td>{{ libelle(materiel.type) }}</td>
+            <td>{{ materiel.marque }} {{ materiel.modele }}</td>
+            <td>{{ materiel.numeroSerie ?? '—' }}</td>
+            <td><span class="badge text-bg-light border">{{ libelle(materiel.etat) }}</span></td>
+            <td>{{ materiel.garantieJusquau ? (materiel.garantieJusquau | slice: 0 : 10) : '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Aucun matériel informatique ne vous est affecté.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

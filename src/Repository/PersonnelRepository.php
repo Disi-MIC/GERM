@@ -36,6 +36,26 @@ class PersonnelRepository extends ServiceEntityRepository
     }
 
     /**
+     * Personnel sans compte de connexion lié, disponibles pour être rattachés à
+     * un nouveau compte agent — plus, en édition, le personnel actuellement lié
+     * (pour qu'il reste sélectionné dans le formulaire).
+     *
+     * @return Personnel[]
+     */
+    public function findDisponiblesPourCompte(?Personnel $inclureActuel = null): array
+    {
+        $qb = $this->createQueryBuilder('p')->orderBy('p.nom', 'ASC');
+
+        if ($inclureActuel) {
+            $qb->andWhere('p.user IS NULL OR p = :actuel')->setParameter('actuel', $inclureActuel);
+        } else {
+            $qb->andWhere('p.user IS NULL');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Personnel filtré par direction et/ou service, pour les statistiques du tableau de bord.
      * Si un service est précisé, il prévaut sur la direction.
      *

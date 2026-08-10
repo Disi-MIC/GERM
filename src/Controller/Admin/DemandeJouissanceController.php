@@ -28,7 +28,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * libre-service, ces demandes sont saisies et traitées (approuvées/refusées) par
  * le superadmin.
  */
-#[IsGranted('ROLE_RH_CONGE')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class DemandeJouissanceController extends AbstractController
 {
     #[Route('/admin/demandes-jouissance', name: 'admin_demande_jouissance_index', methods: ['GET'])]

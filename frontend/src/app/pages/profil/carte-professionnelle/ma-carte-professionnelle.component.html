@@ -1,0 +1,65 @@
+<h5 class="mb-3">Ma carte professionnelle</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <h6 class="text-muted text-uppercase small mb-2">Carte(s) délivrée(s)</h6>
+  <div class="card mb-4">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Numéro</th>
+          <th>Délivrance</th>
+          <th>Expiration</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (carte of cartes; track carte.id) {
+          <tr>
+            <td>{{ carte.numero }}</td>
+            <td>{{ carte.dateDelivrance | slice: 0 : 10 }}</td>
+            <td>{{ carte.dateExpiration ? (carte.dateExpiration | slice: 0 : 10) : '—' }}</td>
+            <td><span class="badge bg-{{ badgeClasseCarte(carte.statut) }}">{{ labelsStatutCarte[carte.statut] }}</span></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="text-center text-muted py-4">Aucune carte professionnelle délivrée.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h6 class="text-muted text-uppercase small mb-2">Historique des demandes</h6>
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Type</th>
+          <th>Statut</th>
+          <th>Créée le</th>
+          <th>Traitée le</th>
+          <th>Commentaire</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (demande of demandes; track demande.id) {
+          <tr>
+            <td>{{ labelsTypeDemande[demande.typeDemande] }}</td>
+            <td><span class="badge bg-{{ badgeClasseDemande(demande.statut) }}">{{ labelsStatutDemande[demande.statut ?? ''] }}</span></td>
+            <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
+            <td>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</td>
+            <td>{{ demande.commentaireTraitement ?? '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">Aucune demande de carte enregistrée.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

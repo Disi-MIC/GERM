@@ -1,0 +1,51 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Délégations</h5>
+  <a routerLink="/delegations/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouvelle délégation
+  </a>
+</div>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Délégant</th>
+          <th>Délégataire</th>
+          <th>Rôle délégué</th>
+          <th>Période</th>
+          <th>Statut</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (delegation of delegations; track delegation.id) {
+          <tr>
+            <td>{{ userLabel(delegation.delegant) }}</td>
+            <td>{{ userLabel(delegation.delegataire) }}</td>
+            <td>{{ labelsRole[delegation.roleDelegue] }}</td>
+            <td>{{ delegation.dateDebut }} — {{ delegation.dateFin }}</td>
+            <td>
+              <span class="badge bg-{{ delegation.statutAffiche?.badgeClass }}">{{ delegation.statutAffiche?.label }}</span>
+            </td>
+            <td class="text-end">
+              @if (delegation.statut === 'active') {
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="revoquer(delegation)">
+                  <i class="bi bi-x-circle"></i> Révoquer
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Aucune délégation.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

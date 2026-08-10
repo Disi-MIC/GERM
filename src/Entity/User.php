@@ -2,23 +2,45 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Compte de connexion d'un agent (accès à l'application GERM).
- * Distinct de la fiche "Personnel" (RH) : un agent peut avoir un compte
- * de connexion lié à sa fiche personnel, mais ce n'est pas obligatoire
- * (ex: un compte superadmin technique).
+ * Distinct de la fiche "Personnel" (RH), mais lié à elle : la règle métier
+ * (imposée par src/Controller/Admin/UserController.php, seul point d'écriture
+ * — voir Personnel::$user pour le côté propriétaire de la relation) impose
+ * qu'un compte soit toujours rattaché à une fiche personnel, à l'exception
+ * du compte super administrateur (ROLE_SUPERADMIN), qui reste un compte
+ * technique optionnellement rattachable.
+ *
+ * Exposition API strictement minimale (id/email/actif/nomComplet, jamais
+ * roles/password) — uniquement pour peupler le sélecteur "délégataire" du
+ * module Délégation. Lecture seule, aucune écriture native ou custom.
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_USER_EMAIL', columns: ['email'])]
+#[ApiResource(
+    operations: [
+        new GetCollection(uriTemplate: '/users', order: ['nom' => 'ASC']),
+        new Get(uriTemplate: '/users/{id}'),
+    ],
+    security: "is_granted('ROLE_ADMIN_RH')",
+    normalizationContext: ['groups' => ['api:read']],
+)]
+#[ApiFilter(BooleanFilter::class, properties: ['actif'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const ROLE_AGENT = 'ROLE_AGENT';
@@ -32,11 +54,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank]
     #[Assert\Email]
+    #[Groups(['api:read'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -173,11 +197,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['api:read'])]
     public function getNomComplet(): string
     {
         return trim(sprintf('%s %s', $this->prenom, $this->nom));
     }
 
+    #[Groups(['api:read'])]
     public function isActif(): ?bool
     {
         return $this->actif;

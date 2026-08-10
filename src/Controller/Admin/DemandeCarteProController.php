@@ -6,8 +6,10 @@ use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
 use App\Entity\DemandeCartePro;
 use App\Entity\Enum\StatutCarteProfessionnelle;
-use App\Entity\Enum\StatutDemande;
+use App\Entity\Enum\StatutDemandeCartePro;
+use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\Personnel;
+use App\Entity\User;
 use App\Form\DemandeCarteProType;
 use App\Repository\DemandeCarteProRepository;
 use App\Repository\PersonnelRepository;
@@ -47,13 +49,13 @@ class DemandeCarteProController extends AbstractController
             ? $personnelRepository->find($request->query->get('personnel'))
             : null;
         $filtreStatut = $request->query->get('statut')
-            ? StatutDemande::tryFrom($request->query->get('statut'))
+            ? StatutDemandeCartePro::tryFrom($request->query->get('statut'))
             : null;
 
         return $this->render('admin/demande_carte_pro/index.html.twig', [
             'demandes' => $demandeRepository->search($filtrePersonnel, $filtreStatut),
             'personnels' => $personnelRepository->search(null),
-            'statuts' => StatutDemande::cases(),
+            'statuts' => StatutDemandeCartePro::cases(),
             'filtre_personnel' => $filtrePersonnel,
             'filtre_statut' => $filtreStatut,
         ]);
@@ -107,69 +109,124 @@ class DemandeCarteProController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/demande-carte-pro/{id}/traiter', name: 'admin_demande_carte_pro_traiter', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function traiter(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
+    #[Route('/admin/demande-carte-pro/{id}/traiter', name: 'admin_demande_carte_pro_traiter', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function traiter(DemandeCartePro $demande): Response
     {
-        if (!$demande->isEnAttente()) {
+        if (!$demande->isEnAttente() && !$demande->isTransmise()) {
             $this->addFlash('danger', 'Cette demande a déjà été traitée.');
 
             return $this->redirectToRoute('admin_demande_carte_pro_index');
         }
 
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('traiter-demande-carte-pro-'.$demande->getId(), $request->request->get('_token'))) {
-                $this->addFlash('danger', 'Jeton de sécurité invalide, merci de réessayer.');
-
-                return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
-            }
-
-            $decisionAction = $request->request->get('decision');
-            $commentaire = $request->request->get('commentaire') ?: null;
-
-            if ('approuver' === $decisionAction) {
-                $numero = trim((string) $request->request->get('numero'));
-                $dateDelivrance = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $request->request->get('date_delivrance')) ?: null;
-
-                if ('' === $numero || null === $dateDelivrance) {
-                    $this->addFlash('danger', 'Merci de renseigner un numéro et une date de délivrance valides pour approuver.');
-
-                    return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
-                }
-
-                $nouvelleCarte = new CarteProfessionnelle();
-                $nouvelleCarte->setPersonnel($demande->getPersonnel());
-                $nouvelleCarte->setNumero($numero);
-                $nouvelleCarte->setDateDelivrance($dateDelivrance);
-                $nouvelleCarte->setStatut(StatutCarteProfessionnelle::VALIDE);
-                $pdfStockage->genererEtStocker($nouvelleCarte);
-                $em->persist($nouvelleCarte);
-
-                $demande->setCarteCreee($nouvelleCarte);
-                $demande->setStatut(StatutDemande::APPROUVEE);
-                $demande->setDateTraitement(new \DateTimeImmutable());
-                $demande->setCommentaireTraitement($commentaire);
-                $em->flush();
-
-                $this->addFlash('success', 'Demande approuvée, la carte professionnelle a été enregistrée.');
-
-                return $this->redirectToRoute('admin_demande_carte_pro_index');
-            }
-
-            if ('refuser' === $decisionAction) {
-                $demande->setStatut(StatutDemande::REFUSEE);
-                $demande->setDateTraitement(new \DateTimeImmutable());
-                $demande->setCommentaireTraitement($commentaire);
-                $em->flush();
-
-                $this->addFlash('success', 'Demande refusée.');
-
-                return $this->redirectToRoute('admin_demande_carte_pro_index');
-            }
-        }
-
         return $this->render('admin/demande_carte_pro/traiter.html.twig', [
             'demande' => $demande,
         ]);
+    }
+
+    #[Route('/admin/demande-carte-pro/{id}/transmettre', name: 'admin_demande_carte_pro_transmettre', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function transmettre(DemandeCartePro $demande, Request $request, EntityManagerInterface $em): Response
+    {
+        if (!$this->isCsrfTokenValid('traiter-demande-carte-pro-'.$demande->getId(), $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton de sécurité invalide, merci de réessayer.');
+
+            return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
+        }
+
+        if (!$demande->isEnAttente()) {
+            $this->addFlash('danger', 'Cette demande a déjà été transmise ou traitée.');
+
+            return $this->redirectToRoute('admin_demande_carte_pro_index');
+        }
+
+        $demande->setStatut(StatutDemandeCartePro::TRANSMISE);
+        $em->flush();
+
+        $this->addFlash('success', 'Demande transmise au RH Admin.');
+
+        return $this->redirectToRoute('admin_demande_carte_pro_index');
+    }
+
+    #[Route('/admin/demande-carte-pro/{id}/rejeter', name: 'admin_demande_carte_pro_rejeter', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function rejeter(DemandeCartePro $demande, Request $request, EntityManagerInterface $em): Response
+    {
+        if (!$this->isCsrfTokenValid('traiter-demande-carte-pro-'.$demande->getId(), $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton de sécurité invalide, merci de réessayer.');
+
+            return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
+        }
+
+        if ($demande->isTransmise()) {
+            // Une fois transmise, seul le RH Admin peut encore rejeter (filet
+            // de sécurité) — le RH Carte Pro ne peut plus revenir dessus.
+            $this->denyAccessUnlessGranted('ROLE_ADMIN_RH');
+        } elseif (!$demande->isEnAttente()) {
+            $this->addFlash('danger', 'Cette demande a déjà été traitée.');
+
+            return $this->redirectToRoute('admin_demande_carte_pro_index');
+        }
+
+        $demande->setStatut(StatutDemandeCartePro::REFUSEE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $demande->setCommentaireTraitement($request->request->get('commentaire') ?: null);
+        $em->flush();
+
+        $this->addFlash('success', 'Demande refusée.');
+
+        return $this->redirectToRoute('admin_demande_carte_pro_index');
+    }
+
+    #[Route('/admin/demande-carte-pro/{id}/approuver', name: 'admin_demande_carte_pro_approuver', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_ADMIN_RH')]
+    public function approuver(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
+    {
+        if (!$this->isCsrfTokenValid('traiter-demande-carte-pro-'.$demande->getId(), $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton de sécurité invalide, merci de réessayer.');
+
+            return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
+        }
+
+        if (!$demande->isTransmise()) {
+            $this->addFlash('danger', "Cette demande doit d'abord être transmise avant de pouvoir être approuvée.");
+
+            return $this->redirectToRoute('admin_demande_carte_pro_index');
+        }
+
+        if (\in_array($demande->getTypeDemande(), [TypeDemandeCartePro::NOUVELLE, TypeDemandeCartePro::RENOUVELLEMENT], true) && !$demande->getCheminFichier()) {
+            $this->addFlash('danger', "Merci de joindre la pièce justificative avant d'approuver cette demande.");
+
+            return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
+        }
+
+        $numero = trim((string) $request->request->get('numero'));
+        $dateDelivrance = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $request->request->get('date_delivrance')) ?: null;
+
+        if ('' === $numero || null === $dateDelivrance) {
+            $this->addFlash('danger', 'Merci de renseigner un numéro et une date de délivrance valides pour approuver.');
+
+            return $this->redirectToRoute('admin_demande_carte_pro_traiter', ['id' => $demande->getId()]);
+        }
+
+        /** @var User $validateur */
+        $validateur = $this->getUser();
+
+        $nouvelleCarte = new CarteProfessionnelle();
+        $nouvelleCarte->setPersonnel($demande->getPersonnel());
+        $nouvelleCarte->setNumero($numero);
+        $nouvelleCarte->setDateDelivrance($dateDelivrance);
+        $nouvelleCarte->setStatut(StatutCarteProfessionnelle::VALIDE);
+        $nouvelleCarte->valider($validateur);
+        $pdfStockage->genererEtStocker($nouvelleCarte);
+        $em->persist($nouvelleCarte);
+
+        $demande->setCarteCreee($nouvelleCarte);
+        $demande->setStatut(StatutDemandeCartePro::APPROUVEE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $demande->setCommentaireTraitement($request->request->get('commentaire') ?: null);
+        $em->flush();
+
+        $this->addFlash('success', 'Demande approuvée, la carte professionnelle a été créée et validée.');
+
+        return $this->redirectToRoute('admin_demande_carte_pro_index');
     }
 
     #[Route('/admin/demande-carte-pro/{id}/delete', name: 'admin_demande_carte_pro_delete', methods: ['POST'], requirements: ['id' => '\d+'])]

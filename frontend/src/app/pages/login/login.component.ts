@@ -26,13 +26,9 @@ export class LoginComponent {
     this.submitting = true;
 
     this.auth.login(this.email, this.password).subscribe({
-      next: (user) => {
+      next: () => {
         this.submitting = false;
-        if (user.roles.includes('ROLE_RH_PERSONNEL')) {
-          this.router.navigateByUrl('/personnel');
-        } else {
-          this.router.navigateByUrl('/acces-refuse');
-        }
+        this.router.navigateByUrl('/');
       },
       error: () => {
         this.submitting = false;

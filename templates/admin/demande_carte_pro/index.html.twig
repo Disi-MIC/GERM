@@ -52,11 +52,13 @@
                 <td>{{ demande.typeDemande.label }}</td>
                 <td>{{ demande.carteReference ? demande.carteReference.numero : '-' }}</td>
                 <td>
-                    <span class="badge text-bg-{{ demande.statut.value == 'approuvee' ? 'success' : (demande.statut.value == 'refusee' ? 'danger' : 'warning') }}">{{ demande.statut.label }}</span>
+                    <span class="badge text-bg-{{ demande.statut.value == 'approuvee' ? 'success' : (demande.statut.value == 'refusee' ? 'danger' : (demande.statut.value == 'transmise' ? 'info' : 'warning')) }}">{{ demande.statut.label }}</span>
                 </td>
                 <td class="text-end">
-                    {% if demande.enAttente %}
+                    {% if demande.enAttente or demande.transmise %}
                         <a href="{{ path('admin_demande_carte_pro_traiter', {id: demande.id}) }}" class="btn btn-sm btn-primary">Traiter</a>
+                    {% endif %}
+                    {% if demande.enAttente %}
                         <form method="post" action="{{ path('admin_demande_carte_pro_delete', {id: demande.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette demande ?');">
                             <input type="hidden" name="_token" value="{{ csrf_token('delete-demande-carte-pro-' ~ demande.id) }}">
                             <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>

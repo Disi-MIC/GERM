@@ -1,0 +1,55 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Gestion des congés</h5>
+  <div class="d-flex gap-2">
+    <a routerLink="/conges/decisions" class="btn btn-outline-secondary btn-sm">Décisions de congé</a>
+    <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary btn-sm">Demandes de décision</a>
+    <a routerLink="/conges/demandes-jouissance" class="btn btn-outline-secondary btn-sm">Demandes de jouissance</a>
+    <a routerLink="/conges/new" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Nouveau congé
+    </a>
+  </div>
+</div>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Agent</th>
+          <th>Type</th>
+          <th>Début</th>
+          <th>Fin</th>
+          <th>Durée</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (conge of conges; track conge.id) {
+          <tr>
+            <td>{{ agentLabel(conge) }}</td>
+            <td>{{ labelsType[conge.type] }}</td>
+            <td>{{ conge.dateDebut | slice: 0 : 10 }}</td>
+            <td>{{ conge.dateFin | slice: 0 : 10 }}</td>
+            <td>{{ conge.duree }} j.</td>
+            <td class="text-end">
+              <a [routerLink]="['/conges', conge.id, 'edit']" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(conge)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Aucun congé.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

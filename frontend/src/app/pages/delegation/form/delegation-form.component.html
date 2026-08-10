@@ -1,0 +1,50 @@
+<h5 class="mb-3">Nouvelle délégation</h5>
+
+@if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+  <div class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Délégataire</label>
+      <select class="form-select" formControlName="delegataire">
+        <option [ngValue]="null">Sélectionner...</option>
+        @for (user of users; track user.id) {
+          <option [ngValue]="user.id">{{ user.nomComplet }} ({{ user.email }})</option>
+        }
+      </select>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Rôle à déléguer</label>
+      <select class="form-select" formControlName="roleDelegue">
+        <option value="ROLE_ADMIN_RH">Administrateur RH (accès global)</option>
+        <option value="ROLE_RH_PERSONNEL">Gestion du personnel</option>
+        <option value="ROLE_RH_CONGE">Gestion des congés</option>
+        <option value="ROLE_RH_CARTE_PRO">Gestion des cartes professionnelles</option>
+      </select>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Date de début</label>
+      <input type="date" class="form-control" formControlName="dateDebut" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Date de fin</label>
+      <input type="date" class="form-control" formControlName="dateFin" />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Motif</label>
+      <textarea class="form-control" rows="3" formControlName="motif"></textarea>
+    </div>
+  </div>
+
+  <div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary" [disabled]="saving">
+      <i class="bi bi-check-lg"></i> Enregistrer
+    </button>
+    <a routerLink="/delegations" class="btn btn-outline-secondary">Annuler</a>
+  </div>
+</form>

@@ -7,10 +7,26 @@
     <div class="alert alert-danger">{{ error }}</div>
   }
 
+  @if (personnelId) {
+    <div class="card p-3 mb-3 d-flex flex-row align-items-center gap-3" style="max-width: 700px;">
+      @if (hasPhoto) {
+        <img [src]="photoUrl()" alt="Photo" class="rounded-circle" style="width: 72px; height: 72px; object-fit: cover;" />
+      } @else {
+        <div class="rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+          <i class="bi bi-person fs-3 text-muted"></i>
+        </div>
+      }
+      <div>
+        <label class="form-label small mb-1 d-block">Photo</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" [disabled]="uploadingPhoto" (change)="onPhotoChange($event)" />
+      </div>
+    </div>
+  }
+
   <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
     <div class="row g-3">
       <div class="col-md-4">
-        <label class="form-label">Matricule</label>
+        <label class="form-label">Matricule (optionnel pour un agent en attente d'affectation)</label>
         <input type="text" class="form-control" formControlName="matricule" />
       </div>
       <div class="col-md-4">
@@ -99,6 +115,11 @@
         <i class="bi bi-check-lg"></i> Enregistrer
       </button>
       <a routerLink="/personnel" class="btn btn-outline-secondary">Annuler</a>
+      @if (personnelId) {
+        <button type="button" class="btn btn-outline-danger ms-auto" (click)="supprimer()">
+          <i class="bi bi-trash"></i> Supprimer
+        </button>
+      }
     </div>
   </form>
 }

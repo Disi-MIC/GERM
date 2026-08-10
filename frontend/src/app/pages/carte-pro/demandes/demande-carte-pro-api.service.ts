@@ -4,13 +4,6 @@ import { Observable } from 'rxjs';
 import { API_BASE } from '../../../core/api-base';
 import { DemandeCartePro } from '../../../core/models/demande-carte-pro.model';
 
-export interface TraiterPayload {
-  decision: 'approuver' | 'refuser';
-  commentaire?: string | null;
-  numero?: string;
-  dateDelivrance?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class DemandeCarteProApiService {
   constructor(private readonly http: HttpClient) {}
@@ -27,8 +20,23 @@ export class DemandeCarteProApiService {
     return this.http.post<DemandeCartePro>(`${API_BASE}/demandes-carte-pro`, demande);
   }
 
-  traiter(id: number, payload: TraiterPayload): Observable<DemandeCartePro> {
-    return this.http.post<DemandeCartePro>(`${API_BASE}/demandes-carte-pro/${id}/traiter`, payload);
+  /** RH Carte Pro : transmet la demande (vérifiée) au RH Admin. */
+  transmettre(id: number): Observable<DemandeCartePro> {
+    return this.http.post<DemandeCartePro>(`${API_BASE}/demandes-carte-pro/${id}/transmettre`, {});
+  }
+
+  /** RH Carte Pro (avant transmission) ou RH Admin (après transmission). */
+  rejeter(id: number, commentaire?: string | null): Observable<DemandeCartePro> {
+    return this.http.post<DemandeCartePro>(`${API_BASE}/demandes-carte-pro/${id}/rejeter`, { commentaire });
+  }
+
+  /** RH Admin uniquement, depuis l'état "transmise" — crée ET valide la carte. */
+  approuver(id: number, numero: string, dateDelivrance: string, commentaire?: string | null): Observable<DemandeCartePro> {
+    return this.http.post<DemandeCartePro>(`${API_BASE}/demandes-carte-pro/${id}/approuver`, {
+      numero,
+      dateDelivrance,
+      commentaire,
+    });
   }
 
   uploadPiece(id: number, fichier: File): Observable<DemandeCartePro> {

@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,6 +26,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
+        #[Autowire('%env(FRONTEND_URL)%')] private readonly string $frontendUrl,
     ) {
     }
 
@@ -49,28 +51,21 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             return new RedirectResponse($targetPath);
         }
 
-        return new RedirectResponse($this->urlGenerator->generate($this->routeAccueilPourRole()));
+        return new RedirectResponse($this->urlApresConnexion());
     }
 
     /**
-     * Choisit la page d'accueil selon le rôle : la hiérarchie de sécurité fait
-     * que ROLE_RH_PERSONNEL est déjà accordé aux superadmins/admins RH, donc
-     * ce premier test les couvre aussi. Le module Carte professionnelle a été
-     * retiré de Twig pour ROLE_RH_CARTE_PRO/ROLE_ADMIN_RH (bascule Angular) :
-     * plus de redirection vers admin_carte_professionnelle_index, qui
-     * renverrait un 403 pour ces comptes désormais.
+     * Tous les modules RH ont été retirés de Twig (bascule Angular) : seul
+     * ROLE_SUPERADMIN garde un accès de secours au tableau de bord Twig,
+     * tout le reste (rôles RH, agents sans rôle métier) est redirigé
+     * directement vers le frontend Angular. Même logique dupliquée dans
+     * SecurityController::login() pour le raccourci "déjà connecté".
      */
-    private function routeAccueilPourRole(): string
+    private function urlApresConnexion(): string
     {
-        if ($this->authorizationChecker->isGranted('ROLE_RH_PERSONNEL')) {
-            return 'admin_dashboard_personnel';
-        }
-
-        if ($this->authorizationChecker->isGranted('ROLE_RH_CONGE')) {
-            return 'admin_conge_index';
-        }
-
-        return 'admin_no_access';
+        return $this->authorizationChecker->isGranted('ROLE_SUPERADMIN')
+            ? $this->urlGenerator->generate('admin_dashboard_personnel')
+            : $this->frontendUrl;
     }
 
     protected function getLoginUrl(Request $request): string

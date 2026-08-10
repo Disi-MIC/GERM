@@ -1,0 +1,42 @@
+<h5 class="mb-3">Mon parc automobile</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Immatriculation</th>
+          <th>Type</th>
+          <th>Marque / Modèle</th>
+          <th>Carburant</th>
+          <th>État</th>
+          <th>Kilométrage</th>
+          <th>Assurance jusqu'au</th>
+          <th>Visite technique jusqu'au</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (vehicule of vehicules; track vehicule.id) {
+          <tr>
+            <td>{{ vehicule.immatriculation }}</td>
+            <td>{{ libelle(vehicule.type) }}</td>
+            <td>{{ vehicule.marque }} {{ vehicule.modele }}</td>
+            <td>{{ vehicule.carburant ? labelsCarburant[vehicule.carburant] : '—' }}</td>
+            <td><span class="badge text-bg-light border">{{ libelle(vehicule.etat) }}</span></td>
+            <td>{{ vehicule.kilometrage ?? '—' }}</td>
+            <td>{{ vehicule.assuranceJusquau ? (vehicule.assuranceJusquau | slice: 0 : 10) : '—' }}</td>
+            <td>{{ vehicule.visiteTechniqueJusquau ? (vehicule.visiteTechniqueJusquau | slice: 0 : 10) : '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="text-center text-muted py-4">Aucun véhicule ne vous est affecté.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

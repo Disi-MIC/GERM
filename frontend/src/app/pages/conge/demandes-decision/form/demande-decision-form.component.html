@@ -1,0 +1,49 @@
+<h5 class="mb-3">Nouvelle demande de décision de congé</h5>
+
+@if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+  <div class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Agent</label>
+      <select class="form-select" formControlName="personnel">
+        <option [ngValue]="null">Sélectionner...</option>
+        @for (personnel of personnels; track personnel.id) {
+          <option [ngValue]="personnel.id">{{ personnel.nomComplet ?? personnel.matricule }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Numéro de la dernière décision (si connue)</label>
+      <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Date de la dernière décision (si connue)</label>
+      <input type="date" class="form-control" formControlName="dateDerniereDecision" />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Motif</label>
+      <textarea class="form-control" rows="3" formControlName="motif"></textarea>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Pièce justificative 1</label>
+      <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichier1Change($event)" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Pièce justificative 2</label>
+      <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichier2Change($event)" />
+    </div>
+  </div>
+
+  <div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary" [disabled]="saving">
+      <i class="bi bi-check-lg"></i> Enregistrer
+    </button>
+    <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Annuler</a>
+  </div>
+</form>

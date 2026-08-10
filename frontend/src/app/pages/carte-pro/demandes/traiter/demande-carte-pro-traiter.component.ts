@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/auth.service';
 import { DemandeCartePro } from '../../../../core/models/demande-carte-pro.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { DemandeCarteProApiService } from '../demande-carte-pro-api.service';
@@ -35,6 +36,7 @@ export class DemandeCarteProTraiterComponent implements OnInit {
     private readonly api: DemandeCarteProApiService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    readonly auth: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +65,30 @@ export class DemandeCarteProTraiterComponent implements OnInit {
     return personnel.nomComplet ?? `${personnel.prenom} ${personnel.nom}`;
   }
 
+  /** Le RH Admin approuve depuis "transmise" ; le RH Carte Pro transmet/rejette depuis "en_attente". */
+  peutApprouver(): boolean {
+    return !!this.demande?.transmise && this.auth.hasRole('ROLE_ADMIN_RH');
+  }
+
+  /** Transmettre/rejeter depuis "en_attente" : réservé au profil RH Carte Pro, pas au RH Admin. */
+  peutTransmettreOuRejeter(): boolean {
+    return !!this.demande?.enAttente && this.auth.hasRole('ROLE_RH_CARTE_PRO');
+  }
+
+  transmettre(): void {
+    if (!this.demande?.id) {
+      return;
+    }
+    this.saving = true;
+    this.api.transmettre(this.demande.id).subscribe({
+      next: () => this.router.navigateByUrl('/cartes-professionnelles/demandes'),
+      error: (err) => {
+        this.saving = false;
+        this.error = err?.error?.errors?.statut ?? 'Erreur lors de la transmission de la demande.';
+      },
+    });
+  }
+
   approuver(): void {
     if (!this.demande?.id) {
       return;
@@ -74,37 +100,28 @@ export class DemandeCarteProTraiterComponent implements OnInit {
     }
 
     this.saving = true;
-    this.api
-      .traiter(this.demande.id, {
-        decision: 'approuver',
-        commentaire: raw.commentaire || null,
-        numero: raw.numero.trim(),
-        dateDelivrance: raw.dateDelivrance,
-      })
-      .subscribe({
-        next: () => this.router.navigateByUrl('/cartes-professionnelles/demandes'),
-        error: () => {
-          this.saving = false;
-          this.error = "Erreur lors de l'approbation de la demande.";
-        },
-      });
+    this.api.approuver(this.demande.id, raw.numero.trim(), raw.dateDelivrance, raw.commentaire || null).subscribe({
+      next: () => this.router.navigateByUrl('/cartes-professionnelles/demandes'),
+      error: (err) => {
+        this.saving = false;
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'approbation de la demande.";
+      },
+    });
   }
 
-  refuser(): void {
+  rejeter(): void {
     if (!this.demande?.id) {
       return;
     }
     const raw = this.form.getRawValue();
 
     this.saving = true;
-    this.api
-      .traiter(this.demande.id, { decision: 'refuser', commentaire: raw.commentaire || null })
-      .subscribe({
-        next: () => this.router.navigateByUrl('/cartes-professionnelles/demandes'),
-        error: () => {
-          this.saving = false;
-          this.error = 'Erreur lors du refus de la demande.';
-        },
-      });
+    this.api.rejeter(this.demande.id, raw.commentaire || null).subscribe({
+      next: () => this.router.navigateByUrl('/cartes-professionnelles/demandes'),
+      error: (err) => {
+        this.saving = false;
+        this.error = err?.error?.errors?.statut ?? 'Erreur lors du rejet de la demande.';
+      },
+    });
   }
 }

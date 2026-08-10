@@ -1,0 +1,73 @@
+<h5 class="mb-3">Nouveau mouvement de carrière</h5>
+
+@if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+  <div class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Agent</label>
+      <select class="form-select" formControlName="personnel">
+        <option [ngValue]="null">Sélectionner...</option>
+        @for (personnel of personnels; track personnel.id) {
+          <option [ngValue]="personnel.id">{{ personnel.nomComplet ?? personnel.matricule }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Type de mouvement</label>
+      <select class="form-select" formControlName="typeMouvement">
+        <option value="nomination">Nomination</option>
+        <option value="mutation">Mutation</option>
+        <option value="promotion">Promotion</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Date d'effet</label>
+      <input type="date" class="form-control" formControlName="dateEffet" />
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Service</label>
+      <select class="form-select" formControlName="service">
+        <option [ngValue]="null">Sélectionner...</option>
+        @for (service of services; track service.id) {
+          <option [ngValue]="service.id">{{ service.nom }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Fonction</label>
+      <input type="text" class="form-control" formControlName="fonction" />
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Grade</label>
+      <input type="text" class="form-control" formControlName="grade" />
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Numéro de décision</label>
+      <input type="text" class="form-control" formControlName="numeroDecision" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Date de décision</label>
+      <input type="date" class="form-control" formControlName="dateDecision" />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Observations</label>
+      <textarea class="form-control" rows="3" formControlName="observations"></textarea>
+    </div>
+  </div>
+
+  <div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary" [disabled]="saving">
+      <i class="bi bi-check-lg"></i> Enregistrer
+    </button>
+    <a routerLink="/carrieres" class="btn btn-outline-secondary">Annuler</a>
+  </div>
+</form>

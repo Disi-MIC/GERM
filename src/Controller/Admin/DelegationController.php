@@ -19,7 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * hiérarchie de rôles) : un titulaire d'un seul rôle rubrique ne peut pas
  * déléguer lui-même.
  */
-#[IsGranted('ROLE_ADMIN_RH')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class DelegationController extends AbstractController
 {
     #[Route('/admin/delegations', name: 'admin_delegation_index', methods: ['GET'])]

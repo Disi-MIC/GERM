@@ -18,9 +18,11 @@ export class PersonnelDetailComponent implements OnInit {
   loading = true;
   saving = false;
   error: string | null = null;
+  hasPhoto = false;
+  uploadingPhoto = false;
 
   form = this.fb.nonNullable.group({
-    matricule: ['', Validators.required],
+    matricule: [''],
     nom: ['', Validators.required],
     prenom: ['', Validators.required],
     sexe: ['M', Validators.required],
@@ -57,7 +59,7 @@ export class PersonnelDetailComponent implements OnInit {
       this.api.getOne(this.personnelId).subscribe({
         next: (personnel) => {
           this.form.patchValue({
-            matricule: personnel.matricule,
+            matricule: personnel.matricule ?? '',
             nom: personnel.nom,
             prenom: personnel.prenom,
             sexe: personnel.sexe,
@@ -74,6 +76,7 @@ export class PersonnelDetailComponent implements OnInit {
             adresse: personnel.adresse ?? '',
             observations: personnel.observations ?? '',
           });
+          this.hasPhoto = personnel.hasPhoto ?? false;
           this.loading = false;
         },
         error: () => {
@@ -94,7 +97,7 @@ export class PersonnelDetailComponent implements OnInit {
 
     const raw = this.form.getRawValue();
     const payload: Personnel = {
-      matricule: raw.matricule,
+      matricule: raw.matricule || null,
       nom: raw.nom,
       prenom: raw.prenom,
       sexe: raw.sexe as 'M' | 'F',
@@ -121,6 +124,46 @@ export class PersonnelDetailComponent implements OnInit {
       error: () => {
         this.saving = false;
         this.error = "Erreur lors de l'enregistrement.";
+      },
+    });
+  }
+
+  photoUrl(): string {
+    return this.personnelId ? this.api.photoUrl(this.personnelId) : '';
+  }
+
+  onPhotoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const fichier = input.files?.[0];
+    if (!fichier || !this.personnelId) {
+      return;
+    }
+
+    this.uploadingPhoto = true;
+    this.api.uploadPhoto(this.personnelId, fichier).subscribe({
+      next: () => {
+        this.uploadingPhoto = false;
+        this.hasPhoto = true;
+      },
+      error: () => {
+        this.uploadingPhoto = false;
+        this.error = "Erreur lors de l'envoi de la photo.";
+      },
+    });
+  }
+
+  supprimer(): void {
+    if (!this.personnelId) {
+      return;
+    }
+    if (!confirm('Supprimer cette fiche personnel ? Cette action est irréversible.')) {
+      return;
+    }
+
+    this.api.delete(this.personnelId).subscribe({
+      next: () => this.router.navigateByUrl('/personnel'),
+      error: (err) => {
+        this.error = err?.error?.errors?.personnel ?? 'Erreur lors de la suppression.';
       },
     });
   }

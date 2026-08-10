@@ -2,7 +2,7 @@ import { CarteProfessionnelle } from './carte-professionnelle.model';
 import { Personnel } from './personnel.model';
 
 export type TypeDemandeCartePro = 'nouvelle' | 'renouvellement' | 'perte_vol';
-export type StatutDemande = 'en_attente' | 'approuvee' | 'refusee';
+export type StatutDemandeCartePro = 'en_attente' | 'transmise' | 'approuvee' | 'refusee';
 
 export interface DemandeCartePro {
   id?: number;
@@ -10,11 +10,12 @@ export interface DemandeCartePro {
   typeDemande: TypeDemandeCartePro;
   carteReference?: CarteProfessionnelle | string | null;
   motif?: string | null;
-  statut?: StatutDemande;
+  statut?: StatutDemandeCartePro;
   dateTraitement?: string | null;
   commentaireTraitement?: string | null;
   carteCreee?: CarteProfessionnelle | string | null;
   nomOriginal?: string | null;
   createdAt?: string;
   enAttente?: boolean;
+  transmise?: boolean;
 }

@@ -21,31 +21,58 @@
         </dd>
     </dl>
 
-    <form method="post">
-        <input type="hidden" name="_token" value="{{ csrf_token('traiter-demande-carte-pro-' ~ demande.id) }}">
-
-        <div class="border rounded p-3 mb-3">
-            <p class="small text-muted mb-2">Champs requis uniquement si vous approuvez la demande :</p>
-            <div class="mb-2">
-                <label for="numero" class="form-label">Numéro de carte</label>
-                <input type="text" name="numero" id="numero" class="form-control">
-            </div>
-            <div class="mb-0">
-                <label for="date_delivrance" class="form-label">Date de délivrance</label>
-                <input type="date" name="date_delivrance" id="date_delivrance" class="form-control">
-                <div class="form-text">La date d'expiration sera calculée automatiquement (+5 ans).</div>
-            </div>
+    {% if demande.enAttente %}
+        <div class="alert alert-info small">
+            Vérifiez la conformité de la pièce jointe, puis transmettez la demande au RH Admin (qui seul peut l'approuver), ou rejetez-la si les pièces ne sont pas conformes.
         </div>
 
         <div class="mb-3">
-            <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
-            <textarea name="commentaire" id="commentaire" class="form-control" rows="3"></textarea>
+            <label for="commentaire" class="form-label">Motif du rejet (si vous rejetez)</label>
+            <textarea name="commentaire" id="commentaire" form="form-rejeter" class="form-control" rows="3"></textarea>
         </div>
+
         <div class="d-flex gap-2">
-            <button type="submit" name="decision" value="approuver" class="btn btn-success"><i class="bi bi-check-lg"></i> Approuver</button>
-            <button type="submit" name="decision" value="refuser" class="btn btn-danger"><i class="bi bi-x-lg"></i> Refuser</button>
+            <form method="post" action="{{ path('admin_demande_carte_pro_transmettre', {id: demande.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('traiter-demande-carte-pro-' ~ demande.id) }}">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Transmettre au RH Admin</button>
+            </form>
+            <form id="form-rejeter" method="post" action="{{ path('admin_demande_carte_pro_rejeter', {id: demande.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('traiter-demande-carte-pro-' ~ demande.id) }}">
+                <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg"></i> Rejeter</button>
+            </form>
             <a href="{{ path('admin_demande_carte_pro_index') }}" class="btn btn-outline-secondary">Annuler</a>
         </div>
-    </form>
+    {% elseif demande.transmise %}
+        <div class="alert alert-warning small">
+            Demande transmise par le RH Carte Pro, en attente de votre décision (RH Admin).
+        </div>
+
+        <form method="post" action="{{ path('admin_demande_carte_pro_approuver', {id: demande.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('traiter-demande-carte-pro-' ~ demande.id) }}">
+
+            <div class="border rounded p-3 mb-3">
+                <div class="mb-2">
+                    <label for="numero" class="form-label">Numéro de carte</label>
+                    <input type="text" name="numero" id="numero" class="form-control">
+                </div>
+                <div class="mb-0">
+                    <label for="date_delivrance" class="form-label">Date de délivrance</label>
+                    <input type="date" name="date_delivrance" id="date_delivrance" class="form-control">
+                    <div class="form-text">La date d'expiration sera calculée automatiquement (+5 ans). La carte sera immédiatement validée (cachet/signature) et téléchargeable.</div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="commentaire2" class="form-label">Commentaire (optionnel)</label>
+                <textarea name="commentaire" id="commentaire2" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Approuver</button>
+                <button type="submit" formaction="{{ path('admin_demande_carte_pro_rejeter', {id: demande.id}) }}" class="btn btn-danger"><i class="bi bi-x-lg"></i> Rejeter</button>
+                <a href="{{ path('admin_demande_carte_pro_index') }}" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+    {% endif %}
 </div>
 {% endblock %}

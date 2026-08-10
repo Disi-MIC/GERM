@@ -1,0 +1,48 @@
+<h5 class="mb-3">{{ decisionId ? 'Modifier' : 'Nouvelle' }} décision de congé</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else {
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Agent</label>
+        <select class="form-select" formControlName="personnel">
+          <option [ngValue]="null">Sélectionner...</option>
+          @for (personnel of personnels; track personnel.id) {
+            <option [ngValue]="personnel.id">{{ personnel.nomComplet ?? personnel.matricule }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Numéro de décision</label>
+        <input type="text" class="form-control" formControlName="numeroDecision" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Date d'octroi</label>
+        <input type="date" class="form-control" formControlName="dateDecision" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Date d'expiration</label>
+        <input type="date" class="form-control" formControlName="dateExpiration" />
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Observations</label>
+        <textarea class="form-control" rows="3" formControlName="observations"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="saving">
+        <i class="bi bi-check-lg"></i> Enregistrer
+      </button>
+      <a routerLink="/conges/decisions" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+  </form>
+}

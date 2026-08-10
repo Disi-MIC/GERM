@@ -17,11 +17,25 @@ export class PersonnelApiService {
   }
 
   create(personnel: Personnel): Observable<Personnel> {
-    return this.http.post<Personnel>(`${API_BASE}/personnels.json`, personnel);
+    return this.http.post<Personnel>(`${API_BASE}/personnels`, personnel);
   }
 
   update(id: number, personnel: Personnel): Observable<Personnel> {
-    return this.http.put<Personnel>(`${API_BASE}/personnels/${id}.json`, personnel);
+    return this.http.put<Personnel>(`${API_BASE}/personnels/${id}`, personnel);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${API_BASE}/personnels/${id}`);
+  }
+
+  uploadPhoto(id: number, fichier: File): Observable<Personnel> {
+    const formData = new FormData();
+    formData.append('photoFichier', fichier);
+    return this.http.post<Personnel>(`${API_BASE}/personnels/${id}/photo`, formData);
+  }
+
+  photoUrl(id: number): string {
+    return `${API_BASE}/personnels/${id}/photo`;
   }
 
   getServices(): Observable<ServiceRef[]> {

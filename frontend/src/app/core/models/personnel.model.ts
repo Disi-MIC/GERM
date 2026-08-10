@@ -13,7 +13,7 @@ export interface ListeValeurRef {
 
 export interface Personnel {
   id?: number;
-  matricule: string;
+  matricule: string | null;
   nom: string;
   prenom: string;
   sexe: 'M' | 'F';
@@ -31,4 +31,5 @@ export interface Personnel {
   createdAt?: string;
   updatedAt?: string;
   nomComplet?: string;
+  hasPhoto?: boolean;
 }

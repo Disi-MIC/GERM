@@ -27,7 +27,7 @@ class PersonnelType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('matricule', TextType::class, ['label' => 'Matricule'])
+            ->add('matricule', TextType::class, ['label' => 'Matricule', 'required' => false])
             ->add('nom', TextType::class, ['label' => 'Nom'])
             ->add('prenom', TextType::class, ['label' => 'Prénom'])
             ->add('sexe', EnumType::class, [

@@ -55,6 +55,31 @@ export class DemandeCarteProFormComponent implements OnInit {
     this.fichier = input.files?.[0] ?? null;
   }
 
+  /**
+   * Le justificatif attendu dépend du type de demande, et pour une nouvelle
+   * carte, de si l'agent a déjà un matricule (prise de service) ou non
+   * (contrat, agent en attente d'affectation officielle).
+   */
+  libellePiece(): string {
+    const raw = this.form.getRawValue();
+
+    if (raw.typeDemande === 'renouvellement') {
+      return 'Copie de la dernière carte professionnelle';
+    }
+
+    if (raw.typeDemande === 'nouvelle') {
+      const personnel = this.personnels.find((p) => p.id === raw.personnel);
+      return personnel?.matricule ? 'Prise de service' : 'Contrat';
+    }
+
+    return 'Pièce justificative (ex. déclaration de perte/vol)';
+  }
+
+  pieceObligatoire(): boolean {
+    const type = this.form.getRawValue().typeDemande;
+    return type === 'nouvelle' || type === 'renouvellement';
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -65,6 +90,11 @@ export class DemandeCarteProFormComponent implements OnInit {
 
     if (raw.typeDemande !== 'nouvelle' && !raw.carteReference) {
       this.error = 'La carte actuelle est requise pour un renouvellement ou une déclaration de perte/vol.';
+      return;
+    }
+
+    if (this.pieceObligatoire() && !this.fichier) {
+      this.error = `Merci de joindre le justificatif requis (${this.libellePiece()}).`;
       return;
     }
 

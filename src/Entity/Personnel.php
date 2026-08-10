@@ -5,8 +5,6 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Entity\Enum\Sexe;
 use App\Entity\Enum\StatutPersonnel;
 use App\Repository\PersonnelRepository;
@@ -19,12 +17,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Fiche RH d'un agent du Ministère (ressource "Personnel").
  *
- * Exposée à la fois en Twig (admin superadmin) et en API (frontend Angular,
- * rôle ROLE_RH_PERSONNEL) — deux interfaces sur la même entité, préfixes
- * d'URL différents (/admin/personnel vs /api/personnel). La suppression
- * n'est volontairement pas exposée côté API : le garde-fou métier de
- * PersonnelController::delete() (historique, congés, décisions, cartes...)
- * n'a pas encore d'équivalent en API Platform.
+ * Exposée en lecture seule côté API (frontend Angular, rôle
+ * ROLE_RH_PERSONNEL — la liste est aussi accessible à ROLE_RH_CARTE_PRO pour
+ * le sélecteur agent des formulaires carte professionnelle) : toutes les
+ * écritures (création avec mouvement de nomination initial, édition,
+ * suppression avec son garde-fou métier, photo) passent par
+ * src/Controller/Api/PersonnelController.php — même choix que
+ * CarteProfessionnelle. Twig ne reste accessible qu'au superadmin, en
+ * secours.
  */
 #[ORM\Entity(repositoryClass: PersonnelRepository::class)]
 #[ORM\Table(name: 'personnel')]
@@ -36,12 +36,9 @@ use Symfony\Component\Validator\Constraints as Assert;
         // accès qu'avait déjà ce rôle sur le sélecteur agent en Twig).
         new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO')"),
         new Get(),
-        new Post(),
-        new Put(),
     ],
     security: "is_granted('ROLE_RH_PERSONNEL')",
     normalizationContext: ['groups' => ['api:read']],
-    denormalizationContext: ['groups' => ['api:write']],
 )]
 class Personnel
 {
@@ -51,8 +48,11 @@ class Personnel
     #[Groups(['api:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 30)]
-    #[Assert\NotBlank]
+    // Optionnel : un agent nouvellement recruté peut être enregistré avant
+    // l'attribution officielle de son matricule (voir DemandeCartePro, où ce
+    // champ détermine le justificatif attendu pour une nouvelle carte —
+    // prise de service si présent, contrat sinon).
+    #[ORM\Column(length: 30, nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?string $matricule = null;
 
@@ -193,7 +193,7 @@ class Personnel
         return $this->matricule;
     }
 
-    public function setMatricule(string $matricule): static
+    public function setMatricule(?string $matricule): static
     {
         $this->matricule = $matricule;
 
@@ -360,6 +360,12 @@ class Personnel
         $this->photo = $photo;
 
         return $this;
+    }
+
+    #[Groups(['api:read'])]
+    public function isHasPhoto(): bool
+    {
+        return null !== $this->photo;
     }
 
     public function getService(): ?Service

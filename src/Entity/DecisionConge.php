@@ -2,10 +2,14 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\DecisionCongeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -13,41 +17,62 @@ use Symfony\Component\Validator\Constraints as Assert;
  * sur laquelle une ou plusieurs demandes de jouissance peuvent s'appuyer tant qu'elle
  * n'a pas expiré. Créée automatiquement à l'approbation d'une DemandeDecision, ou
  * directement pour enregistrer une décision papier antérieure à l'application.
+ *
+ * Exposée en lecture seule côté API : les écritures passent par
+ * src/Controller/Api/DecisionCongeController.php (la suppression y est
+ * bloquée si des demandes de jouissance s'appuient encore sur la décision —
+ * la collection `demandesJouissance` n'est donc volontairement pas exposée,
+ * ce garde-fou reste serveur-only).
  */
 #[ORM\Entity(repositoryClass: DecisionCongeRepository::class)]
 #[ORM\Table(name: 'decision_conge')]
+#[ApiResource(
+    operations: [
+        new GetCollection(uriTemplate: '/decisions-conge', order: ['dateExpiration' => 'DESC']),
+        new Get(uriTemplate: '/decisions-conge/{id}'),
+    ],
+    security: "is_granted('ROLE_RH_CONGE')",
+    normalizationContext: ['groups' => ['api:read']],
+)]
 class DecisionConge
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Personnel::class, inversedBy: 'decisionsConge')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
+    #[Groups(['api:read', 'api:write'])]
     private ?Personnel $personnel = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Le numéro de décision est obligatoire.')]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $numeroDecision = null;
 
     #[ORM\Column(type: 'date_immutable')]
     #[Assert\NotNull(message: "La date d'octroi est obligatoire.")]
+    #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateDecision = null;
 
     #[ORM\Column(type: 'date_immutable')]
     #[Assert\NotNull(message: "La date d'expiration est obligatoire.")]
     #[Assert\GreaterThan(propertyPath: 'dateDecision', message: "La date d'expiration doit être postérieure à la date d'octroi.")]
+    #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateExpiration = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $observations = null;
 
     #[ORM\OneToMany(mappedBy: 'decision', targetEntity: DemandeJouissance::class)]
     private Collection $demandesJouissance;
 
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
@@ -134,6 +159,7 @@ class DecisionConge
         return $this->createdAt;
     }
 
+    #[Groups(['api:read'])]
     public function isValide(): bool
     {
         return $this->dateExpiration >= new \DateTimeImmutable('today');

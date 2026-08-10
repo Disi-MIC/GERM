@@ -3,7 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\DemandeCartePro;
-use App\Entity\Enum\StatutDemande;
+use App\Entity\Enum\StatutDemandeCartePro;
 use App\Entity\Personnel;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -21,7 +21,7 @@ class DemandeCarteProRepository extends ServiceEntityRepository
     /**
      * @return DemandeCartePro[]
      */
-    public function search(?Personnel $personnel, ?StatutDemande $statut): array
+    public function search(?Personnel $personnel, ?StatutDemandeCartePro $statut): array
     {
         $qb = $this->createQueryBuilder('d')
             ->leftJoin('d.personnel', 'p')->addSelect('p')

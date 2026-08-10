@@ -25,7 +25,7 @@
       <tbody>
         @for (personnel of personnels; track personnel.id) {
           <tr>
-            <td>{{ personnel.matricule }}</td>
+            <td>{{ personnel.matricule || '—' }}</td>
             <td>{{ personnel.nomComplet }}</td>
             <td>{{ personnel.fonction }}</td>
             <td>{{ serviceLabel(personnel) }}</td>

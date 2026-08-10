@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/personnel', name: 'admin_personnel_')]
-#[IsGranted('ROLE_RH_PERSONNEL')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class PersonnelController extends AbstractController
 {
     #[Route('', name: 'index', methods: ['GET'])]
@@ -108,6 +108,8 @@ class PersonnelController extends AbstractController
                 || !$personnel->getDemandesCartePro()->isEmpty()
             ) {
                 $this->addFlash('danger', 'Impossible de supprimer cette fiche : elle a un historique de carrière, des congés, des décisions, des demandes de congé, des cartes professionnelles ou des demandes de carte professionnelle enregistrées.');
+            } elseif ($personnel->getUser()) {
+                $this->addFlash('danger', "Impossible de supprimer cette fiche : elle est liée à un compte de connexion. Merci de délier ou supprimer d'abord ce compte.");
             } else {
                 $em->remove($personnel);
                 $em->flush();

@@ -9,9 +9,10 @@
     },
     {
       "name": "germ",
-      "runtimeExecutable": "php",
-      "runtimeArgs": ["-S", "127.0.0.1:8000", "-t", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
-      "port": 8000
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "php -S 127.0.0.1:$PORT -t /Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
+      "port": 8000,
+      "autoPort": true
     },
     {
       "name": "germ-frontend",

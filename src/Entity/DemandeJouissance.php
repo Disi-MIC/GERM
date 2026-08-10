@@ -2,12 +2,16 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\Enum\TypeConge;
 use App\Repository\DemandeJouissanceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -19,59 +23,84 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * décision n'est nécessaire. En attendant un espace agent en libre-service, ces
  * demandes sont saisies et traitées par le superadmin. Approuver crée le Conge
  * effectif correspondant ; refuser la laisse comme trace, sans congé.
+ *
+ * Exposée en lecture seule côté API : les écritures (dont le traitement
+ * approuver/refuser, qui crée le Conge) passent par
+ * src/Controller/Api/DemandeJouissanceController.php.
  */
 #[ORM\Entity(repositoryClass: DemandeJouissanceRepository::class)]
 #[ORM\Table(name: 'demande_jouissance')]
 #[Assert\Callback('validateDecisionRequisePourAnnuel')]
+#[ApiResource(
+    operations: [
+        new GetCollection(uriTemplate: '/demandes-jouissance', order: ['createdAt' => 'DESC']),
+        new Get(uriTemplate: '/demandes-jouissance/{id}'),
+    ],
+    security: "is_granted('ROLE_RH_CONGE')",
+    normalizationContext: ['groups' => ['api:read']],
+)]
 class DemandeJouissance
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Personnel::class, inversedBy: 'demandesJouissance')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
+    #[Groups(['api:read', 'api:write'])]
     private ?Personnel $personnel = null;
 
     #[ORM\Column(length: 20, enumType: TypeConge::class)]
     #[Assert\NotNull(message: 'Le type de congé est obligatoire.')]
+    #[Groups(['api:read', 'api:write'])]
     private ?TypeConge $type = null;
 
     #[ORM\ManyToOne(targetEntity: DecisionConge::class, inversedBy: 'demandesJouissance')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?DecisionConge $decision = null;
 
     #[ORM\Column(type: 'date_immutable')]
     #[Assert\NotNull(message: 'La date de début est obligatoire.')]
+    #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateDebut = null;
 
     #[ORM\Column(type: 'date_immutable')]
     #[Assert\NotNull(message: 'La date de fin est obligatoire.')]
     #[Assert\GreaterThanOrEqual(propertyPath: 'dateDebut', message: 'La date de fin doit être postérieure ou égale à la date de début.')]
+    #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateFin = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $motif = null;
 
     #[ORM\Column(length: 20, enumType: StatutDemande::class)]
+    #[Groups(['api:read'])]
     private StatutDemande $statut = StatutDemande::EN_ATTENTE;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $dateTraitement = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
     private ?string $commentaireTraitement = null;
 
     #[ORM\ManyToOne(targetEntity: Conge::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['api:read'])]
     private ?Conge $conge = null;
 
     #[ORM\OneToMany(mappedBy: 'demande', targetEntity: PieceJustificativeJouissance::class, cascade: ['persist'], orphanRemoval: true)]
+    #[Groups(['api:read'])]
     private Collection $pieces;
 
     #[ORM\Column]
+    #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
@@ -218,6 +247,7 @@ class DemandeJouissance
         return $this->createdAt;
     }
 
+    #[Groups(['api:read'])]
     public function isEnAttente(): bool
     {
         return StatutDemande::EN_ATTENTE === $this->statut;

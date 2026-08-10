@@ -5,15 +5,62 @@
       <div class="small fw-normal text-white-50">Min. de la Communication</div>
     </div>
 
-    <div class="text-uppercase small text-white-50 px-3 pb-1">Ressources Humaines</div>
+    <div class="text-uppercase small text-white-50 px-3 pb-1">Mon espace</div>
+    <a routerLink="/profil" routerLinkActive="active">
+      <i class="bi bi-person-circle"></i> Mon profil
+    </a>
+    <a routerLink="/mon-espace/carriere" routerLinkActive="active">
+      <i class="bi bi-graph-up-arrow"></i> Ma carrière
+    </a>
+    <a routerLink="/mon-espace/parc-informatique" routerLinkActive="active">
+      <i class="bi bi-laptop"></i> Mon parc informatique
+    </a>
+    <a routerLink="/mon-espace/parc-automobile" routerLinkActive="active">
+      <i class="bi bi-truck"></i> Mon parc automobile
+    </a>
+    <a routerLink="/mon-espace/conges" routerLinkActive="active">
+      <i class="bi bi-calendar-event"></i> Mes congés
+    </a>
+    <a routerLink="/mon-espace/carte-professionnelle" routerLinkActive="active">
+      <i class="bi bi-person-vcard"></i> Ma carte professionnelle
+    </a>
+
+    @if (auth.hasRole('ROLE_RH_PERSONNEL')) {
+      <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Tableaux de bord</div>
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <i class="bi bi-speedometer2"></i> Personnel
+      </a>
+    }
+
+    @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+      <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources Humaines</div>
+    }
 
     @if (auth.hasRole('ROLE_RH_PERSONNEL')) {
       <a routerLink="/personnel" routerLinkActive="active">
         <i class="bi bi-people"></i> Personnel
       </a>
+      <a routerLink="/carrieres" routerLinkActive="active">
+        <i class="bi bi-graph-up-arrow"></i> Gestion des carrières
+      </a>
     }
 
-    @if (auth.hasRole('ROLE_RH_CARTE_PRO')) {
+    @if (auth.hasRole('ROLE_RH_CONGE')) {
+      <a routerLink="/conges" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <i class="bi bi-calendar-event"></i> Gestion des congés
+      </a>
+      <a routerLink="/conges/decisions" routerLinkActive="active">
+        <i class="bi bi-file-earmark-text"></i> Décisions de congé
+      </a>
+      <a routerLink="/conges/demandes-decision" routerLinkActive="active">
+        <i class="bi bi-inbox"></i> Demandes de décision
+      </a>
+      <a routerLink="/conges/demandes-jouissance" routerLinkActive="active">
+        <i class="bi bi-inbox"></i> Demandes de jouissance
+      </a>
+    }
+
+    @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
       <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <i class="bi bi-person-vcard"></i> Cartes professionnelles
       </a>
@@ -25,6 +72,9 @@
     @if (auth.hasRole('ROLE_ADMIN_RH')) {
       <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active">
         <i class="bi bi-patch-check"></i> Validation des cartes
+      </a>
+      <a routerLink="/delegations" routerLinkActive="active">
+        <i class="bi bi-person-check"></i> Délégations
       </a>
     }
   </nav>
