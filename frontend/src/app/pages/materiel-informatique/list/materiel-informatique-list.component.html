@@ -1,0 +1,66 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Parc informatique</h5>
+  <a routerLink="/materiel-informatique/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouveau matériel
+  </a>
+</div>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    @for (etat of etats; track etat) {
+      <button
+        type="button"
+        class="btn btn-sm"
+        [class.btn-outline-secondary]="filtreEtat !== etat"
+        [class.btn-secondary]="filtreEtat === etat"
+        (click)="filtrer(etat)"
+      >
+        {{ labelsEtat[etat] }} <span class="badge bg-light text-dark ms-1">{{ compteurs[etat] }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>N° inventaire</th>
+          <th>Type</th>
+          <th>Marque / Modèle</th>
+          <th>Service</th>
+          <th>Affecté à</th>
+          <th>État</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (materiel of materielsAffiches; track materiel.id) {
+          <tr>
+            <td>{{ materiel.numeroInventaire }}</td>
+            <td>{{ libelle(materiel.type) }}</td>
+            <td>{{ materiel.marque }} {{ materiel.modele }}</td>
+            <td>{{ serviceLabel(materiel) }}</td>
+            <td>{{ affecteLabel(materiel) }}</td>
+            <td><span class="badge bg-{{ badgeClasseEtat(materiel) }}">{{ libelle(materiel.etat) }}</span></td>
+            <td class="text-end">
+              <a [routerLink]="['/materiel-informatique', materiel.id]" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(materiel)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">Aucun matériel enregistré.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

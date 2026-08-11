@@ -31,11 +31,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\UniqueConstraint(name: 'UNIQ_PERSONNEL_MATRICULE', columns: ['matricule'])]
 #[ApiResource(
     operations: [
-        // Liste accessible aussi à ROLE_RH_CARTE_PRO : sélection de l'agent
-        // dans les formulaires carte/demande de carte professionnelle (même
-        // accès qu'avait déjà ce rôle sur le sélecteur agent en Twig).
-        new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO')"),
-        new Get(),
+        // Liste accessible aussi à ROLE_RH_CARTE_PRO (sélection de l'agent
+        // dans les formulaires carte/demande de carte professionnelle) et
+        // ROLE_IT_TECHNICIEN (sélecteur "Affecté à" du formulaire Matériel
+        // informatique, domaine IT distinct du RH).
+        new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_TECHNICIEN')"),
+        // Même élargissement que GetCollection ci-dessus : la résolution d'IRI
+        // (ex. Maintenance.realisePar envoyé par le formulaire IT) invoque
+        // cette opération Get, pas seulement la sécurité de base de la ressource.
+        new Get(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_TECHNICIEN')"),
     ],
     security: "is_granted('ROLE_RH_PERSONNEL')",
     normalizationContext: ['groups' => ['api:read']],

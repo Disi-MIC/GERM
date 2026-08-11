@@ -87,6 +87,19 @@ export const routes: Routes = [
           import('./pages/profil/documents/mes-documents.component').then((m) => m.MesDocumentsComponent),
       },
       {
+        path: 'mon-espace/tickets/nouveau',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () =>
+          import('./pages/profil/tickets/nouveau/nouveau-ticket.component').then((m) => m.NouveauTicketComponent),
+      },
+      {
+        path: 'mon-espace/tickets',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_AGENT'] },
+        loadComponent: () => import('./pages/profil/tickets/mes-tickets.component').then((m) => m.MesTicketsComponent),
+      },
+      {
         path: 'mon-espace/carte-professionnelle',
         canActivate: [roleGuard],
         data: { roles: ['ROLE_AGENT'] },
@@ -127,6 +140,31 @@ export const routes: Routes = [
         component: DashboardComponent,
       },
       {
+        path: 'dashboard-conges',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'] },
+        loadComponent: () =>
+          import('./pages/dashboard-conges/dashboard-conges.component').then((m) => m.DashboardCongesComponent),
+      },
+      {
+        path: 'dashboard-cartes-professionnelles',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'] },
+        loadComponent: () =>
+          import('./pages/dashboard-cartes-professionnelles/dashboard-cartes-professionnelles.component').then(
+            (m) => m.DashboardCartesProfessionnellesComponent,
+          ),
+      },
+      {
+        path: 'dashboard-informatique',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        loadComponent: () =>
+          import('./pages/dashboard-informatique/dashboard-informatique.component').then(
+            (m) => m.DashboardInformatiqueComponent,
+          ),
+      },
+      {
         path: 'personnel',
         canActivate: [roleGuard],
         data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
@@ -147,6 +185,31 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./pages/documents-administratifs/documents-administratifs.routes').then(
             (m) => m.DOCUMENTS_ADMINISTRATIFS_ROUTES,
+          ),
+      },
+      {
+        path: 'materiel-informatique',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        loadChildren: () =>
+          import('./pages/materiel-informatique/materiel-informatique.routes').then(
+            (m) => m.MATERIEL_INFORMATIQUE_ROUTES,
+          ),
+      },
+      {
+        path: 'tickets-informatique',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        loadChildren: () =>
+          import('./pages/tickets-informatique/tickets-informatique.routes').then((m) => m.TICKETS_INFORMATIQUE_ROUTES),
+      },
+      {
+        path: 'maintenance-informatique',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        loadChildren: () =>
+          import('./pages/maintenance-informatique/maintenance-informatique.routes').then(
+            (m) => m.MAINTENANCE_INFORMATIQUE_ROUTES,
           ),
       },
       {

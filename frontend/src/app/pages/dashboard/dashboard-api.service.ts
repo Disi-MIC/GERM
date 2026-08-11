@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
-import { DashboardPersonnel } from '../../core/models/dashboard.model';
+import {
+  DashboardCartesProfessionnelles,
+  DashboardConges,
+  DashboardInformatique,
+  DashboardPersonnel,
+} from '../../core/models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService {
@@ -17,5 +22,17 @@ export class DashboardApiService {
       params['service'] = String(service);
     }
     return this.http.get<DashboardPersonnel>(`${API_BASE}/dashboard/personnel`, { params });
+  }
+
+  getConges(): Observable<DashboardConges> {
+    return this.http.get<DashboardConges>(`${API_BASE}/dashboard/conges`);
+  }
+
+  getCartesProfessionnelles(): Observable<DashboardCartesProfessionnelles> {
+    return this.http.get<DashboardCartesProfessionnelles>(`${API_BASE}/dashboard/cartes-professionnelles`);
+  }
+
+  getInformatique(): Observable<DashboardInformatique> {
+    return this.http.get<DashboardInformatique>(`${API_BASE}/dashboard/informatique`);
   }
 }

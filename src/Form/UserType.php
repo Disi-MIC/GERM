@@ -57,6 +57,8 @@ class UserType extends AbstractType
                     'Gestion du personnel' => User::ROLE_RH_PERSONNEL,
                     'Gestion des congés' => User::ROLE_RH_CONGE,
                     'Gestion des cartes professionnelles' => User::ROLE_RH_CARTE_PRO,
+                    'Technicien informatique' => User::ROLE_IT_TECHNICIEN,
+                    'Responsable informatique' => User::ROLE_IT_RESPONSABLE,
                     'Super administrateur' => User::ROLE_SUPERADMIN,
                 ],
                 'multiple' => true,

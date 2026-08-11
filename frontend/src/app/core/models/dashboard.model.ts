@@ -13,3 +13,45 @@ export interface DashboardPersonnel {
   filtreDirection: number | null;
   filtreService: number | null;
 }
+
+// Compteurs par période cumulative : aujourd'hui ⊆ semaine ⊆ mois ⊆ total.
+export interface PeriodeTraitement<T> {
+  aujourdhui: T;
+  semaine: T;
+  mois: T;
+  total: T;
+}
+
+export interface CompteurApprouveesRefusees {
+  approuvees: number;
+  refusees: number;
+}
+
+export interface DashboardConges {
+  enAttente: { decisions: number; jouissances: number };
+  traites: PeriodeTraitement<CompteurApprouveesRefusees>;
+  decisionsValides: number;
+}
+
+export interface DashboardCartesProfessionnelles {
+  enAttente: number;
+  transmises: number;
+  traites: PeriodeTraitement<CompteurApprouveesRefusees>;
+  cartesValides: number;
+  cartesExpirantBientot: number;
+}
+
+export interface CompteurResolusRefuses {
+  resolus: number;
+  refuses: number;
+}
+
+export interface DashboardInformatique {
+  tickets: {
+    ouverts: number;
+    enCours: number;
+    traites: PeriodeTraitement<CompteurResolusRefuses>;
+  };
+  maintenance: PeriodeTraitement<number>;
+  materiel: { total: number; parEtat: Record<string, number> };
+}

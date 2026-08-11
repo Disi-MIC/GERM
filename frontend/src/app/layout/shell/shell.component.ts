@@ -69,7 +69,9 @@ export class ShellComponent implements OnInit, OnDestroy {
       this.auth.hasRole('ROLE_RH_PERSONNEL') ||
       this.auth.hasRole('ROLE_RH_CONGE') ||
       this.auth.hasRole('ROLE_RH_CARTE_PRO') ||
-      this.auth.hasRole('ROLE_ADMIN_RH')
+      this.auth.hasRole('ROLE_ADMIN_RH') ||
+      this.auth.hasRole('ROLE_IT_TECHNICIEN') ||
+      this.auth.hasRole('ROLE_IT_RESPONSABLE')
     );
   }
 

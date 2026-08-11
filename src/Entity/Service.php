@@ -16,15 +16,16 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Service ou Direction du Ministère (ex: Direction des Systèmes d'Information,
  * Direction des Ressources Humaines, Direction de la Communication...).
  *
- * Exposé en lecture seule côté API (pilote Angular) : uniquement pour
- * peupler le sélecteur "Service" du formulaire Personnel — la gestion
+ * Exposé en lecture seule côté API (pilote Angular) : pour peupler le
+ * sélecteur "Service" des formulaires Personnel et Matériel informatique
+ * (deux domaines distincts, RH et IT, d'où les deux rôles) — la gestion
  * complète des services reste Twig-only pour l'instant.
  */
 #[ORM\Entity(repositoryClass: ServiceRepository::class)]
 #[ORM\Table(name: 'service')]
 #[ApiResource(
     operations: [new GetCollection(), new Get()],
-    security: "is_granted('ROLE_RH_PERSONNEL')",
+    security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_TECHNICIEN')",
     normalizationContext: ['groups' => ['api:read']],
 )]
 class Service

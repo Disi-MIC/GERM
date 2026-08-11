@@ -10,6 +10,7 @@ import { DocumentAdministratif } from '../../core/models/document-administratif.
 import { HistoriqueAffectation } from '../../core/models/historique-affectation.model';
 import { MaterielInformatique } from '../../core/models/materiel-informatique.model';
 import { Personnel } from '../../core/models/personnel.model';
+import { PrioriteTicket, TicketIncident } from '../../core/models/ticket-incident.model';
 import { Vehicule } from '../../core/models/vehicule.model';
 
 /**
@@ -30,6 +31,14 @@ export interface DemandeJouissanceSelfPayload {
   dateDebut: string;
   dateFin: string;
   motif?: string | null;
+}
+
+/** 'materielId' est un identifiant numérique, pas une IRI — voir MeDemandesController::creerTicket(). */
+export interface TicketIncidentSelfPayload {
+  materielId: number;
+  titre: string;
+  description: string;
+  priorite: PrioriteTicket;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -143,5 +152,13 @@ export class ProfilApiService {
     const formData = new FormData();
     formData.append('fichier', fichier);
     return this.http.post<DemandeJouissance>(`${API_BASE}/me/demandes-jouissance/${id}/piece2`, formData);
+  }
+
+  getMesTickets(): Observable<TicketIncident[]> {
+    return this.http.get<TicketIncident[]>(`${API_BASE}/me/tickets-incident`);
+  }
+
+  creerTicket(ticket: TicketIncidentSelfPayload): Observable<TicketIncident> {
+    return this.http.post<TicketIncident>(`${API_BASE}/me/tickets-incident`, ticket);
   }
 }

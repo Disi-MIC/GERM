@@ -4,6 +4,14 @@ import { MaterielInformatique } from '../../../core/models/materiel-informatique
 import { ListeValeurRef } from '../../../core/models/personnel.model';
 import { ProfilApiService } from '../profil-api.service';
 
+const BADGES_ETAT: Record<string, string> = {
+  en_service: 'success',
+  en_stock: 'info',
+  en_panne: 'danger',
+  en_maintenance: 'warning',
+  reforme: 'secondary',
+};
+
 @Component({
   selector: 'app-mon-parc-informatique',
   standalone: true,
@@ -16,6 +24,11 @@ export class MonParcInformatiqueComponent implements OnInit {
   error: string | null = null;
 
   constructor(private readonly api: ProfilApiService) {}
+
+  badgeClasseEtat(materiel: MaterielInformatique): string {
+    const code = typeof materiel.etat === 'string' ? '' : materiel.etat.code;
+    return BADGES_ETAT[code] ?? 'secondary';
+  }
 
   ngOnInit(): void {
     this.api.getMesMateriels().subscribe({

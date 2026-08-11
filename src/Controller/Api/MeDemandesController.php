@@ -6,13 +6,16 @@ use App\Controller\AbstractController;
 use App\Entity\DemandeCartePro;
 use App\Entity\DemandeDecision;
 use App\Entity\DemandeJouissance;
+use App\Entity\Enum\PrioriteTicket;
 use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\Personnel;
 use App\Entity\PieceJustificativeDecision;
 use App\Entity\PieceJustificativeJouissance;
+use App\Entity\TicketIncident;
 use App\Entity\User;
 use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\DecisionCongeRepository;
+use App\Repository\MaterielInformatiqueRepository;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -48,6 +51,7 @@ class MeDemandesController extends AbstractController
         private readonly FileStorage $fileStorage,
         private readonly DecisionCongeRepository $decisionCongeRepository,
         private readonly CarteProfessionnelleRepository $carteProfessionnelleRepository,
+        private readonly MaterielInformatiqueRepository $materielInformatiqueRepository,
         private readonly NotificationService $notificationService,
     ) {
     }
@@ -282,6 +286,52 @@ class MeDemandesController extends AbstractController
         $this->em->flush();
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * 'materiel' n'est volontairement pas résolu via IRI (MaterielInformatique
+     * est réservé au rôle RH_IT_TECHNICIEN) : identifiant numérique résolu ici
+     * même, avec vérification que le matériel est bien affecté à l'agent
+     * connecté — même logique que carteReferenceId/decisionId.
+     */
+    #[Route('/api/me/tickets-incident', name: 'api_me_ticket_incident_create', methods: ['POST'])]
+    public function creerTicket(Request $request): JsonResponse
+    {
+        $personnel = $this->personnelConnecte();
+        if (!$personnel) {
+            return $this->reponsePersonnelManquant();
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+
+        $materiel = !empty($data['materielId']) ? $this->materielInformatiqueRepository->find($data['materielId']) : null;
+        if (!$materiel || $materiel->getAffecteA() !== $personnel) {
+            return $this->json(['errors' => ['materiel' => "Ce matériel ne vous est pas affecté."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $ticket = new TicketIncident();
+        $ticket->setPersonnel($personnel);
+        $ticket->setMateriel($materiel);
+        $ticket->setTitre(isset($data['titre']) ? (string) $data['titre'] : null);
+        $ticket->setDescription(isset($data['description']) ? (string) $data['description'] : null);
+        $ticket->setPriorite(PrioriteTicket::tryFrom((string) ($data['priorite'] ?? '')) ?? PrioriteTicket::NORMALE);
+
+        $violations = $this->validator->validate($ticket);
+        if (\count($violations) > 0) {
+            return $this->violationsResponse($violations);
+        }
+
+        $this->em->persist($ticket);
+        $this->em->flush();
+
+        $this->notificationService->notifierRole(
+            User::ROLE_IT_TECHNICIEN,
+            'Nouveau ticket d\'incident',
+            '/tickets-informatique',
+            \sprintf('%s a signalé un incident : "%s".', $personnel->getNomComplet(), $ticket->getTitre()),
+        );
+
+        return $this->json($ticket, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
     }
 
     private function personnelConnecte(): ?Personnel

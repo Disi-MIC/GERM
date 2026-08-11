@@ -1,0 +1,56 @@
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else {
+  <h5 class="mb-3">Nouveau ticket d'incident</h5>
+
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  @if (materiels.length === 0) {
+    <div class="alert alert-warning">
+      Aucun matériel informatique ne vous est actuellement affecté — impossible de signaler un incident.
+    </div>
+    <a routerLink="/mon-espace/tickets" class="btn btn-outline-secondary">Retour</a>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Matériel concerné</label>
+          <select class="form-select" formControlName="materiel">
+            <option [ngValue]="null">Sélectionner...</option>
+            @for (materiel of materiels; track materiel.id) {
+              <option [ngValue]="materiel.id">{{ materiel.marque }} {{ materiel.modele }} ({{ materiel.numeroInventaire }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-8">
+          <label class="form-label">Objet</label>
+          <input type="text" class="form-control" formControlName="titre" placeholder="Ex. Écran noir au démarrage" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Priorité</label>
+          <select class="form-select" formControlName="priorite">
+            <option value="basse">Basse</option>
+            <option value="normale">Normale</option>
+            <option value="haute">Haute</option>
+            <option value="critique">Critique</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="4" formControlName="description" placeholder="Décrivez le problème rencontré"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <i class="bi bi-send"></i> Envoyer
+        </button>
+        <a routerLink="/mon-espace/tickets" class="btn btn-outline-secondary">Annuler</a>
+      </div>
+    </form>
+  }
+}

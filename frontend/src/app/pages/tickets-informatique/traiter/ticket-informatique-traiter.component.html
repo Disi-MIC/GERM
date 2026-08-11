@@ -1,0 +1,88 @@
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (ticket) {
+  <h5 class="mb-3">Ticket — {{ ticket.titre }}</h5>
+
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  <div class="card p-4 mb-3" style="max-width: 700px;">
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Déclarant</dt>
+      <dd class="col-sm-8">{{ agentLabel() }}</dd>
+
+      <dt class="col-sm-4">Matériel</dt>
+      <dd class="col-sm-8">{{ materielLabel() }}</dd>
+
+      <dt class="col-sm-4">Priorité</dt>
+      <dd class="col-sm-8">{{ labelsPriorite[ticket.priorite] }}</dd>
+
+      <dt class="col-sm-4">Description</dt>
+      <dd class="col-sm-8">{{ ticket.description }}</dd>
+
+      <dt class="col-sm-4">Assigné à</dt>
+      <dd class="col-sm-8">{{ assigneLabel() }}</dd>
+
+      @if (ticket.commentaireResolution) {
+        <dt class="col-sm-4">Résolution / motif</dt>
+        <dd class="col-sm-8">{{ ticket.commentaireResolution }}</dd>
+      }
+
+      @if (ticket.commentaireValidation) {
+        <dt class="col-sm-4">Note du responsable</dt>
+        <dd class="col-sm-8">{{ ticket.commentaireValidation }}</dd>
+      }
+    </dl>
+  </div>
+
+  @if (ticket.statut === 'cloture') {
+    <div class="alert alert-success">Ce ticket a été clôturé.</div>
+  } @else if (ticket.statut === 'refuse') {
+    <div class="alert alert-secondary">Ce ticket a été refusé.</div>
+  } @else {
+    <div class="card p-4" style="max-width: 700px;">
+      @if (ticket.ouvert) {
+        <p class="text-muted small">Ce ticket n'a pas encore été pris en charge.</p>
+      } @else if (ticket.enCours) {
+        <p class="text-muted small">Ticket en cours de traitement. Décrivez la résolution apportée pour le marquer résolu.</p>
+      } @else if (ticket.resolu) {
+        <p class="text-muted small">Résolution proposée, en attente de validation par le responsable informatique.</p>
+      }
+
+      @if (peutResoudre() || peutRefuser() || peutValiderOuRouvrir()) {
+        <form [formGroup]="form">
+          <label class="form-label">Commentaire</label>
+          <textarea class="form-control" rows="3" formControlName="commentaire"></textarea>
+        </form>
+      }
+
+      <div class="mt-3 d-flex gap-2 flex-wrap">
+        @if (peutPrendreEnCharge()) {
+          <button type="button" class="btn btn-primary" [disabled]="saving" (click)="prendreEnCharge()">
+            <i class="bi bi-hand-index"></i> Prendre en charge
+          </button>
+        }
+        @if (peutResoudre()) {
+          <button type="button" class="btn btn-success" [disabled]="saving" (click)="resoudre()">
+            <i class="bi bi-check-lg"></i> Marquer résolu
+          </button>
+        }
+        @if (peutValiderOuRouvrir()) {
+          <button type="button" class="btn btn-success" [disabled]="saving" (click)="valider()">
+            <i class="bi bi-patch-check"></i> Valider et clôturer
+          </button>
+          <button type="button" class="btn btn-outline-warning" [disabled]="saving" (click)="rouvrir()">
+            <i class="bi bi-arrow-counterclockwise"></i> Rouvrir
+          </button>
+        }
+        @if (peutRefuser()) {
+          <button type="button" class="btn btn-outline-danger" [disabled]="saving" (click)="refuser()">
+            <i class="bi bi-x-lg"></i> Refuser
+          </button>
+        }
+        <a routerLink="/tickets-informatique" class="btn btn-outline-secondary">Retour</a>
+      </div>
+    </div>
+  }
+}

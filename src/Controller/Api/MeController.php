@@ -18,6 +18,7 @@ use App\Repository\DemandeJouissanceRepository;
 use App\Repository\HistoriqueAffectationRepository;
 use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\NotificationRepository;
+use App\Repository\TicketIncidentRepository;
 use App\Repository\VehiculeRepository;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -310,6 +311,15 @@ class MeController extends AbstractController
         $documents = $personnel ? $repository->findBy(['personnel' => $personnel], ['createdAt' => 'DESC']) : [];
 
         return $this->json($documents, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/me/tickets-incident', name: 'api_me_tickets_incident', methods: ['GET'])]
+    public function ticketsIncident(TicketIncidentRepository $repository): JsonResponse
+    {
+        $personnel = $this->personnelConnecte();
+        $tickets = $personnel ? $repository->findBy(['personnel' => $personnel], ['createdAt' => 'DESC']) : [];
+
+        return $this->json($tickets, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
 
     /**

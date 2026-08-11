@@ -42,6 +42,9 @@ security:
     # ROLE_ADMIN_RH hérite des 3 rôles rubrique RH ; la restriction fine par
     # contrôleur se fait via #[IsGranted] sur un rôle unique, la hiérarchie
     # se charge de laisser passer les rôles englobants automatiquement.
+    # L'informatique (parc, tickets, maintenance) est un domaine séparé du RH,
+    # avec sa propre hiérarchie à 2 niveaux (ROLE_IT_RESPONSABLE hérite de
+    # ROLE_IT_TECHNICIEN) — volontairement pas rattaché à ROLE_ADMIN_RH.
     role_hierarchy:
         ROLE_AGENT: []
         ROLE_ADMIN: [ROLE_AGENT]
@@ -49,7 +52,9 @@ security:
         ROLE_RH_CONGE: [ROLE_AGENT]
         ROLE_RH_CARTE_PRO: [ROLE_AGENT]
         ROLE_ADMIN_RH: [ROLE_RH_PERSONNEL, ROLE_RH_CONGE, ROLE_RH_CARTE_PRO]
-        ROLE_SUPERADMIN: [ROLE_ADMIN, ROLE_ADMIN_RH, ROLE_ALLOWED_TO_SWITCH]
+        ROLE_IT_TECHNICIEN: [ROLE_AGENT]
+        ROLE_IT_RESPONSABLE: [ROLE_IT_TECHNICIEN]
+        ROLE_SUPERADMIN: [ROLE_ADMIN, ROLE_ADMIN_RH, ROLE_IT_RESPONSABLE, ROLE_ALLOWED_TO_SWITCH]
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }

@@ -24,7 +24,7 @@
             <td>{{ libelle(materiel.type) }}</td>
             <td>{{ materiel.marque }} {{ materiel.modele }}</td>
             <td>{{ materiel.numeroSerie ?? '—' }}</td>
-            <td><span class="badge text-bg-light border">{{ libelle(materiel.etat) }}</span></td>
+            <td><span class="badge bg-{{ badgeClasseEtat(materiel) }}">{{ libelle(materiel.etat) }}</span></td>
             <td>{{ materiel.garantieJusquau ? (materiel.garantieJusquau | slice: 0 : 10) : '—' }}</td>
           </tr>
         } @empty {

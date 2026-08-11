@@ -1,0 +1,43 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { API_BASE } from '../../core/api-base';
+import { HistoriqueAffectationMateriel } from '../../core/models/historique-affectation-materiel.model';
+import { MaterielInformatique } from '../../core/models/materiel-informatique.model';
+
+/**
+ * Pas de suffixe `.json` : l'entité déclare un `uriTemplate` explicite pour
+ * ses opérations GetCollection/Get (voir MaterielInformatique), qui partage
+ * les mêmes URLs kebab-case que les actions d'écriture ci-dessous — même
+ * raison que CarteProApiService.
+ */
+@Injectable({ providedIn: 'root' })
+export class MaterielInformatiqueApiService {
+  constructor(private readonly http: HttpClient) {}
+
+  getAll(): Observable<MaterielInformatique[]> {
+    return this.http.get<MaterielInformatique[]>(`${API_BASE}/materiels-informatiques`);
+  }
+
+  getOne(id: number): Observable<MaterielInformatique> {
+    return this.http.get<MaterielInformatique>(`${API_BASE}/materiels-informatiques/${id}`);
+  }
+
+  create(materiel: MaterielInformatique): Observable<MaterielInformatique> {
+    return this.http.post<MaterielInformatique>(`${API_BASE}/materiels-informatiques`, materiel);
+  }
+
+  update(id: number, materiel: MaterielInformatique): Observable<MaterielInformatique> {
+    return this.http.put<MaterielInformatique>(`${API_BASE}/materiels-informatiques/${id}`, materiel);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${API_BASE}/materiels-informatiques/${id}`);
+  }
+
+  getHistoriqueAffectations(materielId: number): Observable<HistoriqueAffectationMateriel[]> {
+    return this.http.get<HistoriqueAffectationMateriel[]>(`${API_BASE}/historique-affectations-materiel`, {
+      params: { materiel: materielId },
+    });
+  }
+}

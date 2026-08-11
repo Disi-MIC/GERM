@@ -19,6 +19,14 @@
       <a routerLink="/mon-espace/parc-informatique" routerLinkActive="active">
         <i class="bi bi-laptop"></i> Mon parc informatique
       </a>
+      <a routerLink="/mon-espace/tickets" routerLinkActive="active">
+        <i class="bi bi-life-preserver"></i> Mes tickets
+        @if (compteurNotifications('/mon-espace/tickets'); as n) {
+          @if (n > 0) {
+            <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+          }
+        }
+      </a>
       <a routerLink="/mon-espace/parc-automobile" routerLinkActive="active">
         <i class="bi bi-truck"></i> Mon parc automobile
       </a>
@@ -44,10 +52,27 @@
     }
 
     @if (estEnAdministration()) {
-      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_IT_TECHNICIEN') || auth.hasRole('ROLE_IT_RESPONSABLE') || auth.hasRole('ROLE_ADMIN_RH')) {
         <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
+      }
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
         <a routerLink="/dashboard" routerLinkActive="active">
           <i class="bi bi-speedometer2"></i> Personnel
+        </a>
+      }
+      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/dashboard-conges" routerLinkActive="active">
+          <i class="bi bi-calendar-event"></i> Congés
+        </a>
+      }
+      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/dashboard-cartes-professionnelles" routerLinkActive="active">
+          <i class="bi bi-person-vcard"></i> Cartes professionnelles
+        </a>
+      }
+      @if (auth.hasRole('ROLE_IT_TECHNICIEN') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+        <a routerLink="/dashboard-informatique" routerLinkActive="active">
+          <i class="bi bi-laptop"></i> Informatique
         </a>
       }
 
@@ -69,6 +94,24 @@
         </a>
         <a routerLink="/documents-administratifs" routerLinkActive="active">
           <i class="bi bi-folder2-open"></i> Documents administratifs
+        </a>
+      }
+
+      @if (auth.hasRole('ROLE_IT_TECHNICIEN') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+        <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Informatique</div>
+        <a routerLink="/materiel-informatique" routerLinkActive="active">
+          <i class="bi bi-laptop"></i> Parc informatique
+        </a>
+        <a routerLink="/tickets-informatique" routerLinkActive="active">
+          <i class="bi bi-life-preserver"></i> Tickets
+          @if (compteurNotifications('/tickets-informatique'); as n) {
+            @if (n > 0) {
+              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+            }
+          }
+        </a>
+        <a routerLink="/maintenance-informatique" routerLinkActive="active">
+          <i class="bi bi-tools"></i> Maintenance
         </a>
       }
 

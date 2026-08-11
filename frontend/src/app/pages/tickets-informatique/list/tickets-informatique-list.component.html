@@ -1,0 +1,60 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Tickets d'incident</h5>
+</div>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    @for (statut of statuts; track statut) {
+      <button
+        type="button"
+        class="btn btn-sm"
+        [class.btn-outline-secondary]="filtreStatut !== statut"
+        [class.btn-secondary]="filtreStatut === statut"
+        (click)="filtrer(statut)"
+      >
+        {{ labelsStatut[statut] }} <span class="badge bg-light text-dark ms-1">{{ compteurs[statut] }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Agent</th>
+          <th>Matériel</th>
+          <th>Objet</th>
+          <th>Priorité</th>
+          <th>Statut</th>
+          <th>Créé le</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ticket of ticketsAffiches; track ticket.id) {
+          <tr>
+            <td>{{ agentLabel(ticket) }}</td>
+            <td>{{ materielLabel(ticket) }}</td>
+            <td>{{ ticket.titre }}</td>
+            <td><span class="badge bg-{{ badgeClassePriorite(ticket.priorite) }}">{{ labelsPriorite[ticket.priorite] }}</span></td>
+            <td><span class="badge bg-{{ badgeClasseStatut(ticket.statut) }}">{{ labelsStatut[ticket.statut!] }}</span></td>
+            <td>{{ ticket.createdAt | slice: 0 : 10 }}</td>
+            <td class="text-end">
+              <a [routerLink]="['/tickets-informatique', ticket.id, 'traiter']" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> Traiter
+              </a>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">Aucun ticket.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
