@@ -150,8 +150,12 @@ class CarteProfessionnelleController extends AbstractController
         $response = new StreamedResponse(function () use ($carte) {
             fpassthru($this->fileStorage->readStream($carte->getCheminFichier()));
         });
+        $nom = $this->fileStorage->nomTelechargement(
+            \sprintf('Carte professionnelle %s - %s', $carte->getNumero(), $carte->getPersonnel()?->getNomComplet() ?? ''),
+            'pdf',
+        );
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($carte->getCheminFichier()));
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition($disposition, $carte->getNomOriginal() ?? 'carte-professionnelle'));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition($disposition, $nom));
 
         return $response;
     }

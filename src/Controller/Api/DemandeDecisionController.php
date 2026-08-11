@@ -90,11 +90,15 @@ class DemandeDecisionController extends AbstractController
     #[Route('/api/pieces-decision/{id}', name: 'api_piece_decision_download', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function downloadPiece(PieceJustificativeDecision $piece): StreamedResponse
     {
+        $nom = $this->fileStorage->nomTelechargement(
+            \sprintf('Piece justificative decision - %s', $piece->getDemande()?->getPersonnel()?->getNomComplet() ?? ''),
+            pathinfo($piece->getCheminFichier(), \PATHINFO_EXTENSION),
+        );
         $response = new StreamedResponse(function () use ($piece) {
             fpassthru($this->fileStorage->readStream($piece->getCheminFichier()));
         });
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($piece->getCheminFichier()));
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $piece->getNomOriginal()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $nom));
 
         return $response;
     }

@@ -90,11 +90,15 @@ class DemandeJouissanceController extends AbstractController
     #[Route('/api/pieces-jouissance/{id}', name: 'api_piece_jouissance_download', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function downloadPiece(PieceJustificativeJouissance $piece): StreamedResponse
     {
+        $nom = $this->fileStorage->nomTelechargement(
+            \sprintf('Piece justificative jouissance - %s', $piece->getDemande()?->getPersonnel()?->getNomComplet() ?? ''),
+            pathinfo($piece->getCheminFichier(), \PATHINFO_EXTENSION),
+        );
         $response = new StreamedResponse(function () use ($piece) {
             fpassthru($this->fileStorage->readStream($piece->getCheminFichier()));
         });
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($piece->getCheminFichier()));
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $piece->getNomOriginal()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $nom));
 
         return $response;
     }

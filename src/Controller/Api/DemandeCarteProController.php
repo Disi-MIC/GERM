@@ -176,11 +176,15 @@ class DemandeCarteProController extends AbstractController
             throw $this->createNotFoundException();
         }
 
+        $nom = $this->fileStorage->nomTelechargement(
+            \sprintf('Piece justificative carte pro - %s', $demande->getPersonnel()?->getNomComplet() ?? ''),
+            pathinfo($demande->getCheminFichier(), \PATHINFO_EXTENSION),
+        );
         $response = new StreamedResponse(function () use ($demande) {
             fpassthru($this->fileStorage->readStream($demande->getCheminFichier()));
         });
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($demande->getCheminFichier()));
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $demande->getNomOriginal() ?? 'piece-justificative'));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $nom));
 
         return $response;
     }

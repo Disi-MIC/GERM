@@ -91,11 +91,15 @@ class DocumentAdministratifController extends AbstractController
     #[Route('/api/documents-administratifs/{id}/fichier', name: 'api_document_administratif_fichier', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function fichier(DocumentAdministratif $document): StreamedResponse
     {
+        $nom = $this->fileStorage->nomTelechargement(
+            \sprintf('%s - %s', $document->getLibelle(), $document->getPersonnel()?->getNomComplet() ?? ''),
+            pathinfo($document->getCheminFichier(), \PATHINFO_EXTENSION),
+        );
         $response = new StreamedResponse(function () use ($document) {
             fpassthru($this->fileStorage->readStream($document->getCheminFichier()));
         });
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($document->getCheminFichier()));
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $document->getNomOriginal()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $nom));
 
         return $response;
     }

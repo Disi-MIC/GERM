@@ -135,4 +135,23 @@ class FileStorage
     {
         $this->filesystem->delete($relativePath);
     }
+
+    /**
+     * Nom de fichier proposé au téléchargement (Content-Disposition) : les
+     * fichiers liés à un agent (carte pro, pièces justificatives, documents
+     * administratifs) sont stockés sous un nom aléatoire (voir store()), mais
+     * doivent être proposés au téléchargement sous un nom lisible incluant le
+     * nom de l'agent plutôt que le nom du fichier scanné d'origine — plus
+     * facile à retrouver une fois enregistré sur le poste de l'utilisateur.
+     * Translittère les accents plutôt que de compter sur l'encodage RFC 6266
+     * du nom de fichier, pour éviter toute variation de rendu selon le
+     * navigateur.
+     */
+    public function nomTelechargement(string $descriptif, string $extension): string
+    {
+        $translitere = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $descriptif) ?: $descriptif;
+        $nettoye = trim((string) preg_replace('/[^A-Za-z0-9]+/', '-', $translitere), '-');
+
+        return \sprintf('%s.%s', '' !== $nettoye ? $nettoye : 'document', $extension);
+    }
 }

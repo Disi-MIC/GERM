@@ -263,11 +263,15 @@ class MeController extends AbstractController
             throw $this->createNotFoundException();
         }
 
+        $nom = $this->fileStorage->nomTelechargement(
+            \sprintf('Carte professionnelle %s - %s', $carte->getNumero(), $carte->getPersonnel()?->getNomComplet() ?? ''),
+            'pdf',
+        );
         $response = new StreamedResponse(function () use ($carte) {
             fpassthru($this->fileStorage->readStream($carte->getCheminFichier()));
         });
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($carte->getCheminFichier()));
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition($disposition, $carte->getNomOriginal() ?? 'carte-professionnelle'));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition($disposition, $nom));
 
         return $response;
     }
@@ -321,11 +325,15 @@ class MeController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        $nom = $this->fileStorage->nomTelechargement(
+            \sprintf('%s - %s', $document->getLibelle(), $document->getPersonnel()?->getNomComplet() ?? ''),
+            pathinfo($document->getCheminFichier(), \PATHINFO_EXTENSION),
+        );
         $response = new StreamedResponse(function () use ($document) {
             fpassthru($this->fileStorage->readStream($document->getCheminFichier()));
         });
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($document->getCheminFichier()));
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $document->getNomOriginal()));
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $nom));
 
         return $response;
     }
