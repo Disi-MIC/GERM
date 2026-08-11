@@ -11,7 +11,12 @@
     {
       "name": "germ",
       "runtimeExecutable": "/opt/homebrew/bin/php",
-      "runtimeArgs": ["-S", "127.0.0.1:8010", "-t", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/public"],
+      "runtimeArgs": [
+        "-d", "upload_max_filesize=12M",
+        "-d", "post_max_size=15M",
+        "-S", "127.0.0.1:8010",
+        "-t", "/Users/alassanetambedou/Desktop/projets_mincom/GERM/public"
+      ],
       "port": 8010
     },
     {

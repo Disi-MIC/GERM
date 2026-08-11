@@ -117,8 +117,8 @@ class PersonnelController extends AbstractController
     {
         $file = $request->files->get('photoFichier');
 
-        if (!$file instanceof UploadedFile) {
-            return $this->json(['errors' => ['photoFichier' => 'Aucun fichier reçu.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        if ($erreur = $this->fileStorage->erreurValidation($file)) {
+            return $this->json(['errors' => ['photoFichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($personnel->getPhoto()) {

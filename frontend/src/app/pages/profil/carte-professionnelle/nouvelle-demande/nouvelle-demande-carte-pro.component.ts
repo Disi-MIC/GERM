@@ -100,9 +100,12 @@ export class NouvelleDemandeCarteProComponent implements OnInit {
         if (this.fichier && demande.id) {
           this.api.uploadPieceDemandeCartePro(demande.id, this.fichier).subscribe({
             next: () => this.router.navigateByUrl('/mon-espace/carte-professionnelle'),
-            error: () => {
+            error: (err) => {
               this.saving = false;
-              this.error = "Demande créée, mais l'envoi de la pièce jointe a échoué.";
+              const detail = err?.error?.errors ? Object.values(err.error.errors).join(' ') : null;
+              this.error = detail
+                ? `Demande créée, mais la pièce jointe n'a pas pu être envoyée : ${detail}`
+                : "Demande créée, mais l'envoi de la pièce jointe a échoué.";
             },
           });
         } else {

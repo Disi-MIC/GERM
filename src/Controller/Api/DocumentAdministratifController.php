@@ -8,7 +8,6 @@ use App\Repository\ListeValeurRepository;
 use App\Repository\PersonnelRepository;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -52,8 +51,8 @@ class DocumentAdministratifController extends AbstractController
         }
 
         $file = $request->files->get('fichier');
-        if (!$file instanceof UploadedFile) {
-            return $this->json(['errors' => ['fichier' => 'Le fichier est obligatoire.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        if ($erreur = $this->fileStorage->erreurValidation($file)) {
+            return $this->json(['errors' => ['fichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $document = new DocumentAdministratif();

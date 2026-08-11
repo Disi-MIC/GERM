@@ -10,7 +10,6 @@ use App\Entity\PieceJustificativeDecision;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -73,8 +72,8 @@ class DemandeDecisionController extends AbstractController
     {
         $file = $request->files->get('fichier');
 
-        if (!$file instanceof UploadedFile) {
-            return $this->json(['errors' => ['fichier' => 'Aucun fichier reçu.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        if ($erreur = $this->fileStorage->erreurValidation($file)) {
+            return $this->json(['errors' => ['fichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $stocke = $this->fileStorage->store($file, 'decision');

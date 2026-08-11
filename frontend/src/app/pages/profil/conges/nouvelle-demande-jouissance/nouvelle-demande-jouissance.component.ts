@@ -84,9 +84,12 @@ export class NouvelleDemandeJouissanceComponent implements OnInit {
     }
 
     const done = () => this.router.navigateByUrl('/mon-espace/conges');
-    const onError = () => {
+    const onError = (err: { error?: { errors?: Record<string, string> } }) => {
       this.saving = false;
-      this.error = "Demande créée, mais l'envoi d'une pièce jointe a échoué.";
+      const detail = err?.error?.errors ? Object.values(err.error.errors).join(' ') : null;
+      this.error = detail
+        ? `Demande créée, mais une pièce jointe n'a pas pu être envoyée : ${detail}`
+        : "Demande créée, mais l'envoi d'une pièce jointe a échoué.";
     };
 
     if (this.fichier1 && this.fichier2) {

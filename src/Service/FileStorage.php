@@ -18,6 +18,12 @@ use Symfony\Component\Mime\MimeTypes;
  */
 class FileStorage
 {
+    /**
+     * Limite applicative (indépendante de upload_max_filesize/post_max_size de
+     * PHP, qu'on ne peut pas changer à l'exécution) — voir erreurValidation().
+     */
+    public const TAILLE_MAX_OCTETS = 10 * 1024 * 1024;
+
     private readonly FilesystemOperator $filesystem;
 
     public function __construct(
@@ -39,6 +45,39 @@ class FileStorage
         );
 
         $this->filesystem = new Filesystem(new SftpAdapter($provider, $root));
+    }
+
+    /**
+     * Message d'erreur à renvoyer au client si le fichier reçu n'est pas
+     * utilisable, ou null s'il est valide — couvre les trois cas possibles :
+     * absent, rejeté par PHP avant même d'atteindre Symfony (upload_max_filesize/
+     * post_max_size, qui ne peuvent pas être changés à l'exécution — d'où une
+     * limite applicative distincte, forcément inférieure), ou simplement trop
+     * volumineux au sens de cette limite applicative. Centralisé ici pour que
+     * chaque contrôleur d'upload applique la même règle avec le même message,
+     * plutôt qu'un simple contrôle de présence dupliqué partout.
+     */
+    public function erreurValidation(?UploadedFile $file): ?string
+    {
+        if (!$file instanceof UploadedFile) {
+            return 'Aucun fichier reçu.';
+        }
+
+        if (!$file->isValid()) {
+            return match ($file->getError()) {
+                \UPLOAD_ERR_INI_SIZE, \UPLOAD_ERR_FORM_SIZE => \sprintf(
+                    'Le fichier dépasse la taille maximale autorisée par le serveur (%d Mo).',
+                    (int) (self::TAILLE_MAX_OCTETS / 1024 / 1024),
+                ),
+                default => "Le fichier n'a pas pu être reçu, merci de réessayer.",
+            };
+        }
+
+        if ($file->getSize() > self::TAILLE_MAX_OCTETS) {
+            return \sprintf('Le fichier dépasse la taille maximale autorisée (%d Mo).', (int) (self::TAILLE_MAX_OCTETS / 1024 / 1024));
+        }
+
+        return null;
     }
 
     /**

@@ -145,9 +145,9 @@ export class PersonnelDetailComponent implements OnInit {
         this.uploadingPhoto = false;
         this.hasPhoto = true;
       },
-      error: () => {
+      error: (err) => {
         this.uploadingPhoto = false;
-        this.error = "Erreur lors de l'envoi de la photo.";
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'envoi de la photo.";
       },
     });
   }
