@@ -19,7 +19,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * d'édition — même logique que HistoriqueAffectation) : la création et la
  * suppression passent par ces actions dédiées.
  */
-#[IsGranted('ROLE_IT_TECHNICIEN')]
+#[IsGranted('ROLE_IT_STOCK')]
 class MaintenanceController extends AbstractController
 {
     public function __construct(

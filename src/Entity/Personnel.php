@@ -33,13 +33,13 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         // Liste accessible aussi à ROLE_RH_CARTE_PRO (sélection de l'agent
         // dans les formulaires carte/demande de carte professionnelle) et
-        // ROLE_IT_TECHNICIEN (sélecteur "Affecté à" du formulaire Matériel
-        // informatique, domaine IT distinct du RH).
-        new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_TECHNICIEN')"),
+        // ROLE_IT_STOCK (sélecteurs "Affecté à"/"Réalisé par" des formulaires
+        // Matériel informatique et Maintenance, domaine IT distinct du RH).
+        new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_STOCK')"),
         // Même élargissement que GetCollection ci-dessus : la résolution d'IRI
         // (ex. Maintenance.realisePar envoyé par le formulaire IT) invoque
         // cette opération Get, pas seulement la sécurité de base de la ressource.
-        new Get(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_TECHNICIEN')"),
+        new Get(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_STOCK')"),
     ],
     security: "is_granted('ROLE_RH_PERSONNEL')",
     normalizationContext: ['groups' => ['api:read']],

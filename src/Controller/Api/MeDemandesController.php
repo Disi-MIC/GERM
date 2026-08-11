@@ -290,7 +290,7 @@ class MeDemandesController extends AbstractController
 
     /**
      * 'materiel' n'est volontairement pas résolu via IRI (MaterielInformatique
-     * est réservé au rôle RH_IT_TECHNICIEN) : identifiant numérique résolu ici
+     * est réservé au rôle ROLE_IT_STOCK) : identifiant numérique résolu ici
      * même, avec vérification que le matériel est bien affecté à l'agent
      * connecté — même logique que carteReferenceId/decisionId.
      */
@@ -325,7 +325,7 @@ class MeDemandesController extends AbstractController
         $this->em->flush();
 
         $this->notificationService->notifierRole(
-            User::ROLE_IT_TECHNICIEN,
+            User::ROLE_IT_TICKETS,
             'Nouveau ticket d\'incident',
             '/tickets-informatique',
             \sprintf('%s a signalé un incident : "%s".', $personnel->getNomComplet(), $ticket->getTitre()),

@@ -158,7 +158,7 @@ export const routes: Routes = [
       {
         path: 'dashboard-informatique',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'] },
         loadComponent: () =>
           import('./pages/dashboard-informatique/dashboard-informatique.component').then(
             (m) => m.DashboardInformatiqueComponent,
@@ -190,7 +190,7 @@ export const routes: Routes = [
       {
         path: 'materiel-informatique',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/materiel-informatique/materiel-informatique.routes').then(
             (m) => m.MATERIEL_INFORMATIQUE_ROUTES,
@@ -199,14 +199,14 @@ export const routes: Routes = [
       {
         path: 'tickets-informatique',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        data: { roles: ['ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/tickets-informatique/tickets-informatique.routes').then((m) => m.TICKETS_INFORMATIQUE_ROUTES),
       },
       {
         path: 'maintenance-informatique',
         canActivate: [roleGuard],
-        data: { roles: ['ROLE_IT_TECHNICIEN', 'ROLE_IT_RESPONSABLE'] },
+        data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/maintenance-informatique/maintenance-informatique.routes').then(
             (m) => m.MAINTENANCE_INFORMATIQUE_ROUTES,

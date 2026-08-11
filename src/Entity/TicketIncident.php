@@ -18,10 +18,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Ticket d'incident sur un matériel du parc informatique. Workflow à deux
- * niveaux (voir StatutTicket) : le technicien ne peut que prendre en charge,
- * résoudre ou refuser ; seul le responsable informatique valide (clôture) ou
- * rouvre un ticket résolu — même séparation des tâches que DemandeCartePro
- * (RH Carte Pro/RH Admin).
+ * niveaux (voir StatutTicket) : ROLE_IT_TICKETS ne peut que prendre en
+ * charge, résoudre ou refuser ; seul le responsable informatique valide
+ * (clôture) ou rouvre un ticket résolu — même séparation des tâches que
+ * DemandeCartePro (RH Carte Pro/RH Admin). L'action de traiter reste
+ * réservée à ROLE_IT_TICKETS (voir TicketIncidentController) mais la lecture
+ * est aussi ouverte à ROLE_IT_STOCK : le formulaire de maintenance liste les
+ * tickets pour renseigner `ticketOrigine`, domaine Stock.
  *
  * Création en self-service par l'agent déclarant (App\Controller\Api\MeDemandesController,
  * matériel devant lui être affecté) OU par le RH/IT pour son compte (Post natif
@@ -37,7 +40,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(uriTemplate: '/tickets-incident/{id}'),
         new Post(uriTemplate: '/tickets-incident'),
     ],
-    security: "is_granted('ROLE_IT_TECHNICIEN')",
+    security: "is_granted('ROLE_IT_TICKETS') or is_granted('ROLE_IT_STOCK')",
     normalizationContext: ['groups' => ['api:read']],
     denormalizationContext: ['groups' => ['api:write']],
 )]

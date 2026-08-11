@@ -16,18 +16,20 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Traitement des tickets d'incident côté frontend Angular. La création
  * simple passe par l'opération Post native d'API Platform (aucun effet de
- * bord) ; le traitement reste une action dédiée, en quatre étapes :
+ * bord) ; le traitement reste une action dédiée, réservée à ROLE_IT_TICKETS
+ * (le Stock peut lire les tickets — voir la sécurité de l'entité — mais ne
+ * peut pas les traiter), en quatre étapes :
  *
- *  - prendreEnCharge() : un technicien s'assigne le ticket (ouvert → en cours) ;
- *  - resoudre() : le technicien propose une résolution (en cours → résolu,
- *    en attente de validation) ;
- *  - refuser() : possible par un technicien (depuis ouvert/en cours) ou par
- *    le responsable (depuis résolu, filet de sécurité) ;
+ *  - prendreEnCharge() : un agent Tickets s'assigne le ticket (ouvert → en cours) ;
+ *  - resoudre() : il propose une résolution (en cours → résolu, en attente
+ *    de validation) ;
+ *  - refuser() : possible par un agent Tickets (depuis ouvert/en cours) ou
+ *    par le responsable (depuis résolu, filet de sécurité) ;
  *  - valider() : réservé au responsable informatique, clôture un ticket résolu ;
  *  - rouvrir() : réservé au responsable, renvoie un ticket résolu en cours si
  *    la résolution proposée n'est pas satisfaisante.
  */
-#[IsGranted('ROLE_IT_TECHNICIEN')]
+#[IsGranted('ROLE_IT_TICKETS')]
 class TicketIncidentController extends AbstractController
 {
     public function __construct(

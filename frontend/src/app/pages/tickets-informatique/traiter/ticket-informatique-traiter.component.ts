@@ -84,11 +84,11 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
   }
 
   peutPrendreEnCharge(): boolean {
-    return !!this.ticket?.ouvert && this.auth.hasRole('ROLE_IT_TECHNICIEN');
+    return !!this.ticket?.ouvert && this.auth.hasRole('ROLE_IT_TICKETS');
   }
 
   peutResoudre(): boolean {
-    return !!this.ticket?.enCours && this.auth.hasRole('ROLE_IT_TECHNICIEN');
+    return !!this.ticket?.enCours && this.auth.hasRole('ROLE_IT_TICKETS');
   }
 
   peutRefuser(): boolean {
@@ -98,7 +98,7 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     if (this.ticket.resolu) {
       return this.auth.hasRole('ROLE_IT_RESPONSABLE');
     }
-    return !!(this.ticket.ouvert || this.ticket.enCours) && this.auth.hasRole('ROLE_IT_TECHNICIEN');
+    return !!(this.ticket.ouvert || this.ticket.enCours) && this.auth.hasRole('ROLE_IT_TICKETS');
   }
 
   peutValiderOuRouvrir(): boolean {

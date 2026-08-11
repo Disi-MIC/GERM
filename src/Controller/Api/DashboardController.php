@@ -159,13 +159,20 @@ class DashboardController extends AbstractController
         ]);
     }
 
-    #[IsGranted('ROLE_IT_TECHNICIEN')]
     #[Route('/api/dashboard/informatique', name: 'api_dashboard_informatique', methods: ['GET'])]
     public function informatique(
         TicketIncidentRepository $ticketIncidentRepository,
         MaintenanceRepository $maintenanceRepository,
         MaterielInformatiqueRepository $materielInformatiqueRepository,
     ): JsonResponse {
+        // Combine stats Stock (matériel/maintenance) et Tickets : #[IsGranted]
+        // ne fait pas d'OR entre deux rôles indépendants, d'où ce contrôle
+        // manuel plutôt qu'un attribut — ROLE_IT_RESPONSABLE passe aussi,
+        // hérité des deux via la hiérarchie.
+        if (!$this->isGranted('ROLE_IT_STOCK') && !$this->isGranted('ROLE_IT_TICKETS')) {
+            throw $this->createAccessDeniedException();
+        }
+
         $bornes = $this->bornesPeriode();
 
         $ticketsTraites = $this->bucketsVides(['resolus', 'refuses']);

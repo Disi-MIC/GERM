@@ -19,8 +19,12 @@ export function administrationLandingUrl(auth: AuthService): string {
   if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
     return '/cartes-professionnelles';
   }
-  if (auth.hasRole('ROLE_IT_TECHNICIEN') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
-    return '/materiel-informatique';
+  if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+    // Tableau de bord plutôt qu'une sous-page précise : accessible aux 3
+    // profils IT (Stock/Tickets/Responsable), contrairement à
+    // /materiel-informatique ou /tickets-informatique qui ne le sont pas
+    // tous les deux à la fois.
+    return '/dashboard-informatique';
   }
 
   return '/profil';

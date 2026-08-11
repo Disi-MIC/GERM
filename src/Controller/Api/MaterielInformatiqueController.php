@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * principe que la synchronisation Personnel/HistoriqueAffectation dans
  * PersonnelController, sans dupliquer le chemin d'écriture.
  */
-#[IsGranted('ROLE_IT_TECHNICIEN')]
+#[IsGranted('ROLE_IT_STOCK')]
 class MaterielInformatiqueController extends AbstractController
 {
     private const GROUPES_LECTURE = ['api:read', 'api:read:rh'];

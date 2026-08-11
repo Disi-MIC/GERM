@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Élément du parc informatique du Ministère.
  *
- * Exposée en lecture seule côté API (frontend Angular, rôle ROLE_IT_TECHNICIEN) :
+ * Exposée en lecture seule côté API (frontend Angular, rôle ROLE_IT_STOCK) :
  * la création, l'édition et la suppression passent par
  * src/Controller/Api/MaterielInformatiqueController.php — même logique que
  * Personnel. `valeurAcquisition`/`fournisseur` portent un groupe de lecture
@@ -27,9 +27,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiResource(
     operations: [
         new GetCollection(uriTemplate: '/materiels-informatiques', order: ['numeroInventaire' => 'ASC']),
-        new Get(uriTemplate: '/materiels-informatiques/{id}'),
+        // Élargi à ROLE_IT_TICKETS : la résolution d'IRI (TicketIncident.materiel
+        // envoyé à la création d'un ticket) invoque cette opération Get, pas
+        // seulement la sécurité de base de la ressource (réservée au Stock).
+        new Get(uriTemplate: '/materiels-informatiques/{id}', security: "is_granted('ROLE_IT_STOCK') or is_granted('ROLE_IT_TICKETS')"),
     ],
-    security: "is_granted('ROLE_IT_TECHNICIEN')",
+    security: "is_granted('ROLE_IT_STOCK')",
     normalizationContext: ['groups' => ['api:read', 'api:read:rh']],
 )]
 class MaterielInformatique

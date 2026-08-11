@@ -43,8 +43,11 @@ security:
     # contrôleur se fait via #[IsGranted] sur un rôle unique, la hiérarchie
     # se charge de laisser passer les rôles englobants automatiquement.
     # L'informatique (parc, tickets, maintenance) est un domaine séparé du RH,
-    # avec sa propre hiérarchie à 2 niveaux (ROLE_IT_RESPONSABLE hérite de
-    # ROLE_IT_TECHNICIEN) — volontairement pas rattaché à ROLE_ADMIN_RH.
+    # volontairement pas rattaché à ROLE_ADMIN_RH. Séparation des tâches à
+    # deux profils métier indépendants (ni l'un n'hérite de l'autre) : Stock
+    # (matériel, affectations, maintenance) et Tickets (traitement des
+    # incidents) ; ROLE_IT_RESPONSABLE (le directeur) hérite des deux, pour
+    # garder tous les droits en plus de la validation qui lui est réservée.
     role_hierarchy:
         ROLE_AGENT: []
         ROLE_ADMIN: [ROLE_AGENT]
@@ -52,8 +55,9 @@ security:
         ROLE_RH_CONGE: [ROLE_AGENT]
         ROLE_RH_CARTE_PRO: [ROLE_AGENT]
         ROLE_ADMIN_RH: [ROLE_RH_PERSONNEL, ROLE_RH_CONGE, ROLE_RH_CARTE_PRO]
-        ROLE_IT_TECHNICIEN: [ROLE_AGENT]
-        ROLE_IT_RESPONSABLE: [ROLE_IT_TECHNICIEN]
+        ROLE_IT_STOCK: [ROLE_AGENT]
+        ROLE_IT_TICKETS: [ROLE_AGENT]
+        ROLE_IT_RESPONSABLE: [ROLE_IT_STOCK, ROLE_IT_TICKETS]
         ROLE_SUPERADMIN: [ROLE_ADMIN, ROLE_ADMIN_RH, ROLE_IT_RESPONSABLE, ROLE_ALLOWED_TO_SWITCH]
 
     access_control:

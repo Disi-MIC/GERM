@@ -52,7 +52,7 @@
     }
 
     @if (estEnAdministration()) {
-      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_IT_TECHNICIEN') || auth.hasRole('ROLE_IT_RESPONSABLE') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE') || auth.hasRole('ROLE_ADMIN_RH')) {
         <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
       }
       @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
@@ -70,7 +70,7 @@
           <i class="bi bi-person-vcard"></i> Cartes professionnelles
         </a>
       }
-      @if (auth.hasRole('ROLE_IT_TECHNICIEN') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+      @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
         <a routerLink="/dashboard-informatique" routerLinkActive="active">
           <i class="bi bi-laptop"></i> Informatique
         </a>
@@ -97,11 +97,15 @@
         </a>
       }
 
-      @if (auth.hasRole('ROLE_IT_TECHNICIEN') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+      @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
         <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Informatique</div>
+      }
+      @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
         <a routerLink="/materiel-informatique" routerLinkActive="active">
           <i class="bi bi-laptop"></i> Parc informatique
         </a>
+      }
+      @if (auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
         <a routerLink="/tickets-informatique" routerLinkActive="active">
           <i class="bi bi-life-preserver"></i> Tickets
           @if (compteurNotifications('/tickets-informatique'); as n) {
@@ -110,6 +114,8 @@
             }
           }
         </a>
+      }
+      @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
         <a routerLink="/maintenance-informatique" routerLinkActive="active">
           <i class="bi bi-tools"></i> Maintenance
         </a>

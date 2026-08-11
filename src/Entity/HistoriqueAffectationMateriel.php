@@ -26,7 +26,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new GetCollection(uriTemplate: '/historique-affectations-materiel', order: ['dateAffectation' => 'DESC']),
         new Get(uriTemplate: '/historique-affectations-materiel/{id}'),
     ],
-    security: "is_granted('ROLE_IT_TECHNICIEN')",
+    security: "is_granted('ROLE_IT_STOCK')",
     normalizationContext: ['groups' => ['api:read']],
 )]
 #[ApiFilter(SearchFilter::class, properties: ['materiel' => 'exact'])]

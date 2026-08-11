@@ -50,7 +50,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const ROLE_RH_PERSONNEL = 'ROLE_RH_PERSONNEL';
     public const ROLE_RH_CONGE = 'ROLE_RH_CONGE';
     public const ROLE_RH_CARTE_PRO = 'ROLE_RH_CARTE_PRO';
-    public const ROLE_IT_TECHNICIEN = 'ROLE_IT_TECHNICIEN';
+    public const ROLE_IT_STOCK = 'ROLE_IT_STOCK';
+    public const ROLE_IT_TICKETS = 'ROLE_IT_TICKETS';
     public const ROLE_IT_RESPONSABLE = 'ROLE_IT_RESPONSABLE';
 
     #[ORM\Id]

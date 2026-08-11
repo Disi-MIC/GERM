@@ -16,9 +16,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Opération de maintenance (préventive ou corrective) sur un matériel du parc
  * informatique — simple journal, pas de workflow de validation (contrairement
- * à TicketIncident) : le technicien consigne directement ce qui a été fait.
- * `ticketOrigine` relie la maintenance au ticket qui l'a déclenchée, quand
- * elle fait suite à un incident plutôt qu'à un entretien planifié.
+ * à TicketIncident) : le gestionnaire de stock consigne directement ce qui a
+ * été fait (rattaché au cycle de vie du matériel, pas au traitement des
+ * tickets). `ticketOrigine` relie la maintenance au ticket qui l'a
+ * déclenchée, quand elle fait suite à un incident plutôt qu'à un entretien
+ * planifié.
  *
  * Exposée en lecture seule côté API : la création et la suppression passent
  * par App\Controller\Api\MaintenanceController.
@@ -30,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new GetCollection(uriTemplate: '/maintenances', order: ['dateRealisation' => 'DESC']),
         new Get(uriTemplate: '/maintenances/{id}'),
     ],
-    security: "is_granted('ROLE_IT_TECHNICIEN')",
+    security: "is_granted('ROLE_IT_STOCK')",
     normalizationContext: ['groups' => ['api:read']],
 )]
 #[ApiFilter(SearchFilter::class, properties: ['materiel' => 'exact'])]

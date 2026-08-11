@@ -18,8 +18,9 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Exposée en lecture seule côté API (pilote Angular) : pour peupler des
  * sélecteurs (ex. "Type de contrat" du formulaire Personnel, "Type de
  * document" du formulaire DocumentAdministratif, "Type/État" du formulaire
- * Matériel informatique — RH et IT sont deux domaines distincts, d'où les
- * deux rôles), toujours filtrée côté client sur `categorie`, jamais côté
+ * Matériel informatique — RH et IT Stock sont deux domaines distincts, d'où
+ * les deux rôles ; ROLE_IT_TICKETS n'a besoin d'aucune de ces listes),
+ * toujours filtrée côté client sur `categorie`, jamais côté
  * serveur. Pagination désactivée : la collection reste petite (quelques
  * dizaines de valeurs au total toutes catégories confondues) et doit
  * toujours être récupérée en entier pour ces sélecteurs — la pagination par
@@ -31,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\UniqueConstraint(name: 'UNIQ_LISTE_VALEUR_CAT_CODE', columns: ['categorie', 'code'])]
 #[ApiResource(
     operations: [new GetCollection(paginationEnabled: false), new Get()],
-    security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_TECHNICIEN')",
+    security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_STOCK')",
     normalizationContext: ['groups' => ['api:read']],
 )]
 class ListeValeur
