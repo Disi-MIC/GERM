@@ -210,7 +210,78 @@ class DashboardController extends AbstractController
             ],
             'echeancesMaintenance' => $this->calculerEcheancesMaintenance($materielInformatiqueRepository, $maintenanceRepository),
             'licencesExpirantBientot' => $this->calculerEcheancesLicences($licenceLogicielRepository, $materielInformatiqueRepository),
+            'slaTickets' => $this->calculerSlaTickets($ticketIncidentRepository),
         ]);
+    }
+
+    /**
+     * Délai cible de résolution par priorité (heures), en repère ITIL —
+     * l'incident critique/urgent avant le confort. Indexé par `code` de
+     * ListeValeur (categorie priorite-ticket) : les 4 valeurs livrées par
+     * défaut sont couvertes, un code personnalisé ajouté par le superadmin
+     * retombe sur le délai "normale" plutôt que de planter.
+     */
+    private const SLA_HEURES_PAR_PRIORITE = [
+        'critique' => 4,
+        'haute' => 24,
+        'normale' => 72,
+        'basse' => 120,
+    ];
+
+    /**
+     * Tickets actifs (ouverts/en cours) dépassant ou approchant leur délai
+     * cible de résolution — calculé à la volée depuis `createdAt` + le délai
+     * de la priorité, jamais stocké. "À risque" = moins de 20 % du délai
+     * restant, seuil relatif plutôt que fixe puisque le délai varie de 4h
+     * (critique) à 120h (basse) — un seuil en heures fixes n'aurait pas de
+     * sens pour les deux à la fois.
+     *
+     * @return array{enRetard: list<array<string, mixed>>, aRisque: list<array<string, mixed>>}
+     */
+    private function calculerSlaTickets(TicketIncidentRepository $ticketIncidentRepository): array
+    {
+        $maintenant = new \DateTimeImmutable();
+        $enRetard = [];
+        $aRisque = [];
+
+        $ticketsActifs = [
+            ...$ticketIncidentRepository->findBy(['statut' => StatutTicket::OUVERT]),
+            ...$ticketIncidentRepository->findBy(['statut' => StatutTicket::EN_COURS]),
+        ];
+
+        foreach ($ticketsActifs as $ticket) {
+            $codePriorite = $ticket->getPriorite()?->getCode() ?? 'normale';
+            $heuresSla = self::SLA_HEURES_PAR_PRIORITE[$codePriorite] ?? self::SLA_HEURES_PAR_PRIORITE['normale'];
+            $echeance = $ticket->getCreatedAt()?->modify(\sprintf('+%d hours', $heuresSla));
+            if (null === $echeance) {
+                continue;
+            }
+
+            $entree = [
+                'ticketId' => $ticket->getId(),
+                'titre' => $ticket->getTitre(),
+                'priorite' => $ticket->getPriorite()?->getLibelle() ?? '',
+                'niveau' => $ticket->getNiveau()->label(),
+                'echeance' => $echeance->format('Y-m-d\TH:i:s'),
+            ];
+
+            if ($echeance < $maintenant) {
+                $entree['heures'] = (int) round(($maintenant->getTimestamp() - $echeance->getTimestamp()) / 3600);
+                $enRetard[] = $entree;
+                continue;
+            }
+
+            $heuresRestantes = ($echeance->getTimestamp() - $maintenant->getTimestamp()) / 3600;
+            if ($heuresRestantes <= $heuresSla * 0.2) {
+                $entree['heures'] = (int) round($heuresRestantes);
+                $aRisque[] = $entree;
+            }
+        }
+
+        usort($enRetard, fn ($a, $b) => $b['heures'] <=> $a['heures']);
+        usort($aRisque, fn ($a, $b) => $a['heures'] <=> $b['heures']);
+
+        return ['enRetard' => $enRetard, 'aRisque' => $aRisque];
     }
 
     /**

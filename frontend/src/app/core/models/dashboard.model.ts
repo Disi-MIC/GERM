@@ -56,6 +56,16 @@ export interface DashboardInformatique {
   materiel: { total: number; parEtat: Record<string, number> };
   echeancesMaintenance: { enRetard: EcheanceMaintenance[]; aVenir: EcheanceMaintenance[] };
   licencesExpirantBientot: { enRetard: EcheanceLicence[]; aVenir: EcheanceLicence[] };
+  slaTickets: { enRetard: SlaTicket[]; aRisque: SlaTicket[] };
+}
+
+export interface SlaTicket {
+  ticketId: number;
+  titre: string;
+  priorite: string;
+  niveau: string;
+  echeance: string;
+  heures: number;
 }
 
 export interface EcheanceMaintenance {

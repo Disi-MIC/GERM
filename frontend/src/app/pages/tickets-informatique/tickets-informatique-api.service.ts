@@ -2,7 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
-import { TicketIncident } from '../../core/models/ticket-incident.model';
+import { Personnel } from '../../core/models/personnel.model';
+import { TicketEscalade, TicketIncident } from '../../core/models/ticket-incident.model';
 
 @Injectable({ providedIn: 'root' })
 export class TicketsInformatiqueApiService {
@@ -34,5 +35,21 @@ export class TicketsInformatiqueApiService {
 
   rouvrir(id: number, commentaire: string): Observable<TicketIncident> {
     return this.http.post<TicketIncident>(`${API_BASE}/tickets-incident/${id}/rouvrir`, { commentaire });
+  }
+
+  escalader(id: number, commentaire: string): Observable<TicketIncident> {
+    return this.http.post<TicketIncident>(`${API_BASE}/tickets-incident/${id}/escalader`, { commentaire });
+  }
+
+  getEscalades(ticketId: number): Observable<TicketEscalade[]> {
+    return this.http.get<TicketEscalade[]>(`${API_BASE}/tickets-escalade`, { params: { ticket: ticketId } });
+  }
+
+  assigner(id: number, personnelId: number): Observable<TicketIncident> {
+    return this.http.post<TicketIncident>(`${API_BASE}/tickets-incident/${id}/assigner`, { personnelId });
+  }
+
+  getTechniciens(): Observable<Personnel[]> {
+    return this.http.get<Personnel[]>(`${API_BASE}/tickets-incident/techniciens`);
   }
 }

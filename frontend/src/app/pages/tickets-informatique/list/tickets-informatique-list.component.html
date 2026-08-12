@@ -29,6 +29,7 @@
           <th>Matériel</th>
           <th>Objet</th>
           <th>Priorité</th>
+          <th>Niveau</th>
           <th>Statut</th>
           <th>Créé le</th>
           <th class="text-end">Actions</th>
@@ -41,6 +42,7 @@
             <td>{{ materielLabel(ticket) }}</td>
             <td>{{ ticket.titre }}</td>
             <td><span class="badge bg-{{ badgeClassePriorite(ticket) }}">{{ prioriteLabel(ticket) }}</span></td>
+            <td><span class="badge bg-secondary">{{ ticket.niveau ? labelsNiveau[ticket.niveau] : '—' }}</span></td>
             <td><span class="badge bg-{{ badgeClasseStatut(ticket.statut) }}">{{ labelsStatut[ticket.statut!] }}</span></td>
             <td>{{ ticket.createdAt | slice: 0 : 10 }}</td>
             <td class="text-end">
@@ -51,7 +53,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="7" class="text-center text-muted py-4">Aucun ticket.</td>
+            <td colspan="8" class="text-center text-muted py-4">Aucun ticket.</td>
           </tr>
         }
       </tbody>

@@ -2,6 +2,7 @@ import { MaterielInformatique } from './materiel-informatique.model';
 import { ListeValeurRef, Personnel } from './personnel.model';
 
 export type StatutTicket = 'ouvert' | 'en_cours' | 'resolu' | 'cloture' | 'refuse';
+export type NiveauTicket = 'n1' | 'n2' | 'n3';
 
 export interface TicketIncident {
   id?: number;
@@ -11,6 +12,8 @@ export interface TicketIncident {
   description: string;
   priorite: ListeValeurRef | string;
   statut?: StatutTicket;
+  /** Palier de support courant (N1/N2/N3) — voir escalade, distinct de `statut`. */
+  niveau?: NiveauTicket;
   assigneA?: Personnel | string | null;
   commentaireResolution?: string | null;
   commentaireValidation?: string | null;
@@ -21,4 +24,14 @@ export interface TicketIncident {
   ouvert?: boolean;
   enCours?: boolean;
   resolu?: boolean;
+}
+
+export interface TicketEscalade {
+  id?: number;
+  ticket: TicketIncident | string;
+  deNiveau: NiveauTicket;
+  versNiveau: NiveauTicket;
+  par?: Personnel | string | null;
+  commentaire: string;
+  createdAt?: string;
 }

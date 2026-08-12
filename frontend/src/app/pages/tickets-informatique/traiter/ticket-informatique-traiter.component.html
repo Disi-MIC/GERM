@@ -18,6 +18,9 @@
       <dt class="col-sm-4">Priorité</dt>
       <dd class="col-sm-8">{{ prioriteLabel() }}</dd>
 
+      <dt class="col-sm-4">Niveau d'intervention</dt>
+      <dd class="col-sm-8"><span class="badge bg-secondary">{{ niveauLabel() }}</span></dd>
+
       <dt class="col-sm-4">Description</dt>
       <dd class="col-sm-8">{{ ticket.description }}</dd>
 
@@ -50,7 +53,24 @@
         <p class="text-muted small">Résolution proposée, en attente de validation par le responsable informatique.</p>
       }
 
-      @if (peutResoudre() || peutRefuser() || peutValiderOuRouvrir()) {
+      @if (peutAssigner()) {
+        <form [formGroup]="formAssignation" class="mb-3">
+          <label class="form-label">Assigner à un technicien</label>
+          <div class="d-flex gap-2">
+            <select class="form-select" formControlName="personnelId">
+              <option [ngValue]="null">Sélectionner...</option>
+              @for (technicien of techniciens; track technicien.id) {
+                <option [ngValue]="technicien.id">{{ technicien.nomComplet }}</option>
+              }
+            </select>
+            <button type="button" class="btn btn-primary text-nowrap" [disabled]="saving" (click)="assigner()">
+              <i class="bi bi-person-check"></i> Assigner
+            </button>
+          </div>
+        </form>
+      }
+
+      @if (peutResoudre() || peutRefuser() || peutValiderOuRouvrir() || peutEscalader()) {
         <form [formGroup]="form">
           <label class="form-label">Commentaire</label>
           <textarea class="form-control" rows="3" formControlName="commentaire"></textarea>
@@ -59,8 +79,8 @@
 
       <div class="mt-3 d-flex gap-2 flex-wrap">
         @if (peutPrendreEnCharge()) {
-          <button type="button" class="btn btn-primary" [disabled]="saving" (click)="prendreEnCharge()">
-            <i class="bi bi-hand-index"></i> Prendre en charge
+          <button type="button" class="btn btn-outline-primary" [disabled]="saving" (click)="prendreEnCharge()">
+            <i class="bi bi-hand-index"></i> Prendre en charge moi-même
           </button>
         }
         @if (peutResoudre()) {
@@ -76,6 +96,11 @@
             <i class="bi bi-arrow-counterclockwise"></i> Rouvrir
           </button>
         }
+        @if (peutEscalader()) {
+          <button type="button" class="btn btn-outline-primary" [disabled]="saving" (click)="escalader()">
+            <i class="bi bi-arrow-up-circle"></i> Escalader
+          </button>
+        }
         @if (peutRefuser()) {
           <button type="button" class="btn btn-outline-danger" [disabled]="saving" (click)="refuser()">
             <i class="bi bi-x-lg"></i> Refuser
@@ -83,6 +108,34 @@
         }
         <a routerLink="/tickets-informatique" class="btn btn-outline-secondary">Retour</a>
       </div>
+    </div>
+  }
+
+  @if (escalades.length > 0) {
+    <h6 class="text-muted text-uppercase small mt-4 mb-2">Historique d'escalade</h6>
+    <div class="card" style="max-width: 700px;">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>De</th>
+            <th>Vers</th>
+            <th>Par</th>
+            <th>Motif</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (escalade of escalades; track escalade.id) {
+            <tr>
+              <td>{{ labelsNiveau[escalade.deNiveau] }}</td>
+              <td>{{ labelsNiveau[escalade.versNiveau] }}</td>
+              <td>{{ escaladeParLabel(escalade) }}</td>
+              <td>{{ escalade.commentaire }}</td>
+              <td>{{ escalade.createdAt | slice: 0 : 10 }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   }
 }

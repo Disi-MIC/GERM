@@ -1,26 +1,40 @@
+import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
-import { TicketIncident } from '../../../core/models/ticket-incident.model';
+import { NiveauTicket, TicketEscalade, TicketIncident } from '../../../core/models/ticket-incident.model';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
+
+const LABELS_NIVEAU: Record<NiveauTicket, string> = {
+  n1: 'Niveau 1 (support)',
+  n2: 'Niveau 2 (technique)',
+  n3: 'Niveau 3 (expertise)',
+};
 
 @Component({
   selector: 'app-ticket-informatique-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe],
   templateUrl: './ticket-informatique-traiter.component.html',
 })
 export class TicketInformatiqueTraiterComponent implements OnInit {
   ticket: TicketIncident | null = null;
+  escalades: TicketEscalade[] = [];
+  techniciens: Personnel[] = [];
   loading = true;
   saving = false;
   error: string | null = null;
+  readonly labelsNiveau = LABELS_NIVEAU;
 
   form = this.fb.nonNullable.group({
     commentaire: [''],
+  });
+
+  formAssignation = this.fb.nonNullable.group({
+    personnelId: [null as number | null, Validators.required],
   });
 
   constructor(
@@ -32,6 +46,9 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
 
   ngOnInit(): void {
     this.charger();
+    if (this.auth.hasRole('ROLE_IT_RESPONSABLE')) {
+      this.api.getTechniciens().subscribe((techniciens) => (this.techniciens = techniciens));
+    }
   }
 
   private charger(): void {
@@ -49,6 +66,7 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
         this.saving = false;
       },
     });
+    this.api.getEscalades(id).subscribe((escalades) => (this.escalades = escalades));
   }
 
   agentLabel(): string {
@@ -84,7 +102,14 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
   }
 
   peutPrendreEnCharge(): boolean {
-    return !!this.ticket?.ouvert && this.auth.hasRole('ROLE_IT_TICKETS');
+    // Réservé au responsable : point d'entrée unique qui reçoit tout
+    // nouveau ticket, à lui de le garder pour lui ou de le répartir
+    // (assigner()) — un technicien ne se sert plus lui-même dans la file.
+    return !!this.ticket?.ouvert && this.auth.hasRole('ROLE_IT_RESPONSABLE');
+  }
+
+  peutAssigner(): boolean {
+    return !!this.ticket?.ouvert && this.auth.hasRole('ROLE_IT_RESPONSABLE');
   }
 
   peutResoudre(): boolean {
@@ -103,6 +128,25 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
 
   peutValiderOuRouvrir(): boolean {
     return !!this.ticket?.resolu && this.auth.hasRole('ROLE_IT_RESPONSABLE');
+  }
+
+  peutEscalader(): boolean {
+    if (!this.ticket || !this.auth.hasRole('ROLE_IT_TICKETS')) {
+      return false;
+    }
+    return !!(this.ticket.ouvert || this.ticket.enCours) && this.ticket.niveau !== 'n3';
+  }
+
+  niveauLabel(): string {
+    return this.ticket?.niveau ? this.labelsNiveau[this.ticket.niveau] : '';
+  }
+
+  escaladeParLabel(escalade: TicketEscalade): string {
+    const par = escalade.par as Personnel | string | null | undefined;
+    if (!par) {
+      return 'Système';
+    }
+    return typeof par === 'string' ? par : (par.nomComplet ?? `${par.prenom} ${par.nom}`);
   }
 
   prendreEnCharge(): void {
@@ -170,6 +214,38 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     }
     this.saving = true;
     this.api.rouvrir(this.ticket.id, commentaire).subscribe({
+      next: () => this.charger(),
+      error: (err) => this.gererErreur(err),
+    });
+  }
+
+  assigner(): void {
+    if (!this.ticket?.id) {
+      return;
+    }
+    const personnelId = this.formAssignation.getRawValue().personnelId;
+    if (!personnelId) {
+      this.error = 'Merci de sélectionner un technicien.';
+      return;
+    }
+    this.saving = true;
+    this.api.assigner(this.ticket.id, personnelId).subscribe({
+      next: () => this.charger(),
+      error: (err) => this.gererErreur(err),
+    });
+  }
+
+  escalader(): void {
+    if (!this.ticket?.id) {
+      return;
+    }
+    const commentaire = this.form.getRawValue().commentaire.trim();
+    if (!commentaire) {
+      this.error = "Merci de préciser le motif de l'escalade.";
+      return;
+    }
+    this.saving = true;
+    this.api.escalader(this.ticket.id, commentaire).subscribe({
       next: () => this.charger(),
       error: (err) => this.gererErreur(err),
     });

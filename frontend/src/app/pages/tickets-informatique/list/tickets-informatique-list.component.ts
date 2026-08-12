@@ -1,7 +1,7 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
+import { NiveauTicket, StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
@@ -36,6 +36,12 @@ const BADGES_PRIORITE: Record<string, string> = {
   critique: 'danger',
 };
 
+const LABELS_NIVEAU: Record<NiveauTicket, string> = {
+  n1: 'N1',
+  n2: 'N2',
+  n3: 'N3',
+};
+
 @Component({
   selector: 'app-tickets-informatique-list',
   standalone: true,
@@ -51,6 +57,7 @@ export class TicketsInformatiqueListComponent implements OnInit {
   compteurs: Record<string, number> = {};
   readonly statuts: StatutTicket[] = ['ouvert', 'en_cours', 'resolu', 'cloture', 'refuse'];
   readonly labelsStatut = LABELS_STATUT;
+  readonly labelsNiveau = LABELS_NIVEAU;
 
   constructor(private readonly api: TicketsInformatiqueApiService) {}
 

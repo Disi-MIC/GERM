@@ -329,8 +329,11 @@ class MeDemandesController extends AbstractController
         $this->em->persist($ticket);
         $this->em->flush();
 
+        // Le responsable est le point d'entrée unique (Service Desk) : c'est
+        // lui qui répartit ensuite sur un technicien via assigner() — voir
+        // TicketIncidentController.
         $this->notificationService->notifierRole(
-            User::ROLE_IT_TICKETS,
+            User::ROLE_IT_RESPONSABLE,
             'Nouveau ticket d\'incident',
             '/tickets-informatique',
             \sprintf('%s a signalé un incident : "%s".', $personnel->getNomComplet(), $ticket->getTitre()),

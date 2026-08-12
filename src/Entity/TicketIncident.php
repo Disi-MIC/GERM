@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use App\Entity\Enum\NiveauTicket;
 use App\Entity\Enum\StatutTicket;
 use App\Repository\TicketIncidentRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -16,32 +17,43 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Ticket d'incident sur un matériel du parc informatique. Workflow à deux
- * niveaux (voir StatutTicket) : ROLE_IT_TICKETS ne peut que prendre en
- * charge, résoudre ou refuser ; seul le responsable informatique valide
- * (clôture) ou rouvre un ticket résolu — même séparation des tâches que
- * DemandeCartePro (RH Carte Pro/RH Admin). L'action de traiter reste
+ * Ticket d'incident sur un matériel du parc informatique. Workflow de
+ * validation à deux rôles (voir StatutTicket) : ROLE_IT_TICKETS ne peut que
+ * prendre en charge, résoudre ou refuser ; seul le responsable informatique
+ * valide (clôture) ou rouvre un ticket résolu — même séparation des tâches
+ * que DemandeCartePro (RH Carte Pro/RH Admin). L'action de traiter reste
  * réservée à ROLE_IT_TICKETS (voir TicketIncidentController) mais la lecture
  * est aussi ouverte à ROLE_IT_STOCK : le formulaire de maintenance liste les
  * tickets pour renseigner `ticketOrigine`, domaine Stock.
  *
+ * `niveau` est un concept différent, orthogonal à `statut` : le palier de
+ * support courant (N1/N2/N3, voir NiveauTicket), avancé par escalade
+ * fonctionnelle (escalader(), historisée dans TicketEscalade) quand
+ * l'incident dépasse la compétence du palier courant — pas un refus, le
+ * ticket reste ouvert mais change de main.
+ *
  * Création en self-service par l'agent déclarant (App\Controller\Api\MeDemandesController,
  * matériel devant lui être affecté) OU par le RH/IT pour son compte (Post natif
  * ici, avec IRI personnel/matériel — même parité que DemandeCartePro). Le
- * traitement (prendre en charge/résoudre/refuser/valider/rouvrir) passe par
- * App\Controller\Api\TicketIncidentController.
+ * traitement (prendre en charge/résoudre/refuser/valider/rouvrir/escalader) passe
+ * par App\Controller\Api\TicketIncidentController.
  *
  * `priorite` est une simple classification (ListeValeur, catégorie
  * priorite-ticket) paramétrable par le superadmin, contrairement à `statut`
  * qui reste un enum PHP figé : changer la priorité ne casse jamais le
- * workflow, alors que renommer/supprimer un statut le pourrait.
+ * workflow, alors que renommer/supprimer un statut le pourrait. Même
+ * raisonnement pour `niveau` (NiveauTicket) : figé dans le code.
  */
 #[ORM\Entity(repositoryClass: TicketIncidentRepository::class)]
 #[ORM\Table(name: 'ticket_incident')]
 #[ApiResource(
     operations: [
         new GetCollection(uriTemplate: '/tickets-incident', order: ['createdAt' => 'DESC']),
-        new Get(uriTemplate: '/tickets-incident/{id}'),
+        // requirements id=\d+ indispensable : sans lui, {id} matche aussi
+        // '/tickets-incident/techniciens' (route custom du contrôleur,
+        // enregistrée après celle-ci) puisque rien ne borne {id} au chiffre —
+        // même piège que les routes Angular statique-avant-wildcard.
+        new Get(uriTemplate: '/tickets-incident/{id}', requirements: ['id' => '\d+']),
         new Post(uriTemplate: '/tickets-incident'),
     ],
     security: "is_granted('ROLE_IT_TICKETS') or is_granted('ROLE_IT_STOCK')",
@@ -89,6 +101,10 @@ class TicketIncident
     #[ORM\Column(length: 20, enumType: StatutTicket::class)]
     #[Groups(['api:read'])]
     private StatutTicket $statut = StatutTicket::OUVERT;
+
+    #[ORM\Column(length: 20, enumType: NiveauTicket::class)]
+    #[Groups(['api:read'])]
+    private NiveauTicket $niveau = NiveauTicket::N1;
 
     #[ORM\ManyToOne(targetEntity: Personnel::class)]
     #[ORM\JoinColumn(nullable: true)]
@@ -197,6 +213,18 @@ class TicketIncident
     public function setStatut(StatutTicket $statut): static
     {
         $this->statut = $statut;
+
+        return $this;
+    }
+
+    public function getNiveau(): NiveauTicket
+    {
+        return $this->niveau;
+    }
+
+    public function setNiveau(NiveauTicket $niveau): static
+    {
+        $this->niveau = $niveau;
 
         return $this;
     }
