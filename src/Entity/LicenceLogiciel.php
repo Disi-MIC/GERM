@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\LicenceLogicielRepository;
+use App\State\LicenceLogicielProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -23,22 +24,30 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Exposée en lecture seule côté API : la création et la suppression passent
  * par App\Controller\Api\LicenceLogicielController.
  *
- * Pas de champ "nombre de postes couverts" stocké ici : ce nombre est compté
- * à la volée (matériels dont systemeExploitation/suiteBureautique/antivirus
- * référence ce logiciel — voir MaterielInformatiqueRepository::countParLogiciel())
- * plutôt que saisi et resynchronisé manuellement à chaque nouveau poste équipé.
+ * Pas de champ "nombre de postes couverts" persisté : $nombrePostes est
+ * transitoire (pas de #[ORM\Column]), rempli par App\State\LicenceLogicielProvider
+ * pour les lectures API Platform natives et par LicenceLogicielController::create()
+ * à la création — jamais saisi ni resynchronisé manuellement, toujours recompté
+ * à la volée depuis MaterielInformatiqueRepository::countParLicence() (un
+ * matériel pointe directement vers la ligne de licence qui le couvre — voir
+ * MaterielInformatique::$systemeExploitation/$suiteBureautique/$antivirus).
+ * Exposé ici (plutôt que recalculé côté client) pour qu'un client mobile
+ * obtienne la même valeur sans dupliquer cette logique.
  */
 #[ORM\Entity(repositoryClass: LicenceLogicielRepository::class)]
 #[ORM\Table(name: 'licence_logiciel')]
 #[ApiResource(
     operations: [
-        new GetCollection(uriTemplate: '/licences-logicielles', order: ['dateExpiration' => 'DESC']),
-        new Get(uriTemplate: '/licences-logicielles/{id}'),
+        new GetCollection(uriTemplate: '/licences-logicielles', order: ['dateExpiration' => 'DESC'], paginationEnabled: false, provider: LicenceLogicielProvider::class),
+        new Get(uriTemplate: '/licences-logicielles/{id}', provider: LicenceLogicielProvider::class),
     ],
     security: "is_granted('ROLE_IT_STOCK')",
     normalizationContext: ['groups' => ['api:read']],
 )]
-#[ApiFilter(SearchFilter::class, properties: ['logiciel' => 'exact'])]
+// 'logiciel.categorie' alimente les 3 sélecteurs dépendants du formulaire
+// matériel (OS/bureautique/antivirus, voir MaterielInformatiqueDetailComponent) :
+// lister les licences disponibles pour la catégorie choisie.
+#[ApiFilter(SearchFilter::class, properties: ['logiciel' => 'exact', 'logiciel.categorie' => 'exact'])]
 class LicenceLogiciel
 {
     #[ORM\Id]
@@ -69,6 +78,7 @@ class LicenceLogiciel
      * acceptée directement du client (pas de groupe api:write dessus).
      */
     #[ORM\Column(nullable: true)]
+    #[Assert\Positive(message: 'La durée doit être un nombre de mois positif.')]
     #[Groups(['api:read', 'api:write'])]
     private ?int $dureeMois = null;
 
@@ -87,6 +97,9 @@ class LicenceLogiciel
     #[ORM\Column]
     #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
+
+    #[Groups(['api:read'])]
+    private int $nombrePostes = 0;
 
     public function __construct()
     {
@@ -185,5 +198,17 @@ class LicenceLogiciel
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getNombrePostes(): int
+    {
+        return $this->nombrePostes;
+    }
+
+    public function setNombrePostes(int $nombrePostes): static
+    {
+        $this->nombrePostes = $nombrePostes;
+
+        return $this;
     }
 }

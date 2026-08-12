@@ -215,26 +215,12 @@ class DashboardController extends AbstractController
     }
 
     /**
-     * Délai cible de résolution par priorité (heures), en repère ITIL —
-     * l'incident critique/urgent avant le confort. Indexé par `code` de
-     * ListeValeur (categorie priorite-ticket) : les 4 valeurs livrées par
-     * défaut sont couvertes, un code personnalisé ajouté par le superadmin
-     * retombe sur le délai "normale" plutôt que de planter.
-     */
-    private const SLA_HEURES_PAR_PRIORITE = [
-        'critique' => 4,
-        'haute' => 24,
-        'normale' => 72,
-        'basse' => 120,
-    ];
-
-    /**
      * Tickets actifs (ouverts/en cours) dépassant ou approchant leur délai
-     * cible de résolution — calculé à la volée depuis `createdAt` + le délai
-     * de la priorité, jamais stocké. "À risque" = moins de 20 % du délai
-     * restant, seuil relatif plutôt que fixe puisque le délai varie de 4h
-     * (critique) à 120h (basse) — un seuil en heures fixes n'aurait pas de
-     * sens pour les deux à la fois.
+     * cible de résolution (voir TicketIncident::getEcheanceSla(), seule
+     * source du calcul). "À risque" = moins de 20 % du délai restant, seuil
+     * relatif plutôt que fixe puisque le délai varie de 4h (critique) à 120h
+     * (basse) — un seuil en heures fixes n'aurait pas de sens pour les deux
+     * à la fois.
      *
      * @return array{enRetard: list<array<string, mixed>>, aRisque: list<array<string, mixed>>}
      */
@@ -250,12 +236,12 @@ class DashboardController extends AbstractController
         ];
 
         foreach ($ticketsActifs as $ticket) {
-            $codePriorite = $ticket->getPriorite()?->getCode() ?? 'normale';
-            $heuresSla = self::SLA_HEURES_PAR_PRIORITE[$codePriorite] ?? self::SLA_HEURES_PAR_PRIORITE['normale'];
-            $echeance = $ticket->getCreatedAt()?->modify(\sprintf('+%d hours', $heuresSla));
-            if (null === $echeance) {
+            $echeance = $ticket->getEcheanceSla();
+            $createdAt = $ticket->getCreatedAt();
+            if (null === $echeance || null === $createdAt) {
                 continue;
             }
+            $heuresSla = ($echeance->getTimestamp() - $createdAt->getTimestamp()) / 3600;
 
             $entree = [
                 'ticketId' => $ticket->getId(),
@@ -286,10 +272,12 @@ class DashboardController extends AbstractController
 
     /**
      * Licences arrivant à expiration (ou déjà expirées) — même fenêtre de 30
-     * jours et même logique enRetard/aVenir que calculerEcheancesMaintenance,
-     * mais sur la licence "en cours" de chaque logiciel (voir
-     * LicenceLogicielRepository::findDernieresParLogiciel) pour ignorer les
-     * renouvellements passés.
+     * jours et même logique enRetard/aVenir que calculerEcheancesMaintenance.
+     * Chaque ligne de licence (pas seulement la plus récente par logiciel,
+     * voir LicenceLogicielRepository::findAvecExpiration) est prise en
+     * compte, mais seulement si du matériel y est encore explicitement
+     * rattaché : une licence à 0 poste est un renouvellement abandonné,
+     * rien à signaler.
      *
      * @return array{enRetard: list<array<string, mixed>>, aVenir: list<array<string, mixed>>}
      */
@@ -303,9 +291,14 @@ class DashboardController extends AbstractController
         $enRetard = [];
         $aVenir = [];
 
-        foreach ($licenceLogicielRepository->findDernieresParLogiciel() as $licence) {
+        foreach ($licenceLogicielRepository->findAvecExpiration() as $licence) {
             $echeance = $licence->getDateExpiration();
             if (null === $echeance) {
+                continue;
+            }
+
+            $nombrePostes = $materielInformatiqueRepository->countParLicence($licence);
+            if (0 === $nombrePostes) {
                 continue;
             }
 
@@ -313,7 +306,7 @@ class DashboardController extends AbstractController
                 'licenceId' => $licence->getId(),
                 'logicielId' => $licence->getLogiciel()?->getId(),
                 'logiciel' => $licence->getLogiciel()?->getLibelle() ?? '',
-                'nombrePostes' => $licence->getLogiciel() ? $materielInformatiqueRepository->countParLogiciel($licence->getLogiciel()) : 0,
+                'nombrePostes' => $nombrePostes,
                 'echeance' => $echeance->format('Y-m-d'),
             ];
 

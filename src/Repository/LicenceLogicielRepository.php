@@ -17,29 +17,23 @@ class LicenceLogicielRepository extends ServiceEntityRepository
     }
 
     /**
-     * Licence "en cours" par logiciel — celle avec la date d'expiration la
-     * plus lointaine, pour ignorer les renouvellements passés lors du calcul
-     * des échéances (DashboardController::informatique()). Un logiciel sans
-     * aucune date d'expiration renseignée sur ses licences n'est pas retenu.
+     * Licences avec une date d'expiration renseignée, triées par échéance —
+     * chaque ligne de licence est désormais rattachée explicitement à du
+     * matériel (voir MaterielInformatique::$systemeExploitation et
+     * MaterielInformatiqueRepository::countParLicence()), donc plus de notion
+     * de licence "en cours" par logiciel à isoler : un ancien renouvellement
+     * reste pertinent tant que du matériel y pointe encore. C'est
+     * DashboardController::calculerEcheancesLicences() qui écarte les lignes
+     * à 0 poste (renouvellement abandonné, jamais rattaché à du matériel).
      *
      * @return LicenceLogiciel[]
      */
-    public function findDernieresParLogiciel(): array
+    public function findAvecExpiration(): array
     {
-        $licences = $this->createQueryBuilder('l')
+        return $this->createQueryBuilder('l')
             ->andWhere('l.dateExpiration IS NOT NULL')
-            ->orderBy('l.dateExpiration', 'DESC')
+            ->orderBy('l.dateExpiration', 'ASC')
             ->getQuery()
             ->getResult();
-
-        $dernieres = [];
-        foreach ($licences as $licence) {
-            $logicielId = $licence->getLogiciel()?->getId();
-            if (null !== $logicielId && !isset($dernieres[$logicielId])) {
-                $dernieres[$logicielId] = $licence;
-            }
-        }
-
-        return array_values($dernieres);
     }
 }

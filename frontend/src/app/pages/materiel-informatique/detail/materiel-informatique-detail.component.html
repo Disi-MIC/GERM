@@ -7,6 +7,22 @@
     <div class="alert alert-danger">{{ error }}</div>
   }
 
+  @if (materielId) {
+    <div class="card p-3 mb-3 d-flex flex-row align-items-center gap-3" style="max-width: 800px;">
+      @if (hasPhoto) {
+        <img [src]="photoUrl()" alt="Photo" class="rounded" style="width: 72px; height: 72px; object-fit: cover;" />
+      } @else {
+        <div class="rounded bg-secondary-subtle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+          <i class="bi bi-pc-display fs-3 text-muted"></i>
+        </div>
+      }
+      <div>
+        <label class="form-label small mb-1 d-block">Photo</label>
+        <input type="file" class="form-control form-control-sm" accept="image/*" [disabled]="uploadingPhoto" (change)="onPhotoChange($event)" />
+      </div>
+    </div>
+  }
+
   <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 800px;">
     <div class="row g-3">
       <div class="col-md-6">
@@ -92,13 +108,17 @@
       <div class="col-12">
         <hr class="my-1" />
         <h6 class="text-muted text-uppercase small mb-0">Logiciels installés</h6>
+        <p class="text-muted small mb-0">
+          Chaque logiciel doit être rattaché à une licence déjà enregistrée dans le
+          <a routerLink="/licences-logicielles">registre des licences</a>.
+        </p>
       </div>
       <div class="col-md-4">
         <label class="form-label">Système d'exploitation</label>
         <select class="form-select" formControlName="systemeExploitation">
           <option [ngValue]="null">Non renseigné</option>
-          @for (os of systemesExploitation; track os.id) {
-            <option [ngValue]="os.id">{{ os.libelle }}</option>
+          @for (licence of licencesOs; track licence.id) {
+            <option [ngValue]="licence.id">{{ licenceLabel(licence) }}</option>
           }
         </select>
       </div>
@@ -106,8 +126,8 @@
         <label class="form-label">Suite bureautique</label>
         <select class="form-select" formControlName="suiteBureautique">
           <option [ngValue]="null">Non renseigné</option>
-          @for (suite of suitesBureautiques; track suite.id) {
-            <option [ngValue]="suite.id">{{ suite.libelle }}</option>
+          @for (licence of licencesBureautique; track licence.id) {
+            <option [ngValue]="licence.id">{{ licenceLabel(licence) }}</option>
           }
         </select>
       </div>
@@ -115,8 +135,8 @@
         <label class="form-label">Antivirus</label>
         <select class="form-select" formControlName="antivirus">
           <option [ngValue]="null">Non renseigné</option>
-          @for (av of antivirusDisponibles; track av.id) {
-            <option [ngValue]="av.id">{{ av.libelle }}</option>
+          @for (licence of licencesAntivirus; track licence.id) {
+            <option [ngValue]="licence.id">{{ licenceLabel(licence) }}</option>
           }
         </select>
       </div>

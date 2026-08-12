@@ -21,6 +21,8 @@ export interface TicketIncident {
   dateResolution?: string | null;
   dateCloture?: string | null;
   createdAt?: string;
+  /** Échéance cible de résolution (ITIL), calculée par priorité — voir TicketIncident::getEcheanceSla(). */
+  echeanceSla?: string | null;
   ouvert?: boolean;
   enCours?: boolean;
   resolu?: boolean;

@@ -21,6 +21,16 @@
       <dt class="col-sm-4">Niveau d'intervention</dt>
       <dd class="col-sm-8"><span class="badge bg-secondary">{{ niveauLabel() }}</span></dd>
 
+      @if (ticket.echeanceSla && (ticket.ouvert || ticket.enCours)) {
+        <dt class="col-sm-4">Échéance de traitement</dt>
+        <dd class="col-sm-8" [class.text-danger]="slaDepassee()" [class.fw-semibold]="slaDepassee()">
+          {{ ticket.echeanceSla | slice: 0 : 10 }} à {{ ticket.echeanceSla | slice: 11 : 16 }}
+          @if (slaDepassee()) {
+            <span class="badge bg-danger ms-1">Délai dépassé</span>
+          }
+        </dd>
+      }
+
       <dt class="col-sm-4">Description</dt>
       <dd class="col-sm-8">{{ ticket.description }}</dd>
 

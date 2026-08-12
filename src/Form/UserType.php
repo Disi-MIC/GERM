@@ -58,7 +58,7 @@ class UserType extends AbstractType
                     'Gestion des congés' => User::ROLE_RH_CONGE,
                     'Gestion des cartes professionnelles' => User::ROLE_RH_CARTE_PRO,
                     'Gestion du stock informatique' => User::ROLE_IT_STOCK,
-                    'Gestion des tickets informatiques' => User::ROLE_IT_TICKETS,
+                    'Technicien informatique (traitement des tickets)' => User::ROLE_IT_TICKETS,
                     'Responsable informatique' => User::ROLE_IT_RESPONSABLE,
                     'Super administrateur' => User::ROLE_SUPERADMIN,
                 ],

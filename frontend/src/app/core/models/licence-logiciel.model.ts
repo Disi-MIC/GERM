@@ -12,4 +12,6 @@ export interface LicenceLogiciel {
   fournisseur?: string | null;
   observations?: string | null;
   createdAt?: string;
+  /** Postes couverts, comptés côté serveur — voir LicenceLogiciel::getNombrePostes(). */
+  nombrePostes?: number;
 }

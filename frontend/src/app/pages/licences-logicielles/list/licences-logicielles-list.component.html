@@ -28,7 +28,7 @@
           <tr>
             <td>{{ logicielLabel(licence) }}</td>
             <td>{{ licence.numeroLicence || '—' }}</td>
-            <td>{{ postesCouverts(licence) }}</td>
+            <td>{{ licence.nombrePostes }}</td>
             <td>{{ licence.dateDebut ? (licence.dateDebut | slice: 0 : 10) : '—' }}</td>
             <td [class.text-danger]="estExpiree(licence)">
               {{ licence.dateExpiration ? (licence.dateExpiration | slice: 0 : 10) : '—' }}

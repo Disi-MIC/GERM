@@ -29,4 +29,15 @@ class HistoriqueAffectationMaterielRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /** Nombre d'entrées d'historique pour ce matériel — garde-fou avant suppression (voir MaterielInformatiqueController). */
+    public function countPourMateriel(MaterielInformatique $materiel): int
+    {
+        return (int) $this->createQueryBuilder('h')
+            ->select('COUNT(h.id)')
+            ->andWhere('h.materiel = :materiel')
+            ->setParameter('materiel', $materiel)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

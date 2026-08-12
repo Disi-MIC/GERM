@@ -12,7 +12,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -60,15 +59,5 @@ class DelegationController extends AbstractController
         $this->em->flush();
 
         return $this->json($delegation, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
-    }
-
-    private function violationsResponse(ConstraintViolationListInterface $violations): JsonResponse
-    {
-        $errors = [];
-        foreach ($violations as $violation) {
-            $errors[$violation->getPropertyPath()] = $violation->getMessage();
-        }
-
-        return $this->json(['errors' => $errors], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

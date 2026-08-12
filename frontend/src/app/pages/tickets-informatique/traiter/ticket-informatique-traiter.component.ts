@@ -141,6 +141,10 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     return this.ticket?.niveau ? this.labelsNiveau[this.ticket.niveau] : '';
   }
 
+  slaDepassee(): boolean {
+    return !!this.ticket?.echeanceSla && new Date(this.ticket.echeanceSla) < new Date();
+  }
+
   escaladeParLabel(escalade: TicketEscalade): string {
     const par = escalade.par as Personnel | string | null | undefined;
     if (!par) {

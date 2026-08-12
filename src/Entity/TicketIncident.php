@@ -135,6 +135,20 @@ class TicketIncident
     #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
+    /**
+     * Délai cible de résolution par priorité (heures), en repère ITIL —
+     * l'incident critique/urgent avant le confort. Indexé par `code` de
+     * ListeValeur (categorie priorite-ticket) : les 4 valeurs livrées par
+     * défaut sont couvertes, un code personnalisé ajouté par le superadmin
+     * retombe sur le délai "normale" plutôt que de planter.
+     */
+    private const SLA_HEURES_PAR_PRIORITE = [
+        'critique' => 4,
+        'haute' => 24,
+        'normale' => 72,
+        'basse' => 120,
+    ];
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -304,6 +318,22 @@ class TicketIncident
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    /**
+     * Échéance cible de résolution (ITIL), calculée à la volée depuis
+     * createdAt + le délai de la priorité — jamais stockée. Exposée en
+     * lecture pour l'afficher au technicien sur son ticket (voir aussi
+     * DashboardController::calculerSlaTickets(), qui agrège cette même
+     * échéance en retard/à risque sur l'ensemble des tickets actifs).
+     */
+    #[Groups(['api:read'])]
+    public function getEcheanceSla(): ?\DateTimeImmutable
+    {
+        $codePriorite = $this->priorite?->getCode() ?? 'normale';
+        $heuresSla = self::SLA_HEURES_PAR_PRIORITE[$codePriorite] ?? self::SLA_HEURES_PAR_PRIORITE['normale'];
+
+        return $this->createdAt?->modify(\sprintf('+%d hours', $heuresSla));
     }
 
     #[Groups(['api:read'])]

@@ -46,9 +46,20 @@
             <td><span class="badge bg-{{ badgeClasseStatut(ticket.statut) }}">{{ labelsStatut[ticket.statut!] }}</span></td>
             <td>{{ ticket.createdAt | slice: 0 : 10 }}</td>
             <td class="text-end">
-              <a [routerLink]="['/tickets-informatique', ticket.id, 'traiter']" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-eye"></i> Traiter
-              </a>
+              @if (ticket.statut === 'ouvert' || ticket.statut === 'en_cours') {
+                <a [routerLink]="['/tickets-informatique', ticket.id, 'traiter']" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye"></i> Traiter
+                </a>
+              } @else {
+                <a
+                  [routerLink]="['/tickets-informatique', ticket.id, 'traiter']"
+                  class="btn btn-sm btn-outline-{{ badgeClasseStatut(ticket.statut) }}"
+                  title="Aperçu"
+                  aria-label="Aperçu"
+                >
+                  <i class="bi bi-eye"></i>
+                </a>
+              }
             </td>
           </tr>
         } @empty {

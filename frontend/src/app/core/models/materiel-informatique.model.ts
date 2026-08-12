@@ -1,3 +1,4 @@
+import { LicenceLogiciel } from './licence-logiciel.model';
 import { ListeValeurRef, Personnel, ServiceRef } from './personnel.model';
 
 export interface MaterielInformatique {
@@ -14,12 +15,14 @@ export interface MaterielInformatique {
   garantieJusquau?: string | null;
   /** Fréquence de maintenance préventive en mois (3/6/12...), null si aucun plan requis. */
   periodiciteMois?: number | null;
-  systemeExploitation?: ListeValeurRef | string | null;
-  suiteBureautique?: ListeValeurRef | string | null;
-  antivirus?: ListeValeurRef | string | null;
+  /** Licence précise couvrant l'installation — pas seulement le produit, voir LicenceLogiciel. */
+  systemeExploitation?: LicenceLogiciel | string | null;
+  suiteBureautique?: LicenceLogiciel | string | null;
+  antivirus?: LicenceLogiciel | string | null;
   etat: ListeValeurRef | string;
   service: ServiceRef | string;
   affecteA?: Personnel | string | null;
   observations?: string | null;
   createdAt?: string;
+  hasPhoto?: boolean;
 }

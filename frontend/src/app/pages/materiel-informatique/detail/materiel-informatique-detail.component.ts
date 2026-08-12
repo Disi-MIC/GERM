@@ -3,8 +3,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HistoriqueAffectationMateriel } from '../../../core/models/historique-affectation-materiel.model';
+import { LicenceLogiciel } from '../../../core/models/licence-logiciel.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
+import { LicencesLogiciellesApiService } from '../../licences-logicielles/licences-logicielles-api.service';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
@@ -19,13 +21,16 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
   services: ServiceRef[] = [];
   typesMateriel: ListeValeurRef[] = [];
   etatsMateriel: ListeValeurRef[] = [];
-  systemesExploitation: ListeValeurRef[] = [];
-  suitesBureautiques: ListeValeurRef[] = [];
-  antivirusDisponibles: ListeValeurRef[] = [];
+  /** Licences disponibles par catégorie de logiciel — voir LicenceLogiciel.logiciel.categorie. */
+  licencesOs: LicenceLogiciel[] = [];
+  licencesBureautique: LicenceLogiciel[] = [];
+  licencesAntivirus: LicenceLogiciel[] = [];
   personnels: Personnel[] = [];
   historique: HistoriqueAffectationMateriel[] = [];
   loading = true;
   saving = false;
+  uploadingPhoto = false;
+  hasPhoto = false;
   error: string | null = null;
 
   form = this.fb.nonNullable.group({
@@ -52,6 +57,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly api: MaterielInformatiqueApiService,
     private readonly personnelApi: PersonnelApiService,
+    private readonly licencesApi: LicencesLogiciellesApiService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
@@ -65,9 +71,14 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     this.personnelApi.getTypesContrat().subscribe((valeurs) => {
       this.typesMateriel = valeurs.filter((v) => v.categorie === 'type-materiel');
       this.etatsMateriel = valeurs.filter((v) => v.categorie === 'etat-materiel');
-      this.systemesExploitation = valeurs.filter((v) => v.categorie === 'logiciel-os');
-      this.suitesBureautiques = valeurs.filter((v) => v.categorie === 'logiciel-bureautique');
-      this.antivirusDisponibles = valeurs.filter((v) => v.categorie === 'logiciel-antivirus');
+    });
+    // Une licence n'est proposée que si elle existe déjà dans le registre
+    // (voir LicenceLogicielController) : impossible de rattacher un logiciel
+    // installé à une licence qui n'a pas encore été enregistrée.
+    this.licencesApi.getAll().subscribe((licences) => {
+      this.licencesOs = licences.filter((l) => this.logicielCategorie(l) === 'logiciel-os');
+      this.licencesBureautique = licences.filter((l) => this.logicielCategorie(l) === 'logiciel-bureautique');
+      this.licencesAntivirus = licences.filter((l) => this.logicielCategorie(l) === 'logiciel-antivirus');
     });
 
     if (this.materielId) {
@@ -99,6 +110,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
               materiel.affecteA && typeof materiel.affecteA !== 'string' ? (materiel.affecteA.id ?? null) : null,
             observations: materiel.observations ?? '',
           });
+          this.hasPhoto = materiel.hasPhoto ?? false;
           this.loading = false;
         },
         error: () => {
@@ -110,6 +122,41 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  private logicielCategorie(licence: LicenceLogiciel): string | null {
+    const logiciel = licence.logiciel as ListeValeurRef | string;
+    return typeof logiciel === 'string' ? null : logiciel.categorie;
+  }
+
+  licenceLabel(licence: LicenceLogiciel): string {
+    const logiciel = licence.logiciel as ListeValeurRef | string;
+    const nomLogiciel = typeof logiciel === 'string' ? logiciel : logiciel.libelle;
+    return `${nomLogiciel} — ${licence.numeroLicence || 'sans n°'}`;
+  }
+
+  photoUrl(): string {
+    return this.materielId ? this.api.photoUrl(this.materielId) : '';
+  }
+
+  onPhotoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const fichier = input.files?.[0];
+    if (!fichier || !this.materielId) {
+      return;
+    }
+
+    this.uploadingPhoto = true;
+    this.api.uploadPhoto(this.materielId, fichier).subscribe({
+      next: () => {
+        this.uploadingPhoto = false;
+        this.hasPhoto = true;
+      },
+      error: (err) => {
+        this.uploadingPhoto = false;
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'envoi de la photo.";
+      },
+    });
   }
 
   affecteLabel(entree: HistoriqueAffectationMateriel): string {
@@ -138,9 +185,9 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
       fournisseur: raw.fournisseur || null,
       garantieJusquau: raw.garantieJusquau || null,
       periodiciteMois: raw.periodiciteMois,
-      systemeExploitation: raw.systemeExploitation ? `/api/liste_valeurs/${raw.systemeExploitation}` : null,
-      suiteBureautique: raw.suiteBureautique ? `/api/liste_valeurs/${raw.suiteBureautique}` : null,
-      antivirus: raw.antivirus ? `/api/liste_valeurs/${raw.antivirus}` : null,
+      systemeExploitation: raw.systemeExploitation ? `/api/licences-logicielles/${raw.systemeExploitation}` : null,
+      suiteBureautique: raw.suiteBureautique ? `/api/licences-logicielles/${raw.suiteBureautique}` : null,
+      antivirus: raw.antivirus ? `/api/licences-logicielles/${raw.antivirus}` : null,
       etat: `/api/liste_valeurs/${raw.etat}`,
       service: `/api/services/${raw.service}`,
       affecteA: raw.affecteA ? `/api/personnels/${raw.affecteA}` : null,
@@ -169,8 +216,8 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
 
     this.api.delete(this.materielId).subscribe({
       next: () => this.router.navigateByUrl('/materiel-informatique'),
-      error: () => {
-        this.error = 'Erreur lors de la suppression.';
+      error: (err) => {
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la suppression.';
       },
     });
   }

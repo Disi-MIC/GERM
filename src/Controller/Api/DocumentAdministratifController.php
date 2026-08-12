@@ -14,7 +14,6 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -111,15 +110,5 @@ class DocumentAdministratifController extends AbstractController
         }
 
         return \DateTimeImmutable::createFromFormat('!Y-m-d', $date) ?: null;
-    }
-
-    private function violationsResponse(ConstraintViolationListInterface $violations): JsonResponse
-    {
-        $errors = [];
-        foreach ($violations as $violation) {
-            $errors[$violation->getPropertyPath()] = $violation->getMessage();
-        }
-
-        return $this->json(['errors' => $errors], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

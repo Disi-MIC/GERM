@@ -7,13 +7,18 @@ use App\Entity\HistoriqueAffectationMateriel;
 use App\Entity\MaterielInformatique;
 use App\Entity\Personnel;
 use App\Repository\HistoriqueAffectationMaterielRepository;
+use App\Repository\MaintenanceRepository;
+use App\Repository\TicketIncidentRepository;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -43,6 +48,9 @@ class MaterielInformatiqueController extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
         private readonly HistoriqueAffectationMaterielRepository $historiqueRepository,
+        private readonly MaintenanceRepository $maintenanceRepository,
+        private readonly TicketIncidentRepository $ticketIncidentRepository,
+        private readonly FileStorage $fileStorage,
     ) {
     }
 
@@ -100,10 +108,104 @@ class MaterielInformatiqueController extends AbstractController
     #[Route('/api/materiels-informatiques/{id}', name: 'api_materiel_informatique_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function delete(MaterielInformatique $materiel): JsonResponse
     {
+        // Historique d'affectation, maintenances et tickets référencent tous
+        // ce matériel en RESTRICT : sans ce contrôle, la suppression lèverait
+        // une erreur SQL brute dès qu'un de ces journaux existe (le cas normal
+        // pour tout matériel réellement utilisé — voir l'état "réformé" pour
+        // retirer un matériel du service sans perdre son historique).
+        $blocages = [];
+        if (($n = $this->maintenanceRepository->countPourMateriel($materiel)) > 0) {
+            $blocages[] = \sprintf('%d maintenance(s)', $n);
+        }
+        if (($n = $this->ticketIncidentRepository->countPourMateriel($materiel)) > 0) {
+            $blocages[] = \sprintf('%d ticket(s) d\'incident', $n);
+        }
+        if (($n = $this->historiqueRepository->countPourMateriel($materiel)) > 0) {
+            $blocages[] = \sprintf('%d entrée(s) d\'historique d\'affectation', $n);
+        }
+
+        if ([] !== $blocages) {
+            return $this->json([
+                'errors' => ['materiel' => \sprintf(
+                    'Impossible de supprimer ce matériel : %s y sont encore rattaché(e)s. Utilisez plutôt l\'état "Réformé" pour le retirer du service.',
+                    implode(', ', $blocages),
+                )],
+            ], JsonResponse::HTTP_CONFLICT);
+        }
+
+        $photo = $materiel->getPhoto();
+
         $this->em->remove($materiel);
         $this->em->flush();
 
+        if ($photo) {
+            $this->fileStorage->delete($photo);
+        }
+
         return $this->json(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/api/materiels-informatiques/{id}/photo', name: 'api_materiel_informatique_photo_upload', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function uploadPhoto(MaterielInformatique $materiel, Request $request): JsonResponse
+    {
+        $file = $request->files->get('photoFichier');
+
+        if ($erreur = $this->fileStorage->erreurValidation($file)) {
+            return $this->json(['errors' => ['photoFichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if ($materiel->getPhoto()) {
+            $this->fileStorage->delete($materiel->getPhoto());
+        }
+
+        $png = $this->convertirPhotoEnPng($file);
+        $stocke = $this->fileStorage->storeContent($png, 'photo.png', 'png', 'materiel-informatique-photos');
+        $materiel->setPhoto($stocke['path']);
+        $this->em->flush();
+
+        return $this->json($materiel, JsonResponse::HTTP_OK, [], ['groups' => self::GROUPES_LECTURE]);
+    }
+
+    #[Route('/api/materiels-informatiques/{id}/photo', name: 'api_materiel_informatique_photo', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function photo(MaterielInformatique $materiel): StreamedResponse
+    {
+        if (!$materiel->getPhoto()) {
+            throw $this->createNotFoundException();
+        }
+
+        $response = new StreamedResponse(function () use ($materiel) {
+            fpassthru($this->fileStorage->readStream($materiel->getPhoto()));
+        });
+        $response->headers->set('Content-Type', $this->fileStorage->mimeType($materiel->getPhoto()));
+        $response->headers->set('Content-Disposition', 'inline');
+
+        return $response;
+    }
+
+    /**
+     * Convertie en PNG quel que soit le format d'origine — même logique que
+     * PersonnelController::convertirPhotoEnPng(), dupliquée ici plutôt que
+     * partagée : ce n'est pas un service métier, juste une conversion de
+     * fichier locale à l'action d'upload.
+     */
+    private function convertirPhotoEnPng(UploadedFile $file): string
+    {
+        $image = imagecreatefromstring(file_get_contents($file->getPathname()));
+
+        if (false === $image) {
+            throw new BadRequestHttpException("Ce fichier n'a pas pu être lu comme une image.");
+        }
+
+        imagepalettetotruecolor($image);
+        imagealphablending($image, true);
+        imagesavealpha($image, true);
+
+        ob_start();
+        imagepng($image);
+        $png = ob_get_clean();
+        imagedestroy($image);
+
+        return $png;
     }
 
     private function ouvrirAffectation(MaterielInformatique $materiel, Personnel $personnel): void
@@ -112,15 +214,5 @@ class MaterielInformatiqueController extends AbstractController
         $affectation->setMateriel($materiel);
         $affectation->setPersonnel($personnel);
         $this->em->persist($affectation);
-    }
-
-    private function violationsResponse(ConstraintViolationListInterface $violations): JsonResponse
-    {
-        $errors = [];
-        foreach ($violations as $violation) {
-            $errors[$violation->getPropertyPath()] = $violation->getMessage();
-        }
-
-        return $this->json(['errors' => $errors], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

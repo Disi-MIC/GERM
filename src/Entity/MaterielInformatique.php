@@ -2,11 +2,14 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\MaterielInformatiqueRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -26,9 +29,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: MaterielInformatiqueRepository::class)]
 #[ORM\Table(name: 'materiel_informatique')]
 #[ORM\UniqueConstraint(name: 'UNIQ_MATERIEL_NUM_INVENTAIRE', columns: ['numero_inventaire'])]
+// Sans ce contrôle applicatif, un doublon ne serait détecté qu'à l'écriture
+// en base (contrainte SQL ci-dessus), remontant une erreur 500 brute au lieu
+// d'un 422 exploitable par le formulaire.
+#[UniqueEntity(fields: ['numeroInventaire'], message: 'Ce numéro d\'inventaire est déjà utilisé par un autre matériel.')]
 #[ApiResource(
     operations: [
-        new GetCollection(uriTemplate: '/materiels-informatiques', order: ['numeroInventaire' => 'ASC']),
+        new GetCollection(uriTemplate: '/materiels-informatiques', order: ['numeroInventaire' => 'ASC'], paginationEnabled: false),
         // Élargi à ROLE_IT_TICKETS : la résolution d'IRI (TicketIncident.materiel
         // envoyé à la création d'un ticket) invoque cette opération Get, pas
         // seulement la sécurité de base de la ressource (réservée au Stock).
@@ -37,6 +44,22 @@ use Symfony\Component\Validator\Constraints as Assert;
     security: "is_granted('ROLE_IT_STOCK')",
     normalizationContext: ['groups' => ['api:read', 'api:read:rh']],
 )]
+// Filtre serveur — sans lui, le frontend devait charger tout le parc pour
+// filtrer côté JS (voir MaterielInformatiqueListComponent), intenable dès
+// que le parc dépasse quelques dizaines de matériels (et incompatible avec
+// un client mobile qui n'a pas intérêt à tout rapatrier pour chercher un
+// matériel). Remplace MaterielInformatiqueRepository::search(), qui n'était
+// jamais appelée par aucun contrôleur.
+#[ApiFilter(SearchFilter::class, properties: [
+    'numeroInventaire' => 'partial',
+    'marque' => 'partial',
+    'modele' => 'partial',
+    'numeroSerie' => 'partial',
+    'type' => 'exact',
+    'etat' => 'exact',
+    'service' => 'exact',
+    'affecteA' => 'exact',
+])]
 class MaterielInformatique
 {
     #[ORM\Id]
@@ -95,30 +118,36 @@ class MaterielInformatique
      * synchronisation manuelle.
      */
     #[ORM\Column(nullable: true)]
+    #[Assert\Positive(message: 'La périodicité doit être un nombre de mois positif.')]
     #[Groups(['api:read', 'api:write'])]
     private ?int $periodiciteMois = null;
 
     /**
      * Logiciels installés — trois catégories fixes (voir CategorieListeValeur
      * LOGICIEL_OS/LOGICIEL_ANTIVIRUS/LOGICIEL_BUREAUTIQUE), toutes optionnelles
-     * (un routeur/imprimante n'a ni OS ni bureautique). La liste des produits
-     * (Windows 11, Kaspersky Plus...) reste paramétrable par le superadmin,
-     * sans toucher au code — cf. les autres champs ListeValeur ci-dessus.
+     * (un routeur/imprimante n'a ni OS ni bureautique). Chaque champ pointe
+     * directement vers la LicenceLogiciel qui couvre cette installation
+     * (jamais vers le seul produit ListeValeur) : la licence à sélectionner
+     * doit exister au préalable dans le registre des licences — c'est cette
+     * association explicite, pas une simple correspondance par produit, qui
+     * fait apparaître le matériel dans le décompte "postes couverts" de la
+     * bonne licence (voir MaterielInformatiqueRepository::countParLicence()
+     * et App\State\LicenceLogicielProvider).
      */
-    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\ManyToOne(targetEntity: LicenceLogiciel::class)]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['api:read', 'api:write'])]
-    private ?ListeValeur $systemeExploitation = null;
+    private ?LicenceLogiciel $systemeExploitation = null;
 
-    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\ManyToOne(targetEntity: LicenceLogiciel::class)]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['api:read', 'api:write'])]
-    private ?ListeValeur $suiteBureautique = null;
+    private ?LicenceLogiciel $suiteBureautique = null;
 
-    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\ManyToOne(targetEntity: LicenceLogiciel::class)]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['api:read', 'api:write'])]
-    private ?ListeValeur $antivirus = null;
+    private ?LicenceLogiciel $antivirus = null;
 
     #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -140,6 +169,15 @@ class MaterielInformatique
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?string $observations = null;
+
+    /**
+     * Chemin de stockage (SFTP, voir App\Service\FileStorage) — jamais exposé
+     * tel quel côté API (pas de Groups ici), seule l'action dédiée
+     * MaterielInformatiqueController::photo() le lit pour servir le fichier.
+     * Même mécanisme que Personnel::$photo.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $photo = null;
 
     #[ORM\Column]
     #[Groups(['api:read'])]
@@ -278,36 +316,36 @@ class MaterielInformatique
         return $this;
     }
 
-    public function getSystemeExploitation(): ?ListeValeur
+    public function getSystemeExploitation(): ?LicenceLogiciel
     {
         return $this->systemeExploitation;
     }
 
-    public function setSystemeExploitation(?ListeValeur $systemeExploitation): static
+    public function setSystemeExploitation(?LicenceLogiciel $systemeExploitation): static
     {
         $this->systemeExploitation = $systemeExploitation;
 
         return $this;
     }
 
-    public function getSuiteBureautique(): ?ListeValeur
+    public function getSuiteBureautique(): ?LicenceLogiciel
     {
         return $this->suiteBureautique;
     }
 
-    public function setSuiteBureautique(?ListeValeur $suiteBureautique): static
+    public function setSuiteBureautique(?LicenceLogiciel $suiteBureautique): static
     {
         $this->suiteBureautique = $suiteBureautique;
 
         return $this;
     }
 
-    public function getAntivirus(): ?ListeValeur
+    public function getAntivirus(): ?LicenceLogiciel
     {
         return $this->antivirus;
     }
 
-    public function setAntivirus(?ListeValeur $antivirus): static
+    public function setAntivirus(?LicenceLogiciel $antivirus): static
     {
         $this->antivirus = $antivirus;
 
@@ -360,6 +398,24 @@ class MaterielInformatique
         $this->observations = $observations;
 
         return $this;
+    }
+
+    public function getPhoto(): ?string
+    {
+        return $this->photo;
+    }
+
+    public function setPhoto(?string $photo): static
+    {
+        $this->photo = $photo;
+
+        return $this;
+    }
+
+    #[Groups(['api:read'])]
+    public function isHasPhoto(): bool
+    {
+        return null !== $this->photo;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable

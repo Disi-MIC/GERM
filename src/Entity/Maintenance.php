@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'maintenance')]
 #[ApiResource(
     operations: [
-        new GetCollection(uriTemplate: '/maintenances', order: ['dateRealisation' => 'DESC']),
+        new GetCollection(uriTemplate: '/maintenances', order: ['dateRealisation' => 'DESC'], paginationEnabled: false),
         new Get(uriTemplate: '/maintenances/{id}'),
     ],
     security: "is_granted('ROLE_IT_STOCK')",

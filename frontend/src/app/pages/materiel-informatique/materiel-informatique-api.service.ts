@@ -52,4 +52,14 @@ export class MaterielInformatiqueApiService {
       params: { materiel: materielId },
     });
   }
+
+  uploadPhoto(id: number, fichier: File): Observable<MaterielInformatique> {
+    const formData = new FormData();
+    formData.append('photoFichier', fichier);
+    return this.http.post<MaterielInformatique>(`${API_BASE}/materiels-informatiques/${id}/photo`, formData);
+  }
+
+  photoUrl(id: number): string {
+    return `${API_BASE}/materiels-informatiques/${id}/photo`;
+  }
 }

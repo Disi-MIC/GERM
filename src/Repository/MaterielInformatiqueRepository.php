@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\ListeValeur;
+use App\Entity\LicenceLogiciel;
 use App\Entity\MaterielInformatique;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -15,24 +15,6 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, MaterielInformatique::class);
-    }
-
-    /**
-     * @return MaterielInformatique[]
-     */
-    public function search(?string $query): array
-    {
-        $qb = $this->createQueryBuilder('m')
-            ->leftJoin('m.service', 's')->addSelect('s')
-            ->leftJoin('m.affecteA', 'p')->addSelect('p')
-            ->orderBy('m.numeroInventaire', 'ASC');
-
-        if ($query) {
-            $qb->andWhere('m.numeroInventaire LIKE :q OR m.marque LIKE :q OR m.modele LIKE :q OR m.numeroSerie LIKE :q')
-                ->setParameter('q', '%'.$query.'%');
-        }
-
-        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -50,18 +32,22 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
     }
 
     /**
-     * Nombre de matériels équipés d'un logiciel donné (système d'exploitation,
-     * suite bureautique ou antivirus — on ne sait pas à l'avance dans lequel
-     * des trois champs il apparaît, d'où le OR) — remplace un compteur "postes
-     * couverts" saisi à la main sur LicenceLogiciel, toujours à jour puisque
-     * recalculé à chaque lecture plutôt que resynchronisé manuellement.
+     * Nombre de matériels rattachés à une licence donnée (système
+     * d'exploitation, suite bureautique ou antivirus — on ne sait pas à
+     * l'avance dans lequel des trois champs elle apparaît, d'où le OR) —
+     * remplace un compteur "postes couverts" saisi à la main sur
+     * LicenceLogiciel, toujours à jour puisque recalculé à chaque lecture.
+     * Compte par ligne de licence précise, pas par produit : deux
+     * renouvellements du même logiciel (deux LicenceLogiciel distinctes)
+     * ont chacun leur propre décompte, reflet de l'association explicite
+     * faite à l'installation (voir MaterielInformatique::$systemeExploitation).
      */
-    public function countParLogiciel(ListeValeur $logiciel): int
+    public function countParLicence(LicenceLogiciel $licence): int
     {
         return (int) $this->createQueryBuilder('m')
             ->select('COUNT(m.id)')
-            ->andWhere('m.systemeExploitation = :logiciel OR m.suiteBureautique = :logiciel OR m.antivirus = :logiciel')
-            ->setParameter('logiciel', $logiciel)
+            ->andWhere('m.systemeExploitation = :licence OR m.suiteBureautique = :licence OR m.antivirus = :licence')
+            ->setParameter('licence', $licence)
             ->getQuery()
             ->getSingleScalarResult();
     }

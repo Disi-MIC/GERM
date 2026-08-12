@@ -10,7 +10,13 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    #[Route('/login', name: 'app_login')]
+    // Volontairement pas '/login' : Angular possède déjà cette route côté
+    // client pour le flux principal (json_login sur /api/login) — un même
+    // chemin pour les deux aurait créé une collision en déploiement même-domaine
+    // (le point d'entrée du firewall "main" redirigeant vers /login atterrissait
+    // sur la page Angular, jamais sur ce formulaire Twig). Sous /admin comme le
+    // reste du back-office de secours réservé au superadmin.
+    #[Route('/admin/login', name: 'app_login')]
     public function login(
         AuthenticationUtils $authenticationUtils,
         AuthorizationCheckerInterface $authorizationChecker,

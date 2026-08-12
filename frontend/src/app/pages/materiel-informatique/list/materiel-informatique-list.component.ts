@@ -115,8 +115,8 @@ export class MaterielInformatiqueListComponent implements OnInit {
         this.recalculerCompteurs();
         this.appliquerFiltre();
       },
-      error: () => {
-        this.error = 'Erreur lors de la suppression.';
+      error: (err) => {
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la suppression.';
       },
     });
   }

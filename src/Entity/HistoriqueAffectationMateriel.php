@@ -23,7 +23,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Table(name: 'historique_affectation_materiel')]
 #[ApiResource(
     operations: [
-        new GetCollection(uriTemplate: '/historique-affectations-materiel', order: ['dateAffectation' => 'DESC']),
+        new GetCollection(uriTemplate: '/historique-affectations-materiel', order: ['dateAffectation' => 'DESC'], paginationEnabled: false),
         new Get(uriTemplate: '/historique-affectations-materiel/{id}'),
     ],
     security: "is_granted('ROLE_IT_STOCK')",

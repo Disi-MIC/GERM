@@ -124,7 +124,11 @@ class TicketIncidentController extends AbstractController
             $technicien->getUser(),
             'Un ticket vous a été assigné',
             '/tickets-informatique',
-            \sprintf('Le ticket "%s" vous a été assigné.', $ticket->getTitre()),
+            \sprintf(
+                'Le ticket "%s" vous a été assigné. Échéance de traitement : %s.',
+                $ticket->getTitre(),
+                $ticket->getEcheanceSla()?->format('d/m/Y H:i') ?? 'non définie',
+            ),
         );
         $this->notificationService->notifier(
             $ticket->getPersonnel()?->getUser(),
