@@ -1,5 +1,6 @@
 import { KeyValuePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { DashboardInformatique } from '../../core/models/dashboard.model';
 import { DashboardApiService } from '../dashboard/dashboard-api.service';
 
@@ -15,7 +16,7 @@ const LABELS_PERIODE: Record<PeriodeKey, string> = {
 @Component({
   selector: 'app-dashboard-informatique',
   standalone: true,
-  imports: [KeyValuePipe],
+  imports: [KeyValuePipe, RouterLink],
   templateUrl: './dashboard-informatique.component.html',
 })
 export class DashboardInformatiqueComponent implements OnInit {

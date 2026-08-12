@@ -18,8 +18,10 @@
     <div class="col-md-6">
       <label class="form-label">Type</label>
       <select class="form-select" formControlName="type">
-        <option value="corrective">Corrective</option>
-        <option value="preventive">Préventive</option>
+        <option [ngValue]="null">Sélectionner...</option>
+        @for (type of typesMaintenance; track type.id) {
+          <option [ngValue]="type.id">{{ type.libelle }}</option>
+        }
       </select>
     </div>
 
@@ -31,10 +33,6 @@
     <div class="col-md-6">
       <label class="form-label">Date de réalisation</label>
       <input type="date" class="form-control" formControlName="dateRealisation" />
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Coût</label>
-      <input type="number" step="0.01" class="form-control" formControlName="cout" />
     </div>
 
     <div class="col-md-6">

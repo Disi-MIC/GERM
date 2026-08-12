@@ -19,7 +19,6 @@
           <th>Description</th>
           <th>Réalisé par</th>
           <th>Date</th>
-          <th>Coût</th>
           <th class="text-end">Actions</th>
         </tr>
       </thead>
@@ -28,14 +27,13 @@
           <tr>
             <td>{{ materielLabel(maintenance) }}</td>
             <td>
-              <span class="badge bg-{{ maintenance.type === 'corrective' ? 'warning' : 'info' }}">
-                {{ labelsType[maintenance.type] }}
+              <span class="badge bg-{{ badgeClasseType(maintenance) }}">
+                {{ typeLabel(maintenance) }}
               </span>
             </td>
             <td>{{ maintenance.description }}</td>
             <td>{{ realiseParLabel(maintenance) }}</td>
             <td>{{ maintenance.dateRealisation | slice: 0 : 10 }}</td>
-            <td>{{ maintenance.cout ?? '—' }}</td>
             <td class="text-end">
               <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(maintenance)">
                 <i class="bi bi-trash"></i>
@@ -44,7 +42,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="7" class="text-center text-muted py-4">Aucune intervention enregistrée.</td>
+            <td colspan="6" class="text-center text-muted py-4">Aucune intervention enregistrée.</td>
           </tr>
         }
       </tbody>

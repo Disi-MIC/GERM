@@ -1,9 +1,9 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { PrioriteTicket, StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
+import { StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
-import { Personnel } from '../../../core/models/personnel.model';
+import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
 
 const LABELS_STATUT: Record<StatutTicket, string> = {
@@ -22,14 +22,14 @@ const BADGES_STATUT: Record<StatutTicket, string> = {
   refuse: 'danger',
 };
 
-const LABELS_PRIORITE: Record<PrioriteTicket, string> = {
-  basse: 'Basse',
-  normale: 'Normale',
-  haute: 'Haute',
-  critique: 'Critique',
-};
-
-const BADGES_PRIORITE: Record<PrioriteTicket, string> = {
+/**
+ * Couleurs pour les 4 codes de priorité livrés par défaut — purement
+ * cosmétique, un code ajouté depuis le paramétrage superadmin retombe sur
+ * 'secondary' (voir badgeClassePriorite). Contrairement à BADGES_STATUT, ce
+ * n'est plus un Record exhaustif puisque la liste des priorités n'est plus
+ * figée dans le code.
+ */
+const BADGES_PRIORITE: Record<string, string> = {
   basse: 'secondary',
   normale: 'info',
   haute: 'warning',
@@ -51,7 +51,6 @@ export class TicketsInformatiqueListComponent implements OnInit {
   compteurs: Record<string, number> = {};
   readonly statuts: StatutTicket[] = ['ouvert', 'en_cours', 'resolu', 'cloture', 'refuse'];
   readonly labelsStatut = LABELS_STATUT;
-  readonly labelsPriorite = LABELS_PRIORITE;
 
   constructor(private readonly api: TicketsInformatiqueApiService) {}
 
@@ -95,8 +94,15 @@ export class TicketsInformatiqueListComponent implements OnInit {
     return statut ? (BADGES_STATUT[statut] ?? 'secondary') : 'secondary';
   }
 
-  badgeClassePriorite(priorite: PrioriteTicket): string {
-    return BADGES_PRIORITE[priorite] ?? 'secondary';
+  prioriteLabel(ticket: TicketIncident): string {
+    const priorite = ticket.priorite as ListeValeurRef | string;
+    return typeof priorite === 'string' ? priorite : priorite.libelle;
+  }
+
+  badgeClassePriorite(ticket: TicketIncident): string {
+    const priorite = ticket.priorite as ListeValeurRef | string;
+    const code = typeof priorite === 'string' ? priorite : priorite.code;
+    return BADGES_PRIORITE[code] ?? 'secondary';
   }
 
   agentLabel(ticket: TicketIncident): string {

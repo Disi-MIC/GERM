@@ -7,7 +7,6 @@ use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use App\Entity\Enum\TypeMaintenance;
 use App\Repository\MaintenanceRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -24,6 +23,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  *
  * Exposée en lecture seule côté API : la création et la suppression passent
  * par App\Controller\Api\MaintenanceController.
+ *
+ * `type` est une classification (ListeValeur, catégorie type-maintenance)
+ * paramétrable par le superadmin — pas de workflow attaché à ce champ,
+ * contrairement à TicketIncident.statut.
  */
 #[ORM\Entity(repositoryClass: MaintenanceRepository::class)]
 #[ORM\Table(name: 'maintenance')]
@@ -50,10 +53,11 @@ class Maintenance
     #[Groups(['api:read', 'api:write'])]
     private ?MaterielInformatique $materiel = null;
 
-    #[ORM\Column(length: 20, enumType: TypeMaintenance::class)]
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le type de maintenance est obligatoire.')]
     #[Groups(['api:read', 'api:write'])]
-    private ?TypeMaintenance $type = null;
+    private ?ListeValeur $type = null;
 
     #[ORM\Column(type: 'text')]
     #[Assert\NotBlank(message: 'La description est obligatoire.')]
@@ -78,10 +82,6 @@ class Maintenance
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?TicketIncident $ticketOrigine = null;
-
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
-    #[Groups(['api:read', 'api:write'])]
-    private ?string $cout = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
@@ -113,12 +113,12 @@ class Maintenance
         return $this;
     }
 
-    public function getType(): ?TypeMaintenance
+    public function getType(): ?ListeValeur
     {
         return $this->type;
     }
 
-    public function setType(?TypeMaintenance $type): static
+    public function setType(?ListeValeur $type): static
     {
         $this->type = $type;
 
@@ -181,18 +181,6 @@ class Maintenance
     public function setTicketOrigine(?TicketIncident $ticketOrigine): static
     {
         $this->ticketOrigine = $ticketOrigine;
-
-        return $this;
-    }
-
-    public function getCout(): ?string
-    {
-        return $this->cout;
-    }
-
-    public function setCout(?string $cout): static
-    {
-        $this->cout = $cout;
 
         return $this;
     }

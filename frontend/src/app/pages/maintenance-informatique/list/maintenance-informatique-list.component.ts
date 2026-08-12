@@ -1,15 +1,13 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Maintenance, TypeMaintenance } from '../../../core/models/maintenance.model';
+import { Maintenance } from '../../../core/models/maintenance.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
-import { Personnel } from '../../../core/models/personnel.model';
+import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { MaintenanceInformatiqueApiService } from '../maintenance-informatique-api.service';
 
-const LABELS_TYPE: Record<TypeMaintenance, string> = {
-  preventive: 'Préventive',
-  corrective: 'Corrective',
-};
+/** Couleur pour le code 'corrective' livré par défaut — les autres retombent sur 'info' (voir badgeClasseType). */
+const CODES_CORRECTIFS = ['corrective'];
 
 @Component({
   selector: 'app-maintenance-informatique-list',
@@ -21,7 +19,6 @@ export class MaintenanceInformatiqueListComponent implements OnInit {
   maintenances: Maintenance[] = [];
   loading = true;
   error: string | null = null;
-  readonly labelsType = LABELS_TYPE;
 
   constructor(private readonly api: MaintenanceInformatiqueApiService) {}
 
@@ -41,6 +38,17 @@ export class MaintenanceInformatiqueListComponent implements OnInit {
   materielLabel(maintenance: Maintenance): string {
     const materiel = maintenance.materiel as MaterielInformatique | string;
     return typeof materiel === 'string' ? materiel : `${materiel.marque} ${materiel.modele} (${materiel.numeroInventaire})`;
+  }
+
+  typeLabel(maintenance: Maintenance): string {
+    const type = maintenance.type as ListeValeurRef | string;
+    return typeof type === 'string' ? type : type.libelle;
+  }
+
+  badgeClasseType(maintenance: Maintenance): string {
+    const type = maintenance.type as ListeValeurRef | string;
+    const code = typeof type === 'string' ? type : type.code;
+    return CODES_CORRECTIFS.includes(code) ? 'warning' : 'info';
   }
 
   realiseParLabel(maintenance: Maintenance): string {

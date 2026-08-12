@@ -13,6 +13,7 @@ use App\Repository\DemandeCarteProRepository;
 use App\Repository\DemandeDecisionRepository;
 use App\Repository\DemandeJouissanceRepository;
 use App\Repository\DirectionRepository;
+use App\Repository\LicenceLogicielRepository;
 use App\Repository\MaintenanceRepository;
 use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\PersonnelRepository;
@@ -164,6 +165,7 @@ class DashboardController extends AbstractController
         TicketIncidentRepository $ticketIncidentRepository,
         MaintenanceRepository $maintenanceRepository,
         MaterielInformatiqueRepository $materielInformatiqueRepository,
+        LicenceLogicielRepository $licenceLogicielRepository,
     ): JsonResponse {
         // Combine stats Stock (matériel/maintenance) et Tickets : #[IsGranted]
         // ne fait pas d'OR entre deux rôles indépendants, d'où ce contrôle
@@ -206,7 +208,107 @@ class DashboardController extends AbstractController
                 'total' => $materielInformatiqueRepository->count([]),
                 'parEtat' => $parEtat,
             ],
+            'echeancesMaintenance' => $this->calculerEcheancesMaintenance($materielInformatiqueRepository, $maintenanceRepository),
+            'licencesExpirantBientot' => $this->calculerEcheancesLicences($licenceLogicielRepository, $materielInformatiqueRepository),
         ]);
+    }
+
+    /**
+     * Licences arrivant à expiration (ou déjà expirées) — même fenêtre de 30
+     * jours et même logique enRetard/aVenir que calculerEcheancesMaintenance,
+     * mais sur la licence "en cours" de chaque logiciel (voir
+     * LicenceLogicielRepository::findDernieresParLogiciel) pour ignorer les
+     * renouvellements passés.
+     *
+     * @return array{enRetard: list<array<string, mixed>>, aVenir: list<array<string, mixed>>}
+     */
+    private function calculerEcheancesLicences(
+        LicenceLogicielRepository $licenceLogicielRepository,
+        MaterielInformatiqueRepository $materielInformatiqueRepository,
+    ): array {
+        $aujourdhui = new \DateTimeImmutable('today');
+        $limite = $aujourdhui->modify('+30 days');
+
+        $enRetard = [];
+        $aVenir = [];
+
+        foreach ($licenceLogicielRepository->findDernieresParLogiciel() as $licence) {
+            $echeance = $licence->getDateExpiration();
+            if (null === $echeance) {
+                continue;
+            }
+
+            $entree = [
+                'licenceId' => $licence->getId(),
+                'logicielId' => $licence->getLogiciel()?->getId(),
+                'logiciel' => $licence->getLogiciel()?->getLibelle() ?? '',
+                'nombrePostes' => $licence->getLogiciel() ? $materielInformatiqueRepository->countParLogiciel($licence->getLogiciel()) : 0,
+                'echeance' => $echeance->format('Y-m-d'),
+            ];
+
+            if ($echeance < $aujourdhui) {
+                $entree['jours'] = $aujourdhui->diff($echeance)->days;
+                $enRetard[] = $entree;
+            } elseif ($echeance <= $limite) {
+                $entree['jours'] = $echeance->diff($aujourdhui)->days;
+                $aVenir[] = $entree;
+            }
+        }
+
+        usort($enRetard, fn ($a, $b) => $b['jours'] <=> $a['jours']);
+        usort($aVenir, fn ($a, $b) => $a['jours'] <=> $b['jours']);
+
+        return ['enRetard' => $enRetard, 'aVenir' => $aVenir];
+    }
+
+    /**
+     * Échéances de maintenance préventive, calculées à la volée plutôt que
+     * stockées : dernière maintenance réalisée pour le matériel (ou, à
+     * défaut, sa date d'acquisition puis sa date d'enregistrement) + sa
+     * périodicité (MaterielInformatique::periodiciteMois). Seuls les
+     * matériels avec une périodicité définie sont concernés. Fenêtre "à
+     * venir" de 30 jours — même seuil que cartesExpirantBientot.
+     *
+     * @return array{enRetard: list<array<string, mixed>>, aVenir: list<array<string, mixed>>}
+     */
+    private function calculerEcheancesMaintenance(
+        MaterielInformatiqueRepository $materielRepository,
+        MaintenanceRepository $maintenanceRepository,
+    ): array {
+        $dernieresDates = $maintenanceRepository->findDernieresDatesParMateriel();
+        $aujourdhui = new \DateTimeImmutable('today');
+        $limite = $aujourdhui->modify('+30 days');
+
+        $enRetard = [];
+        $aVenir = [];
+
+        foreach ($materielRepository->findAvecPeriodiciteMaintenance() as $materiel) {
+            $reference = $dernieresDates[$materiel->getId()]
+                ?? $materiel->getDateAcquisition()
+                ?? $materiel->getCreatedAt();
+            $echeance = $reference->modify(sprintf('+%d months', $materiel->getPeriodiciteMois()));
+
+            $entree = [
+                'materielId' => $materiel->getId(),
+                'numeroInventaire' => $materiel->getNumeroInventaire(),
+                'marque' => $materiel->getMarque(),
+                'modele' => $materiel->getModele(),
+                'echeance' => $echeance->format('Y-m-d'),
+            ];
+
+            if ($echeance < $aujourdhui) {
+                $entree['jours'] = $aujourdhui->diff($echeance)->days;
+                $enRetard[] = $entree;
+            } elseif ($echeance <= $limite) {
+                $entree['jours'] = $echeance->diff($aujourdhui)->days;
+                $aVenir[] = $entree;
+            }
+        }
+
+        usort($enRetard, fn ($a, $b) => $b['jours'] <=> $a['jours']);
+        usort($aVenir, fn ($a, $b) => $a['jours'] <=> $b['jours']);
+
+        return ['enRetard' => $enRetard, 'aVenir' => $aVenir];
     }
 
     /**

@@ -31,6 +31,18 @@ export class MaterielInformatiqueApiService {
     return this.http.put<MaterielInformatique>(`${API_BASE}/materiels-informatiques/${id}`, materiel);
   }
 
+  /**
+   * PUT partiel : le contrôleur désérialise sur l'entité existante
+   * (object_to_populate), donc seul `affecteA` est envoyé — les autres
+   * champs du matériel restent inchangés. `null` renvoie le matériel au
+   * stock (aucun propriétaire).
+   */
+  affecter(id: number, personnelId: number | null): Observable<MaterielInformatique> {
+    return this.http.put<MaterielInformatique>(`${API_BASE}/materiels-informatiques/${id}`, {
+      affecteA: personnelId ? `/api/personnels/${personnelId}` : null,
+    });
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${API_BASE}/materiels-informatiques/${id}`);
   }

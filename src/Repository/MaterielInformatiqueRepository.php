@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\ListeValeur;
 use App\Entity\MaterielInformatique;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -32,6 +33,37 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Matériels avec une périodicité de maintenance préventive définie —
+     * ceux à ignorer dans le calcul des échéances (DashboardController).
+     *
+     * @return MaterielInformatique[]
+     */
+    public function findAvecPeriodiciteMaintenance(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.periodiciteMois IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Nombre de matériels équipés d'un logiciel donné (système d'exploitation,
+     * suite bureautique ou antivirus — on ne sait pas à l'avance dans lequel
+     * des trois champs il apparaît, d'où le OR) — remplace un compteur "postes
+     * couverts" saisi à la main sur LicenceLogiciel, toujours à jour puisque
+     * recalculé à chaque lecture plutôt que resynchronisé manuellement.
+     */
+    public function countParLogiciel(ListeValeur $logiciel): int
+    {
+        return (int) $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->andWhere('m.systemeExploitation = :logiciel OR m.suiteBureautique = :logiciel OR m.antivirus = :logiciel')
+            ->setParameter('logiciel', $logiciel)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**

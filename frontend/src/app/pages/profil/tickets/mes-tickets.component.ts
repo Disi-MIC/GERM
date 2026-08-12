@@ -2,7 +2,8 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
-import { PrioriteTicket, StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
+import { ListeValeurRef } from '../../../core/models/personnel.model';
+import { StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_STATUT: Record<StatutTicket, string> = {
@@ -21,13 +22,6 @@ const BADGES_STATUT: Record<StatutTicket, string> = {
   refuse: 'danger',
 };
 
-const LABELS_PRIORITE: Record<PrioriteTicket, string> = {
-  basse: 'Basse',
-  normale: 'Normale',
-  haute: 'Haute',
-  critique: 'Critique',
-};
-
 @Component({
   selector: 'app-mes-tickets',
   standalone: true,
@@ -39,7 +33,6 @@ export class MesTicketsComponent implements OnInit {
   loading = true;
   error: string | null = null;
   readonly labelsStatut = LABELS_STATUT;
-  readonly labelsPriorite = LABELS_PRIORITE;
 
   constructor(private readonly api: ProfilApiService) {}
 
@@ -59,6 +52,11 @@ export class MesTicketsComponent implements OnInit {
   materielLabel(ticket: TicketIncident): string {
     const materiel = ticket.materiel as MaterielInformatique | string;
     return typeof materiel === 'string' ? materiel : `${materiel.marque} ${materiel.modele} (${materiel.numeroInventaire})`;
+  }
+
+  prioriteLabel(ticket: TicketIncident): string {
+    const priorite = ticket.priorite as ListeValeurRef | string;
+    return typeof priorite === 'string' ? priorite : priorite.libelle;
   }
 
   badgeClasseStatut(statut: StatutTicket | undefined): string {

@@ -6,7 +6,7 @@ use App\Controller\AbstractController;
 use App\Entity\DemandeCartePro;
 use App\Entity\DemandeDecision;
 use App\Entity\DemandeJouissance;
-use App\Entity\Enum\PrioriteTicket;
+use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\Personnel;
 use App\Entity\PieceJustificativeDecision;
@@ -15,6 +15,7 @@ use App\Entity\TicketIncident;
 use App\Entity\User;
 use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\DecisionCongeRepository;
+use App\Repository\ListeValeurRepository;
 use App\Repository\MaterielInformatiqueRepository;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
@@ -52,6 +53,7 @@ class MeDemandesController extends AbstractController
         private readonly DecisionCongeRepository $decisionCongeRepository,
         private readonly CarteProfessionnelleRepository $carteProfessionnelleRepository,
         private readonly MaterielInformatiqueRepository $materielInformatiqueRepository,
+        private readonly ListeValeurRepository $listeValeurRepository,
         private readonly NotificationService $notificationService,
     ) {
     }
@@ -314,7 +316,10 @@ class MeDemandesController extends AbstractController
         $ticket->setMateriel($materiel);
         $ticket->setTitre(isset($data['titre']) ? (string) $data['titre'] : null);
         $ticket->setDescription(isset($data['description']) ? (string) $data['description'] : null);
-        $ticket->setPriorite(PrioriteTicket::tryFrom((string) ($data['priorite'] ?? '')) ?? PrioriteTicket::NORMALE);
+        $codePriorite = (string) ($data['priorite'] ?? '') ?: 'normale';
+        $priorite = $this->listeValeurRepository->findOneByCategorieAndCode(CategorieListeValeur::PRIORITE_TICKET, $codePriorite)
+            ?? $this->listeValeurRepository->findOneByCategorieAndCode(CategorieListeValeur::PRIORITE_TICKET, 'normale');
+        $ticket->setPriorite($priorite);
 
         $violations = $this->validator->validate($ticket);
         if (\count($violations) > 0) {

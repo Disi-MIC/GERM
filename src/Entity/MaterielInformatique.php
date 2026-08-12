@@ -16,10 +16,12 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Exposée en lecture seule côté API (frontend Angular, rôle ROLE_IT_STOCK) :
  * la création, l'édition et la suppression passent par
  * src/Controller/Api/MaterielInformatiqueController.php — même logique que
- * Personnel. `valeurAcquisition`/`fournisseur` portent un groupe de lecture
- * distinct (api:read:rh) plutôt que api:read : la vue en lecture seule "Mon
- * parc informatique" exposée à l'agent affecté (src/Controller/Api/MeController.php)
- * ne demande que le groupe api:read et ne doit jamais voir ces deux champs.
+ * Personnel. `fournisseur` porte un groupe de lecture distinct (api:read:rh)
+ * plutôt que api:read : la vue en lecture seule "Mon parc informatique"
+ * exposée à l'agent affecté (src/Controller/Api/MeController.php) ne demande
+ * que le groupe api:read et ne doit jamais voir ce champ. Aucune donnée
+ * financière (coût, valeur d'acquisition) n'est suivie ici — hors périmètre
+ * du parc informatique, volontairement.
  */
 #[ORM\Entity(repositoryClass: MaterielInformatiqueRepository::class)]
 #[ORM\Table(name: 'materiel_informatique')]
@@ -76,10 +78,6 @@ class MaterielInformatique
     #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $dateAcquisition = null;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
-    #[Groups(['api:read:rh', 'api:write:rh'])]
-    private ?string $valeurAcquisition = null;
-
     #[ORM\Column(length: 150, nullable: true)]
     #[Groups(['api:read:rh', 'api:write:rh'])]
     private ?string $fournisseur = null;
@@ -87,6 +85,40 @@ class MaterielInformatique
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $garantieJusquau = null;
+
+    /**
+     * Fréquence de maintenance préventive, en mois (3/6/12...) — null si aucun
+     * plan n'est requis pour ce matériel. Sert à calculer l'échéance de la
+     * prochaine maintenance côté DashboardController (dernière Maintenance
+     * réalisée, ou à défaut dateAcquisition/createdAt, + ce nombre de mois),
+     * jamais stockée directement pour rester toujours à jour sans
+     * synchronisation manuelle.
+     */
+    #[ORM\Column(nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?int $periodiciteMois = null;
+
+    /**
+     * Logiciels installés — trois catégories fixes (voir CategorieListeValeur
+     * LOGICIEL_OS/LOGICIEL_ANTIVIRUS/LOGICIEL_BUREAUTIQUE), toutes optionnelles
+     * (un routeur/imprimante n'a ni OS ni bureautique). La liste des produits
+     * (Windows 11, Kaspersky Plus...) reste paramétrable par le superadmin,
+     * sans toucher au code — cf. les autres champs ListeValeur ci-dessus.
+     */
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?ListeValeur $systemeExploitation = null;
+
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?ListeValeur $suiteBureautique = null;
+
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?ListeValeur $antivirus = null;
 
     #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -210,18 +242,6 @@ class MaterielInformatique
         return $this;
     }
 
-    public function getValeurAcquisition(): ?string
-    {
-        return $this->valeurAcquisition;
-    }
-
-    public function setValeurAcquisition(?string $valeurAcquisition): static
-    {
-        $this->valeurAcquisition = $valeurAcquisition;
-
-        return $this;
-    }
-
     public function getFournisseur(): ?string
     {
         return $this->fournisseur;
@@ -242,6 +262,54 @@ class MaterielInformatique
     public function setGarantieJusquau(?\DateTimeImmutable $garantieJusquau): static
     {
         $this->garantieJusquau = $garantieJusquau;
+
+        return $this;
+    }
+
+    public function getPeriodiciteMois(): ?int
+    {
+        return $this->periodiciteMois;
+    }
+
+    public function setPeriodiciteMois(?int $periodiciteMois): static
+    {
+        $this->periodiciteMois = $periodiciteMois;
+
+        return $this;
+    }
+
+    public function getSystemeExploitation(): ?ListeValeur
+    {
+        return $this->systemeExploitation;
+    }
+
+    public function setSystemeExploitation(?ListeValeur $systemeExploitation): static
+    {
+        $this->systemeExploitation = $systemeExploitation;
+
+        return $this;
+    }
+
+    public function getSuiteBureautique(): ?ListeValeur
+    {
+        return $this->suiteBureautique;
+    }
+
+    public function setSuiteBureautique(?ListeValeur $suiteBureautique): static
+    {
+        $this->suiteBureautique = $suiteBureautique;
+
+        return $this;
+    }
+
+    public function getAntivirus(): ?ListeValeur
+    {
+        return $this->antivirus;
+    }
+
+    public function setAntivirus(?ListeValeur $antivirus): static
+    {
+        $this->antivirus = $antivirus;
 
         return $this;
     }

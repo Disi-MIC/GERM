@@ -11,7 +11,6 @@ use App\Repository\ListeValeurRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
-use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -45,11 +44,6 @@ class MaterielInformatiqueType extends AbstractType
             ->add('dateAcquisition', DateType::class, [
                 'label' => "Date d'acquisition",
                 'widget' => 'single_text',
-                'required' => false,
-            ])
-            ->add('valeurAcquisition', MoneyType::class, [
-                'label' => "Valeur d'acquisition",
-                'currency' => false,
                 'required' => false,
             ])
             ->add('fournisseur', TextType::class, ['label' => 'Fournisseur', 'required' => false])

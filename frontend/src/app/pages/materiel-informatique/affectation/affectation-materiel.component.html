@@ -1,0 +1,84 @@
+<h5 class="mb-3">Affectation du matériel</h5>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <button
+      type="button"
+      class="btn btn-sm"
+      [class.btn-outline-secondary]="filtre !== 'non_affectes'"
+      [class.btn-secondary]="filtre === 'non_affectes'"
+      (click)="filtrer('non_affectes')"
+    >
+      Non affectés <span class="badge bg-light text-dark ms-1">{{ compteurs.non_affectes }}</span>
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm"
+      [class.btn-outline-secondary]="filtre !== 'affectes'"
+      [class.btn-secondary]="filtre === 'affectes'"
+      (click)="filtrer('affectes')"
+    >
+      Affectés <span class="badge bg-light text-dark ms-1">{{ compteurs.affectes }}</span>
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm"
+      [class.btn-outline-secondary]="filtre !== 'tous'"
+      [class.btn-secondary]="filtre === 'tous'"
+      (click)="filtrer('tous')"
+    >
+      Tous <span class="badge bg-light text-dark ms-1">{{ compteurs.tous }}</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>N° inventaire</th>
+          <th>Matériel</th>
+          <th>Service</th>
+          <th>Affectation actuelle</th>
+          <th>Affecter à</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (materiel of materielsAffiches; track materiel.id) {
+          <tr>
+            <td>{{ materiel.numeroInventaire }}</td>
+            <td>{{ libelle(materiel.type) }} — {{ materiel.marque }} {{ materiel.modele }}</td>
+            <td>{{ serviceLabel(materiel) }}</td>
+            <td>{{ affecteLabel(materiel) }}</td>
+            <td>
+              <select class="form-select form-select-sm" [(ngModel)]="selections[materiel.id!]">
+                <option [ngValue]="null">En stock (aucun)</option>
+                @for (personnel of personnels; track personnel.id) {
+                  <option [ngValue]="personnel.id">{{ personnel.nomComplet || (personnel.prenom + ' ' + personnel.nom) }}</option>
+                }
+              </select>
+            </td>
+            <td class="text-end">
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                [disabled]="selectionInchangee(materiel) || saving[materiel.id!]"
+                (click)="affecter(materiel)"
+              >
+                Affecter
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Aucun matériel dans cette catégorie.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

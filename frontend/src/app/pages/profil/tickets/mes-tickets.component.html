@@ -26,7 +26,7 @@
           <tr>
             <td>{{ ticket.titre }}</td>
             <td>{{ materielLabel(ticket) }}</td>
-            <td>{{ labelsPriorite[ticket.priorite] }}</td>
+            <td>{{ prioriteLabel(ticket) }}</td>
             <td><span class="badge bg-{{ badgeClasseStatut(ticket.statut) }}">{{ labelsStatut[ticket.statut!] }}</span></td>
             <td>{{ ticket.createdAt | slice: 0 : 10 }}</td>
           </tr>

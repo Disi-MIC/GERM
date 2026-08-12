@@ -76,7 +76,7 @@
             {% set carte_active = 'admin_carte_professionnelle' in route or 'admin_demande_carte_pro' in route %}
             {% set delegation_active = 'admin_delegation' in route %}
             {% set rh_active = personnel_active or conge_active or carte_active or delegation_active %}
-            {% set informatique_active = 'admin_materiel' in route or categorie_actuelle in ['type-materiel', 'etat-materiel'] %}
+            {% set informatique_active = 'admin_materiel' in route or categorie_actuelle in ['type-materiel', 'etat-materiel', 'priorite-ticket', 'type-maintenance', 'logiciel-os', 'logiciel-antivirus', 'logiciel-bureautique'] %}
             {% set vehicule_active = 'admin_vehicule' in route or categorie_actuelle in ['type-vehicule', 'etat-vehicule'] %}
 
             {% if is_granted('ROLE_SUPERADMIN') %}
@@ -145,6 +145,11 @@
                     <a href="{{ path('admin_materiel_index') }}" class="{{ 'admin_materiel' in route ? 'active' }}">Parc informatique</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-materiel'}) }}" class="{{ categorie_actuelle == 'type-materiel' ? 'active' }}">Types de matériel</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'etat-materiel'}) }}" class="{{ categorie_actuelle == 'etat-materiel' ? 'active' }}">États du matériel</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'priorite-ticket'}) }}" class="{{ categorie_actuelle == 'priorite-ticket' ? 'active' }}">Priorités de ticket</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-maintenance'}) }}" class="{{ categorie_actuelle == 'type-maintenance' ? 'active' }}">Types de maintenance</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'logiciel-os'}) }}" class="{{ categorie_actuelle == 'logiciel-os' ? 'active' }}">Systèmes d'exploitation</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'logiciel-antivirus'}) }}" class="{{ categorie_actuelle == 'logiciel-antivirus' ? 'active' }}">Antivirus</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'logiciel-bureautique'}) }}" class="{{ categorie_actuelle == 'logiciel-bureautique' ? 'active' }}">Suites bureautiques</a>
                 </div>
 
                 <a href="#submenuVehicule" class="submenu-toggle {{ vehicule_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ vehicule_active ? 'true' : 'false' }}" aria-controls="submenuVehicule">

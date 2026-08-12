@@ -1,0 +1,51 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Licences logicielles</h5>
+  <a routerLink="/licences-logicielles/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouvelle licence
+  </a>
+</div>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <div class="card">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Logiciel</th>
+          <th>N° licence</th>
+          <th>Postes couverts</th>
+          <th>Début</th>
+          <th>Expiration</th>
+          <th>Fournisseur</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (licence of licences; track licence.id) {
+          <tr>
+            <td>{{ logicielLabel(licence) }}</td>
+            <td>{{ licence.numeroLicence || '—' }}</td>
+            <td>{{ postesCouverts(licence) }}</td>
+            <td>{{ licence.dateDebut ? (licence.dateDebut | slice: 0 : 10) : '—' }}</td>
+            <td [class.text-danger]="estExpiree(licence)">
+              {{ licence.dateExpiration ? (licence.dateExpiration | slice: 0 : 10) : '—' }}
+            </td>
+            <td>{{ licence.fournisseur || '—' }}</td>
+            <td class="text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(licence)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">Aucune licence enregistrée.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

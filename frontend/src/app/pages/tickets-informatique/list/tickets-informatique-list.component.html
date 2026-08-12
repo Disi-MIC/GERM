@@ -40,7 +40,7 @@
             <td>{{ agentLabel(ticket) }}</td>
             <td>{{ materielLabel(ticket) }}</td>
             <td>{{ ticket.titre }}</td>
-            <td><span class="badge bg-{{ badgeClassePriorite(ticket.priorite) }}">{{ labelsPriorite[ticket.priorite] }}</span></td>
+            <td><span class="badge bg-{{ badgeClassePriorite(ticket) }}">{{ prioriteLabel(ticket) }}</span></td>
             <td><span class="badge bg-{{ badgeClasseStatut(ticket.statut) }}">{{ labelsStatut[ticket.statut!] }}</span></td>
             <td>{{ ticket.createdAt | slice: 0 : 10 }}</td>
             <td class="text-end">

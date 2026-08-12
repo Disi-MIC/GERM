@@ -1,8 +1,7 @@
 import { MaterielInformatique } from './materiel-informatique.model';
-import { Personnel } from './personnel.model';
+import { ListeValeurRef, Personnel } from './personnel.model';
 
 export type StatutTicket = 'ouvert' | 'en_cours' | 'resolu' | 'cloture' | 'refuse';
-export type PrioriteTicket = 'basse' | 'normale' | 'haute' | 'critique';
 
 export interface TicketIncident {
   id?: number;
@@ -10,7 +9,7 @@ export interface TicketIncident {
   materiel: MaterielInformatique | string;
   titre: string;
   description: string;
-  priorite: PrioriteTicket;
+  priorite: ListeValeurRef | string;
   statut?: StatutTicket;
   assigneA?: Personnel | string | null;
   commentaireResolution?: string | null;

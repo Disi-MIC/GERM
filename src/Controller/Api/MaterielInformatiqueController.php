@@ -21,9 +21,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * MaterielInformatique est exposée en lecture seule via API Platform (voir
  * l'entité) : la création, l'édition et la suppression passent par ces
  * actions dédiées — même logique que PersonnelController. Les groupes
- * api:read:rh/api:write:rh (valeurAcquisition/fournisseur) sont demandés en
- * plus des groupes de base ici, contrairement à la vue self-service "Mon
- * parc informatique" (MeController::materiels()) qui ne les demande jamais.
+ * api:read:rh/api:write:rh (fournisseur) sont demandés en plus des groupes
+ * de base ici, contrairement à la vue self-service "Mon parc informatique"
+ * (MeController::materiels()) qui ne les demande jamais.
  *
  * `affecteA` reste éditable directement dans ce même formulaire (comme
  * Personnel.service/fonction/grade) plutôt que via une action dédiée : create()

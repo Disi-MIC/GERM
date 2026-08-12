@@ -11,3 +11,10 @@ api_platform:
         stateless: false
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin', 'Cookie']
+    # Limite par défaut (30) trop basse pour le graphe de relations du parc
+    # informatique : Maintenance -> materiel -> (type, état, service, affecté
+    # à, OS, bureautique, antivirus...) dépasse ce plafond dès que le matériel
+    # a gagné ses champs logiciels, faisant échouer /api/maintenances (et tout
+    # endpoint similaire) avec "total number of joined relations exceeded".
+    eager_loading:
+        max_joins: 100

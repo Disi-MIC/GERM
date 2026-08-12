@@ -75,12 +75,50 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Valeur d'acquisition</label>
-        <input type="number" step="0.01" class="form-control" formControlName="valeurAcquisition" />
+        <label class="form-label">Maintenance préventive</label>
+        <select class="form-select" formControlName="periodiciteMois">
+          <option [ngValue]="null">Aucune planification</option>
+          <option [ngValue]="3">Trimestrielle (tous les 3 mois)</option>
+          <option [ngValue]="6">Semestrielle (tous les 6 mois)</option>
+          <option [ngValue]="12">Annuelle (tous les 12 mois)</option>
+        </select>
       </div>
+
       <div class="col-md-6">
         <label class="form-label">Fournisseur</label>
         <input type="text" class="form-control" formControlName="fournisseur" />
+      </div>
+
+      <div class="col-12">
+        <hr class="my-1" />
+        <h6 class="text-muted text-uppercase small mb-0">Logiciels installés</h6>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Système d'exploitation</label>
+        <select class="form-select" formControlName="systemeExploitation">
+          <option [ngValue]="null">Non renseigné</option>
+          @for (os of systemesExploitation; track os.id) {
+            <option [ngValue]="os.id">{{ os.libelle }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Suite bureautique</label>
+        <select class="form-select" formControlName="suiteBureautique">
+          <option [ngValue]="null">Non renseigné</option>
+          @for (suite of suitesBureautiques; track suite.id) {
+            <option [ngValue]="suite.id">{{ suite.libelle }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Antivirus</label>
+        <select class="form-select" formControlName="antivirus">
+          <option [ngValue]="null">Non renseigné</option>
+          @for (av of antivirusDisponibles; track av.id) {
+            <option [ngValue]="av.id">{{ av.libelle }}</option>
+          }
+        </select>
       </div>
 
       <div class="col-12">

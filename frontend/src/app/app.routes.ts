@@ -213,6 +213,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'licences-logicielles',
+        canActivate: [roleGuard],
+        data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },
+        loadChildren: () =>
+          import('./pages/licences-logicielles/licences-logicielles.routes').then(
+            (m) => m.LICENCES_LOGICIELLES_ROUTES,
+          ),
+      },
+      {
         path: 'conges',
         canActivate: [roleGuard],
         data: { roles: ['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'] },

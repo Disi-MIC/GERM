@@ -9,7 +9,6 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
-use App\Entity\Enum\PrioriteTicket;
 use App\Entity\Enum\StatutTicket;
 use App\Repository\TicketIncidentRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -31,6 +30,11 @@ use Symfony\Component\Validator\Constraints as Assert;
  * ici, avec IRI personnel/matériel — même parité que DemandeCartePro). Le
  * traitement (prendre en charge/résoudre/refuser/valider/rouvrir) passe par
  * App\Controller\Api\TicketIncidentController.
+ *
+ * `priorite` est une simple classification (ListeValeur, catégorie
+ * priorite-ticket) paramétrable par le superadmin, contrairement à `statut`
+ * qui reste un enum PHP figé : changer la priorité ne casse jamais le
+ * workflow, alors que renommer/supprimer un statut le pourrait.
  */
 #[ORM\Entity(repositoryClass: TicketIncidentRepository::class)]
 #[ORM\Table(name: 'ticket_incident')]
@@ -76,10 +80,11 @@ class TicketIncident
     #[Groups(['api:read', 'api:write'])]
     private ?string $description = null;
 
-    #[ORM\Column(length: 20, enumType: PrioriteTicket::class)]
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'La priorité est obligatoire.')]
     #[Groups(['api:read', 'api:write'])]
-    private ?PrioriteTicket $priorite = PrioriteTicket::NORMALE;
+    private ?ListeValeur $priorite = null;
 
     #[ORM\Column(length: 20, enumType: StatutTicket::class)]
     #[Groups(['api:read'])]
@@ -172,12 +177,12 @@ class TicketIncident
         return $this;
     }
 
-    public function getPriorite(): ?PrioriteTicket
+    public function getPriorite(): ?ListeValeur
     {
         return $this->priorite;
     }
 
-    public function setPriorite(?PrioriteTicket $priorite): static
+    public function setPriorite(?ListeValeur $priorite): static
     {
         $this->priorite = $priorite;
 

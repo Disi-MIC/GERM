@@ -20,7 +20,6 @@
         <dt class="col-sm-3">Affecté à</dt><dd class="col-sm-9">{{ materiel.affecteA ? materiel.affecteA.nomComplet : 'Non affecté' }}</dd>
         <dt class="col-sm-3">Fournisseur</dt><dd class="col-sm-9">{{ materiel.fournisseur|default('-') }}</dd>
         <dt class="col-sm-3">Date d'acquisition</dt><dd class="col-sm-9">{{ materiel.dateAcquisition ? materiel.dateAcquisition|date('d/m/Y') : '-' }}</dd>
-        <dt class="col-sm-3">Valeur d'acquisition</dt><dd class="col-sm-9">{{ materiel.valeurAcquisition|default('-') }}</dd>
         <dt class="col-sm-3">Garantie jusqu'au</dt><dd class="col-sm-9">{{ materiel.garantieJusquau ? materiel.garantieJusquau|date('d/m/Y') : '-' }}</dd>
         <dt class="col-sm-3">État</dt><dd class="col-sm-9">{{ materiel.etat.libelle }}</dd>
         <dt class="col-sm-3">Caractéristiques</dt><dd class="col-sm-9">{{ materiel.specifications|default('-')|nl2br }}</dd>

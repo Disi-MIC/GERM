@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MaterielInformatique } from '../../../../core/models/materiel-informatique.model';
-import { PrioriteTicket } from '../../../../core/models/ticket-incident.model';
+import { ListeValeurRef } from '../../../../core/models/personnel.model';
+import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { ProfilApiService } from '../../profil-api.service';
 
 @Component({
@@ -13,6 +14,7 @@ import { ProfilApiService } from '../../profil-api.service';
 })
 export class NouveauTicketComponent implements OnInit {
   materiels: MaterielInformatique[] = [];
+  priorites: ListeValeurRef[] = [];
   loading = true;
   saving = false;
   error: string | null = null;
@@ -21,16 +23,21 @@ export class NouveauTicketComponent implements OnInit {
     materiel: [null as number | null, Validators.required],
     titre: ['', Validators.required],
     description: ['', Validators.required],
-    priorite: ['normale' as PrioriteTicket, Validators.required],
+    priorite: ['normale', Validators.required],
   });
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly api: ProfilApiService,
+    private readonly personnelApi: PersonnelApiService,
     private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
+    this.personnelApi
+      .getTypesContrat()
+      .subscribe((valeurs) => (this.priorites = valeurs.filter((v) => v.categorie === 'priorite-ticket')));
+
     this.api.getMesMateriels().subscribe({
       next: (materiels) => {
         this.materiels = materiels;

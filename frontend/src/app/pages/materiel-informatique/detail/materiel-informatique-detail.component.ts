@@ -19,6 +19,9 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
   services: ServiceRef[] = [];
   typesMateriel: ListeValeurRef[] = [];
   etatsMateriel: ListeValeurRef[] = [];
+  systemesExploitation: ListeValeurRef[] = [];
+  suitesBureautiques: ListeValeurRef[] = [];
+  antivirusDisponibles: ListeValeurRef[] = [];
   personnels: Personnel[] = [];
   historique: HistoriqueAffectationMateriel[] = [];
   loading = true;
@@ -33,9 +36,12 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     numeroSerie: [''],
     specifications: [''],
     dateAcquisition: [''],
-    valeurAcquisition: [''],
     fournisseur: [''],
     garantieJusquau: [''],
+    periodiciteMois: [null as number | null],
+    systemeExploitation: [null as number | null],
+    suiteBureautique: [null as number | null],
+    antivirus: [null as number | null],
     etat: [null as number | null, Validators.required],
     service: [null as number | null, Validators.required],
     affecteA: [null as number | null],
@@ -59,6 +65,9 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     this.personnelApi.getTypesContrat().subscribe((valeurs) => {
       this.typesMateriel = valeurs.filter((v) => v.categorie === 'type-materiel');
       this.etatsMateriel = valeurs.filter((v) => v.categorie === 'etat-materiel');
+      this.systemesExploitation = valeurs.filter((v) => v.categorie === 'logiciel-os');
+      this.suitesBureautiques = valeurs.filter((v) => v.categorie === 'logiciel-bureautique');
+      this.antivirusDisponibles = valeurs.filter((v) => v.categorie === 'logiciel-antivirus');
     });
 
     if (this.materielId) {
@@ -72,9 +81,18 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
             numeroSerie: materiel.numeroSerie ?? '',
             specifications: materiel.specifications ?? '',
             dateAcquisition: materiel.dateAcquisition?.substring(0, 10) ?? '',
-            valeurAcquisition: materiel.valeurAcquisition ?? '',
             fournisseur: materiel.fournisseur ?? '',
             garantieJusquau: materiel.garantieJusquau?.substring(0, 10) ?? '',
+            periodiciteMois: materiel.periodiciteMois ?? null,
+            systemeExploitation:
+              materiel.systemeExploitation && typeof materiel.systemeExploitation !== 'string'
+                ? materiel.systemeExploitation.id
+                : null,
+            suiteBureautique:
+              materiel.suiteBureautique && typeof materiel.suiteBureautique !== 'string'
+                ? materiel.suiteBureautique.id
+                : null,
+            antivirus: materiel.antivirus && typeof materiel.antivirus !== 'string' ? materiel.antivirus.id : null,
             etat: typeof materiel.etat === 'string' ? null : materiel.etat.id,
             service: typeof materiel.service === 'string' ? null : materiel.service.id,
             affecteA:
@@ -117,12 +135,12 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
       numeroSerie: raw.numeroSerie || null,
       specifications: raw.specifications || null,
       dateAcquisition: raw.dateAcquisition || null,
-      // Doctrine "decimal" est porté côté PHP par une string (pas un float, pour
-      // éviter toute perte de précision) : le control number d'Angular renvoie un
-      // number natif, à reconvertir explicitement avant l'envoi JSON.
-      valeurAcquisition: raw.valeurAcquisition ? String(raw.valeurAcquisition) : null,
       fournisseur: raw.fournisseur || null,
       garantieJusquau: raw.garantieJusquau || null,
+      periodiciteMois: raw.periodiciteMois,
+      systemeExploitation: raw.systemeExploitation ? `/api/liste_valeurs/${raw.systemeExploitation}` : null,
+      suiteBureautique: raw.suiteBureautique ? `/api/liste_valeurs/${raw.suiteBureautique}` : null,
+      antivirus: raw.antivirus ? `/api/liste_valeurs/${raw.antivirus}` : null,
       etat: `/api/liste_valeurs/${raw.etat}`,
       service: `/api/services/${raw.service}`,
       affecteA: raw.affecteA ? `/api/personnels/${raw.affecteA}` : null,

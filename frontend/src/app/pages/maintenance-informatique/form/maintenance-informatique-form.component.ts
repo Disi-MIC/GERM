@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { Maintenance, TypeMaintenance } from '../../../core/models/maintenance.model';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Maintenance } from '../../../core/models/maintenance.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
-import { Personnel } from '../../../core/models/personnel.model';
+import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { TicketIncident } from '../../../core/models/ticket-incident.model';
 import { MaterielInformatiqueApiService } from '../../materiel-informatique/materiel-informatique-api.service';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
@@ -20,18 +20,18 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
   materiels: MaterielInformatique[] = [];
   personnels: Personnel[] = [];
   tickets: TicketIncident[] = [];
+  typesMaintenance: ListeValeurRef[] = [];
   saving = false;
   error: string | null = null;
 
   form = this.fb.nonNullable.group({
     materiel: [null as number | null, Validators.required],
-    type: ['corrective' as TypeMaintenance, Validators.required],
+    type: [null as number | null, Validators.required],
     description: ['', Validators.required],
     dateRealisation: ['', Validators.required],
     realisePar: [null as number | null],
     prestataireExterne: [''],
     ticketOrigine: [null as number | null],
-    cout: [''],
     observations: [''],
   });
 
@@ -41,6 +41,7 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
     private readonly materielApi: MaterielInformatiqueApiService,
     private readonly personnelApi: PersonnelApiService,
     private readonly ticketsApi: TicketsInformatiqueApiService,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
 
@@ -48,6 +49,16 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
     this.materielApi.getAll().subscribe((materiels) => (this.materiels = materiels));
     this.personnelApi.getAll().subscribe((personnels) => (this.personnels = personnels));
     this.ticketsApi.getAll().subscribe((tickets) => (this.tickets = tickets));
+    this.personnelApi
+      .getTypesContrat()
+      .subscribe((valeurs) => (this.typesMaintenance = valeurs.filter((v) => v.categorie === 'type-maintenance')));
+
+    // Préremplissage depuis le lien "Planifier" du tableau de bord (échéance
+    // de maintenance préventive) : /maintenance-informatique/new?materiel=id.
+    const materielParam = this.route.snapshot.queryParamMap.get('materiel');
+    if (materielParam) {
+      this.form.patchValue({ materiel: Number(materielParam) });
+    }
   }
 
   submit(): void {
@@ -59,13 +70,12 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
     const raw = this.form.getRawValue();
     const payload: Maintenance = {
       materiel: `/api/materiels-informatiques/${raw.materiel}`,
-      type: raw.type,
+      type: `/api/liste_valeurs/${raw.type}`,
       description: raw.description,
       dateRealisation: raw.dateRealisation,
       realisePar: raw.realisePar ? `/api/personnels/${raw.realisePar}` : null,
       prestataireExterne: raw.prestataireExterne || null,
       ticketOrigine: raw.ticketOrigine ? `/api/tickets-incident/${raw.ticketOrigine}` : null,
-      cout: raw.cout ? String(raw.cout) : null,
       observations: raw.observations || null,
     };
 

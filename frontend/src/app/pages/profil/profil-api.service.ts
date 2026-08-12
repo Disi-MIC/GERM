@@ -10,7 +10,7 @@ import { DocumentAdministratif } from '../../core/models/document-administratif.
 import { HistoriqueAffectation } from '../../core/models/historique-affectation.model';
 import { MaterielInformatique } from '../../core/models/materiel-informatique.model';
 import { Personnel } from '../../core/models/personnel.model';
-import { PrioriteTicket, TicketIncident } from '../../core/models/ticket-incident.model';
+import { TicketIncident } from '../../core/models/ticket-incident.model';
 import { Vehicule } from '../../core/models/vehicule.model';
 
 /**
@@ -33,12 +33,17 @@ export interface DemandeJouissanceSelfPayload {
   motif?: string | null;
 }
 
-/** 'materielId' est un identifiant numérique, pas une IRI — voir MeDemandesController::creerTicket(). */
+/**
+ * 'materielId' est un identifiant numérique, pas une IRI — voir
+ * MeDemandesController::creerTicket(). 'priorite' est le `code` d'une
+ * ListeValeur (catégorie priorite-ticket), pas un id/IRI non plus : le
+ * serveur la résout par catégorie+code, comme materielId.
+ */
 export interface TicketIncidentSelfPayload {
   materielId: number;
   titre: string;
   description: string;
-  priorite: PrioriteTicket;
+  priorite: string;
 }
 
 @Injectable({ providedIn: 'root' })

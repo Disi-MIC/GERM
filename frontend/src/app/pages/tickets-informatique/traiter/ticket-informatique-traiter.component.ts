@@ -3,16 +3,9 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
-import { Personnel } from '../../../core/models/personnel.model';
-import { PrioriteTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
+import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
+import { TicketIncident } from '../../../core/models/ticket-incident.model';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
-
-const LABELS_PRIORITE: Record<PrioriteTicket, string> = {
-  basse: 'Basse',
-  normale: 'Normale',
-  haute: 'Haute',
-  critique: 'Critique',
-};
 
 @Component({
   selector: 'app-ticket-informatique-traiter',
@@ -25,7 +18,6 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
   loading = true;
   saving = false;
   error: string | null = null;
-  readonly labelsPriorite = LABELS_PRIORITE;
 
   form = this.fb.nonNullable.group({
     commentaire: [''],
@@ -73,6 +65,14 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     }
     const materiel = this.ticket.materiel as MaterielInformatique | string;
     return typeof materiel === 'string' ? materiel : `${materiel.marque} ${materiel.modele} (${materiel.numeroInventaire})`;
+  }
+
+  prioriteLabel(): string {
+    if (!this.ticket) {
+      return '';
+    }
+    const priorite = this.ticket.priorite as ListeValeurRef | string;
+    return typeof priorite === 'string' ? priorite : priorite.libelle;
   }
 
   assigneLabel(): string {

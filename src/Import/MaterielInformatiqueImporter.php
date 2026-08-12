@@ -40,7 +40,6 @@ class MaterielInformatiqueImporter implements EntityImporterInterface
             new ImportColumnDefinition('numero_serie', 'Numéro de série', false),
             new ImportColumnDefinition('specifications', 'Caractéristiques techniques', false),
             new ImportColumnDefinition('date_acquisition', "Date d'acquisition (AAAA-MM-JJ)", false, '2023-03-01'),
-            new ImportColumnDefinition('valeur_acquisition', "Valeur d'acquisition", false, '450000'),
             new ImportColumnDefinition('fournisseur', 'Fournisseur', false),
             new ImportColumnDefinition('garantie_jusquau', "Garantie jusqu'au (AAAA-MM-JJ)", false, '2026-03-01'),
             new ImportColumnDefinition('etat_code', "Code de l'état (obligatoire, voir Listes de valeurs)", true, 'en_stock'),
@@ -97,7 +96,6 @@ class MaterielInformatiqueImporter implements EntityImporterInterface
         try {
             $dateAcquisition = $this->parseDate($row['date_acquisition'] ?? null);
             $garantieJusquau = $this->parseDate($row['garantie_jusquau'] ?? null);
-            $valeurAcquisition = $this->parseDecimal($row['valeur_acquisition'] ?? null);
         } catch (\InvalidArgumentException $e) {
             return new ImportRowResult($lineNumber, ImportRowStatus::ERROR, $e->getMessage());
         }
@@ -110,7 +108,6 @@ class MaterielInformatiqueImporter implements EntityImporterInterface
         $materiel->setNumeroSerie($this->parseString($row['numero_serie'] ?? null));
         $materiel->setSpecifications($this->parseString($row['specifications'] ?? null));
         $materiel->setDateAcquisition($dateAcquisition);
-        $materiel->setValeurAcquisition($valeurAcquisition);
         $materiel->setFournisseur($this->parseString($row['fournisseur'] ?? null));
         $materiel->setGarantieJusquau($garantieJusquau);
         $materiel->setEtat($etat);

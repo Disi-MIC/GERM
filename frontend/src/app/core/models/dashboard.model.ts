@@ -54,4 +54,24 @@ export interface DashboardInformatique {
   };
   maintenance: PeriodeTraitement<number>;
   materiel: { total: number; parEtat: Record<string, number> };
+  echeancesMaintenance: { enRetard: EcheanceMaintenance[]; aVenir: EcheanceMaintenance[] };
+  licencesExpirantBientot: { enRetard: EcheanceLicence[]; aVenir: EcheanceLicence[] };
+}
+
+export interface EcheanceMaintenance {
+  materielId: number;
+  numeroInventaire: string;
+  marque: string;
+  modele: string;
+  echeance: string;
+  jours: number;
+}
+
+export interface EcheanceLicence {
+  licenceId: number;
+  logicielId: number;
+  logiciel: string;
+  nombrePostes: number | null;
+  echeance: string;
+  jours: number;
 }

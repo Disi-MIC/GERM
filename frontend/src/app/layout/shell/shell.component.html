@@ -101,8 +101,11 @@
         <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Informatique</div>
       }
       @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
-        <a routerLink="/materiel-informatique" routerLinkActive="active">
+        <a routerLink="/materiel-informatique" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
           <i class="bi bi-laptop"></i> Parc informatique
+        </a>
+        <a routerLink="/materiel-informatique/affectation" routerLinkActive="active">
+          <i class="bi bi-person-check"></i> Affectation
         </a>
       }
       @if (auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
@@ -118,6 +121,9 @@
       @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
         <a routerLink="/maintenance-informatique" routerLinkActive="active">
           <i class="bi bi-tools"></i> Maintenance
+        </a>
+        <a routerLink="/licences-logicielles" routerLinkActive="active">
+          <i class="bi bi-key"></i> Licences logicielles
         </a>
       }
 

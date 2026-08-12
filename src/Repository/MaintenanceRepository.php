@@ -15,4 +15,28 @@ class MaintenanceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Maintenance::class);
     }
+
+    /**
+     * Dernière date de réalisation par matériel, indexée par id de matériel —
+     * une requête groupée plutôt qu'une par matériel, pour calculer
+     * l'échéance de la prochaine maintenance préventive
+     * (DashboardController::informatique()).
+     *
+     * @return array<int, \DateTimeImmutable>
+     */
+    public function findDernieresDatesParMateriel(): array
+    {
+        $lignes = $this->createQueryBuilder('m')
+            ->select('IDENTITY(m.materiel) AS materielId', 'MAX(m.dateRealisation) AS derniere')
+            ->groupBy('m.materiel')
+            ->getQuery()
+            ->getResult();
+
+        $dates = [];
+        foreach ($lignes as $ligne) {
+            $dates[(int) $ligne['materielId']] = new \DateTimeImmutable((string) $ligne['derniere']);
+        }
+
+        return $dates;
+    }
 }
