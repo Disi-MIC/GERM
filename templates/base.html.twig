@@ -86,6 +86,7 @@
             {% set rh_active = personnel_active or conge_active or carte_active or delegation_active %}
             {% set informatique_active = 'admin_materiel' in route or categorie_actuelle in ['type-materiel', 'etat-materiel', 'priorite-ticket', 'type-maintenance', 'logiciel-os', 'logiciel-antivirus', 'logiciel-bureautique'] %}
             {% set vehicule_active = 'admin_vehicule' in route or categorie_actuelle in ['type-vehicule', 'etat-vehicule'] %}
+            {% set import_active = 'admin_import' in route %}
 
             {% if is_granted('ROLE_SUPERADMIN') %}
                 {# Tous les modules RH sont désormais réservés à Angular ; Twig ne reste
@@ -180,6 +181,18 @@
                 <a href="{{ path('admin_agent_index') }}" class="{{ 'admin_agent' in route ? 'active' }}">
                     <i class="bi bi-person-badge"></i> Comptes agents
                 </a>
+
+                <a href="#submenuImport" class="submenu-toggle {{ import_active ? 'active' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ import_active ? 'true' : 'false' }}" aria-controls="submenuImport">
+                    <span><i class="bi bi-file-earmark-excel"></i> Import de données</span>
+                    <i class="bi bi-chevron-down"></i>
+                </a>
+                <div class="collapse submenu {{ import_active ? 'show' }}" id="submenuImport">
+                    <a href="{{ path('admin_import_upload', {type: 'direction'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'direction'}) ? 'active' }}">Directions</a>
+                    <a href="{{ path('admin_import_upload', {type: 'service'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'service'}) ? 'active' }}">Services</a>
+                    <a href="{{ path('admin_import_upload', {type: 'personnel'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'personnel'}) ? 'active' }}">Personnel</a>
+                    <a href="{{ path('admin_import_upload', {type: 'materiel'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'materiel'}) ? 'active' }}">Parc informatique</a>
+                    <a href="{{ path('admin_import_upload', {type: 'vehicule'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'vehicule'}) ? 'active' }}">Parc automobile</a>
+                </div>
             {% endif %}
         </nav>
         <div class="germ-main d-flex flex-column">
