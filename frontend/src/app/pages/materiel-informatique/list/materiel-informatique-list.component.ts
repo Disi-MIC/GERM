@@ -34,6 +34,7 @@ export class MaterielInformatiqueListComponent implements OnInit {
   materielsAffiches: MaterielInformatique[] = [];
   loading = true;
   error: string | null = null;
+  deleteError: string | null = null;
   filtreEtat: string | null = null;
   compteurs: Record<string, number> = {};
   readonly etats = Object.keys(BADGES_ETAT);
@@ -111,6 +112,7 @@ export class MaterielInformatiqueListComponent implements OnInit {
     if (!confirm('Supprimer ce matériel du parc informatique ? Cette action est irréversible.')) {
       return;
     }
+    this.deleteError = null;
     this.api.delete(materiel.id).subscribe({
       next: () => {
         this.materiels = this.materiels.filter((m) => m.id !== materiel.id);
@@ -118,7 +120,7 @@ export class MaterielInformatiqueListComponent implements OnInit {
         this.appliquerFiltre();
       },
       error: (err) => {
-        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la suppression.';
+        this.deleteError = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la suppression.';
       },
     });
   }

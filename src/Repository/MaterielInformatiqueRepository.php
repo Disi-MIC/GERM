@@ -18,6 +18,26 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return MaterielInformatique[]
+     */
+    public function search(?string $query): array
+    {
+        $qb = $this->createQueryBuilder('m')
+            ->leftJoin('m.type', 't')->addSelect('t')
+            ->leftJoin('m.etat', 'e')->addSelect('e')
+            ->leftJoin('m.service', 's')->addSelect('s')
+            ->leftJoin('m.affecteA', 'p')->addSelect('p')
+            ->orderBy('m.numeroInventaire', 'ASC');
+
+        if ($query) {
+            $qb->andWhere('m.numeroInventaire LIKE :q OR m.marque LIKE :q OR m.modele LIKE :q')
+                ->setParameter('q', '%'.$query.'%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Matériels avec une périodicité de maintenance préventive définie —
      * ceux à ignorer dans le calcul des échéances (DashboardController).
      *
