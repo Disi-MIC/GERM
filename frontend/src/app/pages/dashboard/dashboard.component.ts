@@ -1,13 +1,15 @@
 import { KeyValuePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PanelComponent } from '../../shared/panel/panel.component';
+import { StatTileComponent } from '../../shared/stat-tile/stat-tile.component';
 import { DashboardPersonnel } from '../../core/models/dashboard.model';
 import { DashboardApiService } from './dashboard-api.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, KeyValuePipe],
+  imports: [FormsModule, KeyValuePipe, StatTileComponent, PanelComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {

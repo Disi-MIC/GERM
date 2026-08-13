@@ -5,12 +5,14 @@ import { Router, RouterLink } from '@angular/router';
 import { CarteProfessionnelle } from '../../../../core/models/carte-professionnelle.model';
 import { TypeDemandeCartePro } from '../../../../core/models/demande-carte-pro.model';
 import { Personnel } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DemandeCarteProSelfPayload, ProfilApiService } from '../../profil-api.service';
 
 @Component({
   selector: 'app-nouvelle-demande-carte-pro',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './nouvelle-demande-carte-pro.component.html',
 })
 export class NouvelleDemandeCarteProComponent implements OnInit {

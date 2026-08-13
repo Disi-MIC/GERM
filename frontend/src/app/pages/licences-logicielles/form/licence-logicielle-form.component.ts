@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LicenceLogiciel } from '../../../core/models/licence-logiciel.model';
 import { ListeValeurRef } from '../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { LicencesLogiciellesApiService } from '../licences-logicielles-api.service';
 
 const CATEGORIES_LOGICIEL = ['logiciel-os', 'logiciel-antivirus', 'logiciel-bureautique'];
@@ -11,7 +13,7 @@ const CATEGORIES_LOGICIEL = ['logiciel-os', 'logiciel-antivirus', 'logiciel-bure
 @Component({
   selector: 'app-licence-logicielle-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './licence-logicielle-form.component.html',
 })
 export class LicenceLogicielleFormComponent implements OnInit {

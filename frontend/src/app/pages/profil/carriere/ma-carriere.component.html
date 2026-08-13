@@ -1,11 +1,11 @@
-<h5 class="mb-3">Ma carrière</h5>
+<app-page-header title="Ma carrière" subtitle="Historique de vos mouvements de carrière (nominations, mutations, promotions)."></app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <div class="card">
+  <app-panel [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -43,5 +43,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

@@ -8,12 +8,14 @@ import { MaterielInformatique } from '../../../core/models/materiel-informatique
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { LicencesLogiciellesApiService } from '../../licences-logicielles/licences-logicielles-api.service';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
 @Component({
   selector: 'app-materiel-informatique-detail',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './materiel-informatique-detail.component.html',
 })
 export class MaterielInformatiqueDetailComponent implements OnInit {

@@ -1,12 +1,9 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="mb-0">Demandes de décision de congé</h5>
-  <div class="d-flex gap-2">
-    <a routerLink="/conges" class="btn btn-outline-secondary btn-sm">Congés</a>
-    <a routerLink="/conges/demandes-decision/new" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus-lg"></i> Nouvelle demande
-    </a>
-  </div>
-</div>
+<app-page-header title="Demandes de décision de congé" subtitle="Demandes en attente de traitement.">
+  <a routerLink="/conges" class="btn btn-outline-secondary btn-sm">Congés</a>
+  <a routerLink="/conges/demandes-decision/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouvelle demande
+  </a>
+</app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
@@ -27,7 +24,7 @@
     }
   </div>
 
-  <div class="card">
+  <app-panel [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -60,5 +57,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

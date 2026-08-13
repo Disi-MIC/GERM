@@ -1,0 +1,17 @@
+@if (routerLink) {
+  <a [routerLink]="routerLink" class="germ-stat-tile germ-stat-tile--{{ color }}">
+    <div class="germ-stat-icon"><i class="bi {{ icon }}"></i></div>
+    <div class="germ-stat-body">
+      <div class="germ-stat-value">{{ value }}</div>
+      <div class="germ-stat-label">{{ label }}</div>
+    </div>
+  </a>
+} @else {
+  <div class="germ-stat-tile germ-stat-tile--{{ color }}">
+    <div class="germ-stat-icon"><i class="bi {{ icon }}"></i></div>
+    <div class="germ-stat-body">
+      <div class="germ-stat-value">{{ value }}</div>
+      <div class="germ-stat-label">{{ label }}</div>
+    </div>
+  </div>
+}

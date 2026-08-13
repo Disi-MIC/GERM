@@ -1,11 +1,11 @@
-<h5 class="mb-3">Mon profil</h5>
+<app-page-header title="Mon profil"></app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-warning" style="max-width: 700px;">{{ error }}</div>
 } @else if (personnel) {
-  <div class="card p-4" style="max-width: 700px;">
+  <app-panel class="d-block" style="max-width: 700px;">
     <div class="d-flex align-items-center gap-3 mb-4">
       @if (personnel.hasPhoto) {
         <img [src]="photoUrl()" alt="Photo" class="rounded-circle" style="width: 96px; height: 96px; object-fit: cover;" />
@@ -54,5 +54,5 @@
       <dt class="col-sm-4">Adresse</dt>
       <dd class="col-sm-8">{{ personnel.adresse ?? 'Non renseignée' }}</dd>
     </dl>
-  </div>
+  </app-panel>
 }

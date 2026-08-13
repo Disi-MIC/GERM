@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
 type Filtre = 'tous' | 'non_affectes' | 'affectes';
@@ -10,7 +12,7 @@ type Filtre = 'tous' | 'non_affectes' | 'affectes';
 @Component({
   selector: 'app-affectation-materiel',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PageHeaderComponent, PanelComponent],
   templateUrl: './affectation-materiel.component.html',
 })
 export class AffectationMaterielComponent implements OnInit {

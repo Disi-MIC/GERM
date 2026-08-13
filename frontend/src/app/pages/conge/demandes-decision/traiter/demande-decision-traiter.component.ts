@@ -3,12 +3,14 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DemandeDecision } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 @Component({
   selector: 'app-demande-decision-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-decision-traiter.component.html',
 })
 export class DemandeDecisionTraiterComponent implements OnInit {

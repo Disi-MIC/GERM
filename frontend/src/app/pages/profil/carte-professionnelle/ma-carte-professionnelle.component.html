@@ -1,17 +1,15 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="mb-0">Ma carte professionnelle</h5>
+<app-page-header title="Ma carte professionnelle">
   <a routerLink="/mon-espace/carte-professionnelle/nouvelle-demande" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg"></i> Nouvelle demande
   </a>
-</div>
+</app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <h6 class="text-muted text-uppercase small mb-2">Carte(s) délivrée(s)</h6>
-  <div class="card mb-4">
+  <app-panel title="Carte(s) délivrée(s)" icon="bi-person-vcard" [noPadding]="true" class="d-block mb-4">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -47,10 +45,9 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 
-  <h6 class="text-muted text-uppercase small mb-2">Historique des demandes</h6>
-  <div class="card">
+  <app-panel title="Historique des demandes" icon="bi-clock-history" [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -77,5 +74,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

@@ -1,22 +1,18 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="mb-0">Mes congés</h5>
-  <div class="d-flex gap-2">
-    <a routerLink="/mon-espace/conges/nouvelle-demande-decision" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-plus-lg"></i> Demande de décision
-    </a>
-    <a routerLink="/mon-espace/conges/nouvelle-demande-jouissance" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus-lg"></i> Demande de jouissance
-    </a>
-  </div>
-</div>
+<app-page-header title="Mes congés">
+  <a routerLink="/mon-espace/conges/nouvelle-demande-decision" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Demande de décision
+  </a>
+  <a routerLink="/mon-espace/conges/nouvelle-demande-jouissance" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Demande de jouissance
+  </a>
+</app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <h6 class="text-muted text-uppercase small mb-2">Congés pris</h6>
-  <div class="card mb-4">
+  <app-panel title="Congés pris" icon="bi-calendar-check" [noPadding]="true" class="d-block mb-4">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -43,10 +39,9 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 
-  <h6 class="text-muted text-uppercase small mb-2">Mes décisions de congé valides</h6>
-  <div class="card mb-4">
+  <app-panel title="Mes décisions de congé valides" icon="bi-file-earmark-check" [noPadding]="true" class="d-block mb-4">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -69,10 +64,9 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 
-  <h6 class="text-muted text-uppercase small mb-2">Historique des demandes de décision</h6>
-  <div class="card mb-4">
+  <app-panel title="Historique des demandes de décision" icon="bi-clock-history" [noPadding]="true" class="d-block mb-4">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -97,10 +91,9 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 
-  <h6 class="text-muted text-uppercase small mb-2">Historique des demandes de jouissance</h6>
-  <div class="card">
+  <app-panel title="Historique des demandes de jouissance" icon="bi-clock-history" [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -127,5 +120,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

@@ -2,6 +2,8 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../core/auth.service';
 import { Personnel } from '../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../shared/panel/panel.component';
 import { ProfilApiService } from './profil-api.service';
 
 const LABELS_SEXE: Record<string, string> = {
@@ -28,7 +30,7 @@ const BADGES_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-profil',
   standalone: true,
-  imports: [SlicePipe],
+  imports: [SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './profil.component.html',
 })
 export class ProfilComponent implements OnInit {

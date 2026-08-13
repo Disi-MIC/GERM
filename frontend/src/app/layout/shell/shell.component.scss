@@ -11,6 +11,14 @@
     color: #fff;
     font-weight: 600;
     letter-spacing: 0.5px;
+
+    .brand-logo {
+      height: 36px;
+      width: auto;
+      // Logo MinCom au trait noir (fond transparent) : illisible tel quel
+      // sur le fond navy de la sidebar, d'où l'inversion en blanc.
+      filter: brightness(0) invert(1);
+    }
   }
 
   a {

@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef } from '../../../core/models/personnel.model';
 import { StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_STATUT: Record<StatutTicket, string> = {
@@ -25,7 +27,7 @@ const BADGES_STATUT: Record<StatutTicket, string> = {
 @Component({
   selector: 'app-mes-tickets',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './mes-tickets.component.html',
 })
 export class MesTicketsComponent implements OnInit {

@@ -1,4 +1,7 @@
-<h5 class="mb-3">Mon tableau de bord</h5>
+<div class="mb-4">
+  <h4 class="mb-0 fw-bold">Mon tableau de bord</h4>
+  <p class="text-muted small mb-0">Aperçu de votre carrière, vos ressources et vos demandes en cours.</p>
+</div>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
@@ -7,48 +10,47 @@
 } @else if (data) {
   <div class="row g-3 mb-4">
     <div class="col-md-3 col-6">
-      <a routerLink="/mon-espace/carriere" class="text-decoration-none text-reset">
-        <div class="card p-3 h-100">
-          <div class="text-muted small">Mouvements de carrière</div>
-          <div class="fs-3 fw-bold">{{ data.carriere.nbMouvements }}</div>
-          @if (data.carriere.dernierMouvement) {
-            <div class="text-muted small">Depuis le {{ data.carriere.dernierMouvement.dateEffet | slice: 0 : 10 }}</div>
-          }
-        </div>
-      </a>
+      <app-stat-tile
+        icon="bi-graph-up-arrow"
+        color="primary"
+        [value]="data.carriere.nbMouvements"
+        label="Mouvements de carrière"
+        routerLink="/mon-espace/carriere"
+      />
     </div>
     <div class="col-md-3 col-6">
-      <a routerLink="/mon-espace/conges" class="text-decoration-none text-reset">
-        <div class="card p-3 h-100">
-          <div class="text-muted small">Congés pris</div>
-          <div class="fs-3 fw-bold">{{ data.conges.totalJours }} j</div>
-          <div class="text-muted small">{{ data.conges.total }} congé(s)</div>
-        </div>
-      </a>
+      <app-stat-tile
+        icon="bi-calendar-event"
+        color="info"
+        [value]="data.conges.totalJours + ' j'"
+        label="Congés pris ({{ data.conges.total }})"
+        routerLink="/mon-espace/conges"
+      />
     </div>
     <div class="col-md-3 col-6">
-      <a routerLink="/mon-espace/parc-informatique" class="text-decoration-none text-reset">
-        <div class="card p-3 h-100">
-          <div class="text-muted small">Matériel informatique</div>
-          <div class="fs-3 fw-bold">{{ data.materiels.total }}</div>
-        </div>
-      </a>
+      <app-stat-tile
+        icon="bi-laptop"
+        color="secondary"
+        [value]="data.materiels.total"
+        label="Matériel informatique"
+        routerLink="/mon-espace/parc-informatique"
+      />
     </div>
     <div class="col-md-3 col-6">
-      <a routerLink="/mon-espace/parc-automobile" class="text-decoration-none text-reset">
-        <div class="card p-3 h-100">
-          <div class="text-muted small">Véhicules affectés</div>
-          <div class="fs-3 fw-bold">{{ data.vehicules.total }}</div>
-        </div>
-      </a>
+      <app-stat-tile
+        icon="bi-truck"
+        color="secondary"
+        [value]="data.vehicules.total"
+        label="Véhicules affectés"
+        routerLink="/mon-espace/parc-automobile"
+      />
     </div>
   </div>
 
   <div class="row g-3 mb-4">
     <div class="col-md-4">
-      <a routerLink="/mon-espace/carte-professionnelle" class="text-decoration-none text-reset">
-        <div class="card p-3 h-100">
-          <h6>Ma carte professionnelle</h6>
+      <a routerLink="/mon-espace/carte-professionnelle" class="text-decoration-none text-reset d-block h-100">
+        <app-panel title="Ma carte professionnelle" icon="bi-person-vcard">
           @if (data.carteActive) {
             <span class="badge bg-success align-self-start mb-1">Valide</span>
             <div class="small">N° {{ data.carteActive.numero }}</div>
@@ -57,13 +59,12 @@
             <span class="badge bg-secondary align-self-start mb-1">Aucune carte active</span>
             <div class="text-muted small">Cliquez pour faire une demande.</div>
           }
-        </div>
+        </app-panel>
       </a>
     </div>
 
     <div class="col-md-8">
-      <div class="card p-3 h-100">
-        <h6>Répartition de mes demandes ({{ totalDemandes() }} au total)</h6>
+      <app-panel title="Répartition de mes demandes ({{ totalDemandes() }} au total)" icon="bi-pie-chart">
         @if (totalDemandes() > 0) {
           <div class="progress mb-2" style="height: 10px;">
             @for (entry of data.repartitionDemandes | keyvalue; track entry.key) {
@@ -83,46 +84,46 @@
         } @else {
           <p class="text-muted small mb-0">Aucune demande enregistrée pour le moment.</p>
         }
-      </div>
+      </app-panel>
     </div>
   </div>
 
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <h6 class="mb-0">Mes demandes en attente</h6>
-    <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="filtreDomaine">
-      <option value="toutes">Tous les domaines</option>
-      <option value="carte_pro">Carte professionnelle</option>
-      <option value="decision">Décision de congé</option>
-      <option value="jouissance">Jouissance de congé</option>
-    </select>
-  </div>
-
-  <div class="card">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Demande</th>
-          <th>Statut</th>
-          <th>Créée le</th>
-          <th class="text-end">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (demande of demandesFiltrees; track demande.id + demande.domaine) {
+  <app-panel title="Mes demandes en attente" icon="bi-list-check">
+    <div panelActions>
+      <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="filtreDomaine">
+        <option value="toutes">Tous les domaines</option>
+        <option value="carte_pro">Carte professionnelle</option>
+        <option value="decision">Décision de congé</option>
+        <option value="jouissance">Jouissance de congé</option>
+      </select>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
           <tr>
-            <td>{{ demande.libelle }}</td>
-            <td><span class="badge bg-{{ couleursRepartition[demande.statut] }}">{{ labelsStatut[demande.statut] }}</span></td>
-            <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
-            <td class="text-end">
-              <a [routerLink]="routeDemande(demande)" class="btn btn-sm btn-outline-primary">Voir</a>
-            </td>
+            <th>Demande</th>
+            <th>Statut</th>
+            <th>Créée le</th>
+            <th class="text-end">Action</th>
           </tr>
-        } @empty {
-          <tr>
-            <td colspan="4" class="text-center text-muted py-4">Aucune demande en attente. 🎉</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (demande of demandesFiltrees; track demande.id + demande.domaine) {
+            <tr>
+              <td>{{ demande.libelle }}</td>
+              <td><span class="badge bg-{{ couleursRepartition[demande.statut] }}">{{ labelsStatut[demande.statut] }}</span></td>
+              <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
+              <td class="text-end">
+                <a [routerLink]="routeDemande(demande)" class="btn btn-sm btn-outline-primary">Voir</a>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="text-center text-muted py-4">Aucune demande en attente. 🎉</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-panel>
 }

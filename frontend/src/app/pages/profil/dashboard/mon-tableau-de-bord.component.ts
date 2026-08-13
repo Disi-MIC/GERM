@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DashboardMe, DemandeEnAttenteResume, DomaineDemande } from '../../../core/models/dashboard-me.model';
+import { PanelComponent } from '../../../shared/panel/panel.component';
+import { StatTileComponent } from '../../../shared/stat-tile/stat-tile.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -28,7 +30,7 @@ const COULEURS_REPARTITION: Record<string, string> = {
 @Component({
   selector: 'app-mon-tableau-de-bord',
   standalone: true,
-  imports: [SlicePipe, KeyValuePipe, RouterLink, FormsModule],
+  imports: [SlicePipe, KeyValuePipe, RouterLink, FormsModule, StatTileComponent, PanelComponent],
   templateUrl: './mon-tableau-de-bord.component.html',
 })
 export class MonTableauDeBordComponent implements OnInit {

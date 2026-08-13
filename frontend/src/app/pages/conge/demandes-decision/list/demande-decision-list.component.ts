@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DemandeDecision } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -14,7 +16,7 @@ const LABELS_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-demande-decision-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-decision-list.component.html',
 })
 export class DemandeDecisionListComponent implements OnInit {

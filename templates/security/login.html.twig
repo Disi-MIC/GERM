@@ -3,27 +3,139 @@
 {% block title %}Connexion — GERM{% endblock %}
 
 {% block full_body %}
-<div class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
-    <div class="card shadow-sm" style="width: 380px;">
-        <div class="card-body p-4">
-            <div class="text-center mb-4">
-                <i class="bi bi-bank2 fs-1 text-primary"></i>
-                <h4 class="mt-2 mb-0">GERM</h4>
-                <div class="text-muted small">Gestion des Ressources du Ministère</div>
+<style>
+    /* Même design à deux panneaux que l'écran de connexion Angular
+       (frontend/src/app/pages/login/login.component.scss) — ce formulaire
+       Twig n'est qu'un point d'entrée de secours pour le superadmin
+       (/admin/login), mais reste visuellement cohérent avec le reste de
+       l'application. */
+    .germ-login {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: #f5f7fb;
+    }
+
+    .germ-login-card {
+        display: flex;
+        width: 100%;
+        max-width: 920px;
+        min-height: 560px;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(30, 38, 51, .06), 0 20px 40px -12px rgba(26, 35, 50, .25);
+        background: #fff;
+    }
+
+    .germ-login-brand {
+        position: relative;
+        flex: 0 0 42%;
+        display: flex;
+        align-items: center;
+        padding: 3rem 2.5rem;
+        overflow: hidden;
+        background: linear-gradient(145deg, #1abb9c 0%, #17967f 45%, #1a2332 100%);
+        color: #fff;
+    }
+
+    @media (max-width: 991.98px) {
+        .germ-login-brand { display: none; }
+    }
+
+    .germ-login-brand-shape {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .08);
+    }
+
+    .germ-login-brand-shape--a { width: 320px; height: 320px; top: -120px; right: -100px; }
+    .germ-login-brand-shape--b { width: 220px; height: 220px; bottom: -90px; left: -70px; background: rgba(255, 255, 255, .06); }
+
+    .germ-login-brand-content { position: relative; z-index: 1; }
+    .germ-login-eyebrow {
+        text-transform: uppercase;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        color: rgba(255, 255, 255, .75);
+        margin-bottom: .75rem;
+    }
+    .germ-login-brand-content h1 { font-size: 1.75rem; font-weight: 700; line-height: 1.25; margin-bottom: 1rem; }
+    .germ-login-brand-content p { color: rgba(255, 255, 255, .85); font-size: .9rem; line-height: 1.6; max-width: 320px; }
+
+    .germ-login-form {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 3rem 2.75rem;
+    }
+    .germ-login-form h2 { font-weight: 700; margin-bottom: .25rem; }
+
+    .germ-login-logo { height: 64px; width: auto; margin-bottom: 1.5rem; }
+
+    .germ-login-form .input-group-text { background: #fff; border-right: none; color: #8a96a3; }
+    .germ-login-form .form-control { border-left: none; }
+    .germ-login-form .form-control:focus { box-shadow: none; border-color: #1abb9c; }
+    .germ-login-form .input-group:focus-within .input-group-text { border-color: #1abb9c; }
+
+    /* Ce gabarit charge Bootstrap CDN brut (voir base.html.twig), pas la
+       version compilée depuis les tokens Gentelella utilisée par Angular
+       (styles.scss) : .btn-primary y est donc bleu par défaut. Reforcé en
+       sarcelle ici pour rester visuellement cohérent avec l'écran de
+       connexion Angular, sans toucher aux autres pages Twig (hors périmètre). */
+    .germ-login-form .btn-primary {
+        background-color: #1abb9c;
+        border-color: #1abb9c;
+    }
+    .germ-login-form .btn-primary:hover,
+    .germ-login-form .btn-primary:focus {
+        background-color: #17967f;
+        border-color: #17967f;
+    }
+</style>
+
+<div class="germ-login">
+    <div class="germ-login-card">
+        <div class="germ-login-brand">
+            <div class="germ-login-brand-shape germ-login-brand-shape--a"></div>
+            <div class="germ-login-brand-shape germ-login-brand-shape--b"></div>
+            <div class="germ-login-brand-content">
+                <div class="germ-login-eyebrow">République du Sénégal</div>
+                <h1>Gestion des Ressources<br>du Ministère</h1>
+                <p>
+                    Ministère de l'Industrie et du Commerce — back-office d'administration
+                    réservé au superadministrateur.
+                </p>
             </div>
+        </div>
+
+        <div class="germ-login-form">
+            <img src="{{ asset('images/logo-mincom.png') }}" alt="MinCom" class="germ-login-logo">
+
+            <h2>Connexion</h2>
+            <p class="text-muted mb-4">Accès administrateur GERM</p>
 
             {% if error %}
-                <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                <div class="alert alert-danger py-2 small">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
             {% endif %}
 
             <form method="post">
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" value="{{ last_username }}" name="email" id="email" class="form-control" autocomplete="email" required autofocus>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" value="{{ last_username }}" name="email" id="email" class="form-control" autocomplete="email" required autofocus>
+                    </div>
                 </div>
-                <div class="mb-3">
+                <div class="mb-4">
                     <label for="password" class="form-label">Mot de passe</label>
-                    <input type="password" name="password" id="password" class="form-control" autocomplete="current-password" required>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" name="password" id="password" class="form-control" autocomplete="current-password" required>
+                    </div>
                 </div>
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
                 <button class="btn btn-primary w-100" type="submit">Se connecter</button>

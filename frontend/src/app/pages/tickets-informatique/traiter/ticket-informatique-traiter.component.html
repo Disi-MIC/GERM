@@ -1,13 +1,13 @@
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (ticket) {
-  <h5 class="mb-3">Ticket — {{ ticket.titre }}</h5>
+  <app-page-header title="Ticket — {{ ticket.titre }}"></app-page-header>
 
   @if (error) {
     <div class="alert alert-danger">{{ error }}</div>
   }
 
-  <div class="card p-4 mb-3" style="max-width: 700px;">
+  <app-panel icon="bi-info-circle" title="Détails" class="d-block mb-3" style="max-width: 700px;">
     <dl class="row mb-0">
       <dt class="col-sm-4">Déclarant</dt>
       <dd class="col-sm-8">{{ agentLabel() }}</dd>
@@ -47,14 +47,14 @@
         <dd class="col-sm-8">{{ ticket.commentaireValidation }}</dd>
       }
     </dl>
-  </div>
+  </app-panel>
 
   @if (ticket.statut === 'cloture') {
     <div class="alert alert-success">Ce ticket a été clôturé.</div>
   } @else if (ticket.statut === 'refuse') {
     <div class="alert alert-secondary">Ce ticket a été refusé.</div>
   } @else {
-    <div class="card p-4" style="max-width: 700px;">
+    <app-panel icon="bi-gear" title="Traitement" class="d-block" style="max-width: 700px;">
       @if (ticket.ouvert) {
         <p class="text-muted small">Ce ticket n'a pas encore été pris en charge.</p>
       } @else if (ticket.enCours) {
@@ -118,34 +118,35 @@
         }
         <a routerLink="/tickets-informatique" class="btn btn-outline-secondary">Retour</a>
       </div>
-    </div>
+    </app-panel>
   }
 
   @if (escalades.length > 0) {
-    <h6 class="text-muted text-uppercase small mt-4 mb-2">Historique d'escalade</h6>
-    <div class="card" style="max-width: 700px;">
-      <table class="table table-hover mb-0 align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>De</th>
-            <th>Vers</th>
-            <th>Par</th>
-            <th>Motif</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (escalade of escalades; track escalade.id) {
+    <div class="mt-3" style="max-width: 700px;">
+      <app-panel icon="bi-arrow-up-circle" title="Historique d'escalade" [noPadding]="true">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
             <tr>
-              <td>{{ labelsNiveau[escalade.deNiveau] }}</td>
-              <td>{{ labelsNiveau[escalade.versNiveau] }}</td>
-              <td>{{ escaladeParLabel(escalade) }}</td>
-              <td>{{ escalade.commentaire }}</td>
-              <td>{{ escalade.createdAt | slice: 0 : 10 }}</td>
+              <th>De</th>
+              <th>Vers</th>
+              <th>Par</th>
+              <th>Motif</th>
+              <th>Date</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (escalade of escalades; track escalade.id) {
+              <tr>
+                <td>{{ labelsNiveau[escalade.deNiveau] }}</td>
+                <td>{{ labelsNiveau[escalade.versNiveau] }}</td>
+                <td>{{ escaladeParLabel(escalade) }}</td>
+                <td>{{ escalade.commentaire }}</td>
+                <td>{{ escalade.createdAt | slice: 0 : 10 }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </app-panel>
     </div>
   }
 }

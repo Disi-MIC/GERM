@@ -19,6 +19,11 @@
             font-weight: 700;
             letter-spacing: .5px;
         }
+        .germ-sidebar .brand .brand-logo {
+            height: 36px;
+            width: auto;
+            filter: brightness(0) invert(1);
+        }
         .germ-sidebar a {
             color: #cfd7e6;
             text-decoration: none;
@@ -65,9 +70,12 @@
 {% if app.user %}
     <div class="d-flex">
         <nav class="germ-sidebar d-flex flex-column py-3">
-            <div class="brand px-3 pb-3 fs-5">
-                <i class="bi bi-bank2"></i> GERM
-                <div class="small fw-normal text-white-50">Min. de la Communication</div>
+            <div class="brand px-3 pb-3 d-flex align-items-center gap-2">
+                <img src="{{ asset('images/logo-mini.png') }}" alt="MinCom" class="brand-logo">
+                <div>
+                    <div class="fs-5">GERM</div>
+                    <div class="small fw-normal text-white-50">Ministère de l'Industrie et du Commerce</div>
+                </div>
             </div>
             {% set route = app.request.attributes.get('_route') %}
             {% set categorie_actuelle = app.request.attributes.get('categorie') %}

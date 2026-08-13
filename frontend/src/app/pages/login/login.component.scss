@@ -1,0 +1,135 @@
+// Écran de connexion à deux panneaux, dans l'esprit Gentelella v4 (voir
+// shell.component.scss pour la palette navy/sarcelle reprise des mêmes
+// tokens) : un panneau de marque coloré à gauche, le formulaire sur fond
+// blanc à droite — le panneau de marque disparaît sous lg (formulaire seul,
+// logo réintégré en tête) plutôt que de tasser deux colonnes illisibles.
+
+.germ-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #f5f7fb;
+}
+
+.germ-login-card {
+  display: flex;
+  width: 100%;
+  max-width: 920px;
+  min-height: 560px;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(30, 38, 51, 0.06),
+    0 20px 40px -12px rgba(26, 35, 50, 0.25);
+  background: #fff;
+}
+
+.germ-login-brand {
+  position: relative;
+  flex: 0 0 42%;
+  display: flex;
+  align-items: center;
+  padding: 3rem 2.5rem;
+  overflow: hidden;
+  background: linear-gradient(145deg, #1abb9c 0%, #17967f 45%, #1a2332 100%);
+  color: #fff;
+
+  @media (max-width: 991.98px) {
+    display: none;
+  }
+}
+
+.germ-login-brand-shape {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+
+  &--a {
+    width: 320px;
+    height: 320px;
+    top: -120px;
+    right: -100px;
+  }
+
+  &--b {
+    width: 220px;
+    height: 220px;
+    bottom: -90px;
+    left: -70px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.germ-login-brand-content {
+  position: relative;
+  z-index: 1;
+
+  .germ-login-eyebrow {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-width: 320px;
+  }
+}
+
+.germ-login-form {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 2.75rem;
+
+  h2 {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+}
+
+.germ-login-logo {
+  height: 64px;
+  width: auto;
+  margin-bottom: 1.5rem;
+  align-self: flex-start;
+}
+
+.germ-login-form .input-group-text {
+  background: #fff;
+  border-right: none;
+  color: #8a96a3;
+}
+
+.germ-login-form .form-control {
+  border-left: none;
+
+  &:focus {
+    box-shadow: none;
+    border-color: #1abb9c;
+
+    + .input-group-text,
+    ~ .input-group-text {
+      border-color: #1abb9c;
+    }
+  }
+}
+
+.germ-login-form .input-group:focus-within .input-group-text {
+  border-color: #1abb9c;
+}

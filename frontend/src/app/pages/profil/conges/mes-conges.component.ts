@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { Conge, DecisionConge, DemandeDecision, DemandeJouissance } from '../../../core/models/conge.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -22,7 +24,7 @@ const LABELS_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-mes-conges',
   standalone: true,
-  imports: [SlicePipe, RouterLink],
+  imports: [SlicePipe, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './mes-conges.component.html',
 })
 export class MesCongesComponent implements OnInit {

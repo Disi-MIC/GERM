@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Personnel } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { PersonnelApiService } from '../personnel-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -22,7 +24,7 @@ const BADGES_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-personnel-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './personnel-list.component.html',
 })
 export class PersonnelListComponent implements OnInit {

@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HistoriqueAffectation } from '../../../core/models/historique-affectation.model';
 import { Personnel, ServiceRef } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { CarriereApiService } from '../carriere-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -15,7 +17,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-carriere-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './carriere-list.component.html',
 })
 export class CarriereListComponent implements OnInit {

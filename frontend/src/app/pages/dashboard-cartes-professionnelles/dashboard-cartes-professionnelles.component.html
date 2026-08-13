@@ -1,4 +1,7 @@
-<h5 class="mb-3">Tableau de bord — Cartes professionnelles</h5>
+<div class="mb-4">
+  <h4 class="mb-0 fw-bold">Tableau de bord — Cartes professionnelles</h4>
+  <p class="text-muted small mb-0">Suivi des demandes et des cartes en circulation.</p>
+</div>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
@@ -6,37 +9,27 @@
   <div class="alert alert-danger">{{ error }}</div>
 } @else if (data) {
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">En attente</div>
-        <div class="fs-3 fw-bold">{{ data.enAttente }}</div>
-      </div>
+    <div class="col-md-3 col-6">
+      <app-stat-tile icon="bi-hourglass-split" [color]="data.enAttente > 0 ? 'warning' : 'success'" [value]="data.enAttente" label="En attente" />
     </div>
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Transmises au RH Admin</div>
-        <div class="fs-3 fw-bold">{{ data.transmises }}</div>
-      </div>
+    <div class="col-md-3 col-6">
+      <app-stat-tile icon="bi-send" color="info" [value]="data.transmises" label="Transmises au RH Admin" />
     </div>
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Cartes valides</div>
-        <div class="fs-3 fw-bold">{{ data.cartesValides }}</div>
-      </div>
+    <div class="col-md-3 col-6">
+      <app-stat-tile icon="bi-card-checklist" color="success" [value]="data.cartesValides" label="Cartes valides" />
     </div>
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Expirant sous 1 mois</div>
-        <div class="fs-3 fw-bold" [class.text-warning]="data.cartesExpirantBientot > 0">
-          {{ data.cartesExpirantBientot }}
-        </div>
-      </div>
+    <div class="col-md-3 col-6">
+      <app-stat-tile
+        icon="bi-exclamation-triangle"
+        [color]="data.cartesExpirantBientot > 0 ? 'warning' : 'success'"
+        [value]="data.cartesExpirantBientot"
+        label="Expirant sous 1 mois"
+      />
     </div>
   </div>
 
-  <div class="card p-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h6 class="mb-0">Demandes traitées</h6>
+  <app-panel title="Demandes traitées" icon="bi-bar-chart">
+    <div panelActions>
       <div class="btn-group btn-group-sm">
         @for (p of periodes; track p) {
           <button
@@ -65,5 +58,5 @@
         </div>
       </div>
     </div>
-  </div>
+  </app-panel>
 }

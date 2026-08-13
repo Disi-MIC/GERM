@@ -4,12 +4,14 @@ import { Router, RouterLink } from '@angular/router';
 import { DemandeDecision } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 @Component({
   selector: 'app-demande-decision-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-decision-form.component.html',
 })
 export class DemandeDecisionFormComponent implements OnInit {

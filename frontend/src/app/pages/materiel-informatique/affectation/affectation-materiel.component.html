@@ -1,4 +1,4 @@
-<h5 class="mb-3">Affectation du matériel</h5>
+<app-page-header title="Affectation du matériel" subtitle="Attribuer ou retirer le matériel informatique à un agent."></app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
@@ -35,7 +35,7 @@
     </button>
   </div>
 
-  <div class="card">
+  <app-panel [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -80,5 +80,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

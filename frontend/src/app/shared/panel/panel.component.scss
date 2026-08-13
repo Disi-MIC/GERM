@@ -1,0 +1,57 @@
+.germ-panel {
+  background: #fff;
+  border: 1px solid #e6e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(30, 38, 51, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.germ-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.germ-panel-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #4a5568;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  i {
+    color: #1abb9c;
+  }
+
+  &.text-danger i {
+    color: inherit;
+  }
+  &.text-warning i {
+    color: inherit;
+  }
+  &.text-success i {
+    color: inherit;
+  }
+}
+
+.germ-panel-actions:empty {
+  display: none;
+}
+
+.germ-panel-body {
+  padding: 1.1rem;
+  flex: 1 1 auto;
+
+  &--flush {
+    padding: 0;
+  }
+}

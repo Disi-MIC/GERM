@@ -2,6 +2,8 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { DocumentAdministratif } from '../../../core/models/document-administratif.model';
 import { ListeValeurRef } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { ProfilApiService } from '../profil-api.service';
 
 /**
@@ -13,7 +15,7 @@ import { ProfilApiService } from '../profil-api.service';
 @Component({
   selector: 'app-mes-documents',
   standalone: true,
-  imports: [SlicePipe],
+  imports: [SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './mes-documents.component.html',
 })
 export class MesDocumentsComponent implements OnInit {

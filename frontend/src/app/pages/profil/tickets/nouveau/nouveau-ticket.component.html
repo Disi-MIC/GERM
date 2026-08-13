@@ -1,8 +1,8 @@
+<app-page-header title="Nouveau ticket d'incident"></app-page-header>
+
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else {
-  <h5 class="mb-3">Nouveau ticket d'incident</h5>
-
   @if (error) {
     <div class="alert alert-danger">{{ error }}</div>
   }
@@ -13,7 +13,8 @@
     </div>
     <a routerLink="/mon-espace/tickets" class="btn btn-outline-secondary">Retour</a>
   } @else {
-    <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 700px;">
+    <app-panel>
+    <form [formGroup]="form" (ngSubmit)="submit()" style="max-width: 700px;">
       <div class="row g-3">
         <div class="col-12">
           <label class="form-label">Matériel concerné</label>
@@ -51,5 +52,6 @@
         <a routerLink="/mon-espace/tickets" class="btn btn-outline-secondary">Annuler</a>
       </div>
     </form>
+    </app-panel>
   }
 }

@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth.service';
 import { DemandeCartePro } from '../../../../core/models/demande-carte-pro.model';
 import { Personnel } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DemandeCarteProApiService } from '../demande-carte-pro-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -15,7 +17,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-carte-pro-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-carte-pro-traiter.component.html',
 })
 export class DemandeCarteProTraiterComponent implements OnInit {

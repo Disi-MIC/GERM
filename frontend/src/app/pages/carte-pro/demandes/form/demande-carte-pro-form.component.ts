@@ -6,13 +6,15 @@ import { DemandeCartePro, TypeDemandeCartePro } from '../../../../core/models/de
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { CarteProfessionnelle } from '../../../../core/models/carte-professionnelle.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { CarteProApiService } from '../../carte-pro-api.service';
 import { DemandeCarteProApiService } from '../demande-carte-pro-api.service';
 
 @Component({
   selector: 'app-demande-carte-pro-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-carte-pro-form.component.html',
 })
 export class DemandeCarteProFormComponent implements OnInit {

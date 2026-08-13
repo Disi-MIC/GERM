@@ -4,11 +4,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { PersonnelApiService } from '../personnel-api.service';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 
 @Component({
   selector: 'app-personnel-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PageHeaderComponent],
   templateUrl: './personnel-detail.component.html',
 })
 export class PersonnelDetailComponent implements OnInit {

@@ -1,41 +1,66 @@
-<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-  <div class="card p-4 shadow-sm" style="max-width: 400px; width: 100%;">
-    <div class="text-center mb-4">
-      <i class="bi bi-bank2 fs-2"></i>
-      <h5 class="mt-2 mb-0">GERM</h5>
-      <div class="text-muted small">Gestion des Ressources du Ministère</div>
+<div class="germ-login">
+  <div class="germ-login-card">
+    <div class="germ-login-brand">
+      <div class="germ-login-brand-shape germ-login-brand-shape--a"></div>
+      <div class="germ-login-brand-shape germ-login-brand-shape--b"></div>
+      <div class="germ-login-brand-content">
+        <div class="germ-login-eyebrow">République du Sénégal</div>
+        <h1>Gestion des Ressources<br />du Ministère</h1>
+        <p>
+          Ministère de l'Industrie et du Commerce — plateforme interne de gestion du
+          personnel, du parc informatique et des ressources de l'administration.
+        </p>
+      </div>
     </div>
 
-    @if (error) {
-      <div class="alert alert-danger py-2 small">{{ error }}</div>
-    }
+    <div class="germ-login-form">
+      <img src="assets/images/logo-mincom.png" alt="MinCom" class="germ-login-logo" />
 
-    <form (ngSubmit)="submit()">
-      <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          class="form-control"
-          [(ngModel)]="email"
-          required
-        />
-      </div>
-      <div class="mb-3">
-        <label for="password" class="form-label">Mot de passe</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          class="form-control"
-          [(ngModel)]="password"
-          required
-        />
-      </div>
-      <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
-        Se connecter
-      </button>
-    </form>
+      <h2>Connexion</h2>
+      <p class="text-muted mb-4">Accédez à votre espace de travail GERM.</p>
+
+      @if (error) {
+        <div class="alert alert-danger py-2 small">{{ error }}</div>
+      }
+
+      <form (ngSubmit)="submit()">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-control"
+              [(ngModel)]="email"
+              autocomplete="email"
+              required
+            />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label for="password" class="form-label">Mot de passe</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-control"
+              [(ngModel)]="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
+          @if (submitting) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Se connecter
+        </button>
+      </form>
+    </div>
   </div>
 </div>

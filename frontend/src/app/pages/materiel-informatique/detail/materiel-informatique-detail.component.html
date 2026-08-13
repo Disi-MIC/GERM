@@ -1,29 +1,32 @@
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else {
-  <h5 class="mb-3">{{ materielId ? 'Modifier le matériel' : 'Nouveau matériel informatique' }}</h5>
+  <app-page-header [title]="materielId ? 'Modifier le matériel' : 'Nouveau matériel informatique'"></app-page-header>
 
   @if (error) {
     <div class="alert alert-danger">{{ error }}</div>
   }
 
   @if (materielId) {
-    <div class="card p-3 mb-3 d-flex flex-row align-items-center gap-3" style="max-width: 800px;">
-      @if (hasPhoto) {
-        <img [src]="photoUrl()" alt="Photo" class="rounded" style="width: 72px; height: 72px; object-fit: cover;" />
-      } @else {
-        <div class="rounded bg-secondary-subtle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
-          <i class="bi bi-pc-display fs-3 text-muted"></i>
+    <app-panel class="d-block mb-3" style="max-width: 800px;">
+      <div class="d-flex flex-row align-items-center gap-3">
+        @if (hasPhoto) {
+          <img [src]="photoUrl()" alt="Photo" class="rounded" style="width: 72px; height: 72px; object-fit: cover;" />
+        } @else {
+          <div class="rounded bg-secondary-subtle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+            <i class="bi bi-pc-display fs-3 text-muted"></i>
+          </div>
+        }
+        <div>
+          <label class="form-label small mb-1 d-block">Photo</label>
+          <input type="file" class="form-control form-control-sm" accept="image/*" [disabled]="uploadingPhoto" (change)="onPhotoChange($event)" />
         </div>
-      }
-      <div>
-        <label class="form-label small mb-1 d-block">Photo</label>
-        <input type="file" class="form-control form-control-sm" accept="image/*" [disabled]="uploadingPhoto" (change)="onPhotoChange($event)" />
       </div>
-    </div>
+    </app-panel>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 800px;">
+  <app-panel>
+  <form [formGroup]="form" (ngSubmit)="submit()" style="max-width: 800px;">
     <div class="row g-3">
       <div class="col-md-6">
         <label class="form-label">N° inventaire</label>
@@ -164,32 +167,34 @@
       <a routerLink="/materiel-informatique" class="btn btn-outline-secondary">Annuler</a>
     </div>
   </form>
+  </app-panel>
 
   @if (materielId) {
-    <h6 class="text-muted text-uppercase small mt-4 mb-2">Historique d'affectation</h6>
-    <div class="card" style="max-width: 800px;">
-      <table class="table table-hover mb-0 align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Agent</th>
-            <th>Depuis</th>
-            <th>Jusqu'au</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (entree of historique; track entree.id) {
+    <div class="mt-3" style="max-width: 800px;">
+      <app-panel title="Historique d'affectation" icon="bi-clock-history" [noPadding]="true">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
             <tr>
-              <td>{{ affecteLabel(entree) }}</td>
-              <td>{{ entree.dateAffectation | slice: 0 : 10 }}</td>
-              <td>{{ entree.dateFinAffectation ? (entree.dateFinAffectation | slice: 0 : 10) : 'En cours' }}</td>
+              <th>Agent</th>
+              <th>Depuis</th>
+              <th>Jusqu'au</th>
             </tr>
-          } @empty {
-            <tr>
-              <td colspan="3" class="text-center text-muted py-3">Aucune affectation enregistrée.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (entree of historique; track entree.id) {
+              <tr>
+                <td>{{ affecteLabel(entree) }}</td>
+                <td>{{ entree.dateAffectation | slice: 0 : 10 }}</td>
+                <td>{{ entree.dateFinAffectation ? (entree.dateFinAffectation | slice: 0 : 10) : 'En cours' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="text-center text-muted py-3">Aucune affectation enregistrée.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </app-panel>
     </div>
   }
 }

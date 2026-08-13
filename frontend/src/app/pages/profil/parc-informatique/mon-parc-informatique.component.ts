@@ -2,6 +2,8 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const BADGES_ETAT: Record<string, string> = {
@@ -15,7 +17,7 @@ const BADGES_ETAT: Record<string, string> = {
 @Component({
   selector: 'app-mon-parc-informatique',
   standalone: true,
-  imports: [SlicePipe],
+  imports: [SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './mon-parc-informatique.component.html',
 })
 export class MonParcInformatiqueComponent implements OnInit {

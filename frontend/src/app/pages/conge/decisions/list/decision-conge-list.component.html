@@ -1,19 +1,16 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="mb-0">Décisions de congé</h5>
-  <div class="d-flex gap-2">
-    <a routerLink="/conges" class="btn btn-outline-secondary btn-sm">Congés</a>
-    <a routerLink="/conges/decisions/new" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus-lg"></i> Nouvelle décision
-    </a>
-  </div>
-</div>
+<app-page-header title="Décisions de congé" subtitle="Décisions de congé délivrées au personnel.">
+  <a routerLink="/conges" class="btn btn-outline-secondary btn-sm">Congés</a>
+  <a routerLink="/conges/decisions/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouvelle décision
+  </a>
+</app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <div class="card">
+  <app-panel [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -55,5 +52,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

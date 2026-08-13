@@ -1,13 +1,13 @@
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (demande) {
-  <h5 class="mb-3">Traiter la demande de décision — {{ agentLabel() }}</h5>
+  <app-page-header title="Traiter la demande de décision — {{ agentLabel() }}"></app-page-header>
 
   @if (error) {
     <div class="alert alert-danger">{{ error }}</div>
   }
 
-  <div class="card p-4" style="max-width: 700px;">
+  <app-panel style="max-width: 700px;" class="d-block">
     <dl class="row mb-3">
       @if (demande.numeroDerniereDecision) {
         <dt class="col-sm-4">Dernière décision connue</dt>
@@ -53,5 +53,5 @@
         <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Annuler</a>
       </div>
     </form>
-  </div>
+  </app-panel>
 }

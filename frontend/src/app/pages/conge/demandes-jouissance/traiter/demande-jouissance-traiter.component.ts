@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DemandeJouissance } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DemandeJouissanceApiService } from '../../demande-jouissance-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -16,7 +18,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-jouissance-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-jouissance-traiter.component.html',
 })
 export class DemandeJouissanceTraiterComponent implements OnInit {

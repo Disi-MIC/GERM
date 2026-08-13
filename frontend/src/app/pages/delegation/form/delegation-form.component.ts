@@ -4,12 +4,14 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
 import { Delegation, RoleDelegable } from '../../../core/models/delegation.model';
 import { UserRef } from '../../../core/models/user.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { DelegationApiService } from '../delegation-api.service';
 
 @Component({
   selector: 'app-delegation-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './delegation-form.component.html',
 })
 export class DelegationFormComponent implements OnInit {

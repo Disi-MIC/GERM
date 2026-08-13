@@ -1,4 +1,4 @@
-<h5 class="mb-3">{{ personnelId ? 'Modifier' : 'Nouvel' }} agent</h5>
+<app-page-header [title]="(personnelId ? 'Modifier' : 'Nouvel') + ' agent'" />
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>

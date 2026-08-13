@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { PanelComponent } from '../../shared/panel/panel.component';
+import { StatTileComponent } from '../../shared/stat-tile/stat-tile.component';
 import { DashboardConges } from '../../core/models/dashboard.model';
 import { DashboardApiService } from '../dashboard/dashboard-api.service';
 
@@ -14,6 +16,7 @@ const LABELS_PERIODE: Record<PeriodeKey, string> = {
 @Component({
   selector: 'app-dashboard-conges',
   standalone: true,
+  imports: [StatTileComponent, PanelComponent],
   templateUrl: './dashboard-conges.component.html',
 })
 export class DashboardCongesComponent implements OnInit {

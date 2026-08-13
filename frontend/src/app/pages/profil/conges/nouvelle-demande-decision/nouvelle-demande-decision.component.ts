@@ -2,12 +2,14 @@ import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DemandeDecision } from '../../../../core/models/conge.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { ProfilApiService } from '../../profil-api.service';
 
 @Component({
   selector: 'app-nouvelle-demande-decision',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './nouvelle-demande-decision.component.html',
 })
 export class NouvelleDemandeDecisionComponent {

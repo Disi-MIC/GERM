@@ -3,12 +3,14 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DecisionConge } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DecisionCongeApiService } from '../../decision-conge-api.service';
 
 @Component({
   selector: 'app-decision-conge-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './decision-conge-list.component.html',
 })
 export class DecisionCongeListComponent implements OnInit {

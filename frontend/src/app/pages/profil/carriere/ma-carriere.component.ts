@@ -2,6 +2,8 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { HistoriqueAffectation } from '../../../core/models/historique-affectation.model';
 import { ServiceRef } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_TYPE_MOUVEMENT: Record<string, string> = {
@@ -14,7 +16,7 @@ const LABELS_TYPE_MOUVEMENT: Record<string, string> = {
 @Component({
   selector: 'app-ma-carriere',
   standalone: true,
-  imports: [SlicePipe],
+  imports: [SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './ma-carriere.component.html',
 })
 export class MaCarriereComponent implements OnInit {

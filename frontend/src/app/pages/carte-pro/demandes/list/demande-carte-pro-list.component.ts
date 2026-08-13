@@ -5,6 +5,8 @@ import { AuthService } from '../../../../core/auth.service';
 import { CarteProfessionnelle } from '../../../../core/models/carte-professionnelle.model';
 import { DemandeCartePro } from '../../../../core/models/demande-carte-pro.model';
 import { Personnel } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { CarteProApiService } from '../../carte-pro-api.service';
 import { DemandeCarteProApiService } from '../demande-carte-pro-api.service';
 
@@ -24,7 +26,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-carte-pro-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-carte-pro-list.component.html',
 })
 export class DemandeCarteProListComponent implements OnInit {

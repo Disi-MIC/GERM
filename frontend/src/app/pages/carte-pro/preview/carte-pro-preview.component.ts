@@ -5,12 +5,14 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth.service';
 import { CarteProfessionnelle } from '../../../core/models/carte-professionnelle.model';
 import { Personnel } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { CarteProApiService } from '../carte-pro-api.service';
 
 @Component({
   selector: 'app-carte-pro-preview',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './carte-pro-preview.component.html',
 })
 export class CarteProPreviewComponent implements OnInit {

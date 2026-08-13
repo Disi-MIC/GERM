@@ -3,13 +3,15 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MaterielInformatique } from '../../../../core/models/materiel-informatique.model';
 import { ListeValeurRef } from '../../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { ProfilApiService } from '../../profil-api.service';
 
 @Component({
   selector: 'app-nouveau-ticket',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './nouveau-ticket.component.html',
 })
 export class NouveauTicketComponent implements OnInit {

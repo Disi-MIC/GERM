@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CarteProfessionnelle } from '../../../../core/models/carte-professionnelle.model';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { ProfilApiService } from '../../profil-api.service';
 
 /**
@@ -14,7 +16,7 @@ import { ProfilApiService } from '../../profil-api.service';
 @Component({
   selector: 'app-ma-carte-preview',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './ma-carte-preview.component.html',
 })
 export class MaCartePreviewComponent implements OnInit {

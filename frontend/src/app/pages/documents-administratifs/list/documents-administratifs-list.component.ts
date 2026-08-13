@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DocumentAdministratif } from '../../../core/models/document-administratif.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { DocumentsAdministratifsApiService } from '../documents-administratifs-api.service';
 
 const JOURS_ALERTE_EXPIRATION = 30;
@@ -10,7 +12,7 @@ const JOURS_ALERTE_EXPIRATION = 30;
 @Component({
   selector: 'app-documents-administratifs-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './documents-administratifs-list.component.html',
 })
 export class DocumentsAdministratifsListComponent implements OnInit {

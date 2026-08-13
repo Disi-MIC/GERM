@@ -1,14 +1,13 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="mb-0">Validation des cartes professionnelles</h5>
+<app-page-header title="Validation des cartes professionnelles" subtitle="Cartes en attente de validation par le RH Admin.">
   <a routerLink="/cartes-professionnelles" class="btn btn-outline-secondary btn-sm">Retour</a>
-</div>
+</app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <div class="card">
+  <app-panel [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -40,5 +39,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

@@ -8,12 +8,14 @@ import { TicketIncident } from '../../../core/models/ticket-incident.model';
 import { MaterielInformatiqueApiService } from '../../materiel-informatique/materiel-informatique-api.service';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { TicketsInformatiqueApiService } from '../../tickets-informatique/tickets-informatique-api.service';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { MaintenanceInformatiqueApiService } from '../maintenance-informatique-api.service';
 
 @Component({
   selector: 'app-maintenance-informatique-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
   templateUrl: './maintenance-informatique-form.component.html',
 })
 export class MaintenanceInformatiqueFormComponent implements OnInit {

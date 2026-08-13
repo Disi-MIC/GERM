@@ -5,13 +5,15 @@ import { Router, RouterLink } from '@angular/router';
 import { DecisionConge, DemandeJouissance, TypeConge } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
+import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { DecisionCongeApiService } from '../../decision-conge-api.service';
 import { DemandeJouissanceApiService } from '../../demande-jouissance-api.service';
 
 @Component({
   selector: 'app-demande-jouissance-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './demande-jouissance-form.component.html',
 })
 export class DemandeJouissanceFormComponent implements OnInit {

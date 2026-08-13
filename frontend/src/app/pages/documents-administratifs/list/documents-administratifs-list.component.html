@@ -1,16 +1,15 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="mb-0">Documents administratifs</h5>
+<app-page-header title="Documents administratifs" subtitle="Documents administratifs du personnel.">
   <a routerLink="/documents-administratifs/new" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg"></i> Nouveau document
   </a>
-</div>
+</app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <div class="card">
+  <app-panel [noPadding]="true">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
@@ -55,5 +54,5 @@
         }
       </tbody>
     </table>
-  </div>
+  </app-panel>
 }

@@ -1,10 +1,11 @@
-<h5 class="mb-3">Nouvelle intervention de maintenance</h5>
+<app-page-header title="Nouvelle intervention de maintenance"></app-page-header>
 
 @if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 }
 
-<form [formGroup]="form" (ngSubmit)="submit()" class="card p-4" style="max-width: 800px;">
+<app-panel>
+<form [formGroup]="form" (ngSubmit)="submit()" style="max-width: 800px;">
   <div class="row g-3">
     <div class="col-md-6">
       <label class="form-label">Matériel</label>
@@ -72,3 +73,4 @@
     <a routerLink="/maintenance-informatique" class="btn btn-outline-secondary">Annuler</a>
   </div>
 </form>
+</app-panel>

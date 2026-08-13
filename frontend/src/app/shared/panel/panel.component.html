@@ -1,0 +1,18 @@
+<div class="germ-panel h-100">
+  @if (title) {
+    <div class="germ-panel-header">
+      <h6 class="germ-panel-title" [class]="titleColor ? 'text-' + titleColor : ''">
+        @if (icon) {
+          <i class="bi {{ icon }}"></i>
+        }
+        {{ title }}
+      </h6>
+      <div class="germ-panel-actions">
+        <ng-content select="[panelActions]"></ng-content>
+      </div>
+    </div>
+  }
+  <div class="germ-panel-body" [class.germ-panel-body--flush]="noPadding">
+    <ng-content></ng-content>
+  </div>
+</div>

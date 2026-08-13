@@ -1,4 +1,7 @@
-<h5 class="mb-3">Tableau de bord — Informatique</h5>
+<div class="mb-4">
+  <h4 class="mb-0 fw-bold">Tableau de bord — Informatique</h4>
+  <p class="text-muted small mb-0">Vue d'ensemble du parc, des tickets et des échéances.</p>
+</div>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
@@ -6,47 +9,37 @@
   <div class="alert alert-danger">{{ error }}</div>
 } @else if (data) {
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Tickets ouverts</div>
-        <div class="fs-3 fw-bold">{{ data.tickets.ouverts }}</div>
-      </div>
+    <div class="col-lg col-md-4 col-6">
+      <app-stat-tile icon="bi-life-preserver" color="secondary" [value]="data.tickets.ouverts" label="Tickets ouverts" />
     </div>
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Tickets en cours</div>
-        <div class="fs-3 fw-bold">{{ data.tickets.enCours }}</div>
-      </div>
+    <div class="col-lg col-md-4 col-6">
+      <app-stat-tile icon="bi-arrow-repeat" color="info" [value]="data.tickets.enCours" label="Tickets en cours" />
     </div>
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Matériel enregistré</div>
-        <div class="fs-3 fw-bold">{{ data.materiel.total }}</div>
-      </div>
+    <div class="col-lg col-md-4 col-6">
+      <app-stat-tile icon="bi-laptop" color="primary" [value]="data.materiel.total" label="Matériel enregistré" />
     </div>
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Maintenances en retard</div>
-        <div class="fs-3 fw-bold" [class.text-danger]="data.echeancesMaintenance.enRetard.length > 0">
-          {{ data.echeancesMaintenance.enRetard.length }}
-        </div>
-      </div>
+    <div class="col-lg col-md-4 col-6">
+      <app-stat-tile
+        icon="bi-tools"
+        [color]="data.echeancesMaintenance.enRetard.length > 0 ? 'danger' : 'success'"
+        [value]="data.echeancesMaintenance.enRetard.length"
+        label="Maintenances en retard"
+      />
     </div>
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Tickets hors délai (SLA)</div>
-        <div class="fs-3 fw-bold" [class.text-danger]="data.slaTickets.enRetard.length > 0">
-          {{ data.slaTickets.enRetard.length }}
-        </div>
-      </div>
+    <div class="col-lg col-md-4 col-6">
+      <app-stat-tile
+        icon="bi-stopwatch"
+        [color]="data.slaTickets.enRetard.length > 0 ? 'danger' : 'success'"
+        [value]="data.slaTickets.enRetard.length"
+        label="Tickets hors délai (SLA)"
+      />
     </div>
   </div>
 
   <div class="row g-3 mb-4">
     <div class="col-md-7">
-      <div class="card p-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="mb-0">Activité</h6>
+      <app-panel title="Activité" icon="bi-graph-up">
+        <div panelActions>
           <div class="btn-group btn-group-sm">
             @for (p of periodes; track p) {
               <button
@@ -81,12 +74,11 @@
             </div>
           </div>
         </div>
-      </div>
+      </app-panel>
     </div>
 
     <div class="col-md-5">
-      <div class="card p-3">
-        <h6>Matériel par état</h6>
+      <app-panel title="Matériel par état" icon="bi-pie-chart">
         @for (entry of data.materiel.parEtat | keyvalue; track entry.key) {
           <div class="d-flex justify-content-between small mb-1">
             <span>{{ entry.key }}</span>
@@ -95,14 +87,13 @@
         } @empty {
           <p class="text-muted small mb-0">Aucun matériel enregistré.</p>
         }
-      </div>
+      </app-panel>
     </div>
   </div>
 
-  <div class="row g-3">
+  <div class="row g-3 mb-4">
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="text-danger">Maintenances en retard</h6>
+      <app-panel title="Maintenances en retard" icon="bi-exclamation-triangle" titleColor="danger">
         @for (echeance of data.echeancesMaintenance.enRetard; track echeance.materielId) {
           <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
             <div>
@@ -116,12 +107,11 @@
         } @empty {
           <p class="text-muted small mb-0">Aucune maintenance en retard.</p>
         }
-      </div>
+      </app-panel>
     </div>
 
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="text-warning">À venir sous 30 jours</h6>
+      <app-panel title="À venir sous 30 jours" icon="bi-clock-history" titleColor="warning">
         @for (echeance of data.echeancesMaintenance.aVenir; track echeance.materielId) {
           <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
             <div>
@@ -135,14 +125,13 @@
         } @empty {
           <p class="text-muted small mb-0">Aucune échéance sous 30 jours.</p>
         }
-      </div>
+      </app-panel>
     </div>
   </div>
 
-  <div class="row g-3 mt-1">
+  <div class="row g-3 mb-4">
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="text-danger">Licences logicielles expirées</h6>
+      <app-panel title="Licences logicielles expirées" icon="bi-exclamation-triangle" titleColor="danger">
         @for (licence of data.licencesExpirantBientot.enRetard; track licence.licenceId) {
           <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
             <div>
@@ -156,12 +145,11 @@
         } @empty {
           <p class="text-muted small mb-0">Aucune licence expirée.</p>
         }
-      </div>
+      </app-panel>
     </div>
 
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="text-warning">Licences expirant sous 30 jours</h6>
+      <app-panel title="Licences expirant sous 30 jours" icon="bi-clock-history" titleColor="warning">
         @for (licence of data.licencesExpirantBientot.aVenir; track licence.licenceId) {
           <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
             <div>
@@ -175,14 +163,13 @@
         } @empty {
           <p class="text-muted small mb-0">Aucune échéance sous 30 jours.</p>
         }
-      </div>
+      </app-panel>
     </div>
   </div>
 
-  <div class="row g-3 mt-1">
+  <div class="row g-3">
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="text-danger">Tickets hors délai (SLA)</h6>
+      <app-panel title="Tickets hors délai (SLA)" icon="bi-exclamation-triangle" titleColor="danger">
         @for (ticket of data.slaTickets.enRetard; track ticket.ticketId) {
           <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
             <div>
@@ -198,12 +185,11 @@
         } @empty {
           <p class="text-muted small mb-0">Aucun ticket hors délai.</p>
         }
-      </div>
+      </app-panel>
     </div>
 
     <div class="col-md-6">
-      <div class="card p-3">
-        <h6 class="text-warning">Tickets à risque (SLA)</h6>
+      <app-panel title="Tickets à risque (SLA)" icon="bi-clock-history" titleColor="warning">
         @for (ticket of data.slaTickets.aRisque; track ticket.ticketId) {
           <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
             <div>
@@ -217,7 +203,7 @@
         } @empty {
           <p class="text-muted small mb-0">Aucun ticket à risque.</p>
         }
-      </div>
+      </app-panel>
     </div>
   </div>
 }

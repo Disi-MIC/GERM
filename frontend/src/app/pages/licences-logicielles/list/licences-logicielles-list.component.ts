@@ -3,12 +3,14 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LicenceLogiciel } from '../../../core/models/licence-logiciel.model';
 import { ListeValeurRef } from '../../../core/models/personnel.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { LicencesLogiciellesApiService } from '../licences-logicielles-api.service';
 
 @Component({
   selector: 'app-licences-logicielles-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './licences-logicielles-list.component.html',
 })
 export class LicencesLogiciellesListComponent implements OnInit {

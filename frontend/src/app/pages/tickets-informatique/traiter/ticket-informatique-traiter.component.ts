@@ -6,6 +6,8 @@ import { AuthService } from '../../../core/auth.service';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { NiveauTicket, TicketEscalade, TicketIncident } from '../../../core/models/ticket-incident.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+import { PanelComponent } from '../../../shared/panel/panel.component';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
 
 const LABELS_NIVEAU: Record<NiveauTicket, string> = {
@@ -17,7 +19,7 @@ const LABELS_NIVEAU: Record<NiveauTicket, string> = {
 @Component({
   selector: 'app-ticket-informatique-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
   templateUrl: './ticket-informatique-traiter.component.html',
 })
 export class TicketInformatiqueTraiterComponent implements OnInit {
