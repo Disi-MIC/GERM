@@ -49,17 +49,6 @@ class ImportRunner
         return $this->importers[$type->value]->getColumns();
     }
 
-    /**
-     * @return iterable<int, string[]> en-tête puis une ligne d'exemple
-     */
-    public function generateTemplateRows(TypeImport $type): iterable
-    {
-        $columns = $this->getColumns($type);
-
-        yield array_map(static fn (ImportColumnDefinition $c) => $c->key, $columns);
-        yield array_map(static fn (ImportColumnDefinition $c) => $c->example ?? '', $columns);
-    }
-
     public function run(TypeImport $type, UploadedFile $file): ImportReport
     {
         $importer = $this->importers[$type->value];

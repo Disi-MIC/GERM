@@ -5,6 +5,8 @@ namespace App\Controller\Admin;
 use App\Controller\AbstractController;
 use App\Import\ImportRunner;
 use App\Import\TypeImport;
+use App\Import\XlsxTemplateGenerator;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -42,19 +44,16 @@ class ImportController extends AbstractController
     }
 
     #[Route('/{type}/modele', name: 'template', methods: ['GET'])]
-    public function template(TypeImport $type, ImportRunner $runner): StreamedResponse
+    public function template(TypeImport $type, ImportRunner $runner, XlsxTemplateGenerator $generator): StreamedResponse
     {
-        $response = new StreamedResponse(function () use ($type, $runner) {
-            $handle = fopen('php://output', 'w');
-            fwrite($handle, "\xEF\xBB\xBF");
-            foreach ($runner->generateTemplateRows($type) as $ligne) {
-                fputcsv($handle, $ligne, ';');
-            }
-            fclose($handle);
+        $spreadsheet = $generator->generate($type, $runner->getColumns($type));
+
+        $response = new StreamedResponse(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
         });
 
-        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
-        $response->headers->set('Content-Disposition', sprintf('attachment; filename="modele-%s.csv"', $type->value));
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="modele-%s.xlsx"', $type->value));
 
         return $response;
     }
