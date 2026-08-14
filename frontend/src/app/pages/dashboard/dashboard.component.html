@@ -38,18 +38,9 @@
   <div class="row g-3">
     <div class="col-md-6">
       <app-panel title="Répartition par direction" icon="bi-building">
-        @for (entry of data.parDirection | keyvalue; track entry.key) {
-          <div class="mb-2">
-            <div class="d-flex justify-content-between small">
-              <span>{{ entry.key }}</span>
-              <span>{{ entry.value.M }} H / {{ entry.value.F }} F</span>
-            </div>
-            <div class="progress" style="height: 6px;">
-              <div class="progress-bar bg-primary" [style.width.%]="pourcentage(entry.value.M, entry.value.F)"></div>
-              <div class="progress-bar bg-info" [style.width.%]="100 - pourcentage(entry.value.M, entry.value.F)"></div>
-            </div>
-          </div>
-        } @empty {
+        @if (chartParDirection.labels && chartParDirection.labels.length > 0) {
+          <app-chart type="bar" [data]="chartParDirection" [options]="chartOptions" [height]="260" />
+        } @else {
           <p class="text-muted small mb-0">Aucune donnée.</p>
         }
       </app-panel>
@@ -57,18 +48,9 @@
 
     <div class="col-md-6">
       <app-panel title="Répartition par service" icon="bi-diagram-3">
-        @for (entry of data.parService | keyvalue; track entry.key) {
-          <div class="mb-2">
-            <div class="d-flex justify-content-between small">
-              <span>{{ entry.key }}</span>
-              <span>{{ entry.value.M }} H / {{ entry.value.F }} F</span>
-            </div>
-            <div class="progress" style="height: 6px;">
-              <div class="progress-bar bg-primary" [style.width.%]="pourcentage(entry.value.M, entry.value.F)"></div>
-              <div class="progress-bar bg-info" [style.width.%]="100 - pourcentage(entry.value.M, entry.value.F)"></div>
-            </div>
-          </div>
-        } @empty {
+        @if (chartParService.labels && chartParService.labels.length > 0) {
+          <app-chart type="bar" [data]="chartParService" [options]="chartOptions" [height]="260" />
+        } @else {
           <p class="text-muted small mb-0">Aucune donnée.</p>
         }
       </app-panel>

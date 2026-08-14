@@ -21,10 +21,19 @@ export class AuthService {
       .pipe(tap((user) => this.currentUserSignal.set(user)));
   }
 
+  /**
+   * Vide la session locale même si l'appel serveur échoue (ex. session déjà
+   * expirée côté serveur) — sinon le composant appelant resterait bloqué
+   * sur un état "connecté" alors que /api/logout a échoué pour une raison
+   * qui n'empêche pas de toute façon de renvoyer l'utilisateur vers /login.
+   */
   logout(): Observable<void> {
-    return this.http
-      .post<void>(`${API_BASE}/logout`, {})
-      .pipe(tap(() => this.currentUserSignal.set(null)));
+    return this.http.post<void>(`${API_BASE}/logout`, {}).pipe(
+      tap({
+        next: () => this.currentUserSignal.set(null),
+        error: () => this.currentUserSignal.set(null),
+      }),
+    );
   }
 
   /** Appelé une fois au démarrage de l'app pour savoir si une session existe déjà. */

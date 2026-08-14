@@ -42,7 +42,8 @@ export class ShellComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.auth.logout().subscribe(() => this.router.navigateByUrl('/login'));
+    const versLogin = () => this.router.navigateByUrl('/login');
+    this.auth.logout().subscribe({ next: versLogin, error: versLogin });
   }
 
   ouvrirNotification(notification: NotificationItem): void {

@@ -1,10 +1,13 @@
-import { KeyValuePipe, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ChartData } from 'chart.js';
 import { DashboardMe, DemandeEnAttenteResume, DomaineDemande } from '../../../core/models/dashboard-me.model';
 import { PanelComponent } from '../../../shared/panel/panel.component';
 import { StatTileComponent } from '../../../shared/stat-tile/stat-tile.component';
+import { ChartComponent } from '../../../shared/chart/chart.component';
+import { CHART_COLORS } from '../../../shared/chart/chart-colors';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -27,10 +30,17 @@ const COULEURS_REPARTITION: Record<string, string> = {
   refusee: 'danger',
 };
 
+const CHART_COULEURS_REPARTITION: Record<string, string> = {
+  en_attente: CHART_COLORS.secondary,
+  transmise: CHART_COLORS.info,
+  approuvee: CHART_COLORS.success,
+  refusee: CHART_COLORS.danger,
+};
+
 @Component({
   selector: 'app-mon-tableau-de-bord',
   standalone: true,
-  imports: [SlicePipe, KeyValuePipe, RouterLink, FormsModule, StatTileComponent, PanelComponent],
+  imports: [SlicePipe, RouterLink, FormsModule, StatTileComponent, PanelComponent, ChartComponent],
   templateUrl: './mon-tableau-de-bord.component.html',
 })
 export class MonTableauDeBordComponent implements OnInit {
@@ -41,6 +51,9 @@ export class MonTableauDeBordComponent implements OnInit {
   readonly labelsStatut = LABELS_STATUT;
   readonly couleursRepartition = COULEURS_REPARTITION;
 
+  /** Champ simple recalculé une seule fois au chargement plutôt qu'un getter — voir dashboard.component.ts. */
+  chartRepartition: ChartData<'doughnut'> = { labels: [], datasets: [] };
+
   constructor(private readonly api: ProfilApiService) {}
 
   ngOnInit(): void {
@@ -48,6 +61,12 @@ export class MonTableauDeBordComponent implements OnInit {
       next: (data) => {
         this.data = data;
         this.loading = false;
+        const r = data.repartitionDemandes;
+        const entrees = Object.entries(r).filter(([, valeur]) => valeur > 0);
+        this.chartRepartition = {
+          labels: entrees.map(([cle]) => this.labelsStatut[cle] ?? cle),
+          datasets: [{ data: entrees.map(([, valeur]) => valeur), backgroundColor: entrees.map(([cle]) => CHART_COULEURS_REPARTITION[cle]) }],
+        };
       },
       error: () => {
         this.error = 'Impossible de charger votre tableau de bord.';
@@ -76,10 +95,5 @@ export class MonTableauDeBordComponent implements OnInit {
     }
     const r = this.data.repartitionDemandes;
     return r.en_attente + r.transmise + r.approuvee + r.refusee;
-  }
-
-  pourcentage(valeur: number): number {
-    const total = this.totalDemandes();
-    return total > 0 ? Math.round((valeur / total) * 100) : 0;
   }
 }

@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { ChartData } from 'chart.js';
 import { PanelComponent } from '../../shared/panel/panel.component';
 import { StatTileComponent } from '../../shared/stat-tile/stat-tile.component';
+import { ChartComponent } from '../../shared/chart/chart.component';
+import { CHART_COLORS } from '../../shared/chart/chart-colors';
 import { DashboardConges } from '../../core/models/dashboard.model';
 import { DashboardApiService } from '../dashboard/dashboard-api.service';
 
@@ -16,7 +19,7 @@ const LABELS_PERIODE: Record<PeriodeKey, string> = {
 @Component({
   selector: 'app-dashboard-conges',
   standalone: true,
-  imports: [StatTileComponent, PanelComponent],
+  imports: [StatTileComponent, PanelComponent, ChartComponent],
   templateUrl: './dashboard-conges.component.html',
 })
 export class DashboardCongesComponent implements OnInit {
@@ -27,6 +30,9 @@ export class DashboardCongesComponent implements OnInit {
   readonly periodes: PeriodeKey[] = ['aujourdhui', 'semaine', 'mois', 'total'];
   readonly labelsPeriode = LABELS_PERIODE;
 
+  /** Champ simple recalculé à chaque chargement/changement de période plutôt qu'un getter — voir dashboard.component.ts. */
+  chartTraites: ChartData<'doughnut'> = { labels: [], datasets: [] };
+
   constructor(private readonly api: DashboardApiService) {}
 
   ngOnInit(): void {
@@ -35,6 +41,7 @@ export class DashboardCongesComponent implements OnInit {
       next: (data) => {
         this.data = data;
         this.loading = false;
+        this.recalculerChart();
       },
       error: () => {
         this.error = 'Impossible de charger le tableau de bord.';
@@ -43,7 +50,20 @@ export class DashboardCongesComponent implements OnInit {
     });
   }
 
+  selectionnerPeriode(periode: PeriodeKey): void {
+    this.periode = periode;
+    this.recalculerChart();
+  }
+
   traitesPeriode() {
     return this.data?.traites[this.periode] ?? { approuvees: 0, refusees: 0 };
+  }
+
+  private recalculerChart(): void {
+    const { approuvees, refusees } = this.traitesPeriode();
+    this.chartTraites = {
+      labels: ['Approuvées', 'Refusées'],
+      datasets: [{ data: [approuvees, refusees], backgroundColor: [CHART_COLORS.success, CHART_COLORS.danger] }],
+    };
   }
 }

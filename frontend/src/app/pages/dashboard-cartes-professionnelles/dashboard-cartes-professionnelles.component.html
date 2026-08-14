@@ -37,24 +37,31 @@
             class="btn"
             [class.btn-primary]="periode === p"
             [class.btn-outline-primary]="periode !== p"
-            (click)="periode = p"
+            (click)="selectionnerPeriode(p)"
           >
             {{ labelsPeriode[p] }}
           </button>
         }
       </div>
     </div>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <div class="border rounded p-3 text-center">
-          <div class="text-muted small">Approuvées</div>
-          <div class="fs-2 fw-bold text-success">{{ traitesPeriode().approuvees }}</div>
-        </div>
+    <div class="row g-3 align-items-center">
+      <div class="col-md-5">
+        <app-chart type="doughnut" [data]="chartTraites" [height]="180" />
       </div>
-      <div class="col-md-6">
-        <div class="border rounded p-3 text-center">
-          <div class="text-muted small">Refusées</div>
-          <div class="fs-2 fw-bold text-danger">{{ traitesPeriode().refusees }}</div>
+      <div class="col-md-7">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="border rounded p-3 text-center">
+              <div class="text-muted small">Approuvées</div>
+              <div class="fs-2 fw-bold text-success">{{ traitesPeriode().approuvees }}</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded p-3 text-center">
+              <div class="text-muted small">Refusées</div>
+              <div class="fs-2 fw-bold text-danger">{{ traitesPeriode().refusees }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
