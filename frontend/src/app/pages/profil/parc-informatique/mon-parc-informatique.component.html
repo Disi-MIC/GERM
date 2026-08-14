@@ -5,34 +5,61 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>N° inventaire</th>
-          <th>Type</th>
-          <th>Marque / Modèle</th>
-          <th>N° série</th>
-          <th>État</th>
-          <th>Garantie jusqu'au</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (materiel of materiels; track materiel.id) {
-          <tr>
-            <td>{{ materiel.numeroInventaire }}</td>
-            <td>{{ libelle(materiel.type) }}</td>
-            <td>{{ materiel.marque }} {{ materiel.modele }}</td>
-            <td>{{ materiel.numeroSerie ?? '—' }}</td>
-            <td><span class="badge bg-{{ badgeClasseEtat(materiel) }}">{{ libelle(materiel.etat) }}</span></td>
-            <td>{{ materiel.garantieJusquau ? (materiel.garantieJusquau | slice: 0 : 10) : '—' }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">Aucun matériel informatique ne vous est affecté.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-file-grid
+    [items]="items"
+    emptyMessage="Aucun matériel informatique ne vous est affecté."
+    searchPlaceholder="Rechercher un matériel..."
+    (itemClick)="selectionner($event)"
+  />
+}
+
+@if (materielSelectionne; as materiel) {
+  <div class="modal-backdrop fade show" (click)="fermer()"></div>
+  <div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ materiel.marque }} {{ materiel.modele }}</h5>
+          <button type="button" class="btn-close" aria-label="Fermer" (click)="fermer()"></button>
+        </div>
+        <div class="modal-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">N° inventaire</dt>
+            <dd class="col-sm-7">{{ materiel.numeroInventaire }}</dd>
+
+            <dt class="col-sm-5">Type</dt>
+            <dd class="col-sm-7">{{ libelle(materiel.type) }}</dd>
+
+            <dt class="col-sm-5">N° série</dt>
+            <dd class="col-sm-7">{{ materiel.numeroSerie ?? '—' }}</dd>
+
+            <dt class="col-sm-5">État</dt>
+            <dd class="col-sm-7">
+              <span class="status-dot status-dot-{{ badgeClasseEtat(materiel) }}">{{ libelle(materiel.etat) }}</span>
+            </dd>
+
+            <dt class="col-sm-5">Date de mise en service</dt>
+            <dd class="col-sm-7">{{ materiel.dateMiseEnService ? (materiel.dateMiseEnService | slice: 0 : 10) : '—' }}</dd>
+
+            <dt class="col-sm-5">Antivirus</dt>
+            <dd class="col-sm-7">
+              @if (antivirusLicence(materiel); as antivirus) {
+                {{ licenceLabel(antivirus) }}
+                @if (antivirus.dateExpiration) {
+                  <span class="text-muted">— expire le {{ antivirus.dateExpiration | slice: 0 : 10 }}</span>
+                }
+              } @else {
+                <span class="text-muted">Non installé</span>
+              }
+            </dd>
+
+            @if (materiel.specifications) {
+              <dt class="col-sm-5">Spécifications</dt>
+              <dd class="col-sm-7">{{ materiel.specifications }}</dd>
+            }
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
 }

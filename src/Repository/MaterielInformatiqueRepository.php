@@ -71,22 +71,4 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
-
-    /**
-     * Matériels dont la garantie expire dans les 30 prochains jours (ou déjà expirée).
-     *
-     * @return MaterielInformatique[]
-     */
-    public function findGarantiesExpirantBientot(int $jours = 30): array
-    {
-        $limite = new \DateTimeImmutable(sprintf('+%d days', $jours));
-
-        return $this->createQueryBuilder('m')
-            ->andWhere('m.garantieJusquau IS NOT NULL')
-            ->andWhere('m.garantieJusquau <= :limite')
-            ->setParameter('limite', $limite)
-            ->orderBy('m.garantieJusquau', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
 }

@@ -1,0 +1,98 @@
+<app-panel [title]="title ?? ''" [icon]="icon" [noPadding]="true">
+  <div class="app-data-table-toolbar d-flex justify-content-between align-items-center gap-2 flex-wrap">
+    <div class="app-data-table-search">
+      <i class="bi bi-search"></i>
+      <input
+        type="search"
+        [placeholder]="searchPlaceholder"
+        [(ngModel)]="query"
+        (ngModelChange)="onQueryChange()"
+      />
+    </div>
+
+    @if (toggleableColumns.length) {
+      <div class="dropdown">
+        <button class="app-data-table-columns-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+          <i class="bi bi-sliders"></i> Colonnes
+        </button>
+        <div class="dropdown-menu dropdown-menu-end p-2" (click)="$event.stopPropagation()">
+          @for (column of toggleableColumns; track column.key) {
+            <div class="form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                [id]="'data-table-col-' + column.key"
+                [checked]="isColumnVisible(column)"
+                (change)="toggleColumn(column)"
+              />
+              <label class="form-check-label" [for]="'data-table-col-' + column.key">{{ column.label }}</label>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="table-responsive">
+    <table class="table app-data-table mb-0 align-middle">
+      <thead>
+        <tr>
+          @for (column of visibleColumns; track column.key) {
+            <th
+              [class.text-end]="column.align === 'end'"
+              [class.app-data-table-sortable]="column.sortable"
+              [class.app-data-table-sorted]="sortKey === column.key"
+              (click)="sortBy(column)"
+            >
+              {{ column.label }}
+              @if (column.sortable) {
+                <i
+                  class="bi"
+                  [class.bi-chevron-expand]="sortKey !== column.key"
+                  [class.bi-chevron-down]="sortKey === column.key && sortDir === 'desc'"
+                  [class.bi-chevron-up]="sortKey === column.key && sortDir === 'asc'"
+                ></i>
+              }
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of pagedRows; track trackByFn($index, row)) {
+          <tr>
+            @for (column of visibleColumns; track column.key) {
+              <td [class.text-end]="column.align === 'end'">
+                <ng-container [ngTemplateOutlet]="cellTemplateFor(column.key)" [ngTemplateOutletContext]="{ $implicit: row }"></ng-container>
+              </td>
+            }
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="visibleColumns.length" class="text-center text-muted py-4">
+              {{ query ? 'Aucun résultat pour cette recherche.' : emptyMessage }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (totalCount > 0) {
+    <div class="app-data-table-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="app-data-table-info">{{ totalCount }} résultat{{ totalCount > 1 ? 's' : '' }}</div>
+      @if (totalPages > 1) {
+        <nav aria-label="Pagination">
+          <button type="button" class="app-data-table-page-btn" [disabled]="page === 1" (click)="goToPage(page - 1)" aria-label="Page précédente">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          @for (n of pageNumbers; track n) {
+            <button type="button" class="app-data-table-page-btn" [class.active]="n === page" (click)="goToPage(n)">{{ n }}</button>
+          }
+          <button type="button" class="app-data-table-page-btn" [disabled]="page === totalPages" (click)="goToPage(page + 1)" aria-label="Page suivante">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </nav>
+      }
+    </div>
+  }
+</app-panel>

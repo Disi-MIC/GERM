@@ -5,38 +5,55 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Immatriculation</th>
-          <th>Type</th>
-          <th>Marque / Modèle</th>
-          <th>Carburant</th>
-          <th>État</th>
-          <th>Kilométrage</th>
-          <th>Assurance jusqu'au</th>
-          <th>Visite technique jusqu'au</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (vehicule of vehicules; track vehicule.id) {
-          <tr>
-            <td>{{ vehicule.immatriculation }}</td>
-            <td>{{ libelle(vehicule.type) }}</td>
-            <td>{{ vehicule.marque }} {{ vehicule.modele }}</td>
-            <td>{{ vehicule.carburant ? labelsCarburant[vehicule.carburant] : '—' }}</td>
-            <td><span class="badge text-bg-light border">{{ libelle(vehicule.etat) }}</span></td>
-            <td>{{ vehicule.kilometrage ?? '—' }}</td>
-            <td>{{ vehicule.assuranceJusquau ? (vehicule.assuranceJusquau | slice: 0 : 10) : '—' }}</td>
-            <td>{{ vehicule.visiteTechniqueJusquau ? (vehicule.visiteTechniqueJusquau | slice: 0 : 10) : '—' }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="8" class="text-center text-muted py-4">Aucun véhicule ne vous est affecté.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-file-grid
+    [items]="items"
+    emptyMessage="Aucun véhicule ne vous est affecté."
+    searchPlaceholder="Rechercher un véhicule..."
+    (itemClick)="selectionner($event)"
+  />
+}
+
+@if (vehiculeSelectionne; as vehicule) {
+  <div class="modal-backdrop fade show" (click)="fermer()"></div>
+  <div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ vehicule.marque }} {{ vehicule.modele }}</h5>
+          <button type="button" class="btn-close" aria-label="Fermer" (click)="fermer()"></button>
+        </div>
+        <div class="modal-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Immatriculation</dt>
+            <dd class="col-sm-7">{{ vehicule.immatriculation }}</dd>
+
+            <dt class="col-sm-5">Type</dt>
+            <dd class="col-sm-7">{{ libelle(vehicule.type) }}</dd>
+
+            <dt class="col-sm-5">Carburant</dt>
+            <dd class="col-sm-7">{{ vehicule.carburant ? labelsCarburant[vehicule.carburant] : '—' }}</dd>
+
+            <dt class="col-sm-5">État</dt>
+            <dd class="col-sm-7">
+              <span class="status-dot status-dot-{{ badgeClasseEtat(vehicule) }}">{{ libelle(vehicule.etat) }}</span>
+            </dd>
+
+            <dt class="col-sm-5">Kilométrage</dt>
+            <dd class="col-sm-7">{{ vehicule.kilometrage ?? '—' }}</dd>
+
+            <dt class="col-sm-5">Assurance jusqu'au</dt>
+            <dd class="col-sm-7">{{ vehicule.assuranceJusquau ? (vehicule.assuranceJusquau | slice: 0 : 10) : '—' }}</dd>
+
+            <dt class="col-sm-5">Visite technique jusqu'au</dt>
+            <dd class="col-sm-7">{{ vehicule.visiteTechniqueJusquau ? (vehicule.visiteTechniqueJusquau | slice: 0 : 10) : '—' }}</dd>
+
+            @if (vehicule.observations) {
+              <dt class="col-sm-5">Observations</dt>
+              <dd class="col-sm-7">{{ vehicule.observations }}</dd>
+            }
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
 }

@@ -4,7 +4,9 @@ import { RouterLink } from '@angular/router';
 import { DocumentAdministratif } from '../../../core/models/document-administratif.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { DocumentsAdministratifsApiService } from '../documents-administratifs-api.service';
 
 const JOURS_ALERTE_EXPIRATION = 30;
@@ -12,13 +14,22 @@ const JOURS_ALERTE_EXPIRATION = 30;
 @Component({
   selector: 'app-documents-administratifs-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './documents-administratifs-list.component.html',
 })
 export class DocumentsAdministratifsListComponent implements OnInit {
   documents: DocumentAdministratif[] = [];
   loading = true;
   error: string | null = null;
+
+  readonly columns: DataTableColumn<DocumentAdministratif>[] = [
+    { key: 'agent', label: 'Agent', sortable: true, value: (d) => this.agentLabel(d) },
+    { key: 'type', label: 'Type', sortable: true, value: (d) => this.typeLabel(d) },
+    { key: 'libelle', label: 'Libellé', sortable: true, value: (d) => d.libelle },
+    { key: 'dateDocument', label: 'Date document', sortable: true, value: (d) => d.dateDocument ?? '' },
+    { key: 'expiration', label: 'Expiration', sortable: true, value: (d) => d.dateExpiration ?? '' },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: DocumentsAdministratifsApiService) {}
 

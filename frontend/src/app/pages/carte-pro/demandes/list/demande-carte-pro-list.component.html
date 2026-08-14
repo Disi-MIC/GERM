@@ -26,75 +26,54 @@
     }
   </div>
 
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Agent</th>
-          <th>Type</th>
-          <th>Statut</th>
-          <th>Créée le</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (demande of demandesAffichees; track demande.id) {
-          <tr>
-            <td>{{ agentLabel(demande) }}</td>
-            <td>{{ labelsType[demande.typeDemande] }}</td>
-            <td>
-              <span class="badge bg-{{ badgeClass(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
-            </td>
-            <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
-            <td class="text-end">
-              @if (peutTransmettreOuRejeter(demande)) {
-                <a
-                  [routerLink]="['/cartes-professionnelles/demandes', demande.id, 'traiter']"
-                  class="btn btn-sm btn-outline-primary"
-                  title="Vérifier la pièce et les informations avant de transmettre ou rejeter"
-                >
-                  <i class="bi bi-check2-square"></i> Contrôler
-                </a>
-              }
-              @if (peutTraiterTransmise(demande)) {
-                <a [routerLink]="['/cartes-professionnelles/demandes', demande.id, 'traiter']" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-check2-square"></i> Traiter
-                </a>
-              }
-              @if (demande.statut === 'approuvee') {
-                <button
-                  type="button"
-                  class="btn btn-sm btn-link text-success p-0 ms-2"
-                  title="Voir la carte"
-                  data-bs-toggle="modal"
-                  data-bs-target="#carteInfoModal"
-                  (click)="selectionnerDemande(demande)"
-                >
-                  <i class="bi bi-person-vcard-fill fs-5"></i>
-                </button>
-              }
-              @if (demande.statut === 'refusee') {
-                <button
-                  type="button"
-                  class="btn btn-sm btn-link text-danger p-0 ms-2"
-                  title="Rejeter"
-                  data-bs-toggle="modal"
-                  data-bs-target="#carteInfoModal"
-                  (click)="selectionnerDemande(demande)"
-                >
-                  <i class="bi bi-person-vcard-fill fs-5"></i>
-                </button>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="text-center text-muted py-4">Aucune demande.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table [rows]="demandesAffichees" [columns]="columns" emptyMessage="Aucune demande." searchPlaceholder="Rechercher une demande...">
+    <ng-template appDataTableCell="agent" let-demande>{{ agentLabel(demande) }}</ng-template>
+    <ng-template appDataTableCell="type" let-demande>{{ labelsType[demande.typeDemande] }}</ng-template>
+    <ng-template appDataTableCell="statut" let-demande>
+      <span class="status-dot status-dot-{{ badgeClass(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="actions" let-demande>
+      @if (peutTransmettreOuRejeter(demande)) {
+        <a
+          [routerLink]="['/cartes-professionnelles/demandes', demande.id, 'traiter']"
+          class="btn btn-sm btn-outline-primary"
+          title="Vérifier la pièce et les informations avant de transmettre ou rejeter"
+        >
+          <i class="bi bi-check2-square"></i> Contrôler
+        </a>
+      }
+      @if (peutTraiterTransmise(demande)) {
+        <a [routerLink]="['/cartes-professionnelles/demandes', demande.id, 'traiter']" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-check2-square"></i> Traiter
+        </a>
+      }
+      @if (demande.statut === 'approuvee') {
+        <button
+          type="button"
+          class="btn btn-sm btn-link text-success p-0 ms-2"
+          title="Voir la carte"
+          data-bs-toggle="modal"
+          data-bs-target="#carteInfoModal"
+          (click)="selectionnerDemande(demande)"
+        >
+          <i class="bi bi-person-vcard-fill fs-5"></i>
+        </button>
+      }
+      @if (demande.statut === 'refusee') {
+        <button
+          type="button"
+          class="btn btn-sm btn-link text-danger p-0 ms-2"
+          title="Rejeter"
+          data-bs-toggle="modal"
+          data-bs-target="#carteInfoModal"
+          (click)="selectionnerDemande(demande)"
+        >
+          <i class="bi bi-person-vcard-fill fs-5"></i>
+        </button>
+      }
+    </ng-template>
+  </app-data-table>
 }
 
 <div class="modal fade" id="carteInfoModal" tabindex="-1" aria-hidden="true">

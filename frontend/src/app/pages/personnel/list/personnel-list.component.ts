@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Personnel } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { PersonnelApiService } from '../personnel-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -13,7 +15,7 @@ const LABELS_STATUT: Record<string, string> = {
   demissionnaire: 'Démissionnaire',
 };
 
-const BADGES_STATUT: Record<string, string> = {
+const COULEURS_STATUT: Record<string, string> = {
   actif: 'success',
   en_conge: 'info',
   suspendu: 'warning',
@@ -24,7 +26,7 @@ const BADGES_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-personnel-list',
   standalone: true,
-  imports: [RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './personnel-list.component.html',
 })
 export class PersonnelListComponent implements OnInit {
@@ -32,6 +34,15 @@ export class PersonnelListComponent implements OnInit {
   loading = true;
   error: string | null = null;
   readonly labelsStatut = LABELS_STATUT;
+
+  readonly columns: DataTableColumn<Personnel>[] = [
+    { key: 'matricule', label: 'Matricule', sortable: true, value: (p) => p.matricule ?? '' },
+    { key: 'nomComplet', label: 'Nom complet', sortable: true, value: (p) => p.nomComplet },
+    { key: 'fonction', label: 'Fonction', sortable: true, value: (p) => p.fonction },
+    { key: 'service', label: 'Service', sortable: true, value: (p) => this.serviceLabel(p) },
+    { key: 'statut', label: 'Statut', sortable: true, value: (p) => this.labelsStatut[p.statut] ?? p.statut },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: PersonnelApiService) {}
 
@@ -53,6 +64,6 @@ export class PersonnelListComponent implements OnInit {
   }
 
   badgeClasseStatut(statut: string): string {
-    return BADGES_STATUT[statut] ?? 'secondary';
+    return COULEURS_STATUT[statut] ?? 'secondary';
   }
 }

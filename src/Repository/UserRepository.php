@@ -29,4 +29,28 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->persist($user);
         $this->getEntityManager()->flush();
     }
+
+    /**
+     * Trié par le nom affiché : celui de la fiche agent liée si le compte y
+     * est rattaché, sinon le nom propre du compte (voir User::getNom()).
+     * Un simple ORDER BY u.nom ne suffit plus depuis que ce champ n'est
+     * renseigné que pour les comptes sans fiche liée.
+     *
+     * @return User[]
+     */
+    public function findTriesParNomAffiche(): array
+    {
+        // COALESCE doit passer par un select HIDDEN pour être utilisable dans
+        // l'ORDER BY : cette version de Doctrine ne l'accepte pas telle
+        // quelle directement en orderBy() (QueryException "Expected known
+        // function, got COALESCE").
+        return $this->createQueryBuilder('u')
+            ->leftJoin('u.personnel', 'p')->addSelect('p')
+            ->addSelect('COALESCE(p.nom, u.nom) AS HIDDEN nomTri')
+            ->addSelect('COALESCE(p.prenom, u.prenom) AS HIDDEN prenomTri')
+            ->orderBy('nomTri', 'ASC')
+            ->addOrderBy('prenomTri', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

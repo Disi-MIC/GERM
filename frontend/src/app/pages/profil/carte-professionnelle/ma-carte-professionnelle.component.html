@@ -9,70 +9,48 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel title="Carte(s) délivrée(s)" icon="bi-person-vcard" [noPadding]="true" class="d-block mb-4">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Numéro</th>
-          <th>Délivrance</th>
-          <th>Expiration</th>
-          <th>Statut</th>
-          <th class="text-end">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (carte of cartes; track carte.id) {
-          <tr>
-            <td>{{ carte.numero }}</td>
-            <td>{{ carte.dateDelivrance | slice: 0 : 10 }}</td>
-            <td>{{ carte.dateExpiration ? (carte.dateExpiration | slice: 0 : 10) : '—' }}</td>
-            <td><span class="badge bg-{{ badgeClasseCarte(carte.statut) }}">{{ labelsStatutCarte[carte.statut] }}</span></td>
-            <td class="text-end">
-              @if (carte.valideeParAdminRh && carte.id) {
-                <a [routerLink]="['/mon-espace/carte-professionnelle', carte.id]" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-eye"></i> Visualiser
-                </a>
-                <a [href]="cartePdfTelechargerUrl(carte.id)" target="_blank" class="btn btn-sm btn-outline-success">
-                  <i class="bi bi-download"></i> Télécharger
-                </a>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="text-center text-muted py-4">Aucune carte professionnelle délivrée.</td>
-          </tr>
+  <div class="mb-4">
+    <app-data-table
+      [rows]="cartes"
+      [columns]="colonnesCartes"
+      title="Carte(s) délivrée(s)"
+      icon="bi-person-vcard"
+      emptyMessage="Aucune carte professionnelle délivrée."
+      searchPlaceholder="Rechercher..."
+    >
+      <ng-template appDataTableCell="numero" let-carte>{{ carte.numero }}</ng-template>
+      <ng-template appDataTableCell="delivrance" let-carte>{{ carte.dateDelivrance | slice: 0 : 10 }}</ng-template>
+      <ng-template appDataTableCell="expiration" let-carte>{{ carte.dateExpiration ? (carte.dateExpiration | slice: 0 : 10) : '—' }}</ng-template>
+      <ng-template appDataTableCell="statut" let-carte>
+        <span class="status-dot status-dot-{{ badgeClasseCarte(carte.statut) }}">{{ labelsStatutCarte[carte.statut] }}</span>
+      </ng-template>
+      <ng-template appDataTableCell="action" let-carte>
+        @if (carte.valideeParAdminRh && carte.id) {
+          <a [routerLink]="['/mon-espace/carte-professionnelle', carte.id]" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-eye"></i> Visualiser
+          </a>
+          <a [href]="cartePdfTelechargerUrl(carte.id)" target="_blank" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-download"></i> Télécharger
+          </a>
         }
-      </tbody>
-    </table>
-  </app-panel>
+      </ng-template>
+    </app-data-table>
+  </div>
 
-  <app-panel title="Historique des demandes" icon="bi-clock-history" [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Type</th>
-          <th>Statut</th>
-          <th>Créée le</th>
-          <th>Traitée le</th>
-          <th>Commentaire</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (demande of demandes; track demande.id) {
-          <tr>
-            <td>{{ labelsTypeDemande[demande.typeDemande] }}</td>
-            <td><span class="badge bg-{{ badgeClasseDemande(demande.statut) }}">{{ labelsStatutDemande[demande.statut ?? ''] }}</span></td>
-            <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
-            <td>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</td>
-            <td>{{ demande.commentaireTraitement ?? '—' }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="text-center text-muted py-4">Aucune demande de carte enregistrée.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table
+    [rows]="demandes"
+    [columns]="colonnesDemandes"
+    title="Historique des demandes"
+    icon="bi-clock-history"
+    emptyMessage="Aucune demande de carte enregistrée."
+    searchPlaceholder="Rechercher..."
+  >
+    <ng-template appDataTableCell="type" let-demande>{{ labelsTypeDemande[demande.typeDemande] }}</ng-template>
+    <ng-template appDataTableCell="statut" let-demande>
+      <span class="status-dot status-dot-{{ badgeClasseDemande(demande.statut) }}">{{ labelsStatutDemande[demande.statut ?? ''] }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
+    <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+  </app-data-table>
 }

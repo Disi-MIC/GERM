@@ -3,7 +3,9 @@ import { RouterLink } from '@angular/router';
 import { Delegation } from '../../../core/models/delegation.model';
 import { UserRef } from '../../../core/models/user.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { DelegationApiService } from '../delegation-api.service';
 
 const LABELS_ROLE: Record<string, string> = {
@@ -16,7 +18,7 @@ const LABELS_ROLE: Record<string, string> = {
 @Component({
   selector: 'app-delegation-list',
   standalone: true,
-  imports: [RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './delegation-list.component.html',
 })
 export class DelegationListComponent implements OnInit {
@@ -24,6 +26,15 @@ export class DelegationListComponent implements OnInit {
   loading = true;
   error: string | null = null;
   readonly labelsRole = LABELS_ROLE;
+
+  readonly columns: DataTableColumn<Delegation>[] = [
+    { key: 'delegant', label: 'Délégant', sortable: true, value: (d) => this.userLabel(d.delegant) },
+    { key: 'delegataire', label: 'Délégataire', sortable: true, value: (d) => this.userLabel(d.delegataire) },
+    { key: 'role', label: 'Rôle délégué', sortable: true, value: (d) => this.labelsRole[d.roleDelegue] ?? d.roleDelegue },
+    { key: 'periode', label: 'Période', sortable: true, value: (d) => d.dateDebut },
+    { key: 'statut', label: 'Statut', sortable: true, value: (d) => d.statutAffiche?.label ?? '' },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: DelegationApiService) {}
 

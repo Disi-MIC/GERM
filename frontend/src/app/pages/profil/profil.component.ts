@@ -1,9 +1,13 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { DashboardMe } from '../../core/models/dashboard-me.model';
+import { HistoriqueAffectation, TypeMouvementCarriere } from '../../core/models/historique-affectation.model';
 import { Personnel } from '../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../shared/panel/panel.component';
+import { StatTileComponent } from '../../shared/stat-tile/stat-tile.component';
 import { ProfilApiService } from './profil-api.service';
 
 const LABELS_SEXE: Record<string, string> = {
@@ -27,18 +31,39 @@ const BADGES_STATUT: Record<string, string> = {
   demissionnaire: 'danger',
 };
 
+const LABELS_MOUVEMENT: Record<TypeMouvementCarriere, string> = {
+  nomination: 'Nomination',
+  mutation: 'Mutation',
+  promotion: 'Promotion',
+  autre: 'Mouvement',
+};
+
+const ICONES_MOUVEMENT: Record<TypeMouvementCarriere, string> = {
+  nomination: 'bi-award',
+  mutation: 'bi-arrow-left-right',
+  promotion: 'bi-graph-up-arrow',
+  autre: 'bi-dot',
+};
+
+/** Nombre de mouvements récents affichés dans la frise ; le lien "Voir tout" mène à l'historique complet. */
+const NB_MOUVEMENTS_RECENTS = 5;
+
 @Component({
   selector: 'app-profil',
   standalone: true,
-  imports: [SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [SlicePipe, RouterLink, PageHeaderComponent, PanelComponent, StatTileComponent],
   templateUrl: './profil.component.html',
+  styleUrl: './profil.component.scss',
 })
 export class ProfilComponent implements OnInit {
   personnel: Personnel | null = null;
+  tableauDeBord: DashboardMe | null = null;
+  carriere: HistoriqueAffectation[] = [];
   loading = true;
   error: string | null = null;
   readonly labelsSexe = LABELS_SEXE;
   readonly labelsStatut = LABELS_STATUT;
+  readonly labelsMouvement = LABELS_MOUVEMENT;
 
   constructor(
     private readonly api: ProfilApiService,
@@ -56,10 +81,23 @@ export class ProfilComponent implements OnInit {
         this.loading = false;
       },
     });
+    this.api.getMonTableauDeBord().subscribe((tableauDeBord) => (this.tableauDeBord = tableauDeBord));
+    this.api.getMaCarriere().subscribe((carriere) => (this.carriere = carriere));
+  }
+
+  get mouvementsRecents(): HistoriqueAffectation[] {
+    return this.carriere.slice(0, NB_MOUVEMENTS_RECENTS);
   }
 
   photoUrl(): string {
     return this.api.photoUrl();
+  }
+
+  initiales(): string {
+    if (!this.personnel) {
+      return '';
+    }
+    return `${this.personnel.prenom.charAt(0)}${this.personnel.nom.charAt(0)}`.toUpperCase();
   }
 
   serviceLabel(): string {
@@ -74,5 +112,30 @@ export class ProfilComponent implements OnInit {
 
   badgeClasseStatut(statut: string): string {
     return BADGES_STATUT[statut] ?? 'secondary';
+  }
+
+  iconeMouvement(type: TypeMouvementCarriere): string {
+    return ICONES_MOUVEMENT[type] ?? 'bi-dot';
+  }
+
+  /** Ancienneté en années pleines depuis la date d'embauche, "—" si non renseignée. */
+  anciennete(): string {
+    if (!this.personnel?.dateEmbauche) {
+      return '—';
+    }
+    const debut = new Date(this.personnel.dateEmbauche);
+    const maintenant = new Date();
+    let annees = maintenant.getFullYear() - debut.getFullYear();
+    const anniversairePasse =
+      maintenant.getMonth() > debut.getMonth() || (maintenant.getMonth() === debut.getMonth() && maintenant.getDate() >= debut.getDate());
+    if (!anniversairePasse) {
+      annees -= 1;
+    }
+    return annees <= 0 ? '< 1 an' : `${annees} an${annees > 1 ? 's' : ''}`;
+  }
+
+  mouvementLabel(entree: HistoriqueAffectation): string {
+    const service = entree.service && typeof entree.service !== 'string' ? entree.service.nom : '';
+    return `${entree.fonction} — ${service}`;
   }
 }

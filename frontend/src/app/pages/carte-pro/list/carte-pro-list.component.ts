@@ -6,14 +6,16 @@ import { CarteProfessionnelle } from '../../../core/models/carte-professionnelle
 import { Personnel } from '../../../core/models/personnel.model';
 import { CarteProApiService } from '../carte-pro-api.service';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 
 const LABELS_COMPTEURS = ['Valide', 'Expire bientôt', 'Expirée', 'Perdue', 'Volée', 'Annulée'] as const;
 
 @Component({
   selector: 'app-carte-pro-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './carte-pro-list.component.html',
 })
 export class CarteProListComponent implements OnInit {
@@ -25,6 +27,21 @@ export class CarteProListComponent implements OnInit {
   compteurs: Record<string, number> = {};
   enAttenteValidation = 0;
   readonly labelsCompteurs = LABELS_COMPTEURS;
+
+  readonly columns: DataTableColumn<CarteProfessionnelle>[] = [
+    { key: 'numero', label: 'Numéro', sortable: true, value: (c) => c.numero },
+    { key: 'agent', label: 'Agent', sortable: true, value: (c) => this.agentLabel(c) },
+    { key: 'delivrance', label: 'Délivrance', sortable: true, value: (c) => c.dateDelivrance },
+    { key: 'expiration', label: 'Expiration', sortable: true, value: (c) => c.dateExpiration },
+    { key: 'statut', label: 'Statut', sortable: true, value: (c) => c.statutAffiche?.label ?? '' },
+    {
+      key: 'validationRh',
+      label: 'Validation RH',
+      sortable: true,
+      value: (c) => (c.valideeParAdminRh ? 'Validée' : 'En attente'),
+    },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(
     private readonly api: CarteProApiService,

@@ -5,7 +5,9 @@ import { NiveauTicket, StatutTicket, TicketIncident } from '../../../core/models
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
 
 const LABELS_STATUT: Record<StatutTicket, string> = {
@@ -47,7 +49,7 @@ const LABELS_NIVEAU: Record<NiveauTicket, string> = {
 @Component({
   selector: 'app-tickets-informatique-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './tickets-informatique-list.component.html',
 })
 export class TicketsInformatiqueListComponent implements OnInit {
@@ -60,6 +62,17 @@ export class TicketsInformatiqueListComponent implements OnInit {
   readonly statuts: StatutTicket[] = ['ouvert', 'en_cours', 'resolu', 'cloture', 'refuse'];
   readonly labelsStatut = LABELS_STATUT;
   readonly labelsNiveau = LABELS_NIVEAU;
+
+  readonly columns: DataTableColumn<TicketIncident>[] = [
+    { key: 'agent', label: 'Agent', sortable: true, value: (t) => this.agentLabel(t) },
+    { key: 'materiel', label: 'Matériel', sortable: true, value: (t) => this.materielLabel(t) },
+    { key: 'objet', label: 'Objet', sortable: true, value: (t) => t.titre },
+    { key: 'priorite', label: 'Priorité', sortable: true, value: (t) => this.prioriteLabel(t) },
+    { key: 'niveau', label: 'Niveau', sortable: true, value: (t) => (t.niveau ? this.labelsNiveau[t.niveau] : '') },
+    { key: 'statut', label: 'Statut', sortable: true, value: (t) => this.labelsStatut[t.statut!] ?? '' },
+    { key: 'creeLe', label: 'Créé le', sortable: true, value: (t) => t.createdAt },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: TicketsInformatiqueApiService) {}
 
@@ -101,6 +114,14 @@ export class TicketsInformatiqueListComponent implements OnInit {
 
   badgeClasseStatut(statut: StatutTicket | undefined): string {
     return statut ? (BADGES_STATUT[statut] ?? 'secondary') : 'secondary';
+  }
+
+  statutLabel(statut: StatutTicket | undefined): string {
+    return statut ? LABELS_STATUT[statut] : '—';
+  }
+
+  niveauLabel(niveau: NiveauTicket | undefined): string {
+    return niveau ? LABELS_NIVEAU[niveau] : '—';
   }
 
   prioriteLabel(ticket: TicketIncident): string {

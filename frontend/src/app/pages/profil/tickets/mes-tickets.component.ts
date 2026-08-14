@@ -5,7 +5,9 @@ import { MaterielInformatique } from '../../../core/models/materiel-informatique
 import { ListeValeurRef } from '../../../core/models/personnel.model';
 import { StatutTicket, TicketIncident } from '../../../core/models/ticket-incident.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_STATUT: Record<StatutTicket, string> = {
@@ -27,7 +29,7 @@ const BADGES_STATUT: Record<StatutTicket, string> = {
 @Component({
   selector: 'app-mes-tickets',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './mes-tickets.component.html',
 })
 export class MesTicketsComponent implements OnInit {
@@ -35,6 +37,14 @@ export class MesTicketsComponent implements OnInit {
   loading = true;
   error: string | null = null;
   readonly labelsStatut = LABELS_STATUT;
+
+  readonly columns: DataTableColumn<TicketIncident>[] = [
+    { key: 'objet', label: 'Objet', sortable: true, value: (t) => t.titre },
+    { key: 'materiel', label: 'Matériel', sortable: true, value: (t) => this.materielLabel(t) },
+    { key: 'priorite', label: 'Priorité', sortable: true, value: (t) => this.prioriteLabel(t) },
+    { key: 'statut', label: 'Statut', sortable: true, value: (t) => this.statutLabel(t.statut) },
+    { key: 'creeLe', label: 'Créé le', sortable: true, value: (t) => t.createdAt },
+  ];
 
   constructor(private readonly api: ProfilApiService) {}
 
@@ -63,5 +73,9 @@ export class MesTicketsComponent implements OnInit {
 
   badgeClasseStatut(statut: StatutTicket | undefined): string {
     return statut ? (BADGES_STATUT[statut] ?? 'secondary') : 'secondary';
+  }
+
+  statutLabel(statut: StatutTicket | undefined): string {
+    return statut ? LABELS_STATUT[statut] : '—';
   }
 }

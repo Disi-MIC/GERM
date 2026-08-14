@@ -4,19 +4,28 @@ import { RouterLink } from '@angular/router';
 import { CarteProfessionnelle } from '../../../core/models/carte-professionnelle.model';
 import { Personnel } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { CarteProApiService } from '../carte-pro-api.service';
 
 @Component({
   selector: 'app-carte-pro-validation',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './carte-pro-validation.component.html',
 })
 export class CarteProValidationComponent implements OnInit {
   cartes: CarteProfessionnelle[] = [];
   loading = true;
   error: string | null = null;
+
+  readonly columns: DataTableColumn<CarteProfessionnelle>[] = [
+    { key: 'numero', label: 'Numéro', sortable: true, value: (c) => c.numero },
+    { key: 'agent', label: 'Agent', sortable: true, value: (c) => this.agentLabel(c) },
+    { key: 'creeeLe', label: 'Créée le', sortable: true, value: (c) => c.createdAt },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: CarteProApiService) {}
 

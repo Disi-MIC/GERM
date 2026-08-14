@@ -31,8 +31,12 @@ class UserType extends AbstractType
     {
         $builder
             ->add('email', EmailType::class, ['label' => 'Email de connexion'])
-            ->add('nom', TextType::class, ['label' => 'Nom'])
-            ->add('prenom', TextType::class, ['label' => 'Prénom'])
+            ->add('nom', TextType::class, [
+                'label' => 'Nom',
+                'required' => false,
+                'help' => 'Obligatoire uniquement si aucune fiche agent n\'est liée ci-dessous — sinon dérivé automatiquement de cette fiche.',
+            ])
+            ->add('prenom', TextType::class, ['label' => 'Prénom', 'required' => false])
             ->add('personnel', EntityType::class, [
                 'label' => 'Fiche agent liée',
                 'class' => Personnel::class,

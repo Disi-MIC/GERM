@@ -105,9 +105,14 @@ class MaterielInformatique
     #[Groups(['api:read:rh', 'api:write:rh'])]
     private ?string $fournisseur = null;
 
+    // Plutôt qu'une date de garantie (jamais renseignée en pratique — 0 des
+    // 39 matériels réels en prod ne l'avaient, au même titre que
+    // dateAcquisition d'ailleurs) : la date de mise en service reste
+    // pertinente même pour un matériel antérieur à la plateforme, d'où son
+    // caractère optionnel ici aussi.
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
-    private ?\DateTimeImmutable $garantieJusquau = null;
+    private ?\DateTimeImmutable $dateMiseEnService = null;
 
     /**
      * Fréquence de maintenance préventive, en mois (3/6/12...) — null si aucun
@@ -155,9 +160,17 @@ class MaterielInformatique
     #[Groups(['api:read', 'api:write'])]
     private ?ListeValeur $etat = null;
 
+    // Optionnel : un agent affecté (voir $affecteA) est déjà rattaché à un
+    // service bien précis (Personnel::$service), donc ce champ ferait double
+    // emploi dans ce cas — getService() délègue alors à
+    // $affecteA->getService() et nettoyerServiceRedondant() vide la colonne
+    // au persist/update pour ne jamais laisser les deux diverger (même
+    // logique que User::getNom() vs Personnel::$nom). Reste une valeur
+    // propre, et donc utile, uniquement pour un matériel non affecté — et
+    // même là, pas obligatoire : un matériel en stock ou réformé n'a pas
+    // besoin d'un service connu.
     #[ORM\ManyToOne(targetEntity: Service::class, inversedBy: 'materiels')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull(message: 'Le service/direction est obligatoire.')]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?Service $service = null;
 
@@ -292,14 +305,14 @@ class MaterielInformatique
         return $this;
     }
 
-    public function getGarantieJusquau(): ?\DateTimeImmutable
+    public function getDateMiseEnService(): ?\DateTimeImmutable
     {
-        return $this->garantieJusquau;
+        return $this->dateMiseEnService;
     }
 
-    public function setGarantieJusquau(?\DateTimeImmutable $garantieJusquau): static
+    public function setDateMiseEnService(?\DateTimeImmutable $dateMiseEnService): static
     {
-        $this->garantieJusquau = $garantieJusquau;
+        $this->dateMiseEnService = $dateMiseEnService;
 
         return $this;
     }
@@ -366,7 +379,7 @@ class MaterielInformatique
 
     public function getService(): ?Service
     {
-        return $this->service;
+        return $this->affecteA?->getService() ?? $this->service;
     }
 
     public function setService(?Service $service): static
@@ -432,6 +445,22 @@ class MaterielInformatique
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    /**
+     * Vide la copie propre de $service dès qu'un agent est affecté — voir
+     * getService(), qui délègue alors à $affecteA->getService(). Une
+     * callback plutôt qu'un nettoyage dans chaque contrôleur : trois chemins
+     * d'écriture distincts touchent cette entité (API Angular, CRUD Twig de
+     * secours, import en masse), tous doivent respecter cet invariant.
+     */
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function nettoyerServiceRedondant(): void
+    {
+        if (null !== $this->affecteA) {
+            $this->service = null;
+        }
     }
 
     public function __toString(): string

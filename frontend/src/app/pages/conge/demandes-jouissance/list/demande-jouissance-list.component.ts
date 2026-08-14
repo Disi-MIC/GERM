@@ -4,7 +4,9 @@ import { RouterLink } from '@angular/router';
 import { DemandeJouissance } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../../shared/data-table/data-table.component';
 import { DemandeJouissanceApiService } from '../../demande-jouissance-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -24,7 +26,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-jouissance-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './demande-jouissance-list.component.html',
 })
 export class DemandeJouissanceListComponent implements OnInit {
@@ -37,6 +39,14 @@ export class DemandeJouissanceListComponent implements OnInit {
   readonly labelsStatut = LABELS_STATUT;
   readonly labelsType = LABELS_TYPE;
   readonly statuts = Object.keys(LABELS_STATUT);
+
+  readonly columns: DataTableColumn<DemandeJouissance>[] = [
+    { key: 'agent', label: 'Agent', sortable: true, value: (d) => this.agentLabel(d) },
+    { key: 'type', label: 'Type', sortable: true, value: (d) => this.labelsType[d.type] ?? d.type },
+    { key: 'statut', label: 'Statut', sortable: true, value: (d) => this.labelsStatut[d.statut ?? ''] ?? '' },
+    { key: 'creeeLe', label: 'Créée le', sortable: true, value: (d) => d.createdAt },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: DemandeJouissanceApiService) {}
 

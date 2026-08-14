@@ -4,7 +4,9 @@ import { RouterLink } from '@angular/router';
 import { DemandeDecision } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../../shared/data-table/data-table.component';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -16,7 +18,7 @@ const LABELS_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-demande-decision-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './demande-decision-list.component.html',
 })
 export class DemandeDecisionListComponent implements OnInit {
@@ -28,6 +30,13 @@ export class DemandeDecisionListComponent implements OnInit {
   compteurs: Record<string, number> = {};
   readonly labelsStatut = LABELS_STATUT;
   readonly statuts = Object.keys(LABELS_STATUT);
+
+  readonly columns: DataTableColumn<DemandeDecision>[] = [
+    { key: 'agent', label: 'Agent', sortable: true, value: (d) => this.agentLabel(d) },
+    { key: 'statut', label: 'Statut', sortable: true, value: (d) => this.labelsStatut[d.statut ?? ''] ?? '' },
+    { key: 'creeeLe', label: 'Créée le', sortable: true, value: (d) => d.createdAt },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: DemandeDecisionApiService) {}
 

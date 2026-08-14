@@ -3,7 +3,9 @@ import { Component, OnInit } from '@angular/core';
 import { HistoriqueAffectation } from '../../../core/models/historique-affectation.model';
 import { ServiceRef } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_TYPE_MOUVEMENT: Record<string, string> = {
@@ -16,7 +18,7 @@ const LABELS_TYPE_MOUVEMENT: Record<string, string> = {
 @Component({
   selector: 'app-ma-carriere',
   standalone: true,
-  imports: [SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './ma-carriere.component.html',
 })
 export class MaCarriereComponent implements OnInit {
@@ -24,6 +26,15 @@ export class MaCarriereComponent implements OnInit {
   loading = true;
   error: string | null = null;
   readonly labelsTypeMouvement = LABELS_TYPE_MOUVEMENT;
+
+  readonly columns: DataTableColumn<HistoriqueAffectation>[] = [
+    { key: 'dateEffet', label: "Date d'effet", sortable: true, value: (m) => m.dateEffet },
+    { key: 'mouvement', label: 'Mouvement', sortable: true, value: (m) => this.labelsTypeMouvement[m.typeMouvement] ?? m.typeMouvement },
+    { key: 'service', label: 'Service', sortable: true, value: (m) => this.serviceLabel(m) },
+    { key: 'fonction', label: 'Fonction', sortable: true, value: (m) => m.fonction },
+    { key: 'grade', label: 'Grade', sortable: true, value: (m) => m.grade ?? '' },
+    { key: 'decision', label: 'Décision', sortable: true, value: (m) => m.numeroDecision ?? '' },
+  ];
 
   constructor(private readonly api: ProfilApiService) {}
 

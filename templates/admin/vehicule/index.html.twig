@@ -3,6 +3,38 @@
 {% block title %}Parc automobile — GERM{% endblock %}
 {% block page_title %}Parc automobile{% endblock %}
 
+{# État du véhicule : icône + couleur sémantique (miroir de ICONES_ETAT_MATERIEL
+   côté Angular, voir frontend/src/app/shared/materiel/materiel-indicateurs.util.ts,
+   adapté aux codes etat-vehicule qui diffèrent d'etat-materiel : en_mission au
+   lieu d'en_stock). #}
+{% macro etat_icon(etat) %}
+    {% set icones = {en_service: 'check-circle-fill', en_mission: 'geo-alt-fill', en_panne: 'exclamation-triangle-fill', en_maintenance: 'tools', reforme: 'slash-circle'} %}
+    {% set couleurs = {en_service: 'success', en_mission: 'info', en_panne: 'danger', en_maintenance: 'warning-emphasis', reforme: 'secondary'} %}
+    <span class="text-{{ couleurs[etat.code] ?? 'secondary' }}">
+        <i class="bi bi-{{ icones[etat.code] ?? 'question-circle-fill' }}"></i> {{ etat.libelle }}
+    </span>
+{% endmacro %}
+
+{# Statut d'un document à échéance (assurance, visite technique) : mêmes seuils
+   d'alerte que l'expiration de licence antivirus côté Angular (90j / 30j). #}
+{% macro expiration_icon(date, label, icon_ok, icon_alert, icon_absent) %}
+    {% if date is null %}
+        <i class="bi bi-{{ icon_absent }} text-secondary" title="{{ label }} non renseignée"></i>
+    {% else %}
+        {% set jours = ((date|date('U')) - ("now"|date('U'))) // 86400 %}
+        {% set date_fr = date|date('d/m/Y') %}
+        {% if jours < 0 %}
+            <i class="bi bi-{{ icon_alert }} text-danger" title="{{ label }} expirée depuis le {{ date_fr }}"></i>
+        {% elseif jours <= 30 %}
+            <i class="bi bi-{{ icon_alert }} text-danger" title="{{ label }} expire le {{ date_fr }} (dans {{ jours }} j)"></i>
+        {% elseif jours <= 90 %}
+            <i class="bi bi-{{ icon_alert }} text-warning-emphasis" title="{{ label }} expire le {{ date_fr }} (dans {{ jours }} j)"></i>
+        {% else %}
+            <i class="bi bi-{{ icon_ok }} text-success" title="{{ label }} valide jusqu'au {{ date_fr }}"></i>
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form class="d-flex" method="get">
@@ -25,6 +57,8 @@
             <th>Service</th>
             <th>Chauffeur</th>
             <th>État</th>
+            <th>Assurance</th>
+            <th>Visite technique</th>
             <th class="text-end">Actions</th>
         </tr>
         </thead>
@@ -36,7 +70,9 @@
                 <td>{{ vehicule.marque }} {{ vehicule.modele }}</td>
                 <td>{{ vehicule.service }}</td>
                 <td>{{ vehicule.chauffeurAffecte ? vehicule.chauffeurAffecte.nomComplet : '—' }}</td>
-                <td><span class="badge text-bg-{{ vehicule.etat.code == 'en_service' ? 'success' : (vehicule.etat.code == 'en_panne' ? 'danger' : 'secondary') }}">{{ vehicule.etat.libelle }}</span></td>
+                <td>{{ _self.etat_icon(vehicule.etat) }}</td>
+                <td>{{ _self.expiration_icon(vehicule.assuranceJusquau, 'Assurance', 'shield-fill-check', 'shield-fill-exclamation', 'shield-slash') }}</td>
+                <td>{{ _self.expiration_icon(vehicule.visiteTechniqueJusquau, 'Visite technique', 'patch-check-fill', 'patch-exclamation-fill', 'patch-minus') }}</td>
                 <td class="text-end">
                     <a href="{{ path('admin_vehicule_show', {id: vehicule.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
                     <a href="{{ path('admin_vehicule_edit', {id: vehicule.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
@@ -47,7 +83,7 @@
                 </td>
             </tr>
         {% else %}
-            <tr><td colspan="7" class="text-center text-muted py-4">Aucun véhicule enregistré.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted py-4">Aucun véhicule enregistré.</td></tr>
         {% endfor %}
         </tbody>
     </table>

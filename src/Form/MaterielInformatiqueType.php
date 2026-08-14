@@ -47,8 +47,8 @@ class MaterielInformatiqueType extends AbstractType
                 'required' => false,
             ])
             ->add('fournisseur', TextType::class, ['label' => 'Fournisseur', 'required' => false])
-            ->add('garantieJusquau', DateType::class, [
-                'label' => "Garantie jusqu'au",
+            ->add('dateMiseEnService', DateType::class, [
+                'label' => 'Date de mise en service',
                 'widget' => 'single_text',
                 'required' => false,
             ])
@@ -65,7 +65,9 @@ class MaterielInformatiqueType extends AbstractType
                 'label' => 'Service / Direction',
                 'class' => Service::class,
                 'choice_label' => 'nom',
-                'placeholder' => 'Sélectionner...',
+                'required' => false,
+                'placeholder' => 'Non renseigné',
+                'help' => "Dérivé automatiquement dès qu'un agent est affecté ci-dessous. Pas nécessaire pour un matériel en stock ou réformé.",
             ])
             ->add('affecteA', EntityType::class, [
                 'label' => 'Affecté à (agent)',

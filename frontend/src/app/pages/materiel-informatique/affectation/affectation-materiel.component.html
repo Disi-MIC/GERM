@@ -35,50 +35,28 @@
     </button>
   </div>
 
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>N° inventaire</th>
-          <th>Matériel</th>
-          <th>Service</th>
-          <th>Affectation actuelle</th>
-          <th>Affecter à</th>
-          <th class="text-end">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (materiel of materielsAffiches; track materiel.id) {
-          <tr>
-            <td>{{ materiel.numeroInventaire }}</td>
-            <td>{{ libelle(materiel.type) }} — {{ materiel.marque }} {{ materiel.modele }}</td>
-            <td>{{ serviceLabel(materiel) }}</td>
-            <td>{{ affecteLabel(materiel) }}</td>
-            <td>
-              <select class="form-select form-select-sm" [(ngModel)]="selections[materiel.id!]">
-                <option [ngValue]="null">En stock (aucun)</option>
-                @for (personnel of personnels; track personnel.id) {
-                  <option [ngValue]="personnel.id">{{ personnel.nomComplet || (personnel.prenom + ' ' + personnel.nom) }}</option>
-                }
-              </select>
-            </td>
-            <td class="text-end">
-              <button
-                type="button"
-                class="btn btn-sm btn-primary"
-                [disabled]="selectionInchangee(materiel) || saving[materiel.id!]"
-                (click)="affecter(materiel)"
-              >
-                Affecter
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">Aucun matériel dans cette catégorie.</td>
-          </tr>
+  <app-data-table [rows]="materielsAffiches" [columns]="columns" emptyMessage="Aucun matériel dans cette catégorie." searchPlaceholder="Rechercher un matériel...">
+    <ng-template appDataTableCell="numeroInventaire" let-materiel>{{ materiel.numeroInventaire }}</ng-template>
+    <ng-template appDataTableCell="materiel" let-materiel>{{ libelle(materiel.type) }} — {{ materiel.marque }} {{ materiel.modele }}</ng-template>
+    <ng-template appDataTableCell="service" let-materiel>{{ serviceLabel(materiel) }}</ng-template>
+    <ng-template appDataTableCell="affectationActuelle" let-materiel>{{ affecteLabel(materiel) }}</ng-template>
+    <ng-template appDataTableCell="affecterA" let-materiel>
+      <select class="form-select form-select-sm" [(ngModel)]="selections[materiel.id!]">
+        <option [ngValue]="null">En stock (aucun)</option>
+        @for (personnel of personnels; track personnel.id) {
+          <option [ngValue]="personnel.id">{{ personnel.nomComplet || (personnel.prenom + ' ' + personnel.nom) }}</option>
         }
-      </tbody>
-    </table>
-  </app-panel>
+      </select>
+    </ng-template>
+    <ng-template appDataTableCell="action" let-materiel>
+      <button
+        type="button"
+        class="btn btn-sm btn-primary"
+        [disabled]="selectionInchangee(materiel) || saving[materiel.id!]"
+        (click)="affecter(materiel)"
+      >
+        Affecter
+      </button>
+    </ng-template>
+  </app-data-table>
 }

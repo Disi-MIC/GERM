@@ -94,4 +94,44 @@ export class ShellComponent implements OnInit, OnDestroy {
       this.router.navigateByUrl(administrationLandingUrl(this.auth));
     }
   }
+
+  /**
+   * Groupe de sous-menu actuellement actif, pour ouvrir automatiquement le
+   * bon dropdown façon Gentelella à la navigation — même logique que les
+   * variables `_active` du sidebar Twig (base.html.twig), calculée côté
+   * client puisqu'il n'y a pas de re-rendu serveur par page ici. Bootstrap
+   * garde ensuite la main sur la classe "show" tant que la route ne change
+   * pas (Angular ne réécrit la classe que si la valeur retournée change).
+   */
+  groupePersonnelActif(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/personnel') || url.startsWith('/carrieres') || url.startsWith('/documents-administratifs');
+  }
+
+  groupeCongesActif(): boolean {
+    return this.router.url.startsWith('/conges');
+  }
+
+  groupeCartesProActif(): boolean {
+    return this.router.url.startsWith('/cartes-professionnelles');
+  }
+
+  groupeInformatiqueActif(): boolean {
+    const url = this.router.url;
+    return (
+      url.startsWith('/materiel-informatique') ||
+      url.startsWith('/tickets-informatique') ||
+      url.startsWith('/maintenance-informatique') ||
+      url.startsWith('/licences-logicielles')
+    );
+  }
+
+  /** Initiales pour l'avatar du menu utilisateur (topbar) — vide si pas de nom disponible. */
+  initiales(): string {
+    const user = this.auth.currentUser();
+    if (!user) {
+      return '';
+    }
+    return `${user.prenom.charAt(0)}${user.nom.charAt(0)}`.toUpperCase();
+  }
 }

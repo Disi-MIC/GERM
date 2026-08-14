@@ -9,38 +9,16 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Agent</th>
-          <th>Type</th>
-          <th>Service</th>
-          <th>Fonction</th>
-          <th>Date d'effet</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (mouvement of mouvements; track mouvement.id) {
-          <tr>
-            <td>{{ agentLabel(mouvement) }}</td>
-            <td>{{ labelsType[mouvement.typeMouvement] }}</td>
-            <td>{{ serviceLabel(mouvement) }}</td>
-            <td>{{ mouvement.fonction }}</td>
-            <td>{{ mouvement.dateEffet | slice: 0 : 10 }}</td>
-            <td class="text-end">
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(mouvement)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">Aucun mouvement.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table [rows]="mouvements" [columns]="columns" emptyMessage="Aucun mouvement." searchPlaceholder="Rechercher un mouvement...">
+    <ng-template appDataTableCell="agent" let-mouvement>{{ agentLabel(mouvement) }}</ng-template>
+    <ng-template appDataTableCell="type" let-mouvement>{{ labelsType[mouvement.typeMouvement] }}</ng-template>
+    <ng-template appDataTableCell="service" let-mouvement>{{ serviceLabel(mouvement) }}</ng-template>
+    <ng-template appDataTableCell="fonction" let-mouvement>{{ mouvement.fonction }}</ng-template>
+    <ng-template appDataTableCell="dateEffet" let-mouvement>{{ mouvement.dateEffet | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="actions" let-mouvement>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(mouvement)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </ng-template>
+  </app-data-table>
 }

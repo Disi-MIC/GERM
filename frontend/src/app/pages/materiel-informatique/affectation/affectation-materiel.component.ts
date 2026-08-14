@@ -4,7 +4,9 @@ import { MaterielInformatique } from '../../../core/models/materiel-informatique
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
 type Filtre = 'tous' | 'non_affectes' | 'affectes';
@@ -12,7 +14,7 @@ type Filtre = 'tous' | 'non_affectes' | 'affectes';
 @Component({
   selector: 'app-affectation-materiel',
   standalone: true,
-  imports: [FormsModule, PageHeaderComponent, PanelComponent],
+  imports: [FormsModule, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './affectation-materiel.component.html',
 })
 export class AffectationMaterielComponent implements OnInit {
@@ -26,6 +28,15 @@ export class AffectationMaterielComponent implements OnInit {
   /** Sélection en cours dans le <select> de chaque ligne, avant clic sur "Affecter". */
   selections: Record<number, number | null> = {};
   saving: Record<number, boolean> = {};
+
+  readonly columns: DataTableColumn<MaterielInformatique>[] = [
+    { key: 'numeroInventaire', label: "N° inventaire", sortable: true, value: (m) => m.numeroInventaire },
+    { key: 'materiel', label: 'Matériel', sortable: true, value: (m) => `${this.libelle(m.type)} ${m.marque} ${m.modele}` },
+    { key: 'service', label: 'Service', sortable: true, value: (m) => this.serviceLabel(m) },
+    { key: 'affectationActuelle', label: 'Affectation actuelle', sortable: true, value: (m) => this.affecteLabel(m) },
+    { key: 'affecterA', label: 'Affecter à', alwaysVisible: true },
+    { key: 'action', label: 'Action', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(
     private readonly api: MaterielInformatiqueApiService,
@@ -85,7 +96,10 @@ export class AffectationMaterielComponent implements OnInit {
   }
 
   serviceLabel(materiel: MaterielInformatique): string {
-    const service = materiel.service as ServiceRef | string;
+    const service = materiel.service as ServiceRef | string | null;
+    if (!service) {
+      return '—';
+    }
     return typeof service === 'string' ? service : service.nom;
   }
 

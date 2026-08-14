@@ -19,53 +19,35 @@
     }
   </div>
 
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Agent</th>
-          <th>Matériel</th>
-          <th>Objet</th>
-          <th>Priorité</th>
-          <th>Niveau</th>
-          <th>Statut</th>
-          <th>Créé le</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (ticket of ticketsAffiches; track ticket.id) {
-          <tr>
-            <td>{{ agentLabel(ticket) }}</td>
-            <td>{{ materielLabel(ticket) }}</td>
-            <td>{{ ticket.titre }}</td>
-            <td><span class="badge bg-{{ badgeClassePriorite(ticket) }}">{{ prioriteLabel(ticket) }}</span></td>
-            <td><span class="badge bg-secondary">{{ ticket.niveau ? labelsNiveau[ticket.niveau] : '—' }}</span></td>
-            <td><span class="badge bg-{{ badgeClasseStatut(ticket.statut) }}">{{ labelsStatut[ticket.statut!] }}</span></td>
-            <td>{{ ticket.createdAt | slice: 0 : 10 }}</td>
-            <td class="text-end">
-              @if (ticket.statut === 'ouvert' || ticket.statut === 'en_cours') {
-                <a [routerLink]="['/tickets-informatique', ticket.id, 'traiter']" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-eye"></i> Traiter
-                </a>
-              } @else {
-                <a
-                  [routerLink]="['/tickets-informatique', ticket.id, 'traiter']"
-                  class="btn btn-sm btn-outline-{{ badgeClasseStatut(ticket.statut) }}"
-                  title="Aperçu"
-                  aria-label="Aperçu"
-                >
-                  <i class="bi bi-eye"></i>
-                </a>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="8" class="text-center text-muted py-4">Aucun ticket.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table [rows]="ticketsAffiches" [columns]="columns" emptyMessage="Aucun ticket." searchPlaceholder="Rechercher un ticket...">
+    <ng-template appDataTableCell="agent" let-ticket>{{ agentLabel(ticket) }}</ng-template>
+    <ng-template appDataTableCell="materiel" let-ticket>{{ materielLabel(ticket) }}</ng-template>
+    <ng-template appDataTableCell="objet" let-ticket>{{ ticket.titre }}</ng-template>
+    <ng-template appDataTableCell="priorite" let-ticket>
+      <span class="status-dot status-dot-{{ badgeClassePriorite(ticket) }}">{{ prioriteLabel(ticket) }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="niveau" let-ticket>
+      <span class="status-dot status-dot-secondary">{{ niveauLabel(ticket.niveau) }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="statut" let-ticket>
+      <span class="status-dot status-dot-{{ badgeClasseStatut(ticket.statut) }}">{{ statutLabel(ticket.statut) }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="creeLe" let-ticket>{{ ticket.createdAt | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="actions" let-ticket>
+      @if (ticket.statut === 'ouvert' || ticket.statut === 'en_cours') {
+        <a [routerLink]="['/tickets-informatique', ticket.id, 'traiter']" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-eye"></i> Traiter
+        </a>
+      } @else {
+        <a
+          [routerLink]="['/tickets-informatique', ticket.id, 'traiter']"
+          class="btn btn-sm btn-outline-{{ badgeClasseStatut(ticket.statut) }}"
+          title="Aperçu"
+          aria-label="Aperçu"
+        >
+          <i class="bi bi-eye"></i>
+        </a>
+      }
+    </ng-template>
+  </app-data-table>
 }

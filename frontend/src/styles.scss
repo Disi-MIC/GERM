@@ -44,3 +44,136 @@ $card-border-color: $border-color;
 $card-box-shadow: $box-shadow-sm;
 
 @import 'bootstrap/scss/bootstrap';
+
+// Palette d'accent façon vignettes "file manager" Gentelella v4 (voir
+// file_manager.html) : une couleur pleine pour l'icône/texte + une teinte
+// à 6% d'opacité (suffixe hex 0f) pour le fond de la pastille — reprise
+// telle quelle des tokens mesurés sur la page de référence. Globale (et
+// non scopée à <app-file-grid>) pour rester réutilisable par toute future
+// vignette colorée hors du composant grille.
+:root {
+  --red: #{$danger};
+  --red-lt: #{$danger}0f;
+  --blue: #066fd1;
+  --blue-lt: #066fd10f;
+  --green: #{$success};
+  --green-lt: #{$success}0f;
+  --yellow: #{$warning};
+  --yellow-lt: #{$warning}0f;
+  --purple: #ae3ec9;
+  --purple-lt: #ae3ec90f;
+  --orange: #f76707;
+  --orange-lt: #f767070f;
+  --accent-primary-lt: #{$primary}0f;
+  --accent-secondary-lt: #{$secondary}0f;
+}
+
+// Point de statut façon tableau dynamique Gentelella v4 (voir
+// tables_dynamic.html) : un point coloré discret plutôt qu'une pastille
+// Bootstrap pleine, mieux adapté à une cellule de tableau dense. Global
+// plutôt que scopé à <app-data-table> : utilisé par les cellules "État"/
+// "Statut" projetées par chaque page consommatrice, hors de la portée
+// d'encapsulation de vue du composant tableau lui-même.
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.71875rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &.status-dot-success {
+    color: $success;
+  }
+  &.status-dot-danger {
+    color: $danger;
+  }
+  &.status-dot-secondary {
+    color: $secondary;
+  }
+  &.status-dot-info {
+    color: #066fd1;
+  }
+  // Le point reste $warning (référence), le texte est assombri pour rester
+  // lisible sur fond blanc — un jaune/orange clair en plein texte ne l'est pas.
+  &.status-dot-warning {
+    color: #b45309;
+
+    &::before {
+      background: $warning;
+    }
+  }
+
+  // Variante grille de vignettes (voir <app-file-grid>) : une icône remplace
+  // le point, plus lisible qu'un point seul quand la carte a la place pour elle.
+  &.status-dot-icon {
+    gap: 0.3rem;
+
+    &::before {
+      display: none;
+    }
+
+    i {
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// Icône colorée autonome (sans texte), pour des indicateurs compacts en
+// grille de vignettes (ex. antivirus installé/statut d'expiration sur les
+// cartes du parc informatique) — même palette sémantique que .status-dot.
+.icon-badge {
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: default;
+
+  &.icon-badge-success {
+    color: $success;
+  }
+  &.icon-badge-danger {
+    color: $danger;
+  }
+  &.icon-badge-secondary {
+    color: $secondary;
+  }
+  &.icon-badge-info {
+    color: #066fd1;
+  }
+  &.icon-badge-warning {
+    color: #b45309;
+  }
+}
+
+// Même traitement d'en-tête que <app-data-table> (voir
+// data-table.component.scss), pour les tableaux fixes trop petits pour
+// justifier tri/recherche/pagination (historiques embarqués dans une page
+// de détail, ex. MaterielInformatiqueDetailComponent) — juste la cohérence
+// visuelle, sans la barre d'outils interactive.
+.germ-table-head {
+  thead th {
+    padding: 0.5rem 1rem;
+    background: $body-bg;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #7e8896;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    color: $secondary;
+  }
+}

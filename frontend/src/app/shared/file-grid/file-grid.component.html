@@ -1,0 +1,49 @@
+<div class="fg-toolbar">
+  <div class="fg-search">
+    <i class="bi bi-search"></i>
+    <input type="text" class="form-control form-control-sm" [placeholder]="searchPlaceholder" [(ngModel)]="query" />
+  </div>
+  <div class="fg-count">{{ filtered.length }} élément{{ filtered.length > 1 ? 's' : '' }}</div>
+</div>
+
+@if (filtered.length === 0) {
+  <p class="text-muted text-center py-4 mb-0">{{ emptyMessage }}</p>
+} @else {
+  <div class="fg-grid">
+    @for (item of filtered; track item.row) {
+      <div
+        class="fg-item"
+        [style.--fg-color]="colorFg(item.color)"
+        [style.--fg-color-bg]="colorBg(item.color)"
+        (click)="onClick(item)"
+      >
+        <div class="fg-item-icon">
+          @if (item.iconIsText) {
+            <span class="fg-item-ext">{{ item.icon }}</span>
+          } @else {
+            <i class="bi bi-{{ item.icon }}"></i>
+          }
+        </div>
+        <div class="fg-item-name" [title]="item.name">{{ item.name }}</div>
+        @if (item.meta) {
+          <div class="fg-item-meta" [title]="item.meta">{{ item.meta }}</div>
+        }
+        @if (item.statusLabel) {
+          <span class="status-dot status-dot-{{ item.statusColor }}" [class.status-dot-icon]="!!item.statusIcon">
+            @if (item.statusIcon) {
+              <i class="bi bi-{{ item.statusIcon }}"></i>
+            }
+            {{ item.statusLabel }}
+          </span>
+        }
+        @if (item.badges && item.badges.length > 0) {
+          <div class="fg-item-badges">
+            @for (badge of item.badges; track badge.icon + badge.title) {
+              <i class="bi bi-{{ badge.icon }} icon-badge icon-badge-{{ badge.colorClass }}" [title]="badge.title"></i>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+}

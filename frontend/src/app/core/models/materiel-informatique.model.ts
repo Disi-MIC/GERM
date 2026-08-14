@@ -12,7 +12,7 @@ export interface MaterielInformatique {
   dateAcquisition?: string | null;
   /** RH uniquement (groupe api:read:rh côté serveur) — jamais renvoyé par la vue self-service "Mon parc informatique". */
   fournisseur?: string | null;
-  garantieJusquau?: string | null;
+  dateMiseEnService?: string | null;
   /** Fréquence de maintenance préventive en mois (3/6/12...), null si aucun plan requis. */
   periodiciteMois?: number | null;
   /** Licence précise couvrant l'installation — pas seulement le produit, voir LicenceLogiciel. */
@@ -20,7 +20,8 @@ export interface MaterielInformatique {
   suiteBureautique?: LicenceLogiciel | string | null;
   antivirus?: LicenceLogiciel | string | null;
   etat: ListeValeurRef | string;
-  service: ServiceRef | string;
+  /** Dérivé de l'agent affecté quand affecteA est renseigné (voir MaterielInformatique::getService() côté serveur) ; sinon propre au matériel, absent pour un matériel en stock/réformé sans service connu. */
+  service: ServiceRef | string | null;
   affecteA?: Personnel | string | null;
   observations?: string | null;
   createdAt?: string;

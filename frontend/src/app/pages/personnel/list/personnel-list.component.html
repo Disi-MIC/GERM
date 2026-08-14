@@ -9,38 +9,18 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Matricule</th>
-          <th>Nom complet</th>
-          <th>Fonction</th>
-          <th>Service</th>
-          <th>Statut</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (personnel of personnels; track personnel.id) {
-          <tr>
-            <td>{{ personnel.matricule || '—' }}</td>
-            <td>{{ personnel.nomComplet }}</td>
-            <td>{{ personnel.fonction }}</td>
-            <td>{{ serviceLabel(personnel) }}</td>
-            <td><span class="badge bg-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span></td>
-            <td class="text-end">
-              <a [routerLink]="['/personnel', personnel.id]" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-pencil"></i>
-              </a>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">Aucun agent enregistré.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table [rows]="personnels" [columns]="columns" emptyMessage="Aucun agent enregistré." searchPlaceholder="Rechercher un agent...">
+    <ng-template appDataTableCell="matricule" let-personnel>{{ personnel.matricule || '—' }}</ng-template>
+    <ng-template appDataTableCell="nomComplet" let-personnel>{{ personnel.nomComplet }}</ng-template>
+    <ng-template appDataTableCell="fonction" let-personnel>{{ personnel.fonction }}</ng-template>
+    <ng-template appDataTableCell="service" let-personnel>{{ serviceLabel(personnel) }}</ng-template>
+    <ng-template appDataTableCell="statut" let-personnel>
+      <span class="status-dot status-dot-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="actions" let-personnel>
+      <a [routerLink]="['/personnel', personnel.id]" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil"></i>
+      </a>
+    </ng-template>
+  </app-data-table>
 }

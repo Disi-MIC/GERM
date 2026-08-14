@@ -4,19 +4,31 @@ import { RouterLink } from '@angular/router';
 import { LicenceLogiciel } from '../../../core/models/licence-logiciel.model';
 import { ListeValeurRef } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { LicencesLogiciellesApiService } from '../licences-logicielles-api.service';
 
 @Component({
   selector: 'app-licences-logicielles-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './licences-logicielles-list.component.html',
 })
 export class LicencesLogiciellesListComponent implements OnInit {
   licences: LicenceLogiciel[] = [];
   loading = true;
   error: string | null = null;
+
+  readonly columns: DataTableColumn<LicenceLogiciel>[] = [
+    { key: 'logiciel', label: 'Logiciel', sortable: true, value: (l) => this.logicielLabel(l) },
+    { key: 'numero', label: 'N° licence', sortable: true, value: (l) => l.numeroLicence ?? '' },
+    { key: 'postes', label: 'Postes couverts', sortable: true, value: (l) => l.nombrePostes ?? 0 },
+    { key: 'debut', label: 'Début', sortable: true, value: (l) => l.dateDebut ?? '' },
+    { key: 'expiration', label: 'Expiration', sortable: true, value: (l) => l.dateExpiration ?? '' },
+    { key: 'fournisseur', label: 'Fournisseur', sortable: true, value: (l) => l.fournisseur ?? '' },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: LicencesLogiciellesApiService) {}
 

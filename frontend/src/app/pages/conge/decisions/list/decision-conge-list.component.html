@@ -10,47 +10,25 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Numéro</th>
-          <th>Agent</th>
-          <th>Octroi</th>
-          <th>Expiration</th>
-          <th>Statut</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (decision of decisions; track decision.id) {
-          <tr>
-            <td>{{ decision.numeroDecision }}</td>
-            <td>{{ agentLabel(decision) }}</td>
-            <td>{{ decision.dateDecision | slice: 0 : 10 }}</td>
-            <td>{{ decision.dateExpiration | slice: 0 : 10 }}</td>
-            <td>
-              @if (decision.isValide) {
-                <span class="badge bg-success">Valide</span>
-              } @else {
-                <span class="badge bg-secondary">Expirée</span>
-              }
-            </td>
-            <td class="text-end">
-              <a [routerLink]="['/conges/decisions', decision.id, 'edit']" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(decision)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">Aucune décision.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table [rows]="decisions" [columns]="columns" emptyMessage="Aucune décision." searchPlaceholder="Rechercher une décision...">
+    <ng-template appDataTableCell="numero" let-decision>{{ decision.numeroDecision }}</ng-template>
+    <ng-template appDataTableCell="agent" let-decision>{{ agentLabel(decision) }}</ng-template>
+    <ng-template appDataTableCell="octroi" let-decision>{{ decision.dateDecision | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="expiration" let-decision>{{ decision.dateExpiration | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="statut" let-decision>
+      @if (decision.isValide) {
+        <span class="status-dot status-dot-success">Valide</span>
+      } @else {
+        <span class="status-dot status-dot-secondary">Expirée</span>
+      }
+    </ng-template>
+    <ng-template appDataTableCell="actions" let-decision>
+      <a [routerLink]="['/conges/decisions', decision.id, 'edit']" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(decision)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </ng-template>
+  </app-data-table>
 }

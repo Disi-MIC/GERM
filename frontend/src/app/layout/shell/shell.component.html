@@ -87,101 +87,140 @@
            (Personnel/Congé/Carte Pro) fait, en plus de ses propres rubriques
            (Validation des cartes, Délégations). Seule exception, volontaire :
            Transmettre/Rejeter une demande de carte pro "en attente" reste
-           réservé au seul profil RH Carte Pro (séparation des tâches). -->
+           réservé au seul profil RH Carte Pro (séparation des tâches).
+           Chaque domaine à plusieurs rubriques devient un dropdown repliable
+           façon Gentelella (chevron + collapse Bootstrap) ; un domaine à une
+           seule destination (Délégations) reste un lien plat. -->
       @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
-        <a routerLink="/personnel" routerLinkActive="active">
-          <i class="bi bi-people"></i> Personnel
+        <a
+          href="#submenuPersonnel"
+          class="submenu-toggle"
+          [class.active]="groupePersonnelActif()"
+          data-bs-toggle="collapse"
+          role="button"
+          [attr.aria-expanded]="groupePersonnelActif()"
+          aria-controls="submenuPersonnel"
+        >
+          <span><i class="bi bi-people"></i> Personnel</span>
+          <i class="bi bi-chevron-down chevron"></i>
         </a>
-        <a routerLink="/carrieres" routerLinkActive="active">
-          <i class="bi bi-graph-up-arrow"></i> Gestion des carrières
+        <div class="collapse submenu" [class.show]="groupePersonnelActif()" id="submenuPersonnel">
+          <a routerLink="/personnel" routerLinkActive="active">Personnel</a>
+          <a routerLink="/carrieres" routerLinkActive="active">Gestion des carrières</a>
+          <a routerLink="/documents-administratifs" routerLinkActive="active">Documents administratifs</a>
+        </div>
+      }
+
+      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <a
+          href="#submenuConges"
+          class="submenu-toggle"
+          [class.active]="groupeCongesActif()"
+          data-bs-toggle="collapse"
+          role="button"
+          [attr.aria-expanded]="groupeCongesActif()"
+          aria-controls="submenuConges"
+        >
+          <span><i class="bi bi-calendar-event"></i> Congés</span>
+          <i class="bi bi-chevron-down chevron"></i>
         </a>
-        <a routerLink="/documents-administratifs" routerLinkActive="active">
-          <i class="bi bi-folder2-open"></i> Documents administratifs
+        <div class="collapse submenu" [class.show]="groupeCongesActif()" id="submenuConges">
+          <a routerLink="/conges" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Gestion des congés</a>
+          <a routerLink="/conges/decisions" routerLinkActive="active">Décisions de congé</a>
+          <a routerLink="/conges/demandes-decision" routerLinkActive="active">
+            Demandes de décision
+            @if (compteurNotifications('/conges/demandes-decision'); as n) {
+              @if (n > 0) {
+                <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+              }
+            }
+          </a>
+          <a routerLink="/conges/demandes-jouissance" routerLinkActive="active">
+            Demandes de jouissance
+            @if (compteurNotifications('/conges/demandes-jouissance'); as n) {
+              @if (n > 0) {
+                <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+              }
+            }
+          </a>
+        </div>
+      }
+
+      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+        <a
+          href="#submenuCartesPro"
+          class="submenu-toggle"
+          [class.active]="groupeCartesProActif()"
+          data-bs-toggle="collapse"
+          role="button"
+          [attr.aria-expanded]="groupeCartesProActif()"
+          aria-controls="submenuCartesPro"
+        >
+          <span><i class="bi bi-person-vcard"></i> Cartes professionnelles</span>
+          <i class="bi bi-chevron-down chevron"></i>
+        </a>
+        <div class="collapse submenu" [class.show]="groupeCartesProActif()" id="submenuCartesPro">
+          <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Cartes professionnelles</a>
+          <a routerLink="/cartes-professionnelles/demandes" routerLinkActive="active">
+            Demandes de carte
+            @if (compteurNotifications('/cartes-professionnelles/demandes'); as n) {
+              @if (n > 0) {
+                <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+              }
+            }
+          </a>
+          @if (auth.hasRole('ROLE_ADMIN_RH')) {
+            <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active">Validation des cartes</a>
+          }
+        </div>
+      }
+
+      @if (auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/delegations" routerLinkActive="active">
+          <i class="bi bi-person-check"></i> Délégations
         </a>
       }
 
       @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
         <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Informatique</div>
-      }
-      @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
-        <a routerLink="/materiel-informatique" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bi bi-laptop"></i> Parc informatique
+        <a
+          href="#submenuInformatique"
+          class="submenu-toggle"
+          [class.active]="groupeInformatiqueActif()"
+          data-bs-toggle="collapse"
+          role="button"
+          [attr.aria-expanded]="groupeInformatiqueActif()"
+          aria-controls="submenuInformatique"
+        >
+          <span><i class="bi bi-pc-display"></i> Parc &amp; support</span>
+          <i class="bi bi-chevron-down chevron"></i>
         </a>
-        <a routerLink="/materiel-informatique/affectation" routerLinkActive="active">
-          <i class="bi bi-person-check"></i> Affectation
-        </a>
-      }
-      @if (auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
-        <a routerLink="/tickets-informatique" routerLinkActive="active">
-          <i class="bi bi-life-preserver"></i> Tickets
-          @if (compteurNotifications('/tickets-informatique'); as n) {
-            @if (n > 0) {
-              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
-            }
+        <div class="collapse submenu" [class.show]="groupeInformatiqueActif()" id="submenuInformatique">
+          @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+            <a routerLink="/materiel-informatique" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Parc informatique</a>
+            <a routerLink="/materiel-informatique/affectation" routerLinkActive="active">Affectation</a>
           }
-        </a>
-      }
-      @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
-        <a routerLink="/maintenance-informatique" routerLinkActive="active">
-          <i class="bi bi-tools"></i> Maintenance
-        </a>
-        <a routerLink="/licences-logicielles" routerLinkActive="active">
-          <i class="bi bi-key"></i> Licences logicielles
-        </a>
-      }
-
-      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_ADMIN_RH')) {
-        <a routerLink="/conges" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bi bi-calendar-event"></i> Gestion des congés
-        </a>
-        <a routerLink="/conges/decisions" routerLinkActive="active">
-          <i class="bi bi-file-earmark-text"></i> Décisions de congé
-        </a>
-        <a routerLink="/conges/demandes-decision" routerLinkActive="active">
-          <i class="bi bi-inbox"></i> Demandes de décision
-          @if (compteurNotifications('/conges/demandes-decision'); as n) {
-            @if (n > 0) {
-              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
-            }
+          @if (auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+            <a routerLink="/tickets-informatique" routerLinkActive="active">
+              Tickets
+              @if (compteurNotifications('/tickets-informatique'); as n) {
+                @if (n > 0) {
+                  <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
+                }
+              }
+            </a>
           }
-        </a>
-        <a routerLink="/conges/demandes-jouissance" routerLinkActive="active">
-          <i class="bi bi-inbox"></i> Demandes de jouissance
-          @if (compteurNotifications('/conges/demandes-jouissance'); as n) {
-            @if (n > 0) {
-              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
-            }
+          @if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_RESPONSABLE')) {
+            <a routerLink="/maintenance-informatique" routerLinkActive="active">Maintenance</a>
+            <a routerLink="/licences-logicielles" routerLinkActive="active">Licences logicielles</a>
           }
-        </a>
-      }
-
-      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
-        <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bi bi-person-vcard"></i> Cartes professionnelles
-        </a>
-        <a routerLink="/cartes-professionnelles/demandes" routerLinkActive="active">
-          <i class="bi bi-inbox"></i> Demandes de carte
-          @if (compteurNotifications('/cartes-professionnelles/demandes'); as n) {
-            @if (n > 0) {
-              <span class="badge bg-danger rounded-pill ms-auto">{{ n }}</span>
-            }
-          }
-        </a>
-      }
-
-      @if (auth.hasRole('ROLE_ADMIN_RH')) {
-        <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active">
-          <i class="bi bi-patch-check"></i> Validation des cartes
-        </a>
-        <a routerLink="/delegations" routerLinkActive="active">
-          <i class="bi bi-person-check"></i> Délégations
-        </a>
+        </div>
       }
     }
   </nav>
 
   <div class="germ-main d-flex flex-column flex-grow-1">
-    <header class="germ-topbar d-flex justify-content-between align-items-center px-4 py-2">
+    <header class="germ-topbar d-flex justify-content-between align-items-center">
       <div class="fw-semibold">GERM</div>
       <div class="d-flex align-items-center gap-3">
         @if (aAccesAdministration()) {
@@ -240,11 +279,19 @@
           </div>
         </div>
         @if (auth.currentUser(); as user) {
-          <span class="text-muted small">{{ user.prenom }} {{ user.nom }}</span>
+          <div class="dropdown">
+            <button type="button" class="germ-user-menu-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="germ-user-avatar">{{ initiales() }}</span>
+              <span class="text-body small d-none d-md-inline">{{ user.prenom }} {{ user.nom }}</span>
+              <i class="bi bi-chevron-down small text-muted"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" routerLink="/profil"><i class="bi bi-person"></i> Mon profil</a>
+              <div class="dropdown-divider"></div>
+              <button type="button" class="dropdown-item" (click)="logout()"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
+            </div>
+          </div>
         }
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="logout()">
-          <i class="bi bi-box-arrow-right"></i> Déconnexion
-        </button>
       </div>
     </header>
     <main class="p-4">

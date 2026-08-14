@@ -24,40 +24,19 @@
     }
   </div>
 
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Agent</th>
-          <th>Type</th>
-          <th>Statut</th>
-          <th>Créée le</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (demande of demandesAffichees; track demande.id) {
-          <tr>
-            <td>{{ agentLabel(demande) }}</td>
-            <td>{{ labelsType[demande.type] }}</td>
-            <td>
-              <span class="badge bg-{{ badgeClass(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
-            </td>
-            <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
-            <td class="text-end">
-              @if (demande.isEnAttente) {
-                <a [routerLink]="['/conges/demandes-jouissance', demande.id, 'traiter']" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-check2-square"></i> Traiter
-                </a>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="text-center text-muted py-4">Aucune demande.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table [rows]="demandesAffichees" [columns]="columns" emptyMessage="Aucune demande." searchPlaceholder="Rechercher une demande...">
+    <ng-template appDataTableCell="agent" let-demande>{{ agentLabel(demande) }}</ng-template>
+    <ng-template appDataTableCell="type" let-demande>{{ labelsType[demande.type] }}</ng-template>
+    <ng-template appDataTableCell="statut" let-demande>
+      <span class="status-dot status-dot-{{ badgeClass(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="actions" let-demande>
+      @if (demande.isEnAttente) {
+        <a [routerLink]="['/conges/demandes-jouissance', demande.id, 'traiter']" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-check2-square"></i> Traiter
+        </a>
+      }
+    </ng-template>
+  </app-data-table>
 }

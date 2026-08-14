@@ -6,7 +6,9 @@ import { CarteProfessionnelle } from '../../../../core/models/carte-professionne
 import { DemandeCartePro } from '../../../../core/models/demande-carte-pro.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../../shared/data-table/data-table.component';
 import { CarteProApiService } from '../../carte-pro-api.service';
 import { DemandeCarteProApiService } from '../demande-carte-pro-api.service';
 
@@ -26,7 +28,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-carte-pro-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './demande-carte-pro-list.component.html',
 })
 export class DemandeCarteProListComponent implements OnInit {
@@ -40,6 +42,14 @@ export class DemandeCarteProListComponent implements OnInit {
   readonly labelsStatut = LABELS_STATUT;
   readonly labelsType = LABELS_TYPE;
   readonly statuts = Object.keys(LABELS_STATUT);
+
+  readonly columns: DataTableColumn<DemandeCartePro>[] = [
+    { key: 'agent', label: 'Agent', sortable: true, value: (d) => this.agentLabel(d) },
+    { key: 'type', label: 'Type', sortable: true, value: (d) => this.labelsType[d.typeDemande] ?? d.typeDemande },
+    { key: 'statut', label: 'Statut', sortable: true, value: (d) => this.labelsStatut[d.statut ?? ''] ?? '' },
+    { key: 'creeeLe', label: 'Créée le', sortable: true, value: (d) => d.createdAt },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(
     private readonly api: DemandeCarteProApiService,

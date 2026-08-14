@@ -71,7 +71,6 @@ class DashboardController extends AbstractController
     {
         return $this->render('admin/dashboard/materiel.html.twig', [
             'nb_materiels' => $materielRepository->count([]),
-            'garanties_expirant' => $materielRepository->findGarantiesExpirantBientot(30),
         ]);
     }
 

@@ -5,54 +5,126 @@
 } @else if (error) {
   <div class="alert alert-warning" style="max-width: 700px;">{{ error }}</div>
 } @else if (personnel) {
-  <app-panel class="d-block" style="max-width: 700px;">
-    <div class="d-flex align-items-center gap-3 mb-4">
+  <app-panel class="d-block mb-3">
+    <div class="d-flex flex-wrap align-items-center gap-4">
       @if (personnel.hasPhoto) {
         <img [src]="photoUrl()" alt="Photo" class="rounded-circle" style="width: 96px; height: 96px; object-fit: cover;" />
       } @else {
-        <div class="rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center" style="width: 96px; height: 96px;">
-          <i class="bi bi-person fs-1 text-muted"></i>
-        </div>
+        <div class="germ-profile-avatar">{{ initiales() }}</div>
       }
-      <div>
-        <div class="fs-5 fw-semibold">{{ personnel.nomComplet }}</div>
-        <div class="text-muted">{{ personnel.fonction }}</div>
+      <div class="flex-grow-1">
+        <div class="fs-4 fw-semibold">{{ personnel.nomComplet }}</div>
+        <div class="text-muted mb-2">{{ personnel.fonction }}</div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span class="badge bg-light text-dark border">
+            <i class="bi bi-upc-scan"></i> {{ personnel.matricule ?? 'Matricule non attribué' }}
+          </span>
+          <span class="badge bg-light text-dark border"><i class="bi bi-diagram-3"></i> {{ serviceLabel() }}</span>
+          <span class="status-dot status-dot-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span>
+        </div>
       </div>
     </div>
-
-    <dl class="row mb-0">
-      <dt class="col-sm-4">Matricule</dt>
-      <dd class="col-sm-8">{{ personnel.matricule ?? 'Non attribué' }}</dd>
-
-      <dt class="col-sm-4">Sexe</dt>
-      <dd class="col-sm-8">{{ labelsSexe[personnel.sexe] }}</dd>
-
-      <dt class="col-sm-4">Date de naissance</dt>
-      <dd class="col-sm-8">{{ personnel.dateNaissance ? (personnel.dateNaissance | slice: 0 : 10) : 'Non renseignée' }}</dd>
-
-      <dt class="col-sm-4">Service / Direction</dt>
-      <dd class="col-sm-8">{{ serviceLabel() }}</dd>
-
-      <dt class="col-sm-4">Grade</dt>
-      <dd class="col-sm-8">{{ personnel.grade ?? 'Non renseigné' }}</dd>
-
-      <dt class="col-sm-4">Type de contrat</dt>
-      <dd class="col-sm-8">{{ typeContratLabel() }}</dd>
-
-      <dt class="col-sm-4">Date d'embauche</dt>
-      <dd class="col-sm-8">{{ personnel.dateEmbauche ? (personnel.dateEmbauche | slice: 0 : 10) : 'Non renseignée' }}</dd>
-
-      <dt class="col-sm-4">Statut</dt>
-      <dd class="col-sm-8"><span class="badge bg-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span></dd>
-
-      <dt class="col-sm-4">Téléphone</dt>
-      <dd class="col-sm-8">{{ personnel.telephone ?? 'Non renseigné' }}</dd>
-
-      <dt class="col-sm-4">Email</dt>
-      <dd class="col-sm-8">{{ personnel.email ?? 'Non renseigné' }}</dd>
-
-      <dt class="col-sm-4">Adresse</dt>
-      <dd class="col-sm-8">{{ personnel.adresse ?? 'Non renseignée' }}</dd>
-    </dl>
   </app-panel>
+
+  @if (tableauDeBord; as db) {
+    <div class="row g-3 mb-3">
+      <div class="col-md-3 col-6">
+        <app-stat-tile icon="bi-hourglass-split" color="primary" [value]="anciennete()" label="Ancienneté" />
+      </div>
+      <div class="col-md-3 col-6">
+        <app-stat-tile
+          icon="bi-graph-up-arrow"
+          color="info"
+          [value]="db.carriere.nbMouvements"
+          label="Mouvements de carrière"
+          routerLink="/mon-espace/carriere"
+        />
+      </div>
+      <div class="col-md-3 col-6">
+        <app-stat-tile
+          icon="bi-calendar-event"
+          color="success"
+          [value]="db.conges.totalJours + ' j'"
+          label="Congés pris ({{ db.conges.total }})"
+          routerLink="/mon-espace/conges"
+        />
+      </div>
+      <div class="col-md-3 col-6">
+        <app-stat-tile
+          icon="bi-laptop"
+          color="secondary"
+          [value]="db.materiels.total"
+          label="Matériel affecté"
+          routerLink="/mon-espace/parc-informatique"
+        />
+      </div>
+    </div>
+  }
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <app-panel title="Identité" icon="bi-person-badge" class="d-block mb-3">
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Sexe</dt>
+          <dd class="col-sm-7">{{ labelsSexe[personnel.sexe] }}</dd>
+
+          <dt class="col-sm-5">Date de naissance</dt>
+          <dd class="col-sm-7">{{ personnel.dateNaissance ? (personnel.dateNaissance | slice: 0 : 10) : 'Non renseignée' }}</dd>
+
+          <dt class="col-sm-5">Adresse</dt>
+          <dd class="col-sm-7">{{ personnel.adresse ?? 'Non renseignée' }}</dd>
+        </dl>
+      </app-panel>
+
+      <app-panel title="Poste" icon="bi-briefcase" class="d-block mb-3">
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Service / Direction</dt>
+          <dd class="col-sm-7">{{ serviceLabel() }}</dd>
+
+          <dt class="col-sm-5">Grade</dt>
+          <dd class="col-sm-7">{{ personnel.grade ?? 'Non renseigné' }}</dd>
+
+          <dt class="col-sm-5">Type de contrat</dt>
+          <dd class="col-sm-7">{{ typeContratLabel() }}</dd>
+
+          <dt class="col-sm-5">Date d'embauche</dt>
+          <dd class="col-sm-7">{{ personnel.dateEmbauche ? (personnel.dateEmbauche | slice: 0 : 10) : 'Non renseignée' }}</dd>
+        </dl>
+      </app-panel>
+
+      <app-panel title="Contact" icon="bi-telephone" class="d-block">
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Téléphone</dt>
+          <dd class="col-sm-7">{{ personnel.telephone ?? 'Non renseigné' }}</dd>
+
+          <dt class="col-sm-5">Email</dt>
+          <dd class="col-sm-7">{{ personnel.email ?? 'Non renseigné' }}</dd>
+        </dl>
+      </app-panel>
+    </div>
+
+    <div class="col-lg-5">
+      <app-panel title="Historique de carrière" icon="bi-clock-history">
+        <div panelActions>
+          <a routerLink="/mon-espace/carriere" class="small text-decoration-none">Voir tout <i class="bi bi-arrow-right"></i></a>
+        </div>
+        @if (mouvementsRecents.length > 0) {
+          <div class="germ-timeline">
+            @for (entree of mouvementsRecents; track entree.id) {
+              <div class="germ-timeline-item">
+                <div class="germ-timeline-dot"><i class="bi {{ iconeMouvement(entree.typeMouvement) }}"></i></div>
+                <div class="germ-timeline-content">
+                  <div class="small text-muted">{{ entree.dateEffet ? (entree.dateEffet | slice: 0 : 10) : '—' }}</div>
+                  <div class="fw-semibold small">{{ labelsMouvement[entree.typeMouvement] }}</div>
+                  <div class="small text-muted">{{ mouvementLabel(entree) }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-muted small mb-0">Aucun mouvement de carrière enregistré.</p>
+        }
+      </app-panel>
+    </div>
+  </div>
 }

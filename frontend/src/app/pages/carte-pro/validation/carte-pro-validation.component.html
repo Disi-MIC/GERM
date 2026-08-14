@@ -7,37 +7,17 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Numéro</th>
-          <th>Agent</th>
-          <th>Créée le</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (carte of cartes; track carte.id) {
-          <tr>
-            <td>{{ carte.numero }}</td>
-            <td>{{ agentLabel(carte) }}</td>
-            <td>{{ carte.createdAt | slice: 0 : 10 }}</td>
-            <td class="text-end">
-              <a [routerLink]="['/cartes-professionnelles', carte.id]" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-eye"></i> Aperçu
-              </a>
-              <button type="button" class="btn btn-sm btn-warning" (click)="valider(carte)">
-                <i class="bi bi-patch-check"></i> Valider
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="4" class="text-center text-muted py-4">Aucune carte en attente de validation.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table [rows]="cartes" [columns]="columns" emptyMessage="Aucune carte en attente de validation." searchPlaceholder="Rechercher une carte...">
+    <ng-template appDataTableCell="numero" let-carte>{{ carte.numero }}</ng-template>
+    <ng-template appDataTableCell="agent" let-carte>{{ agentLabel(carte) }}</ng-template>
+    <ng-template appDataTableCell="creeeLe" let-carte>{{ carte.createdAt | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="actions" let-carte>
+      <a [routerLink]="['/cartes-professionnelles', carte.id]" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-eye"></i> Aperçu
+      </a>
+      <button type="button" class="btn btn-sm btn-warning" (click)="valider(carte)">
+        <i class="bi bi-patch-check"></i> Valider
+      </button>
+    </ng-template>
+  </app-data-table>
 }

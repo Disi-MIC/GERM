@@ -37,7 +37,10 @@ export class DelegationFormComponent implements OnInit {
   ngOnInit(): void {
     this.api.getUsers().subscribe((users) => {
       const moi = this.auth.currentUser()?.id;
-      this.users = users.filter((u) => u.id !== moi);
+      // Tri côté client : l'API ne trie plus par nom (voir User::getNom(),
+      // qui délègue à la fiche agent liée — un ORDER BY côté serveur sur la
+      // colonne brute ne serait plus fiable), nomComplet lui reste correct.
+      this.users = users.filter((u) => u.id !== moi).sort((a, b) => a.nomComplet.localeCompare(b.nomComplet));
     });
   }
 

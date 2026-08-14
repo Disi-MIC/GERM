@@ -32,9 +32,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_USER_EMAIL', columns: ['email'])]
+// Pas d'order:['nom' => 'ASC'] ici : ce champ n'est renseigné que pour les
+// comptes sans fiche agent liée (voir getNom()), un simple ORDER BY sur la
+// colonne serait donc trié n'importe comment pour la plupart des comptes.
+// Le seul consommateur (sélecteur délégataire, DelegationFormComponent)
+// trie côté client sur nomComplet, qui lui reste toujours correct.
 #[ApiResource(
     operations: [
-        new GetCollection(uriTemplate: '/users', order: ['nom' => 'ASC']),
+        new GetCollection(uriTemplate: '/users'),
         new Get(uriTemplate: '/users/{id}'),
     ],
     security: "is_granted('ROLE_ADMIN_RH')",
@@ -75,12 +80,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank]
+    // Nullable : sert uniquement de repli pour les comptes sans fiche agent
+    // liée (le compte super administrateur — voir Personnel::$user pour la
+    // règle métier). Un compte lié à une fiche agent n'a plus sa propre
+    // copie : getNom()/getPrenom() délèguent alors à $personnel, seule
+    // source de vérité, pour ne jamais laisser les deux diverger (ex. après
+    // un changement de nom). Le caractère obligatoire "sauf compte lié" est
+    // appliqué par UserController::lierPersonnelOuRefuser(), pas ici.
+    #[ORM\Column(length: 100, nullable: true)]
     private ?string $nom = null;
 
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank]
+    #[ORM\Column(length: 100, nullable: true)]
     private ?string $prenom = null;
 
     #[ORM\Column(nullable: true)]
@@ -178,10 +188,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getNom(): ?string
     {
-        return $this->nom;
+        return $this->personnel?->getNom() ?? $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
         $this->nom = $nom;
 
@@ -190,10 +200,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getPrenom(): ?string
     {
-        return $this->prenom;
+        return $this->personnel?->getPrenom() ?? $this->prenom;
     }
 
-    public function setPrenom(string $prenom): static
+    public function setPrenom(?string $prenom): static
     {
         $this->prenom = $prenom;
 
@@ -203,7 +213,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['api:read'])]
     public function getNomComplet(): string
     {
-        return trim(sprintf('%s %s', $this->prenom, $this->nom));
+        return trim(sprintf('%s %s', $this->getPrenom(), $this->getNom()));
     }
 
     #[Groups(['api:read'])]

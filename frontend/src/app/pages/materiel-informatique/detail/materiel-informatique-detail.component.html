@@ -68,11 +68,12 @@
       <div class="col-md-6">
         <label class="form-label">Service / Direction</label>
         <select class="form-select" formControlName="service">
-          <option [ngValue]="null">Sélectionner...</option>
+          <option [ngValue]="null">Non renseigné</option>
           @for (service of services; track service.id) {
             <option [ngValue]="service.id">{{ service.nom }}</option>
           }
         </select>
+        <div class="form-text">Dérivé automatiquement dès qu'un agent est affecté ci-dessous. Pas nécessaire pour un matériel en stock ou réformé.</div>
       </div>
       <div class="col-md-6">
         <label class="form-label">Affecté à</label>
@@ -89,8 +90,8 @@
         <input type="date" class="form-control" formControlName="dateAcquisition" />
       </div>
       <div class="col-md-6">
-        <label class="form-label">Garantie jusqu'au</label>
-        <input type="date" class="form-control" formControlName="garantieJusquau" />
+        <label class="form-label">Date de mise en service</label>
+        <input type="date" class="form-control" formControlName="dateMiseEnService" />
       </div>
 
       <div class="col-md-6">
@@ -172,8 +173,8 @@
   @if (materielId) {
     <div class="mt-3" style="max-width: 800px;">
       <app-panel title="Historique d'affectation" icon="bi-clock-history" [noPadding]="true">
-        <table class="table table-hover mb-0 align-middle">
-          <thead class="table-light">
+        <table class="table table-hover germ-table-head mb-0 align-middle">
+          <thead>
             <tr>
               <th>Agent</th>
               <th>Depuis</th>

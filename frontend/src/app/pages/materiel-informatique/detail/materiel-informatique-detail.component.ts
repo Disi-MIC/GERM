@@ -44,13 +44,16 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     specifications: [''],
     dateAcquisition: [''],
     fournisseur: [''],
-    garantieJusquau: [''],
+    dateMiseEnService: [''],
     periodiciteMois: [null as number | null],
     systemeExploitation: [null as number | null],
     suiteBureautique: [null as number | null],
     antivirus: [null as number | null],
     etat: [null as number | null, Validators.required],
-    service: [null as number | null, Validators.required],
+    // Pas de Validators.required : dérivé automatiquement de l'agent affecté
+    // (voir MaterielInformatique::getService() côté serveur), et pas
+    // nécessaire du tout pour un matériel en stock ou réformé.
+    service: [null as number | null],
     affecteA: [null as number | null],
     observations: [''],
   });
@@ -95,7 +98,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
             specifications: materiel.specifications ?? '',
             dateAcquisition: materiel.dateAcquisition?.substring(0, 10) ?? '',
             fournisseur: materiel.fournisseur ?? '',
-            garantieJusquau: materiel.garantieJusquau?.substring(0, 10) ?? '',
+            dateMiseEnService: materiel.dateMiseEnService?.substring(0, 10) ?? '',
             periodiciteMois: materiel.periodiciteMois ?? null,
             systemeExploitation:
               materiel.systemeExploitation && typeof materiel.systemeExploitation !== 'string'
@@ -107,7 +110,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
                 : null,
             antivirus: materiel.antivirus && typeof materiel.antivirus !== 'string' ? materiel.antivirus.id : null,
             etat: typeof materiel.etat === 'string' ? null : materiel.etat.id,
-            service: typeof materiel.service === 'string' ? null : materiel.service.id,
+            service: materiel.service && typeof materiel.service !== 'string' ? materiel.service.id : null,
             affecteA:
               materiel.affecteA && typeof materiel.affecteA !== 'string' ? (materiel.affecteA.id ?? null) : null,
             observations: materiel.observations ?? '',
@@ -185,13 +188,13 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
       specifications: raw.specifications || null,
       dateAcquisition: raw.dateAcquisition || null,
       fournisseur: raw.fournisseur || null,
-      garantieJusquau: raw.garantieJusquau || null,
+      dateMiseEnService: raw.dateMiseEnService || null,
       periodiciteMois: raw.periodiciteMois,
       systemeExploitation: raw.systemeExploitation ? `/api/licences-logicielles/${raw.systemeExploitation}` : null,
       suiteBureautique: raw.suiteBureautique ? `/api/licences-logicielles/${raw.suiteBureautique}` : null,
       antivirus: raw.antivirus ? `/api/licences-logicielles/${raw.antivirus}` : null,
       etat: `/api/liste_valeurs/${raw.etat}`,
-      service: `/api/services/${raw.service}`,
+      service: raw.service ? `/api/services/${raw.service}` : null,
       affecteA: raw.affecteA ? `/api/personnels/${raw.affecteA}` : null,
       observations: raw.observations || null,
     };

@@ -5,43 +5,21 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Date d'effet</th>
-          <th>Mouvement</th>
-          <th>Service</th>
-          <th>Fonction</th>
-          <th>Grade</th>
-          <th>Décision</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (mouvement of mouvements; track mouvement.id) {
-          <tr>
-            <td>{{ mouvement.dateEffet | slice: 0 : 10 }}</td>
-            <td><span class="badge text-bg-light border">{{ labelsTypeMouvement[mouvement.typeMouvement] }}</span></td>
-            <td>{{ serviceLabel(mouvement) }}</td>
-            <td>{{ mouvement.fonction }}</td>
-            <td>{{ mouvement.grade ?? '—' }}</td>
-            <td>
-              @if (mouvement.numeroDecision) {
-                {{ mouvement.numeroDecision }}
-                @if (mouvement.dateDecision) {
-                  <span class="text-muted small">({{ mouvement.dateDecision | slice: 0 : 10 }})</span>
-                }
-              } @else {
-                —
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">Aucun mouvement de carrière enregistré.</td>
-          </tr>
+  <app-data-table [rows]="mouvements" [columns]="columns" emptyMessage="Aucun mouvement de carrière enregistré." searchPlaceholder="Rechercher...">
+    <ng-template appDataTableCell="dateEffet" let-mouvement>{{ mouvement.dateEffet | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="mouvement" let-mouvement><span class="badge text-bg-light border">{{ labelsTypeMouvement[mouvement.typeMouvement] }}</span></ng-template>
+    <ng-template appDataTableCell="service" let-mouvement>{{ serviceLabel(mouvement) }}</ng-template>
+    <ng-template appDataTableCell="fonction" let-mouvement>{{ mouvement.fonction }}</ng-template>
+    <ng-template appDataTableCell="grade" let-mouvement>{{ mouvement.grade ?? '—' }}</ng-template>
+    <ng-template appDataTableCell="decision" let-mouvement>
+      @if (mouvement.numeroDecision) {
+        {{ mouvement.numeroDecision }}
+        @if (mouvement.dateDecision) {
+          <span class="text-muted small">({{ mouvement.dateDecision | slice: 0 : 10 }})</span>
         }
-      </tbody>
-    </table>
-  </app-panel>
+      } @else {
+        —
+      }
+    </ng-template>
+  </app-data-table>
 }

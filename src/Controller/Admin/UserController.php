@@ -28,7 +28,7 @@ class UserController extends AbstractController
     public function index(UserRepository $repository): Response
     {
         return $this->render('admin/agent/index.html.twig', [
-            'agents' => $repository->findBy([], ['nom' => 'ASC']),
+            'agents' => $repository->findTriesParNomAffiche(),
         ]);
     }
 
@@ -93,6 +93,11 @@ class UserController extends AbstractController
      * (portée par Personnel::$user, jamais mappée automatiquement par le
      * formulaire côté User). Retourne false — et attache une erreur au champ
      * — si la sélection est invalide ; le formulaire est alors ré-affiché.
+     *
+     * Applique aussi la règle miroir sur nom/prenom : ces champs ne sont
+     * obligatoires que pour un compte sans fiche liée (voir User::getNom(),
+     * qui délègue à $personnel dès qu'il est renseigné) ; on efface la copie
+     * User dès qu'une fiche est liée pour ne jamais la laisser diverger.
      */
     private function lierPersonnelOuRefuser(FormInterface $form, User $user, ?Personnel $personnelActuel = null): bool
     {
@@ -107,11 +112,19 @@ class UserController extends AbstractController
             return false;
         }
 
+        if (!$personnelSelectionne && (!$form->get('nom')->getData() || !$form->get('prenom')->getData())) {
+            $form->get('nom')->addError(new FormError('Nom et prénom sont obligatoires pour un compte sans fiche agent liée.'));
+
+            return false;
+        }
+
         if ($personnelActuel && $personnelActuel !== $personnelSelectionne) {
             $personnelActuel->setUser(null);
         }
         if ($personnelSelectionne) {
             $personnelSelectionne->setUser($user);
+            $user->setNom(null);
+            $user->setPrenom(null);
         }
 
         return true;

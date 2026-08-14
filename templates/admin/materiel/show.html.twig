@@ -16,11 +16,11 @@
     <dl class="row mb-0">
         <dt class="col-sm-3">Type</dt><dd class="col-sm-9">{{ materiel.type ? materiel.type.libelle : '-' }}</dd>
         <dt class="col-sm-3">Numéro de série</dt><dd class="col-sm-9">{{ materiel.numeroSerie|default('-') }}</dd>
-        <dt class="col-sm-3">Service / Direction</dt><dd class="col-sm-9">{{ materiel.service }}</dd>
+        <dt class="col-sm-3">Service / Direction</dt><dd class="col-sm-9">{{ materiel.service ?? '-' }}</dd>
         <dt class="col-sm-3">Affecté à</dt><dd class="col-sm-9">{{ materiel.affecteA ? materiel.affecteA.nomComplet : 'Non affecté' }}</dd>
         <dt class="col-sm-3">Fournisseur</dt><dd class="col-sm-9">{{ materiel.fournisseur|default('-') }}</dd>
         <dt class="col-sm-3">Date d'acquisition</dt><dd class="col-sm-9">{{ materiel.dateAcquisition ? materiel.dateAcquisition|date('d/m/Y') : '-' }}</dd>
-        <dt class="col-sm-3">Garantie jusqu'au</dt><dd class="col-sm-9">{{ materiel.garantieJusquau ? materiel.garantieJusquau|date('d/m/Y') : '-' }}</dd>
+        <dt class="col-sm-3">Date de mise en service</dt><dd class="col-sm-9">{{ materiel.dateMiseEnService ? materiel.dateMiseEnService|date('d/m/Y') : '-' }}</dd>
         <dt class="col-sm-3">État</dt><dd class="col-sm-9">{{ materiel.etat.libelle }}</dd>
         <dt class="col-sm-3">Caractéristiques</dt><dd class="col-sm-9">{{ materiel.specifications|default('-')|nl2br }}</dd>
         <dt class="col-sm-3">Observations</dt><dd class="col-sm-9">{{ materiel.observations|default('-')|nl2br }}</dd>

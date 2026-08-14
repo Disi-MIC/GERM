@@ -5,7 +5,9 @@ import { Maintenance } from '../../../core/models/maintenance.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { MaintenanceInformatiqueApiService } from '../maintenance-informatique-api.service';
 
 /** Couleur pour le code 'corrective' livré par défaut — les autres retombent sur 'info' (voir badgeClasseType). */
@@ -14,13 +16,22 @@ const CODES_CORRECTIFS = ['corrective'];
 @Component({
   selector: 'app-maintenance-informatique-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './maintenance-informatique-list.component.html',
 })
 export class MaintenanceInformatiqueListComponent implements OnInit {
   maintenances: Maintenance[] = [];
   loading = true;
   error: string | null = null;
+
+  readonly columns: DataTableColumn<Maintenance>[] = [
+    { key: 'materiel', label: 'Matériel', sortable: true, value: (m) => this.materielLabel(m) },
+    { key: 'type', label: 'Type', sortable: true, value: (m) => this.typeLabel(m) },
+    { key: 'description', label: 'Description', sortable: true, value: (m) => m.description },
+    { key: 'realisePar', label: 'Réalisé par', sortable: true, value: (m) => this.realiseParLabel(m) },
+    { key: 'date', label: 'Date', sortable: true, value: (m) => m.dateRealisation },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: MaintenanceInformatiqueApiService) {}
 

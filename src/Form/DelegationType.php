@@ -31,9 +31,19 @@ class DelegationType extends AbstractType
                 'choice_label' => fn (User $u) => sprintf('%s (%s)', $u->getNomComplet(), $u->getEmail()),
                 'placeholder' => 'Sélectionner...',
                 'query_builder' => function (UserRepository $r) use ($delegant) {
+                    // COALESCE plutôt qu'un simple ORDER BY u.nom : ce champ
+                    // n'est renseigné que pour les comptes sans fiche agent
+                    // liée depuis que User::getNom() délègue à Personnel
+                    // (voir UserRepository::findTriesParNomAffiche(), même
+                    // logique — y compris le select HIDDEN, requis par cette
+                    // version de Doctrine pour trier sur un COALESCE).
                     $qb = $r->createQueryBuilder('u')
+                        ->leftJoin('u.personnel', 'p')
+                        ->addSelect('COALESCE(p.nom, u.nom) AS HIDDEN nomTri')
+                        ->addSelect('COALESCE(p.prenom, u.prenom) AS HIDDEN prenomTri')
                         ->andWhere('u.actif = true')
-                        ->orderBy('u.nom', 'ASC');
+                        ->orderBy('nomTri', 'ASC')
+                        ->addOrderBy('prenomTri', 'ASC');
 
                     if ($delegant) {
                         $qb->andWhere('u != :delegant')->setParameter('delegant', $delegant);

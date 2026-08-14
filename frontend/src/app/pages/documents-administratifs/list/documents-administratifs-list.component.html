@@ -9,50 +9,28 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Agent</th>
-          <th>Type</th>
-          <th>Libellé</th>
-          <th>Date document</th>
-          <th>Expiration</th>
-          <th class="text-end">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (document of documents; track document.id) {
-          <tr>
-            <td>{{ agentLabel(document) }}</td>
-            <td>{{ typeLabel(document) }}</td>
-            <td>{{ document.libelle }}</td>
-            <td>{{ document.dateDocument ? (document.dateDocument | slice: 0 : 10) : '—' }}</td>
-            <td>
-              @if (document.dateExpiration) {
-                {{ document.dateExpiration | slice: 0 : 10 }}
-                @if (badgeExpiration(document); as badge) {
-                  <span class="badge bg-{{ badge.classe }} ms-1">{{ badge.texte }}</span>
-                }
-              } @else {
-                —
-              }
-            </td>
-            <td class="text-end">
-              <a [href]="fichierUrl(document.id!)" target="_blank" class="btn btn-sm btn-outline-success">
-                <i class="bi bi-download"></i> Télécharger
-              </a>
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(document)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">Aucun document administratif.</td>
-          </tr>
+  <app-data-table [rows]="documents" [columns]="columns" emptyMessage="Aucun document administratif." searchPlaceholder="Rechercher un document...">
+    <ng-template appDataTableCell="agent" let-document>{{ agentLabel(document) }}</ng-template>
+    <ng-template appDataTableCell="type" let-document>{{ typeLabel(document) }}</ng-template>
+    <ng-template appDataTableCell="libelle" let-document>{{ document.libelle }}</ng-template>
+    <ng-template appDataTableCell="dateDocument" let-document>{{ document.dateDocument ? (document.dateDocument | slice: 0 : 10) : '—' }}</ng-template>
+    <ng-template appDataTableCell="expiration" let-document>
+      @if (document.dateExpiration) {
+        {{ document.dateExpiration | slice: 0 : 10 }}
+        @if (badgeExpiration(document); as badge) {
+          <span class="status-dot status-dot-{{ badge.classe }} ms-1">{{ badge.texte }}</span>
         }
-      </tbody>
-    </table>
-  </app-panel>
+      } @else {
+        —
+      }
+    </ng-template>
+    <ng-template appDataTableCell="actions" let-document>
+      <a [href]="fichierUrl(document.id!)" target="_blank" class="btn btn-sm btn-outline-success">
+        <i class="bi bi-download"></i> Télécharger
+      </a>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(document)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </ng-template>
+  </app-data-table>
 }

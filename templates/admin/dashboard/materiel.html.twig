@@ -13,24 +13,4 @@
         </div>
     </div>
 </div>
-
-<div class="card stat-card p-3">
-    <h6 class="mb-3"><i class="bi bi-exclamation-triangle text-warning"></i> Garanties matériel expirant sous 30 jours</h6>
-    {% if garanties_expirant is empty %}
-        <p class="text-muted small mb-0">Aucune échéance proche.</p>
-    {% else %}
-        <table class="table table-sm mb-0">
-            <thead><tr><th>Matériel</th><th>N° inventaire</th><th>Garantie jusqu'au</th></tr></thead>
-            <tbody>
-            {% for m in garanties_expirant %}
-                <tr>
-                    <td><a href="{{ path('admin_materiel_show', {id: m.id}) }}">{{ m.marque }} {{ m.modele }}</a></td>
-                    <td>{{ m.numeroInventaire }}</td>
-                    <td>{{ m.garantieJusquau ? m.garantieJusquau|date('d/m/Y') : '-' }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
-</div>
 {% endblock %}

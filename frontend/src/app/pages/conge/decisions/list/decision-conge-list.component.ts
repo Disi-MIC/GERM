@@ -4,19 +4,30 @@ import { RouterLink } from '@angular/router';
 import { DecisionConge } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../../shared/data-table/data-table.component';
 import { DecisionCongeApiService } from '../../decision-conge-api.service';
 
 @Component({
   selector: 'app-decision-conge-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './decision-conge-list.component.html',
 })
 export class DecisionCongeListComponent implements OnInit {
   decisions: DecisionConge[] = [];
   loading = true;
   error: string | null = null;
+
+  readonly columns: DataTableColumn<DecisionConge>[] = [
+    { key: 'numero', label: 'Numéro', sortable: true, value: (d) => d.numeroDecision },
+    { key: 'agent', label: 'Agent', sortable: true, value: (d) => this.agentLabel(d) },
+    { key: 'octroi', label: 'Octroi', sortable: true, value: (d) => d.dateDecision },
+    { key: 'expiration', label: 'Expiration', sortable: true, value: (d) => d.dateExpiration },
+    { key: 'statut', label: 'Statut', sortable: true, value: (d) => (d.isValide ? 'Valide' : 'Expirée') },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: DecisionCongeApiService) {}
 

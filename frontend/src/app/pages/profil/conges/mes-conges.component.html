@@ -12,113 +12,70 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
-  <app-panel title="Congés pris" icon="bi-calendar-check" [noPadding]="true" class="d-block mb-4">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Type</th>
-          <th>Date début</th>
-          <th>Date fin</th>
-          <th>Durée</th>
-          <th>Motif</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (conge of conges; track conge.id) {
-          <tr>
-            <td><span class="badge text-bg-light border">{{ labelsType[conge.type] }}</span></td>
-            <td>{{ conge.dateDebut | slice: 0 : 10 }}</td>
-            <td>{{ conge.dateFin | slice: 0 : 10 }}</td>
-            <td>{{ conge.duree }} j</td>
-            <td>{{ conge.motif ?? '—' }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="text-center text-muted py-4">Aucun congé enregistré.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <div class="mb-4">
+    <app-data-table
+      [rows]="conges"
+      [columns]="colonnesConges"
+      title="Congés pris"
+      icon="bi-calendar-check"
+      emptyMessage="Aucun congé enregistré."
+      searchPlaceholder="Rechercher..."
+    >
+      <ng-template appDataTableCell="type" let-conge><span class="badge text-bg-light border">{{ labelsType[conge.type] }}</span></ng-template>
+      <ng-template appDataTableCell="debut" let-conge>{{ conge.dateDebut | slice: 0 : 10 }}</ng-template>
+      <ng-template appDataTableCell="fin" let-conge>{{ conge.dateFin | slice: 0 : 10 }}</ng-template>
+      <ng-template appDataTableCell="duree" let-conge>{{ conge.duree }} j</ng-template>
+      <ng-template appDataTableCell="motif" let-conge>{{ conge.motif ?? '—' }}</ng-template>
+    </app-data-table>
+  </div>
 
-  <app-panel title="Mes décisions de congé valides" icon="bi-file-earmark-check" [noPadding]="true" class="d-block mb-4">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Numéro</th>
-          <th>Date de décision</th>
-          <th>Expire le</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (decision of decisions; track decision.id) {
-          <tr>
-            <td>{{ decision.numeroDecision }}</td>
-            <td>{{ decision.dateDecision | slice: 0 : 10 }}</td>
-            <td>{{ decision.dateExpiration | slice: 0 : 10 }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="3" class="text-center text-muted py-4">Aucune décision de congé valide.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <div class="mb-4">
+    <app-data-table
+      [rows]="decisions"
+      [columns]="colonnesDecisions"
+      title="Mes décisions de congé valides"
+      icon="bi-file-earmark-check"
+      emptyMessage="Aucune décision de congé valide."
+      searchPlaceholder="Rechercher..."
+    >
+      <ng-template appDataTableCell="numero" let-decision>{{ decision.numeroDecision }}</ng-template>
+      <ng-template appDataTableCell="dateDecision" let-decision>{{ decision.dateDecision | slice: 0 : 10 }}</ng-template>
+      <ng-template appDataTableCell="expiration" let-decision>{{ decision.dateExpiration | slice: 0 : 10 }}</ng-template>
+    </app-data-table>
+  </div>
 
-  <app-panel title="Historique des demandes de décision" icon="bi-clock-history" [noPadding]="true" class="d-block mb-4">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Statut</th>
-          <th>Créée le</th>
-          <th>Traitée le</th>
-          <th>Commentaire</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (demande of demandesDecision; track demande.id) {
-          <tr>
-            <td><span class="badge bg-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span></td>
-            <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
-            <td>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</td>
-            <td>{{ demande.commentaireTraitement ?? '—' }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="4" class="text-center text-muted py-4">Aucune demande de décision enregistrée.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <div class="mb-4">
+    <app-data-table
+      [rows]="demandesDecision"
+      [columns]="colonnesDemandesDecision"
+      title="Historique des demandes de décision"
+      icon="bi-clock-history"
+      emptyMessage="Aucune demande de décision enregistrée."
+      searchPlaceholder="Rechercher..."
+    >
+      <ng-template appDataTableCell="statut" let-demande>
+        <span class="status-dot status-dot-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
+      </ng-template>
+      <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
+      <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
+      <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+    </app-data-table>
+  </div>
 
-  <app-panel title="Historique des demandes de jouissance" icon="bi-clock-history" [noPadding]="true">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Type</th>
-          <th>Dates</th>
-          <th>Statut</th>
-          <th>Traitée le</th>
-          <th>Commentaire</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (demande of demandesJouissance; track demande.id) {
-          <tr>
-            <td>{{ labelsType[demande.type] }}</td>
-            <td>{{ demande.dateDebut | slice: 0 : 10 }} au {{ demande.dateFin | slice: 0 : 10 }}</td>
-            <td><span class="badge bg-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span></td>
-            <td>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</td>
-            <td>{{ demande.commentaireTraitement ?? '—' }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="text-center text-muted py-4">Aucune demande de jouissance enregistrée.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </app-panel>
+  <app-data-table
+    [rows]="demandesJouissance"
+    [columns]="colonnesDemandesJouissance"
+    title="Historique des demandes de jouissance"
+    icon="bi-clock-history"
+    emptyMessage="Aucune demande de jouissance enregistrée."
+    searchPlaceholder="Rechercher..."
+  >
+    <ng-template appDataTableCell="type" let-demande>{{ labelsType[demande.type] }}</ng-template>
+    <ng-template appDataTableCell="dates" let-demande>{{ demande.dateDebut | slice: 0 : 10 }} au {{ demande.dateFin | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="statut" let-demande>
+      <span class="status-dot status-dot-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
+    <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+  </app-data-table>
 }

@@ -4,7 +4,9 @@ import { RouterLink } from '@angular/router';
 import { HistoriqueAffectation } from '../../../core/models/historique-affectation.model';
 import { Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { CarriereApiService } from '../carriere-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -17,7 +19,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-carriere-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './carriere-list.component.html',
 })
 export class CarriereListComponent implements OnInit {
@@ -25,6 +27,15 @@ export class CarriereListComponent implements OnInit {
   loading = true;
   error: string | null = null;
   readonly labelsType = LABELS_TYPE;
+
+  readonly columns: DataTableColumn<HistoriqueAffectation>[] = [
+    { key: 'agent', label: 'Agent', sortable: true, value: (m) => this.agentLabel(m) },
+    { key: 'type', label: 'Type', sortable: true, value: (m) => this.labelsType[m.typeMouvement] ?? m.typeMouvement },
+    { key: 'service', label: 'Service', sortable: true, value: (m) => this.serviceLabel(m) },
+    { key: 'fonction', label: 'Fonction', sortable: true, value: (m) => m.fonction },
+    { key: 'dateEffet', label: "Date d'effet", sortable: true, value: (m) => m.dateEffet },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: CarriereApiService) {}
 

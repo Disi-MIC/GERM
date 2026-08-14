@@ -1,19 +1,15 @@
-import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../shared/panel/panel.component';
+import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
+import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { badgesAntivirus, COULEURS_ETAT_MATERIEL, ICONES_ETAT_MATERIEL, IconIndicateur } from '../../../shared/materiel/materiel-indicateurs.util';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
-const BADGES_ETAT: Record<string, string> = {
-  en_service: 'success',
-  en_stock: 'info',
-  en_panne: 'danger',
-  en_maintenance: 'warning',
-  reforme: 'secondary',
-};
+const BADGES_ETAT = COULEURS_ETAT_MATERIEL;
 
 const LABELS_ETAT: Record<string, string> = {
   en_service: 'En service',
@@ -26,7 +22,7 @@ const LABELS_ETAT: Record<string, string> = {
 @Component({
   selector: 'app-materiel-informatique-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
   templateUrl: './materiel-informatique-list.component.html',
 })
 export class MaterielInformatiqueListComponent implements OnInit {
@@ -39,6 +35,17 @@ export class MaterielInformatiqueListComponent implements OnInit {
   compteurs: Record<string, number> = {};
   readonly etats = Object.keys(BADGES_ETAT);
   readonly labelsEtat = LABELS_ETAT;
+
+  readonly columns: DataTableColumn<MaterielInformatique>[] = [
+    { key: 'numeroInventaire', label: "N° inventaire", sortable: true, value: (m) => m.numeroInventaire },
+    { key: 'type', label: 'Type', sortable: true, value: (m) => this.libelle(m.type) },
+    { key: 'marqueModele', label: 'Marque / Modèle', sortable: true, value: (m) => `${m.marque} ${m.modele}` },
+    { key: 'service', label: 'Service', sortable: true, value: (m) => this.serviceLabel(m) },
+    { key: 'affecteA', label: 'Affecté à', sortable: true, value: (m) => this.affecteLabel(m) },
+    { key: 'etat', label: 'État', sortable: true, value: (m) => this.libelle(m.etat) },
+    { key: 'antivirus', label: 'Antivirus' },
+    { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
+  ];
 
   constructor(private readonly api: MaterielInformatiqueApiService) {}
 
@@ -92,8 +99,19 @@ export class MaterielInformatiqueListComponent implements OnInit {
     return BADGES_ETAT[this.codeEtat(materiel)] ?? 'secondary';
   }
 
+  iconeEtat(materiel: MaterielInformatique): string {
+    return ICONES_ETAT_MATERIEL[this.codeEtat(materiel)] ?? 'question-circle-fill';
+  }
+
+  iconesAntivirus(materiel: MaterielInformatique): IconIndicateur[] {
+    return badgesAntivirus(materiel);
+  }
+
   serviceLabel(materiel: MaterielInformatique): string {
-    const service = materiel.service as ServiceRef | string;
+    const service = materiel.service as ServiceRef | string | null;
+    if (!service) {
+      return '—';
+    }
     return typeof service === 'string' ? service : service.nom;
   }
 
