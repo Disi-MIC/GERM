@@ -25,13 +25,53 @@
     </table>
 </div>
 
-<div class="card stat-card p-3 mb-4" style="max-width: 600px;">
-    <h6 class="mb-3">Importer un fichier</h6>
-    <form method="post" enctype="multipart/form-data">
-        <input type="hidden" name="_token" value="{{ csrf_token('import-' ~ type.value) }}">
-        <input type="file" name="file" accept=".csv,.xlsx" class="form-control mb-3" required>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importer</button>
-    </form>
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card stat-card p-3 h-100">
+            <h6 class="mb-3">Importer un fichier</h6>
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" name="_token" value="{{ csrf_token('import-' ~ type.value) }}">
+                <input type="file" name="file" accept=".csv,.xlsx" class="form-control mb-3" required>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importer</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card stat-card p-3 h-100">
+            <h6 class="mb-3"><i class="bi bi-google text-muted"></i> Lier à un Google Sheet</h6>
+            {% if lien %}
+                <p class="small text-muted mb-2">
+                    Classeur lié :
+                    <a href="{{ lien.url }}" target="_blank" rel="noopener" class="text-truncate d-inline-block align-bottom" style="max-width: 260px;">{{ lien.url }}</a>
+                </p>
+                <p class="small text-muted mb-3">
+                    {% if lien.derniereSynchronisationAt %}
+                        Dernière synchronisation : {{ lien.derniereSynchronisationAt|date('d/m/Y H:i') }}
+                    {% else %}
+                        Jamais synchronisé.
+                    {% endif %}
+                </p>
+                <form method="post" action="{{ path('admin_import_google_sheet_synchroniser', {type: type.value}) }}" class="mb-3">
+                    <input type="hidden" name="_token" value="{{ csrf_token('import-google-sheet-sync-' ~ type.value) }}">
+                    <button type="submit" class="btn btn-success"><i class="bi bi-arrow-repeat"></i> Synchroniser maintenant</button>
+                </form>
+                <hr>
+                <p class="small text-muted mb-2">Remplacer le lien :</p>
+            {% else %}
+                <p class="small text-muted mb-3">
+                    Partagez le classeur avec l'accès <strong>"Toute personne disposant du lien — Lecteur"</strong>,
+                    puis collez son lien de partage ci-dessous. La première ligne du classeur doit contenir les
+                    mêmes colonnes que le modèle Excel (voir tableau ci-dessus).
+                </p>
+            {% endif %}
+            <form method="post" action="{{ path('admin_import_google_sheet_lier', {type: type.value}) }}" class="d-flex gap-2">
+                <input type="hidden" name="_token" value="{{ csrf_token('import-google-sheet-' ~ type.value) }}">
+                <input type="url" name="url" placeholder="https://docs.google.com/spreadsheets/d/..." class="form-control" required>
+                <button type="submit" class="btn btn-outline-primary text-nowrap"><i class="bi bi-link-45deg"></i> Lier</button>
+            </form>
+        </div>
+    </div>
 </div>
 
 {% if report %}

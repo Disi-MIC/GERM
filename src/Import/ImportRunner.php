@@ -4,12 +4,14 @@ namespace App\Import;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Orchestration commune à tous les imports : choix du parseur (CSV/XLSX), choix de
- * l'importeur selon le type, vérification des colonnes obligatoires, boucle sur les
- * lignes avec flush par lot, et confinement de toute exception dans le rapport plutôt
- * que de faire planter la page.
+ * Orchestration commune à tous les imports : choix du parseur (CSV/XLSX) ou
+ * récupération depuis Google Sheets, choix de l'importeur selon le type,
+ * vérification des colonnes obligatoires, boucle sur les lignes avec flush
+ * par lot, et confinement de toute exception dans le rapport plutôt que de
+ * faire planter la page.
  */
 class ImportRunner
 {
@@ -23,15 +25,17 @@ class ImportRunner
 
     public function __construct(
         private readonly EntityManagerInterface $em,
-        CsvFileParser $csvFileParser,
+        private readonly CsvFileParser $csvFileParser,
         XlsxFileParser $xlsxFileParser,
+        private readonly HttpClientInterface $httpClient,
+        private readonly GoogleSheetUrlResolver $googleSheetUrlResolver,
         DirectionImporter $directionImporter,
         ServiceImporter $serviceImporter,
         PersonnelImporter $personnelImporter,
         MaterielInformatiqueImporter $materielImporter,
         VehiculeImporter $vehiculeImporter,
     ) {
-        $this->parsers = [$csvFileParser, $xlsxFileParser];
+        $this->parsers = [$this->csvFileParser, $xlsxFileParser];
         $this->importers = [
             TypeImport::DIRECTION->value => $directionImporter,
             TypeImport::SERVICE->value => $serviceImporter,
@@ -51,8 +55,6 @@ class ImportRunner
 
     public function run(TypeImport $type, UploadedFile $file): ImportReport
     {
-        $importer = $this->importers[$type->value];
-
         $parser = null;
         foreach ($this->parsers as $candidat) {
             if ($candidat->supports($file)) {
@@ -70,13 +72,70 @@ class ImportRunner
             return new ImportReport(0, 0, 0, [], 'Impossible de lire le fichier : '.$e->getMessage());
         }
 
+        return $this->traiterLignes($type, $rows);
+    }
+
+    /**
+     * Récupère l'export CSV public du classeur Google Sheets et le fait
+     * suivre au même pipeline que l'import par fichier — aucune écriture
+     * vers Google, lecture seule. $urlSaisie accepte tel quel un lien de
+     * partage copié depuis le navigateur (voir GoogleSheetUrlResolver).
+     */
+    public function runFromGoogleSheet(TypeImport $type, string $urlSaisie): ImportReport
+    {
+        try {
+            $urlExport = $this->googleSheetUrlResolver->resoudreUrlExportCsv($urlSaisie);
+        } catch (\InvalidArgumentException $e) {
+            return new ImportReport(0, 0, 0, [], $e->getMessage());
+        }
+
+        try {
+            $response = $this->httpClient->request('GET', $urlExport, ['timeout' => 15]);
+            $statusCode = $response->getStatusCode();
+            $contenu = $response->getContent(false);
+        } catch (\Throwable $e) {
+            return new ImportReport(0, 0, 0, [], 'Impossible de contacter Google Sheets : '.$e->getMessage());
+        }
+
+        if (400 === $statusCode) {
+            return new ImportReport(0, 0, 0, [], 'Google Sheets a répondu avec le code 400 — l\'onglet visé par ce lien n\'existe plus (ex. supprimé ou réorganisé depuis). Réouvrez le classeur, copiez le lien de partage à jour depuis l\'onglet voulu, puis relancez la liaison.');
+        }
+
+        if (200 !== $statusCode) {
+            return new ImportReport(0, 0, 0, [], sprintf(
+                'Google Sheets a répondu avec le code %d — vérifiez que le classeur est partagé en lecture ("Toute personne disposant du lien").',
+                $statusCode,
+            ));
+        }
+
+        // Classeur non partagé publiquement : Google renvoie une page de connexion HTML plutôt qu'un CSV.
+        if (str_starts_with(ltrim($contenu), '<')) {
+            return new ImportReport(0, 0, 0, [], 'Ce classeur n\'est pas accessible publiquement. Partagez-le avec l\'accès "Toute personne disposant du lien — Lecteur", puis réessayez.');
+        }
+
+        try {
+            $rows = iterator_to_array($this->csvFileParser->parseContent($contenu, ','));
+        } catch (\Throwable $e) {
+            return new ImportReport(0, 0, 0, [], 'Impossible de lire le contenu du classeur : '.$e->getMessage());
+        }
+
+        return $this->traiterLignes($type, $rows);
+    }
+
+    /**
+     * @param array<int, array<string, ?string>> $rows
+     */
+    private function traiterLignes(TypeImport $type, array $rows): ImportReport
+    {
+        $importer = $this->importers[$type->value];
+
         if ([] === $rows) {
-            return new ImportReport(0, 0, 0, [], 'Le fichier ne contient aucune ligne de données.');
+            return new ImportReport(0, 0, 0, [], 'Aucune ligne de données trouvée.');
         }
 
         $colonnesManquantes = $this->colonnesManquantes($importer, array_keys(reset($rows)));
         if ([] !== $colonnesManquantes) {
-            return new ImportReport(0, 0, 0, [], 'Colonnes manquantes dans le fichier : '.implode(', ', $colonnesManquantes));
+            return new ImportReport(0, 0, 0, [], 'Colonnes manquantes : '.implode(', ', $colonnesManquantes));
         }
 
         $created = 0;
