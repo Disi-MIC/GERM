@@ -1,8 +1,8 @@
 import { ListeValeurRef, Personnel } from './personnel.model';
 
 export type TypeConge = 'annuel' | 'maladie' | 'maternite_paternite' | 'sans_solde' | 'autre';
-/** 'transmise'/'transmise_agent' ne concernent que DemandeDecision (circuit à 4 étapes) — jamais DemandeJouissance (3 états). */
-export type StatutDemande = 'en_attente' | 'transmise' | 'approuvee' | 'refusee' | 'transmise_agent';
+/** Tous sauf en_attente/approuvee/refusee ne concernent que DemandeDecision (circuit à 5 étapes) — jamais DemandeJouissance (3 états). */
+export type StatutDemande = 'en_attente' | 'transmise' | 'approuvee' | 'retournee' | 'refusee' | 'transmise_agent';
 
 export interface Conge {
   id?: number;
@@ -54,6 +54,7 @@ export interface DemandeDecision {
   enAttente?: boolean;
   transmise?: boolean;
   approuvee?: boolean;
+  retournee?: boolean;
 }
 
 export interface DemandeJouissance {

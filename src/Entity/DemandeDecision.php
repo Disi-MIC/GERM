@@ -15,13 +15,18 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Demande de décision de congé : pour un agent qui n'en a jamais eu, ou dont la
- * dernière a expiré/atteint son terme. Circuit à quatre étapes, comme
- * DemandeCartePro : le RH Congé vérifie les pièces et génère la DecisionConge
- * (transmettre()) ou rejette pour un motif prédéterminé (rejeter()) ; le RH
- * Admin valide ensuite la décision déjà créée (approuver(), ne crée rien de
- * nouveau — voir DecisionConge::valider()) ; le circuit papier (impression,
- * service courrier) se déroule hors de l'application ; le RH Congé confirme
- * enfin la remise physique à l'agent (transmettreAgent()).
+ * dernière a expiré/atteint son terme. Circuit à cinq étapes :
+ *
+ *  1. Le RH Congé vérifie les pièces et génère la DecisionConge (transmettre())
+ *     ou rejette pour un motif prédéterminé (rejeter()) ;
+ *  2. le RH Admin valide la décision déjà créée (approuver(), ne crée rien de
+ *     nouveau — voir DecisionConge::valider()), ce qui déclenche hors
+ *     application l'impression, le passage au service courrier et la
+ *     signature de l'autorité ;
+ *  3. une fois le papier signé revenu, le RH Admin le vérifie et le transmet
+ *     au RH Congé (confirmerRetour()) ;
+ *  4. le RH Congé remet enfin la décision à l'agent, physiquement et dans
+ *     l'application (transmettreAgent()).
  *
  * Exposée en lecture seule côté API : toutes les écritures passent par
  * src/Controller/Api/DemandeDecisionController.php.
@@ -266,6 +271,12 @@ class DemandeDecision
     public function isApprouvee(): bool
     {
         return StatutDemande::APPROUVEE === $this->statut;
+    }
+
+    #[Groups(['api:read'])]
+    public function isRetournee(): bool
+    {
+        return StatutDemande::RETOURNEE === $this->statut;
     }
 
     public function __toString(): string

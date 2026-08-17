@@ -47,12 +47,17 @@ export class DemandeDecisionApiService {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/rejeter`, { motifRejet, commentaire });
   }
 
-  /** RH Admin uniquement, depuis l'état "transmise" — valide la DecisionConge déjà créée, n'en crée pas de nouvelle. */
+  /** RH Admin uniquement, depuis l'état "transmise" — valide la DecisionConge déjà créée, n'en crée pas de nouvelle. Déclenche le circuit papier hors application. */
   approuver(id: number): Observable<DemandeDecision> {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/approuver`, {});
   }
 
-  /** RH Congé uniquement, depuis l'état "approuvee" — confirme la remise physique à l'agent. */
+  /** RH Admin uniquement, depuis l'état "approuvee" — confirme la vérification du papier signé revenu du circuit et le transmet au RH Congé. */
+  confirmerRetour(id: number): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/confirmer-retour`, {});
+  }
+
+  /** RH Congé uniquement, depuis l'état "retournee" — confirme la remise physique et électronique à l'agent. */
   transmettreAgent(id: number): Observable<DemandeDecision> {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/transmettre-agent`, {});
   }

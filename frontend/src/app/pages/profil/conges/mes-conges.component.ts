@@ -22,6 +22,7 @@ const LABELS_STATUT: Record<string, string> = {
   en_attente: 'En attente',
   transmise: 'En cours de validation',
   approuvee: 'Validée, en préparation',
+  retournee: 'Signée, en cours de remise',
   transmise_agent: 'Reçue',
   refusee: 'Refusée',
 };
@@ -99,6 +100,8 @@ export class MesCongesComponent implements OnInit {
       case 'transmise':
         return 'info';
       case 'approuvee':
+        return 'primary';
+      case 'retournee':
         return 'primary';
       case 'transmise_agent':
         return 'success';

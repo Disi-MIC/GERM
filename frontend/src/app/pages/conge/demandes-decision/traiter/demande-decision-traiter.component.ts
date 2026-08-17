@@ -83,8 +83,9 @@ export class DemandeDecisionTraiterComponent implements OnInit {
       return [creee, { label: 'Refusée', sousTitre: this.formatDate(d.dateTraitement), etat: 'rejete' }];
     }
 
-    const transmiseFaite = d.statut === 'transmise' || d.statut === 'approuvee' || d.statut === 'transmise_agent';
-    const approuveeFaite = d.statut === 'approuvee' || d.statut === 'transmise_agent';
+    const transmiseFaite = d.statut !== 'en_attente';
+    const approuveeFaite = d.statut === 'approuvee' || d.statut === 'retournee' || d.statut === 'transmise_agent';
+    const retourneeFaite = d.statut === 'retournee' || d.statut === 'transmise_agent';
 
     return [
       creee,
@@ -94,14 +95,19 @@ export class DemandeDecisionTraiterComponent implements OnInit {
         etat: transmiseFaite ? 'termine' : 'actuel',
       },
       {
-        label: 'Approuvée',
+        label: 'Approuvée (circuit de signature)',
         sousTitre: approuveeFaite ? 'Fait' : null,
         etat: approuveeFaite ? 'termine' : transmiseFaite ? 'actuel' : 'a-venir',
       },
       {
+        label: 'Signée, retournée au RH Congé',
+        sousTitre: retourneeFaite ? 'Fait' : null,
+        etat: retourneeFaite ? 'termine' : approuveeFaite ? 'actuel' : 'a-venir',
+      },
+      {
         label: "Transmise à l'agent",
         sousTitre: d.statut === 'transmise_agent' ? this.formatDate(d.dateTraitement) : null,
-        etat: d.statut === 'transmise_agent' ? 'termine' : approuveeFaite ? 'actuel' : 'a-venir',
+        etat: d.statut === 'transmise_agent' ? 'termine' : retourneeFaite ? 'actuel' : 'a-venir',
       },
     ];
   }
@@ -144,9 +150,14 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     return !!this.demande?.transmise && this.auth.hasRole('ROLE_ADMIN_RH');
   }
 
-  /** Confirmer la remise physique depuis "approuvee" : réservé au RH Congé. */
+  /** Confirmer le retour du circuit papier depuis "approuvee" : réservé au RH Admin. */
+  peutConfirmerRetour(): boolean {
+    return this.demande?.statut === 'approuvee' && this.auth.hasRole('ROLE_ADMIN_RH');
+  }
+
+  /** Confirmer la remise physique depuis "retournee" : réservé au RH Congé. */
   peutTransmettreAgent(): boolean {
-    return this.demande?.statut === 'approuvee' && this.auth.hasRole('ROLE_RH_CONGE');
+    return this.demande?.statut === 'retournee' && this.auth.hasRole('ROLE_RH_CONGE');
   }
 
   transmettre(): void {
@@ -196,6 +207,21 @@ export class DemandeDecisionTraiterComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'approbation de la demande.";
+      },
+    });
+  }
+
+  confirmerRetour(): void {
+    if (!this.demande?.id) {
+      return;
+    }
+    this.saving = true;
+    this.error = null;
+    this.api.confirmerRetour(this.demande.id).subscribe({
+      next: () => this.router.navigateByUrl('/conges/demandes-decision'),
+      error: (err) => {
+        this.saving = false;
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la confirmation du retour.';
       },
     });
   }

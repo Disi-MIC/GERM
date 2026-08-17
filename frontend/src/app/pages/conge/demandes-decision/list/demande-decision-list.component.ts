@@ -12,7 +12,8 @@ import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 const LABELS_STATUT: Record<string, string> = {
   en_attente: 'En attente',
   transmise: 'Transmise au RH Admin',
-  approuvee: 'Approuvée',
+  approuvee: 'Approuvée, circuit de signature',
+  retournee: 'Signée, transmise au RH Congé',
   transmise_agent: "Transmise à l'agent",
   refusee: 'Refusée',
 };
@@ -93,6 +94,8 @@ export class DemandeDecisionListComponent implements OnInit {
       case 'transmise':
         return 'info';
       case 'approuvee':
+        return 'primary';
+      case 'retournee':
         return 'primary';
       case 'transmise_agent':
         return 'success';

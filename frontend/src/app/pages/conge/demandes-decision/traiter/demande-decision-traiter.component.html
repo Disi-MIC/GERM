@@ -180,7 +180,20 @@
       <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary mt-3">Retour</a>
     } @else if (demande.statut === 'approuvee') {
       <div class="alert alert-success small">
-        Décision validée par le RH Admin. Une fois le circuit papier (impression, service courrier) terminé, confirmez la remise à l'agent.
+        Décision validée par le RH Admin : impression, service courrier et signature de l'autorité en cours, hors application. Confirmez ici quand le papier signé est revenu et vérifié.
+      </div>
+
+      @if (peutConfirmerRetour()) {
+        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="confirmerRetour()">
+          <i class="bi bi-file-earmark-check"></i> Confirmer le retour et transmettre au RH Congé
+        </button>
+      } @else {
+        <div class="alert alert-secondary small">Seul le RH Admin peut confirmer le retour du circuit papier.</div>
+      }
+      <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary ms-2">Retour</a>
+    } @else if (demande.statut === 'retournee') {
+      <div class="alert alert-success small">
+        Décision signée et vérifiée par le RH Admin. Remettez-la à l'agent (physiquement et dans l'application) pour clôturer la demande.
       </div>
 
       @if (peutTransmettreAgent()) {

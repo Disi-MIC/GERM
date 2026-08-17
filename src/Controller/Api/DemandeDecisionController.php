@@ -37,10 +37,14 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *    sécurité) — motif obligatoire, choisi dans une liste prédéterminée ;
  *  - approuver() : réservé au RH Admin, uniquement depuis l'état "transmise"
  *    — valide la DecisionConge déjà créée par transmettre(), n'en crée pas
- *    de nouvelle (voir DecisionConge::valider()) ;
+ *    de nouvelle (voir DecisionConge::valider()) ; déclenche hors application
+ *    l'impression, le passage au service courrier et la signature de
+ *    l'autorité ;
+ *  - confirmerRetour() : réservé au RH Admin, uniquement depuis l'état
+ *    "approuvee" — le papier signé est revenu, vérifié, et transmis au RH
+ *    Congé ;
  *  - transmettreAgent() : réservé au RH Congé, uniquement depuis l'état
- *    "approuvee" — confirme la remise physique à l'agent une fois le
- *    circuit papier (impression, service courrier) terminé hors application.
+ *    "retournee" — confirme la remise physique et électronique à l'agent.
  */
 #[IsGranted('ROLE_RH_CONGE')]
 class DemandeDecisionController extends AbstractController
@@ -226,11 +230,31 @@ class DemandeDecisionController extends AbstractController
         $demande->setDateTraitement(new \DateTimeImmutable());
         $this->em->flush();
 
+        // Pas de notification ici : l'approbation ne fait que déclencher le
+        // circuit papier hors application (impression, courrier, signature) —
+        // personne n'a d'action à faire dans l'app avant que le papier signé
+        // ne revienne (voir confirmerRetour()).
+
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/demandes-decision/{id}/confirmer-retour', name: 'api_demande_decision_confirmer_retour', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_ADMIN_RH')]
+    public function confirmerRetour(DemandeDecision $demande): JsonResponse
+    {
+        if (!$demande->isApprouvee()) {
+            return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être approuvée avant de confirmer le retour du circuit papier."]], JsonResponse::HTTP_CONFLICT);
+        }
+
+        $demande->setStatut(StatutDemande::RETOURNEE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $this->em->flush();
+
         $this->notificationService->notifierRole(
             User::ROLE_RH_CONGE,
-            'Décision de congé validée par le RH Admin',
+            'Décision de congé signée, à remettre à l\'agent',
             '/conges/demandes-decision',
-            \sprintf('La décision de %s est validée : impression et circuit courrier à lancer, puis à transmettre à l\'agent.', $demande->getPersonnel()?->getNomComplet()),
+            \sprintf('Le RH Admin a vérifié et transmis la décision signée de %s : à remettre à l\'agent.', $demande->getPersonnel()?->getNomComplet()),
         );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
@@ -239,8 +263,8 @@ class DemandeDecisionController extends AbstractController
     #[Route('/api/demandes-decision/{id}/transmettre-agent', name: 'api_demande_decision_transmettre_agent', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function transmettreAgent(DemandeDecision $demande): JsonResponse
     {
-        if (!$demande->isApprouvee()) {
-            return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être validée par le RH Admin avant d'être transmise à l'agent."]], JsonResponse::HTTP_CONFLICT);
+        if (!$demande->isRetournee()) {
+            return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être retournée du circuit papier avant d'être transmise à l'agent."]], JsonResponse::HTTP_CONFLICT);
         }
 
         $demande->setStatut(StatutDemande::TRANSMISE_AGENT);
