@@ -4,6 +4,7 @@ namespace App\Service;
 
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\PhpseclibV3\SftpAdapter;
 use League\Flysystem\PhpseclibV3\SftpConnectionProvider;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -11,10 +12,19 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Mime\MimeTypes;
 
 /**
- * Stocke sur un serveur SFTP distant tous les fichiers uploadés/générés par
- * l'application (photos, pièces justificatives, cartes professionnelles), sous
- * un nom de fichier aléatoire (jamais le nom d'origine, protection path-traversal
- * et anti-écrasement). Servi ensuite par une action de contrôleur authentifiée.
+ * Stocke tous les fichiers uploadés/générés par l'application (photos, pièces
+ * justificatives, cartes professionnelles), sous un nom de fichier aléatoire
+ * (jamais le nom d'origine, protection path-traversal et anti-écrasement).
+ * Servi ensuite par une action de contrôleur authentifiée.
+ *
+ * En production, stockage sur un serveur SFTP distant (réseau interne du
+ * ministère). FILE_STORAGE_LOCAL (voir when@dev dans services.yaml) bascule
+ * sur le disque local du poste de dev : ce serveur SFTP n'est joignable que
+ * depuis le réseau interne, injoignable en dev délocalisé — sans ce repli, le
+ * moindre upload/lecture de fichier (photo, PDF de carte pro) reste bloqué 30
+ * secondes (max_execution_time) avant d'échouer, sans lien avec le code
+ * appelant. La prod n'est jamais concernée : FILE_STORAGE_LOCAL vaut false
+ * par défaut (voir .env) et n'est mis à true que dans .env.local (non versionné).
  */
 class FileStorage
 {
@@ -27,6 +37,8 @@ class FileStorage
     private readonly FilesystemOperator $filesystem;
 
     public function __construct(
+        #[Autowire('%env(bool:FILE_STORAGE_LOCAL)%')] bool $local,
+        #[Autowire('%kernel.project_dir%')] string $projectDir,
         #[Autowire('%env(SFTP_HOST)%')] string $host,
         #[Autowire('%env(int:SFTP_PORT)%')] int $port,
         #[Autowire('%env(SFTP_USERNAME)%')] string $username,
@@ -35,6 +47,12 @@ class FileStorage
         #[Autowire('%env(SFTP_PRIVATE_KEY_PASSPHRASE)%')] string $privateKeyPassphrase,
         #[Autowire('%env(SFTP_ROOT)%')] string $root,
     ) {
+        if ($local) {
+            $this->filesystem = new Filesystem(new LocalFilesystemAdapter($projectDir.'/var/uploads'));
+
+            return;
+        }
+
         $provider = new SftpConnectionProvider(
             host: $host,
             username: $username,

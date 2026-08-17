@@ -21,8 +21,10 @@ use App\Repository\NotificationRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Repository\VehiculeRepository;
 use App\Service\FileStorage;
+use App\Service\PersonnelPhotoService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -43,6 +45,7 @@ class MeController extends AbstractController
     public function __construct(
         private readonly FileStorage $fileStorage,
         private readonly EntityManagerInterface $em,
+        private readonly PersonnelPhotoService $photoService,
     ) {
     }
 
@@ -89,6 +92,26 @@ class MeController extends AbstractController
         $response->headers->set('Content-Disposition', 'inline');
 
         return $response;
+    }
+
+    #[Route('/api/me/personnel/photo', name: 'api_me_personnel_photo_upload', methods: ['POST'])]
+    public function personnelPhotoUpload(Request $request): JsonResponse
+    {
+        $personnel = $this->personnelConnecte();
+
+        if (!$personnel) {
+            return $this->json(['errors' => ['personnel' => "Aucune fiche personnel n'est liée à votre compte. Merci de contacter le service RH."]], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $file = $request->files->get('photoFichier');
+
+        if ($erreur = $this->photoService->erreurValidation($file)) {
+            return $this->json(['errors' => ['photoFichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $this->photoService->remplacer($personnel, $file);
+
+        return $this->json($personnel, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
 
     /**

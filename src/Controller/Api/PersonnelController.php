@@ -7,12 +7,11 @@ use App\Entity\Enum\TypeMouvementCarriere;
 use App\Entity\HistoriqueAffectation;
 use App\Entity\Personnel;
 use App\Service\FileStorage;
+use App\Service\PersonnelPhotoService;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -33,6 +32,7 @@ class PersonnelController extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
         private readonly FileStorage $fileStorage,
+        private readonly PersonnelPhotoService $photoService,
     ) {
     }
 
@@ -116,18 +116,11 @@ class PersonnelController extends AbstractController
     {
         $file = $request->files->get('photoFichier');
 
-        if ($erreur = $this->fileStorage->erreurValidation($file)) {
+        if ($erreur = $this->photoService->erreurValidation($file)) {
             return $this->json(['errors' => ['photoFichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        if ($personnel->getPhoto()) {
-            $this->fileStorage->delete($personnel->getPhoto());
-        }
-
-        $png = $this->convertirPhotoEnPng($file);
-        $stocke = $this->fileStorage->storeContent($png, 'photo.png', 'png', 'personnel-photos');
-        $personnel->setPhoto($stocke['path']);
-        $this->em->flush();
+        $this->photoService->remplacer($personnel, $file);
 
         return $this->json($personnel, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
@@ -146,30 +139,5 @@ class PersonnelController extends AbstractController
         $response->headers->set('Content-Disposition', 'inline');
 
         return $response;
-    }
-
-    /**
-     * Convertie en PNG quel que soit le format d'origine (JPEG, GIF, WEBP,
-     * BMP, AVIF...), pour garantir un rendu fiable partout où la photo est
-     * affichée ou intégrée (dont le PDF de la carte professionnelle).
-     */
-    private function convertirPhotoEnPng(UploadedFile $file): string
-    {
-        $image = imagecreatefromstring(file_get_contents($file->getPathname()));
-
-        if (false === $image) {
-            throw new BadRequestHttpException("Ce fichier n'a pas pu être lu comme une image.");
-        }
-
-        imagepalettetotruecolor($image);
-        imagealphablending($image, true);
-        imagesavealpha($image, true);
-
-        ob_start();
-        imagepng($image);
-        $png = ob_get_clean();
-        imagedestroy($image);
-
-        return $png;
     }
 }
