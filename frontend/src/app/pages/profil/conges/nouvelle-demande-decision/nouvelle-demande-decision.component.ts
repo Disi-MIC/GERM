@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DemandeDecision } from '../../../../core/models/conge.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
@@ -7,6 +7,12 @@ import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { FilePieceInputComponent } from '../../../../shared/file-piece-input/file-piece-input.component';
 import { ProfilApiService } from '../../profil-api.service';
 
+/**
+ * Un agent nouvellement affecté n'a jamais eu de décision de congé : seule sa
+ * prise de service est exigée. Sinon, l'ancienne décision est exigée en plus
+ * (voir DemandeDecision::$nouvellementAffecte côté serveur, source de vérité
+ * partagée avec le formulaire RH demande-decision-form).
+ */
 @Component({
   selector: 'app-nouvelle-demande-decision',
   standalone: true,
@@ -16,12 +22,13 @@ import { ProfilApiService } from '../../profil-api.service';
 export class NouvelleDemandeDecisionComponent {
   saving = false;
   error: string | null = null;
-  fichier1: File | null = null;
-  fichier2: File | null = null;
+  fichierPriseDeService: File | null = null;
+  fichierAncienneDecision: File | null = null;
 
   form = this.fb.nonNullable.group({
-    dateDerniereDecision: [''],
+    nouvellementAffecte: [null as boolean | null, Validators.required],
     numeroDerniereDecision: [''],
+    dateDerniereDecision: [''],
     motif: [''],
   });
 
@@ -32,18 +39,37 @@ export class NouvelleDemandeDecisionComponent {
   ) {}
 
   submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.error = "Merci d'indiquer si vous êtes nouvellement affecté(e).";
+      return;
+    }
+
     const raw = this.form.getRawValue();
+    const nouvellementAffecte = raw.nouvellementAffecte!;
+
+    if (!this.fichierPriseDeService) {
+      this.error = 'Merci de joindre votre prise de service.';
+      return;
+    }
+    if (!nouvellementAffecte && !this.fichierAncienneDecision) {
+      this.error = 'Merci de joindre votre ancienne décision de congé.';
+      return;
+    }
+
     // 'personnel' est volontairement omis : le serveur le déduit toujours du compte
     // connecté (voir MeDemandesController) et une IRI vide ferait échouer la désérialisation.
     const payload = {
-      dateDerniereDecision: raw.dateDerniereDecision || null,
-      numeroDerniereDecision: raw.numeroDerniereDecision || null,
+      nouvellementAffecte,
+      numeroDerniereDecision: nouvellementAffecte ? null : raw.numeroDerniereDecision || null,
+      dateDerniereDecision: nouvellementAffecte ? null : raw.dateDerniereDecision || null,
       motif: raw.motif || null,
     } as DemandeDecision;
 
     this.saving = true;
+    this.error = null;
     this.api.creerDemandeDecision(payload).subscribe({
-      next: (demande) => this.uploadPiecesEtRediriger(demande),
+      next: (demande) => this.uploadPiecesEtRediriger(demande, nouvellementAffecte),
       error: (err) => {
         this.saving = false;
         this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'enregistrement de la demande.";
@@ -51,9 +77,9 @@ export class NouvelleDemandeDecisionComponent {
     });
   }
 
-  private uploadPiecesEtRediriger(demande: DemandeDecision): void {
+  private uploadPiecesEtRediriger(demande: DemandeDecision, nouvellementAffecte: boolean): void {
     const id = demande.id;
-    if (!id || (!this.fichier1 && !this.fichier2)) {
+    if (!id) {
       this.router.navigateByUrl('/mon-espace/conges');
       return;
     }
@@ -67,15 +93,15 @@ export class NouvelleDemandeDecisionComponent {
         : "Demande créée, mais l'envoi d'une pièce jointe a échoué.";
     };
 
-    if (this.fichier1 && this.fichier2) {
-      this.api.uploadPieceDecision1(id, this.fichier1).subscribe({
-        next: () => this.api.uploadPieceDecision2(id, this.fichier2!).subscribe({ next: done, error: onError }),
-        error: onError,
-      });
-    } else if (this.fichier1) {
-      this.api.uploadPieceDecision1(id, this.fichier1).subscribe({ next: done, error: onError });
-    } else if (this.fichier2) {
-      this.api.uploadPieceDecision2(id, this.fichier2).subscribe({ next: done, error: onError });
-    }
+    this.api.uploadPieceDecision1(id, this.fichierPriseDeService!).subscribe({
+      next: () => {
+        if (!nouvellementAffecte && this.fichierAncienneDecision) {
+          this.api.uploadPieceDecision2(id, this.fichierAncienneDecision).subscribe({ next: done, error: onError });
+        } else {
+          done();
+        }
+      },
+      error: onError,
+    });
   }
 }

@@ -54,6 +54,19 @@ class DemandeDecision
     #[Groups(['api:read', 'api:write'])]
     private ?string $numeroDerniereDecision = null;
 
+    /**
+     * Détermine les pièces attendues : un agent nouvellement affecté ne peut
+     * pas encore avoir de décision de congé antérieure, donc seule sa prise
+     * de service est exigée (piece1) ; sinon l'ancienne décision (piece2)
+     * est exigée en plus — voir piece1()/piece2() côté contrôleur et les
+     * formulaires Angular (demande-decision-form, nouvelle-demande-decision)
+     * qui adaptent labels et champs requis sur ce booléen.
+     */
+    #[ORM\Column]
+    #[Assert\NotNull(message: "Merci d'indiquer si l'agent est nouvellement affecté.")]
+    #[Groups(['api:read', 'api:write'])]
+    private ?bool $nouvellementAffecte = null;
+
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?string $motif = null;
@@ -126,6 +139,18 @@ class DemandeDecision
     public function setNumeroDerniereDecision(?string $numeroDerniereDecision): static
     {
         $this->numeroDerniereDecision = $numeroDerniereDecision;
+
+        return $this;
+    }
+
+    public function isNouvellementAffecte(): ?bool
+    {
+        return $this->nouvellementAffecte;
+    }
+
+    public function setNouvellementAffecte(?bool $nouvellementAffecte): static
+    {
+        $this->nouvellementAffecte = $nouvellementAffecte;
 
         return $this;
     }

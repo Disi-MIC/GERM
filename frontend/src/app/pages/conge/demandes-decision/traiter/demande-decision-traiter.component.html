@@ -11,6 +11,8 @@
 
   <app-panel style="max-width: 700px;" class="d-block">
     <dl class="row mb-3">
+      <dt class="col-sm-4">Agent nouvellement affecté</dt>
+      <dd class="col-sm-8">{{ demande.nouvellementAffecte ? 'Oui' : 'Non' }}</dd>
       @if (demande.numeroDerniereDecision) {
         <dt class="col-sm-4">Dernière décision connue</dt>
         <dd class="col-sm-8">{{ demande.numeroDerniereDecision }}</dd>

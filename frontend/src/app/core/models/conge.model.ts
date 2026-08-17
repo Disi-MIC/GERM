@@ -34,6 +34,7 @@ export interface PieceJustificative {
 export interface DemandeDecision {
   id?: number;
   personnel: Personnel | string;
+  nouvellementAffecte: boolean;
   dateDerniereDecision?: string | null;
   numeroDerniereDecision?: string | null;
   motif?: string | null;

@@ -7,14 +7,25 @@
 <app-panel>
 <form [formGroup]="form" (ngSubmit)="submit()" style="max-width: 700px;">
   <div class="row g-3">
-    <div class="col-md-6">
-      <label class="form-label">Numéro de ma dernière décision (si connu)</label>
-      <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
+    <div class="col-12">
+      <label class="form-label">Êtes-vous nouvellement affecté(e) à votre poste ? <span class="text-danger">*</span></label>
+      <select class="form-select" formControlName="nouvellementAffecte">
+        <option [ngValue]="null" disabled>Choisir...</option>
+        <option [ngValue]="true">Oui — je n'ai jamais eu de décision de congé</option>
+        <option [ngValue]="false">Non — j'ai déjà une décision de congé</option>
+      </select>
     </div>
-    <div class="col-md-6">
-      <label class="form-label">Date de ma dernière décision (si connue)</label>
-      <input type="date" class="form-control" formControlName="dateDerniereDecision" />
-    </div>
+
+    @if (form.value.nouvellementAffecte === false) {
+      <div class="col-md-6">
+        <label class="form-label">Numéro de ma dernière décision (si connu)</label>
+        <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Date de ma dernière décision (si connue)</label>
+        <input type="date" class="form-control" formControlName="dateDerniereDecision" />
+      </div>
+    }
 
     <div class="col-12">
       <label class="form-label">Motif</label>
@@ -22,11 +33,13 @@
     </div>
 
     <div class="col-md-6">
-      <app-file-piece-input label="Pièce justificative 1" [(fichier)]="fichier1" />
+      <app-file-piece-input label="Prise de service" [requis]="true" [(fichier)]="fichierPriseDeService" />
     </div>
-    <div class="col-md-6">
-      <app-file-piece-input label="Pièce justificative 2" [(fichier)]="fichier2" />
-    </div>
+    @if (form.value.nouvellementAffecte === false) {
+      <div class="col-md-6">
+        <app-file-piece-input label="Ancienne décision de congé" [requis]="true" [(fichier)]="fichierAncienneDecision" />
+      </div>
+    }
   </div>
 
   <div class="mt-3 d-flex gap-2">
