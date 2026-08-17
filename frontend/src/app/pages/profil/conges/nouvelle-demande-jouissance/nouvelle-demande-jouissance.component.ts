@@ -4,12 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { DecisionConge, DemandeJouissance, TypeConge } from '../../../../core/models/conge.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { FilePieceInputComponent } from '../../../../shared/file-piece-input/file-piece-input.component';
 import { DemandeJouissanceSelfPayload, ProfilApiService } from '../../profil-api.service';
 
 @Component({
   selector: 'app-nouvelle-demande-jouissance',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, FilePieceInputComponent],
   templateUrl: './nouvelle-demande-jouissance.component.html',
 })
 export class NouvelleDemandeJouissanceComponent implements OnInit {
@@ -35,16 +36,6 @@ export class NouvelleDemandeJouissanceComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.getMesDecisionsConge().subscribe((decisions) => (this.mesDecisionsValides = decisions));
-  }
-
-  onFichier1Change(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.fichier1 = input.files?.[0] ?? null;
-  }
-
-  onFichier2Change(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.fichier2 = input.files?.[0] ?? null;
   }
 
   submit(): void {

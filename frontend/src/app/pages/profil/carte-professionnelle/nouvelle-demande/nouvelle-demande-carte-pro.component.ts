@@ -7,12 +7,13 @@ import { TypeDemandeCartePro } from '../../../../core/models/demande-carte-pro.m
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { FilePieceInputComponent } from '../../../../shared/file-piece-input/file-piece-input.component';
 import { DemandeCarteProSelfPayload, ProfilApiService } from '../../profil-api.service';
 
 @Component({
   selector: 'app-nouvelle-demande-carte-pro',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, FilePieceInputComponent],
   templateUrl: './nouvelle-demande-carte-pro.component.html',
 })
 export class NouvelleDemandeCarteProComponent implements OnInit {
@@ -47,11 +48,6 @@ export class NouvelleDemandeCarteProComponent implements OnInit {
       },
     });
     this.api.getMesCartesProfessionnelles().subscribe((cartes) => (this.mesCartes = cartes));
-  }
-
-  onFichierChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.fichier = input.files?.[0] ?? null;
   }
 
   libellePiece(): string {

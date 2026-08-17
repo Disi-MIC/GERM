@@ -43,12 +43,10 @@
     </div>
 
     <div class="col-md-6">
-      <label class="form-label">Pièce justificative 1</label>
-      <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichier1Change($event)" />
+      <app-file-piece-input label="Pièce justificative 1" [(fichier)]="fichier1" />
     </div>
     <div class="col-md-6">
-      <label class="form-label">Pièce justificative 2</label>
-      <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichier2Change($event)" />
+      <app-file-piece-input label="Pièce justificative 2" [(fichier)]="fichier2" />
     </div>
   </div>
 

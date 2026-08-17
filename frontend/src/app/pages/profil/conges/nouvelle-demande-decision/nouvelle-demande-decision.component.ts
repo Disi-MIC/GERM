@@ -4,12 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { DemandeDecision } from '../../../../core/models/conge.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { FilePieceInputComponent } from '../../../../shared/file-piece-input/file-piece-input.component';
 import { ProfilApiService } from '../../profil-api.service';
 
 @Component({
   selector: 'app-nouvelle-demande-decision',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, FilePieceInputComponent],
   templateUrl: './nouvelle-demande-decision.component.html',
 })
 export class NouvelleDemandeDecisionComponent {
@@ -29,16 +30,6 @@ export class NouvelleDemandeDecisionComponent {
     private readonly api: ProfilApiService,
     private readonly router: Router,
   ) {}
-
-  onFichier1Change(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.fichier1 = input.files?.[0] ?? null;
-  }
-
-  onFichier2Change(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.fichier2 = input.files?.[0] ?? null;
-  }
 
   submit(): void {
     const raw = this.form.getRawValue();

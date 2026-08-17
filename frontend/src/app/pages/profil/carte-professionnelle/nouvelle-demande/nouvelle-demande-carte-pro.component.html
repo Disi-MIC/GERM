@@ -35,13 +35,7 @@
       </div>
 
       <div class="col-12">
-        <label class="form-label">
-          {{ libellePiece() }}
-          @if (pieceObligatoire()) {
-            <span class="text-danger">*</span>
-          }
-        </label>
-        <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichierChange($event)" />
+        <app-file-piece-input [label]="libellePiece()" [requis]="pieceObligatoire()" [(fichier)]="fichier" />
       </div>
     </div>
 
