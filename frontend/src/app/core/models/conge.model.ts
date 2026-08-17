@@ -1,7 +1,8 @@
-import { Personnel } from './personnel.model';
+import { ListeValeurRef, Personnel } from './personnel.model';
 
 export type TypeConge = 'annuel' | 'maladie' | 'maternite_paternite' | 'sans_solde' | 'autre';
-export type StatutDemande = 'en_attente' | 'approuvee' | 'refusee';
+/** 'transmise'/'transmise_agent' ne concernent que DemandeDecision (circuit à 4 étapes) — jamais DemandeJouissance (3 états). */
+export type StatutDemande = 'en_attente' | 'transmise' | 'approuvee' | 'refusee' | 'transmise_agent';
 
 export interface Conge {
   id?: number;
@@ -21,6 +22,11 @@ export interface DecisionConge {
   dateDecision: string | null;
   dateExpiration: string | null;
   observations?: string | null;
+  nombreJours?: number | null;
+  genereeParNom?: string | null;
+  valideeParAdminRh?: boolean;
+  valideeParNom?: string | null;
+  valideeLe?: string | null;
   createdAt?: string;
   isValide?: boolean;
 }
@@ -42,9 +48,12 @@ export interface DemandeDecision {
   dateTraitement?: string | null;
   commentaireTraitement?: string | null;
   decisionCreee?: DecisionConge | string | null;
+  motifRejet?: ListeValeurRef | string | null;
   pieces?: PieceJustificative[];
   createdAt?: string;
-  isEnAttente?: boolean;
+  enAttente?: boolean;
+  transmise?: boolean;
+  approuvee?: boolean;
 }
 
 export interface DemandeJouissance {

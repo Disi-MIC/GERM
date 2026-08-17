@@ -15,11 +15,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Demande de décision de congé : pour un agent qui n'en a jamais eu, ou dont la
- * dernière a expiré/atteint son terme. Approuver crée la DecisionConge correspondante ;
- * refuser la laisse comme trace, sans décision créée.
+ * dernière a expiré/atteint son terme. Circuit à quatre étapes, comme
+ * DemandeCartePro : le RH Congé vérifie les pièces et génère la DecisionConge
+ * (transmettre()) ou rejette pour un motif prédéterminé (rejeter()) ; le RH
+ * Admin valide ensuite la décision déjà créée (approuver(), ne crée rien de
+ * nouveau — voir DecisionConge::valider()) ; le circuit papier (impression,
+ * service courrier) se déroule hors de l'application ; le RH Congé confirme
+ * enfin la remise physique à l'agent (transmettreAgent()).
  *
- * Exposée en lecture seule côté API : les écritures (dont le traitement
- * approuver/refuser, qui crée la DecisionConge) passent par
+ * Exposée en lecture seule côté API : toutes les écritures passent par
  * src/Controller/Api/DemandeDecisionController.php.
  */
 #[ORM\Entity(repositoryClass: DemandeDecisionRepository::class)]
@@ -82,6 +86,12 @@ class DemandeDecision
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read'])]
     private ?string $commentaireTraitement = null;
+
+    /** Motif prédéterminé (ListeValeur, catégorie motif-rejet-decision-conge) — obligatoire quand statut = REFUSEE. */
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['api:read'])]
+    private ?ListeValeur $motifRejet = null;
 
     #[ORM\ManyToOne(targetEntity: DecisionConge::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
@@ -203,6 +213,18 @@ class DemandeDecision
         return $this;
     }
 
+    public function getMotifRejet(): ?ListeValeur
+    {
+        return $this->motifRejet;
+    }
+
+    public function setMotifRejet(?ListeValeur $motifRejet): static
+    {
+        $this->motifRejet = $motifRejet;
+
+        return $this;
+    }
+
     public function getDecisionCreee(): ?DecisionConge
     {
         return $this->decisionCreee;
@@ -232,6 +254,18 @@ class DemandeDecision
     public function isEnAttente(): bool
     {
         return StatutDemande::EN_ATTENTE === $this->statut;
+    }
+
+    #[Groups(['api:read'])]
+    public function isTransmise(): bool
+    {
+        return StatutDemande::TRANSMISE === $this->statut;
+    }
+
+    #[Groups(['api:read'])]
+    public function isApprouvee(): bool
+    {
+        return StatutDemande::APPROUVEE === $this->statut;
     }
 
     public function __toString(): string

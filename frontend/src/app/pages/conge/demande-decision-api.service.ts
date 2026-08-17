@@ -4,14 +4,6 @@ import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
 import { DemandeDecision } from '../../core/models/conge.model';
 
-export interface TraiterDecisionPayload {
-  decision: 'approuver' | 'refuser';
-  commentaire?: string | null;
-  numero_decision?: string;
-  date_decision?: string;
-  date_expiration?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class DemandeDecisionApiService {
   constructor(private readonly http: HttpClient) {}
@@ -40,8 +32,29 @@ export class DemandeDecisionApiService {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/piece2`, formData);
   }
 
-  traiter(id: number, payload: TraiterDecisionPayload): Observable<DemandeDecision> {
-    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/traiter`, payload);
+  /** RH Congé : vérifie les pièces, génère la DecisionConge (numéro/dates/nombre de jours) et transmet au RH Admin. */
+  transmettre(id: number, numero: string, dateDecision: string, dateExpiration: string, nombreJours: number): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/transmettre`, {
+      numero,
+      dateDecision,
+      dateExpiration,
+      nombreJours,
+    });
+  }
+
+  /** RH Congé (avant transmission, pièces incomplètes) ou RH Admin (après transmission, filet de sécurité). */
+  rejeter(id: number, motifRejet: number, commentaire?: string | null): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/rejeter`, { motifRejet, commentaire });
+  }
+
+  /** RH Admin uniquement, depuis l'état "transmise" — valide la DecisionConge déjà créée, n'en crée pas de nouvelle. */
+  approuver(id: number): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/approuver`, {});
+  }
+
+  /** RH Congé uniquement, depuis l'état "approuvee" — confirme la remise physique à l'agent. */
+  transmettreAgent(id: number): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/transmettre-agent`, {});
   }
 
   delete(id: number): Observable<void> {

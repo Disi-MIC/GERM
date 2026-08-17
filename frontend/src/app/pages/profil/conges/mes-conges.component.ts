@@ -20,7 +20,9 @@ const LABELS_TYPE: Record<string, string> = {
 
 const LABELS_STATUT: Record<string, string> = {
   en_attente: 'En attente',
-  approuvee: 'Approuvée',
+  transmise: 'En cours de validation',
+  approuvee: 'Validée, en préparation',
+  transmise_agent: 'Reçue',
   refusee: 'Refusée',
 };
 
@@ -93,6 +95,17 @@ export class MesCongesComponent implements OnInit {
   }
 
   badgeClasse(statut: string | undefined): string {
-    return statut === 'approuvee' ? 'success' : statut === 'refusee' ? 'danger' : 'secondary';
+    switch (statut) {
+      case 'transmise':
+        return 'info';
+      case 'approuvee':
+        return 'primary';
+      case 'transmise_agent':
+        return 'success';
+      case 'refusee':
+        return 'danger';
+      default:
+        return 'secondary';
+    }
   }
 }

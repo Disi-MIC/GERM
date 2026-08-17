@@ -13,13 +13,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Valeur d'une liste paramétrable (type de matériel, état, type de contrat,
- * type de document...), gérable depuis l'admin sans modification du code.
+ * type de document, motif de rejet...), gérable depuis l'admin sans
+ * modification du code.
  *
  * Exposée en lecture seule côté API (pilote Angular) : pour peupler des
  * sélecteurs (ex. "Type de contrat" du formulaire Personnel, "Type de
  * document" du formulaire DocumentAdministratif, "Type/État" du formulaire
- * Matériel informatique — RH et IT Stock sont deux domaines distincts, d'où
- * les deux rôles ; ROLE_IT_TICKETS n'a besoin d'aucune de ces listes),
+ * Matériel informatique, "Motif de rejet" du traitement des demandes de
+ * décision de congé — RH, IT Stock et RH Congé sont trois domaines distincts,
+ * d'où les trois rôles ; ROLE_IT_TICKETS n'a besoin d'aucune de ces listes),
  * toujours filtrée côté client sur `categorie`, jamais côté
  * serveur. Pagination désactivée : la collection reste petite (quelques
  * dizaines de valeurs au total toutes catégories confondues) et doit
@@ -32,7 +34,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\UniqueConstraint(name: 'UNIQ_LISTE_VALEUR_CAT_CODE', columns: ['categorie', 'code'])]
 #[ApiResource(
     operations: [new GetCollection(paginationEnabled: false), new Get()],
-    security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_STOCK')",
+    security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_STOCK') or is_granted('ROLE_RH_CONGE')",
     normalizationContext: ['groups' => ['api:read']],
 )]
 class ListeValeur

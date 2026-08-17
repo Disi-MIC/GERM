@@ -31,7 +31,7 @@
     </ng-template>
     <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
     <ng-template appDataTableCell="actions" let-demande>
-      @if (demande.isEnAttente) {
+      @if (demande.statut !== 'refusee' && demande.statut !== 'transmise_agent') {
         <a [routerLink]="['/conges/demandes-decision', demande.id, 'traiter']" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-check2-square"></i> Traiter
         </a>

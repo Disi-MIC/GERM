@@ -5,8 +5,11 @@ namespace App\Controller\Api;
 use App\Controller\AbstractController;
 use App\Entity\DecisionConge;
 use App\Entity\DemandeDecision;
+use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\PieceJustificativeDecision;
+use App\Entity\User;
+use App\Repository\ListeValeurRepository;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,9 +26,21 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * Écritures sur les demandes de décision de congé côté frontend Angular. La
  * ressource DemandeDecision est exposée en lecture seule via API Platform :
  * la création simple passe par une action dédiée (pièces jointes en appels
- * séparés, comme pour DemandeCartePro), le traitement (approuver crée la
- * DecisionConge correspondante / refuser) et la suppression (bloquée si déjà
- * traitée) aussi — même logique que DemandeDecisionController côté Twig.
+ * séparés, comme pour DemandeCartePro), le traitement en quatre étapes :
+ *
+ *  - transmettre() : le RH Congé vérifie que les pièces attendues sont
+ *    présentes (voir DemandeDecision::$nouvellementAffecte — une pièce si
+ *    nouvellement affecté, deux sinon), génère la DecisionConge (numéro,
+ *    dates, nombre de jours) et transmet au RH Admin ;
+ *  - rejeter() : possible par le RH Congé (avant transmission, pièces
+ *    incomplètes) ou par le RH Admin (après transmission, filet de
+ *    sécurité) — motif obligatoire, choisi dans une liste prédéterminée ;
+ *  - approuver() : réservé au RH Admin, uniquement depuis l'état "transmise"
+ *    — valide la DecisionConge déjà créée par transmettre(), n'en crée pas
+ *    de nouvelle (voir DecisionConge::valider()) ;
+ *  - transmettreAgent() : réservé au RH Congé, uniquement depuis l'état
+ *    "approuvee" — confirme la remise physique à l'agent une fois le
+ *    circuit papier (impression, service courrier) terminé hors application.
  */
 #[IsGranted('ROLE_RH_CONGE')]
 class DemandeDecisionController extends AbstractController
@@ -36,6 +51,7 @@ class DemandeDecisionController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly FileStorage $fileStorage,
         private readonly NotificationService $notificationService,
+        private readonly ListeValeurRepository $listeValeurRepository,
     ) {
     }
 
@@ -102,70 +118,143 @@ class DemandeDecisionController extends AbstractController
         return $response;
     }
 
-    #[Route('/api/demandes-decision/{id}/traiter', name: 'api_demande_decision_traiter', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function traiter(DemandeDecision $demande, Request $request): JsonResponse
+    #[Route('/api/demandes-decision/{id}/transmettre', name: 'api_demande_decision_transmettre', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function transmettre(DemandeDecision $demande, Request $request): JsonResponse
     {
         if (!$demande->isEnAttente()) {
+            return $this->json(['errors' => ['statut' => 'Cette demande a déjà été transmise ou traitée.']], JsonResponse::HTTP_CONFLICT);
+        }
+
+        $piecesAttendues = $demande->isNouvellementAffecte() ? 1 : 2;
+        if ($demande->getPieces()->count() < $piecesAttendues) {
+            return $this->json(['errors' => ['pieces' => \sprintf(
+                'Pièces incomplètes : %d attendue(s) (%s), %d fournie(s).',
+                $piecesAttendues,
+                $demande->isNouvellementAffecte() ? 'prise de service' : 'prise de service + ancienne décision',
+                $demande->getPieces()->count(),
+            )]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $numero = trim((string) ($data['numero'] ?? ''));
+        $dateDecision = isset($data['dateDecision'])
+            ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateDecision']) ?: null
+            : null;
+        $dateExpiration = isset($data['dateExpiration'])
+            ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateExpiration']) ?: null
+            : null;
+        $nombreJours = isset($data['nombreJours']) ? (int) $data['nombreJours'] : null;
+
+        if ('' === $numero || null === $dateDecision || null === $dateExpiration || $dateExpiration <= $dateDecision || null === $nombreJours || $nombreJours <= 0) {
+            return $this->json(['errors' => ['numero' => "Merci de renseigner un numéro, un nombre de jours et des dates valides (date d'expiration postérieure à la date d'octroi) pour transmettre."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        /** @var User $operateur */
+        $operateur = $this->getUser();
+
+        $nouvelleDecision = new DecisionConge();
+        $nouvelleDecision->setPersonnel($demande->getPersonnel());
+        $nouvelleDecision->setNumeroDecision($numero);
+        $nouvelleDecision->setDateDecision($dateDecision);
+        $nouvelleDecision->setDateExpiration($dateExpiration);
+        $nouvelleDecision->setNombreJours($nombreJours);
+        $nouvelleDecision->setGenereePar($operateur);
+        $nouvelleDecision->marquerEnAttenteValidationAdminRh();
+        $this->em->persist($nouvelleDecision);
+
+        $demande->setDecisionCreee($nouvelleDecision);
+        $demande->setStatut(StatutDemande::TRANSMISE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $this->em->flush();
+
+        $this->notificationService->notifierRole(
+            User::ROLE_ADMIN_RH,
+            'Décision de congé à valider',
+            '/conges/demandes-decision',
+            \sprintf('Le RH Congé a transmis la décision de %s pour validation.', $demande->getPersonnel()?->getNomComplet()),
+        );
+
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/demandes-decision/{id}/rejeter', name: 'api_demande_decision_rejeter', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function rejeter(DemandeDecision $demande, Request $request): JsonResponse
+    {
+        if ($demande->isTransmise()) {
+            // Une fois transmise, seul le RH Admin peut encore rejeter (filet
+            // de sécurité) — le RH Congé ne peut plus revenir dessus.
+            $this->denyAccessUnlessGranted('ROLE_ADMIN_RH');
+        } elseif (!$demande->isEnAttente()) {
             return $this->json(['errors' => ['statut' => 'Cette demande a déjà été traitée.']], JsonResponse::HTTP_CONFLICT);
         }
 
         $data = json_decode($request->getContent(), true) ?? [];
-        $decision = $data['decision'] ?? null;
-        $commentaire = $data['commentaire'] ?? null;
-
-        if ('approuver' === $decision) {
-            $numero = trim((string) ($data['numero_decision'] ?? ''));
-            $dateDecision = isset($data['date_decision'])
-                ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['date_decision']) ?: null
-                : null;
-            $dateExpiration = isset($data['date_expiration'])
-                ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['date_expiration']) ?: null
-                : null;
-
-            if ('' === $numero || null === $dateDecision || null === $dateExpiration || $dateExpiration <= $dateDecision) {
-                return $this->json(['errors' => ['numero_decision' => "Merci de renseigner un numéro et des dates valides (date d'expiration postérieure à la date d'octroi) pour approuver."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            $nouvelleDecision = new DecisionConge();
-            $nouvelleDecision->setPersonnel($demande->getPersonnel());
-            $nouvelleDecision->setNumeroDecision($numero);
-            $nouvelleDecision->setDateDecision($dateDecision);
-            $nouvelleDecision->setDateExpiration($dateExpiration);
-            $this->em->persist($nouvelleDecision);
-
-            $demande->setDecisionCreee($nouvelleDecision);
-            $demande->setStatut(StatutDemande::APPROUVEE);
-            $demande->setDateTraitement(new \DateTimeImmutable());
-            $demande->setCommentaireTraitement($commentaire);
-            $this->em->flush();
-
-            $this->notificationService->notifier(
-                $demande->getPersonnel()?->getUser(),
-                'Votre demande de décision de congé a été approuvée',
-                '/mon-espace/conges',
-                $commentaire,
-            );
-
-            return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+        $motif = !empty($data['motifRejet']) ? $this->listeValeurRepository->find($data['motifRejet']) : null;
+        if (!$motif || CategorieListeValeur::MOTIF_REJET_DECISION_CONGE !== $motif->getCategorie()) {
+            return $this->json(['errors' => ['motifRejet' => 'Merci de sélectionner un motif de rejet.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        if ('refuser' === $decision) {
-            $demande->setStatut(StatutDemande::REFUSEE);
-            $demande->setDateTraitement(new \DateTimeImmutable());
-            $demande->setCommentaireTraitement($commentaire);
-            $this->em->flush();
+        $demande->setStatut(StatutDemande::REFUSEE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $demande->setMotifRejet($motif);
+        $demande->setCommentaireTraitement($data['commentaire'] ?? null);
+        $this->em->flush();
 
-            $this->notificationService->notifier(
-                $demande->getPersonnel()?->getUser(),
-                'Votre demande de décision de congé a été refusée',
-                '/mon-espace/conges',
-                $commentaire,
-            );
+        $this->notificationService->notifier(
+            $demande->getPersonnel()?->getUser(),
+            'Votre demande de décision de congé a été refusée',
+            '/mon-espace/conges',
+            $motif->getLibelle().($demande->getCommentaireTraitement() ? ' — '.$demande->getCommentaireTraitement() : ''),
+        );
 
-            return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/demandes-decision/{id}/approuver', name: 'api_demande_decision_approuver', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_ADMIN_RH')]
+    public function approuver(DemandeDecision $demande): JsonResponse
+    {
+        if (!$demande->isTransmise()) {
+            return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être transmise par le RH Congé avant de pouvoir être approuvée."]], JsonResponse::HTTP_CONFLICT);
         }
 
-        return $this->json(['errors' => ['decision' => 'Décision invalide : "approuver" ou "refuser" attendu.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        /** @var User $validateur */
+        $validateur = $this->getUser();
+        $demande->getDecisionCreee()?->valider($validateur);
+
+        $demande->setStatut(StatutDemande::APPROUVEE);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $this->em->flush();
+
+        $this->notificationService->notifierRole(
+            User::ROLE_RH_CONGE,
+            'Décision de congé validée par le RH Admin',
+            '/conges/demandes-decision',
+            \sprintf('La décision de %s est validée : impression et circuit courrier à lancer, puis à transmettre à l\'agent.', $demande->getPersonnel()?->getNomComplet()),
+        );
+
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    #[Route('/api/demandes-decision/{id}/transmettre-agent', name: 'api_demande_decision_transmettre_agent', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function transmettreAgent(DemandeDecision $demande): JsonResponse
+    {
+        if (!$demande->isApprouvee()) {
+            return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être validée par le RH Admin avant d'être transmise à l'agent."]], JsonResponse::HTTP_CONFLICT);
+        }
+
+        $demande->setStatut(StatutDemande::TRANSMISE_AGENT);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $this->em->flush();
+
+        $this->notificationService->notifier(
+            $demande->getPersonnel()?->getUser(),
+            'Votre décision de congé est disponible',
+            '/mon-espace/conges',
+            'Votre décision de congé vous a été remise.',
+        );
+
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
 
     #[Route('/api/demandes-decision/{id}', name: 'api_demande_decision_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
