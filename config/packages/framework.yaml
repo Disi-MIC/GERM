@@ -17,10 +17,18 @@ when@test:
 # du point de vue du cookie de session, quel que soit ce domaine. Un cookie
 # SameSite=Lax (réglage par défaut ci-dessus) n'est alors jamais renvoyé sur
 # les appels API (XHR/fetch), même juste après un login réussi : seul
-# SameSite=None le permet, ce qui exige cookie_secure (HTTPS). Restreint à
-# dev pour ne pas relâcher cookie_samesite en production sans y avoir réfléchi.
+# SameSite=None le permet, ce qui exige cookie_secure (HTTPS).
 when@dev:
     framework:
         session:
             cookie_secure: true
+            cookie_samesite: none
+
+# Même raison qu'en dev (voir ci-dessus) : l'app mobile distribuée en
+# interne (environment.mobile.prod.ts, germ-appdbserver) est servie en
+# HTTPS depuis cet environnement — cookie_secure: auto (réglage de base)
+# y vaut donc déjà true, seul cookie_samesite doit être desserré.
+when@prod:
+    framework:
+        session:
             cookie_samesite: none
