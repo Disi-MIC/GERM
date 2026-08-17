@@ -5,6 +5,7 @@ import { DemandeJouissance } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { EtapeTimeline, StatusTimelineComponent } from '../../../../shared/status-timeline/status-timeline.component';
 import { DemandeJouissanceApiService } from '../../demande-jouissance-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -18,7 +19,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-jouissance-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
   templateUrl: './demande-jouissance-traiter.component.html',
 })
 export class DemandeJouissanceTraiterComponent implements OnInit {
@@ -52,6 +53,31 @@ export class DemandeJouissanceTraiterComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  get etapesTimeline(): EtapeTimeline[] {
+    const d = this.demande;
+    if (!d) {
+      return [];
+    }
+    const creee: EtapeTimeline = { label: 'Créée', sousTitre: this.formatDate(d.createdAt), etat: 'termine' };
+
+    if (d.statut === 'refusee') {
+      return [creee, { label: 'Refusée', sousTitre: this.formatDate(d.dateTraitement), etat: 'rejete' }];
+    }
+
+    return [
+      creee,
+      {
+        label: 'Approuvée',
+        sousTitre: d.statut === 'approuvee' ? this.formatDate(d.dateTraitement) : null,
+        etat: d.statut === 'approuvee' ? 'termine' : 'actuel',
+      },
+    ];
+  }
+
+  private formatDate(iso?: string | null): string | null {
+    return iso ? `${iso.slice(0, 10)} · ${iso.slice(11, 16)}` : null;
   }
 
   agentLabel(): string {

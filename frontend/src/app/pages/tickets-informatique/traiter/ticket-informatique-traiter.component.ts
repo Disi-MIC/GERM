@@ -8,6 +8,7 @@ import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model'
 import { NiveauTicket, TicketEscalade, TicketIncident } from '../../../core/models/ticket-incident.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
+import { EtapeTimeline, StatusTimelineComponent } from '../../../shared/status-timeline/status-timeline.component';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
 
 const LABELS_NIVEAU: Record<NiveauTicket, string> = {
@@ -19,7 +20,7 @@ const LABELS_NIVEAU: Record<NiveauTicket, string> = {
 @Component({
   selector: 'app-ticket-informatique-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
   templateUrl: './ticket-informatique-traiter.component.html',
 })
 export class TicketInformatiqueTraiterComponent implements OnInit {
@@ -71,6 +72,52 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     this.api.getEscalades(id).subscribe((escalades) => (this.escalades = escalades));
   }
 
+  /**
+   * Reflète toujours le statut courant (pas un historique figé) : un ticket
+   * rouvert après résolution repasse par exemple "Résolu" en 'actuel' — même
+   * logique que le reste de la page (rechargée à chaque action via charger()).
+   * L'escalade de niveau (N1/N2/N3) reste hors de cette frise, déjà tracée
+   * par le tableau "Historique d'escalade" plus bas.
+   */
+  get etapesTimeline(): EtapeTimeline[] {
+    const t = this.ticket;
+    if (!t) {
+      return [];
+    }
+    const ouvert: EtapeTimeline = { label: 'Ouvert', sousTitre: this.formatDate(t.createdAt), etat: 'termine' };
+
+    if (t.statut === 'refuse') {
+      return [ouvert, { label: 'Refusé', sousTitre: this.formatDate(t.dateResolution ?? t.dateCloture), etat: 'rejete' }];
+    }
+
+    const priseEnCharge = !!t.datePriseEnCharge;
+    const resolu = t.statut === 'resolu' || t.statut === 'cloture';
+    const cloture = t.statut === 'cloture';
+
+    return [
+      ouvert,
+      {
+        label: 'En cours',
+        sousTitre: this.formatDate(t.datePriseEnCharge),
+        etat: priseEnCharge ? 'termine' : 'actuel',
+      },
+      {
+        label: 'Résolu',
+        sousTitre: this.formatDate(t.dateResolution),
+        etat: resolu ? 'termine' : priseEnCharge ? 'actuel' : 'a-venir',
+      },
+      {
+        label: 'Clôturé',
+        sousTitre: this.formatDate(t.dateCloture),
+        etat: cloture ? 'termine' : resolu ? 'actuel' : 'a-venir',
+      },
+    ];
+  }
+
+  private formatDate(iso?: string | null): string | null {
+    return iso ? `${iso.slice(0, 10)} · ${iso.slice(11, 16)}` : null;
+  }
+
   agentLabel(): string {
     if (!this.ticket) {
       return '';
@@ -115,7 +162,13 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
   }
 
   peutResoudre(): boolean {
-    return !!this.ticket?.enCours && this.auth.hasRole('ROLE_IT_TICKETS');
+    // ROLE_IT_RESPONSABLE inclut ROLE_IT_TICKETS via la hiérarchie de rôles
+    // Symfony, mais celle-ci n'est jamais répercutée côté Angular
+    // (AuthService.hasRole() ne lit que les rôles littéraux de /api/me) — le
+    // responsable doit donc être listé explicitement à chaque contrôle
+    // "réservé à ROLE_IT_TICKETS", comme déjà fait pour RH Admin (voir
+    // ShellComponent) et ROLE_IT_STOCK/ROLE_IT_TICKETS ailleurs dans le menu.
+    return !!this.ticket?.enCours && this.auth.hasAnyRole(['ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE']);
   }
 
   peutRefuser(): boolean {
@@ -125,7 +178,7 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     if (this.ticket.resolu) {
       return this.auth.hasRole('ROLE_IT_RESPONSABLE');
     }
-    return !!(this.ticket.ouvert || this.ticket.enCours) && this.auth.hasRole('ROLE_IT_TICKETS');
+    return !!(this.ticket.ouvert || this.ticket.enCours) && this.auth.hasAnyRole(['ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE']);
   }
 
   peutValiderOuRouvrir(): boolean {
@@ -133,7 +186,7 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
   }
 
   peutEscalader(): boolean {
-    if (!this.ticket || !this.auth.hasRole('ROLE_IT_TICKETS')) {
+    if (!this.ticket || !this.auth.hasAnyRole(['ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'])) {
       return false;
     }
     return !!(this.ticket.ouvert || this.ticket.enCours) && this.ticket.niveau !== 'n3';

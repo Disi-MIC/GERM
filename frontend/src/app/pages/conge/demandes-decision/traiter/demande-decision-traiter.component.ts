@@ -5,12 +5,13 @@ import { DemandeDecision } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { EtapeTimeline, StatusTimelineComponent } from '../../../../shared/status-timeline/status-timeline.component';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 @Component({
   selector: 'app-demande-decision-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
   templateUrl: './demande-decision-traiter.component.html',
 })
 export class DemandeDecisionTraiterComponent implements OnInit {
@@ -46,6 +47,31 @@ export class DemandeDecisionTraiterComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  get etapesTimeline(): EtapeTimeline[] {
+    const d = this.demande;
+    if (!d) {
+      return [];
+    }
+    const creee: EtapeTimeline = { label: 'Créée', sousTitre: this.formatDate(d.createdAt), etat: 'termine' };
+
+    if (d.statut === 'refusee') {
+      return [creee, { label: 'Refusée', sousTitre: this.formatDate(d.dateTraitement), etat: 'rejete' }];
+    }
+
+    return [
+      creee,
+      {
+        label: 'Approuvée',
+        sousTitre: d.statut === 'approuvee' ? this.formatDate(d.dateTraitement) : null,
+        etat: d.statut === 'approuvee' ? 'termine' : 'actuel',
+      },
+    ];
+  }
+
+  private formatDate(iso?: string | null): string | null {
+    return iso ? `${iso.slice(0, 10)} · ${iso.slice(11, 16)}` : null;
   }
 
   agentLabel(): string {

@@ -1,0 +1,17 @@
+<div class="germ-timeline-scroll">
+  <div class="germ-timeline">
+    @for (etape of etapes; track $index) {
+      <div class="germ-timeline-step">
+        <span class="germ-timeline-dot" [class]="'germ-timeline-dot--' + etape.etat">
+          @if (etape.etat === 'termine') {
+            <i class="bi bi-check-lg"></i>
+          } @else if (etape.etat === 'rejete') {
+            <i class="bi bi-x-lg"></i>
+          }
+        </span>
+        <span class="germ-timeline-label" [class.germ-timeline-label--muted]="etape.etat === 'a-venir'">{{ etape.label }}</span>
+        <span class="germ-timeline-sous-titre">{{ etape.sousTitre || '—' }}</span>
+      </div>
+    }
+  </div>
+</div>

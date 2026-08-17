@@ -6,6 +6,7 @@ import { DemandeCartePro } from '../../../../core/models/demande-carte-pro.model
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { EtapeTimeline, StatusTimelineComponent } from '../../../../shared/status-timeline/status-timeline.component';
 import { DemandeCarteProApiService } from '../demande-carte-pro-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -17,7 +18,7 @@ const LABELS_TYPE: Record<string, string> = {
 @Component({
   selector: 'app-demande-carte-pro-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
   templateUrl: './demande-carte-pro-traiter.component.html',
 })
 export class DemandeCarteProTraiterComponent implements OnInit {
@@ -63,6 +64,44 @@ export class DemandeCarteProTraiterComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  /**
+   * Le workflow réel (transmise → approuvée) ne conserve aucune date de
+   * transmission ; en cas de refus, impossible de savoir avec certitude à
+   * quel stade il est intervenu (RH Carte Pro comme RH Admin peuvent
+   * rejeter). On affiche donc alors seulement "Créée → Refusée", plutôt
+   * qu'une étape intermédiaire dont on ne peut garantir l'exactitude.
+   */
+  get etapesTimeline(): EtapeTimeline[] {
+    const d = this.demande;
+    if (!d) {
+      return [];
+    }
+    const creee: EtapeTimeline = { label: 'Créée', sousTitre: this.formatDate(d.createdAt), etat: 'termine' };
+
+    if (d.statut === 'refusee') {
+      return [creee, { label: 'Refusée', sousTitre: this.formatDate(d.dateTraitement), etat: 'rejete' }];
+    }
+
+    const transmiseFaite = d.statut === 'transmise' || d.statut === 'approuvee';
+    return [
+      creee,
+      {
+        label: 'Transmise au RH Admin',
+        sousTitre: transmiseFaite ? 'Fait' : null,
+        etat: transmiseFaite ? 'termine' : 'actuel',
+      },
+      {
+        label: 'Approuvée',
+        sousTitre: d.statut === 'approuvee' ? this.formatDate(d.dateTraitement) : null,
+        etat: d.statut === 'approuvee' ? 'termine' : transmiseFaite ? 'actuel' : 'a-venir',
+      },
+    ];
+  }
+
+  private formatDate(iso?: string | null): string | null {
+    return iso ? `${iso.slice(0, 10)} · ${iso.slice(11, 16)}` : null;
   }
 
   agentLabel(): string {
