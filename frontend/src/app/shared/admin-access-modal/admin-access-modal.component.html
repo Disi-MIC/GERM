@@ -1,0 +1,35 @@
+@if (adminAccess.demandeEnCours()) {
+  <div class="admin-access-backdrop" (click)="annuler()"></div>
+  <div class="admin-access-modal">
+    <div class="admin-access-modal-icon"><i class="bi bi-shield-lock"></i></div>
+    <h2 class="admin-access-modal-title">Accès Administration</h2>
+    <p class="admin-access-modal-subtitle">Merci de confirmer votre mot de passe pour continuer.</p>
+
+    <form (ngSubmit)="confirmer()">
+      <input
+        type="password"
+        class="form-control"
+        placeholder="Mot de passe"
+        [(ngModel)]="motDePasse"
+        name="motDePasse"
+        autofocus
+        [disabled]="soumission"
+      />
+
+      @if (erreur) {
+        <div class="admin-access-modal-erreur">{{ erreur }}</div>
+      }
+
+      <div class="admin-access-modal-actions">
+        <button type="button" class="btn btn-outline-secondary" [disabled]="soumission" (click)="annuler()">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!motDePasse || soumission">
+          @if (soumission) {
+            <i class="bi bi-arrow-repeat"></i>
+          } @else {
+            Confirmer
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+}

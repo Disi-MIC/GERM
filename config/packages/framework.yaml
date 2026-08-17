@@ -11,3 +11,16 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+
+# La WebView native (Capacitor) charge l'app depuis capacitor://localhost,
+# une origine forcément différente du domaine de l'API — donc "cross-site"
+# du point de vue du cookie de session, quel que soit ce domaine. Un cookie
+# SameSite=Lax (réglage par défaut ci-dessus) n'est alors jamais renvoyé sur
+# les appels API (XHR/fetch), même juste après un login réussi : seul
+# SameSite=None le permet, ce qui exige cookie_secure (HTTPS). Restreint à
+# dev pour ne pas relâcher cookie_samesite en production sans y avoir réfléchi.
+when@dev:
+    framework:
+        session:
+            cookie_secure: true
+            cookie_samesite: none

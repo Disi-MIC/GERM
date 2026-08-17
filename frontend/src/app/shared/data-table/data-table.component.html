@@ -33,7 +33,7 @@
     }
   </div>
 
-  <div class="table-responsive">
+  <div class="table-responsive" [class.app-data-table-desktop-only]="!!mobileItemTemplate">
     <table class="table app-data-table mb-0 align-middle">
       <thead>
         <tr>
@@ -57,25 +57,39 @@
           }
         </tr>
       </thead>
-      <tbody>
-        @for (row of pagedRows; track trackByFn($index, row)) {
-          <tr>
-            @for (column of visibleColumns; track column.key) {
-              <td [class.text-end]="column.align === 'end'">
-                <ng-container [ngTemplateOutlet]="cellTemplateFor(column.key)" [ngTemplateOutletContext]="{ $implicit: row }"></ng-container>
-              </td>
-            }
-          </tr>
-        } @empty {
-          <tr>
-            <td [attr.colspan]="visibleColumns.length" class="text-center text-muted py-4">
-              {{ query ? 'Aucun résultat pour cette recherche.' : emptyMessage }}
-            </td>
-          </tr>
-        }
-      </tbody>
+      @if (pagedRows.length > 0) {
+        <tbody>
+          @for (row of pagedRows; track trackByFn($index, row)) {
+            <tr>
+              @for (column of visibleColumns; track column.key) {
+                <td [class.text-end]="column.align === 'end'" [attr.data-label]="column.label">
+                  <ng-container [ngTemplateOutlet]="cellTemplateFor(column.key)" [ngTemplateOutletContext]="{ $implicit: row }"></ng-container>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      }
     </table>
   </div>
+
+  @if (mobileItemTemplate && pagedRows.length > 0) {
+    <div class="app-data-table-mobile-list">
+      @for (row of pagedRows; track trackByFn($index, row)) {
+        <ng-container [ngTemplateOutlet]="mobileItemTemplate.templateRef" [ngTemplateOutletContext]="{ $implicit: row }"></ng-container>
+      }
+    </div>
+  }
+
+  @if (pagedRows.length === 0) {
+    <!-- Hors de .table-responsive volontairement : un message dans une cellule
+         soumise au défilement horizontal de la table reste invisible tant
+         qu'on n'a pas fait défiler jusqu'à sa colonne — surtout gênant sur
+         mobile où la table déborde dès quelques colonnes. -->
+    <p class="text-center text-muted py-4 mb-0 px-3">
+      {{ query ? 'Aucun résultat pour cette recherche.' : emptyMessage }}
+    </p>
+  }
 
   @if (totalCount > 0) {
     <div class="app-data-table-footer d-flex justify-content-between align-items-center flex-wrap gap-2">

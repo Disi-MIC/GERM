@@ -9,7 +9,7 @@ import { DemandeCartePro, TypeDemandeCartePro } from '../../core/models/demande-
 import { DocumentAdministratif } from '../../core/models/document-administratif.model';
 import { HistoriqueAffectation } from '../../core/models/historique-affectation.model';
 import { MaterielInformatique } from '../../core/models/materiel-informatique.model';
-import { Personnel } from '../../core/models/personnel.model';
+import { ListeValeurRef, Personnel } from '../../core/models/personnel.model';
 import { TicketIncident } from '../../core/models/ticket-incident.model';
 import { Vehicule } from '../../core/models/vehicule.model';
 
@@ -56,6 +56,12 @@ export class ProfilApiService {
 
   photoUrl(): string {
     return `${API_BASE}/me/personnel/photo`;
+  }
+
+  uploaderMaPhoto(fichier: File): Observable<Personnel> {
+    const formData = new FormData();
+    formData.append('photoFichier', fichier);
+    return this.http.post<Personnel>(`${API_BASE}/me/personnel/photo`, formData);
   }
 
   getMonTableauDeBord(): Observable<DashboardMe> {
@@ -114,6 +120,19 @@ export class ProfilApiService {
 
   documentFichierUrl(id: number): string {
     return `${API_BASE}/me/documents-administratifs/${id}/fichier`;
+  }
+
+  /** Types de document-administratif que l'agent peut déposer lui-même (pièces justificatives uniquement). */
+  getTypesDocumentsSoumissibles(): Observable<ListeValeurRef[]> {
+    return this.http.get<ListeValeurRef[]>(`${API_BASE}/me/documents-administratifs/types`);
+  }
+
+  uploaderDocument(typeCode: string, libelle: string, fichier: File): Observable<DocumentAdministratif> {
+    const formData = new FormData();
+    formData.append('type', typeCode);
+    formData.append('libelle', libelle);
+    formData.append('fichier', fichier);
+    return this.http.post<DocumentAdministratif>(`${API_BASE}/me/documents-administratifs`, formData);
   }
 
   /** Auto-service : la fiche personnel est toujours celle du compte connecté, jamais transmise par le client. */

@@ -4,21 +4,62 @@
   <div class="alert alert-danger">{{ error }}</div>
   <a routerLink="/mon-espace/carte-professionnelle" class="btn btn-outline-secondary btn-sm">Retour</a>
 } @else if (carte) {
-  <app-page-header title="Ma carte professionnelle — {{ carte.numero }}">
-    <a [href]="telechargerUrl" target="_blank" class="btn btn-success btn-sm">
-      <i class="bi bi-download"></i> Télécharger
-    </a>
-    <a routerLink="/mon-espace/carte-professionnelle" class="btn btn-outline-secondary btn-sm">Retour</a>
-  </app-page-header>
+  @if (estNatif) {
+    <app-page-header title="Ma carte professionnelle">
+      <a routerLink="/mon-espace/carte-professionnelle" class="btn btn-outline-secondary btn-sm">Retour</a>
+    </app-page-header>
 
-  <div class="alert alert-success d-flex align-items-center gap-2">
-    <i class="bi bi-patch-check-fill"></i>
-    Validée par {{ carte.valideeParNom }} le {{ carte.valideeLe | slice: 0 : 10 }}.
-  </div>
+    <div class="mob-card">
+      <div class="mob-card-row">
+        <div class="mob-card-icon mob-card-icon-success">
+          <i class="bi bi-person-vcard"></i>
+        </div>
+        <div class="mob-card-body">
+          <div class="mob-card-title-row">
+            <span class="mob-card-title">{{ carte.numero }}</span>
+            <span class="status-dot status-dot-success">{{ labelsStatut[carte.statut] }}</span>
+          </div>
+          <div class="mob-card-meta">
+            <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>Délivrée le {{ carte.dateDelivrance | slice: 0 : 10 }}</span>
+            @if (carte.dateExpiration) {
+              <span class="mob-card-meta-item"><i class="bi bi-hourglass-split"></i>Expire le {{ carte.dateExpiration | slice: 0 : 10 }}</span>
+            }
+          </div>
+          <div class="mob-card-subtitle">
+            <i class="bi bi-patch-check-fill text-success"></i>
+            Validée par {{ carte.valideeParNom }} le {{ carte.valideeLe | slice: 0 : 10 }}
+          </div>
+        </div>
+      </div>
+      @if (erreurOuverture) {
+        <div class="alert alert-danger mt-3 mb-0 py-2 px-3">{{ erreurOuverture }}</div>
+      }
+      <div class="mob-card-actions">
+        <button type="button" class="btn btn-outline-primary" [disabled]="ouvertureEnCours" (click)="voir()">
+          <i class="bi bi-eye"></i> Voir la carte
+        </button>
+        <button type="button" class="btn btn-success" [disabled]="ouvertureEnCours" (click)="telecharger()">
+          <i class="bi bi-download"></i> Télécharger
+        </button>
+      </div>
+    </div>
+  } @else {
+    <app-page-header title="Ma carte professionnelle — {{ carte.numero }}">
+      <a [href]="telechargerUrl" target="_blank" class="btn btn-success btn-sm">
+        <i class="bi bi-download"></i> Télécharger
+      </a>
+      <a routerLink="/mon-espace/carte-professionnelle" class="btn btn-outline-secondary btn-sm">Retour</a>
+    </app-page-header>
 
-  @if (pdfUrl) {
-    <app-panel>
-      <iframe [src]="pdfUrl" style="width: 100%; height: 75vh; border: none;" title="Aperçu de ma carte professionnelle"></iframe>
-    </app-panel>
+    <div class="alert alert-success d-flex align-items-center gap-2">
+      <i class="bi bi-patch-check-fill"></i>
+      Validée par {{ carte.valideeParNom }} le {{ carte.valideeLe | slice: 0 : 10 }}.
+    </div>
+
+    @if (pdfUrl) {
+      <app-panel>
+        <iframe [src]="pdfUrl" style="width: 100%; height: 75vh; border: none;" title="Aperçu de ma carte professionnelle"></iframe>
+      </app-panel>
+    }
   }
 }

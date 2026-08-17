@@ -31,14 +31,14 @@ export function administrationLandingUrl(auth: AuthService): string {
 }
 
 /**
- * Route d'accueil ('/') : redirige vers le premier espace pertinent parmi
- * les rôles littéraux de l'utilisateur connecté. Un agent sans aucun rôle RH
- * (seulement ROLE_AGENT, le rôle de base de tout compte) atterrit sur son
- * profil.
+ * Route d'accueil ('/') : atterrit toujours sur « Mon espace », web comme
+ * mobile, même pour un compte RH/IT — administrationLandingUrl() n'entre en
+ * jeu qu'ensuite, une fois le bouton "Administration" utilisé (voir
+ * ShellComponent.basculerVue / MobileShellComponent.allerVersAdministration),
+ * et seulement après reconfirmation du mot de passe (adminAccessGuard).
  */
 export const homeGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
   const router = inject(Router);
 
-  return router.parseUrl(administrationLandingUrl(auth));
+  return router.parseUrl('/mon-espace/tableau-de-bord');
 };

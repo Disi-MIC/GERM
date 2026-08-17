@@ -2,6 +2,7 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription, filter, interval } from 'rxjs';
+import { AdminAccessService } from '../../core/admin-access.service';
 import { AuthService } from '../../core/auth.service';
 import { administrationLandingUrl } from '../../core/guards/home.guard';
 import { NotificationItem } from '../../core/models/notification.model';
@@ -22,6 +23,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   constructor(
     readonly auth: AuthService,
     readonly notifications: NotificationService,
+    private readonly adminAccess: AdminAccessService,
     private readonly router: Router,
   ) {}
 
@@ -42,6 +44,8 @@ export class ShellComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    this.notifications.effacerBadge();
+    this.adminAccess.verrouiller();
     const versLogin = () => this.router.navigateByUrl('/login');
     this.auth.logout().subscribe({ next: versLogin, error: versLogin });
   }

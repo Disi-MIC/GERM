@@ -17,5 +17,26 @@
       <span class="status-dot status-dot-{{ badgeClasseStatut(ticket.statut) }}">{{ statutLabel(ticket.statut) }}</span>
     </ng-template>
     <ng-template appDataTableCell="creeLe" let-ticket>{{ ticket.createdAt | slice: 0 : 10 }}</ng-template>
+
+    <ng-template appDataTableMobileItem let-ticket>
+      <div class="mob-card">
+        <div class="mob-card-row">
+          <div class="mob-card-icon mob-card-icon-{{ badgeClasseStatut(ticket.statut) }}">
+            <i class="bi bi-life-preserver"></i>
+          </div>
+          <div class="mob-card-body">
+            <div class="mob-card-title-row">
+              <span class="mob-card-title">{{ ticket.titre }}</span>
+            </div>
+            <div class="mob-card-subtitle">{{ materielLabel(ticket) }}</div>
+            <div class="mob-card-meta">
+              <span class="status-dot status-dot-{{ badgeClasseStatut(ticket.statut) }}">{{ statutLabel(ticket.statut) }}</span>
+              <span class="mob-card-meta-item"><i class="bi bi-flag"></i>{{ prioriteLabel(ticket) }}</span>
+              <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>{{ ticket.createdAt | slice: 0 : 10 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
   </app-data-table>
 }

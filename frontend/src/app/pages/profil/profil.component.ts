@@ -61,6 +61,11 @@ export class ProfilComponent implements OnInit {
   carriere: HistoriqueAffectation[] = [];
   loading = true;
   error: string | null = null;
+  photoEnCours = false;
+  erreurPhoto: string | null = null;
+  /** Casse le cache navigateur de <img [src]="photoUrl()"> : l'URL de la photo est
+   *  toujours la même après un changement, sans ce paramètre l'ancienne image resterait affichée. */
+  private photoVersion = 0;
   readonly labelsSexe = LABELS_SEXE;
   readonly labelsStatut = LABELS_STATUT;
   readonly labelsMouvement = LABELS_MOUVEMENT;
@@ -90,7 +95,28 @@ export class ProfilComponent implements OnInit {
   }
 
   photoUrl(): string {
-    return this.api.photoUrl();
+    return `${this.api.photoUrl()}?v=${this.photoVersion}`;
+  }
+
+  changerPhoto(input: HTMLInputElement): void {
+    const fichier = input.files?.[0];
+    input.value = '';
+    if (!fichier || !this.personnel) {
+      return;
+    }
+    this.photoEnCours = true;
+    this.erreurPhoto = null;
+    this.api.uploaderMaPhoto(fichier).subscribe({
+      next: (personnel) => {
+        this.personnel = personnel;
+        this.photoVersion++;
+        this.photoEnCours = false;
+      },
+      error: (err) => {
+        this.erreurPhoto = err?.error?.errors?.photoFichier ?? "Impossible de mettre à jour la photo.";
+        this.photoEnCours = false;
+      },
+    });
   }
 
   initiales(): string {

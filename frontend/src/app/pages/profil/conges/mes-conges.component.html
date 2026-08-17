@@ -26,6 +26,28 @@
       <ng-template appDataTableCell="fin" let-conge>{{ conge.dateFin | slice: 0 : 10 }}</ng-template>
       <ng-template appDataTableCell="duree" let-conge>{{ conge.duree }} j</ng-template>
       <ng-template appDataTableCell="motif" let-conge>{{ conge.motif ?? '—' }}</ng-template>
+
+      <ng-template appDataTableMobileItem let-conge>
+        <div class="mob-card">
+          <div class="mob-card-row">
+            <div class="mob-card-icon">
+              <i class="bi bi-calendar-check"></i>
+            </div>
+            <div class="mob-card-body">
+              <div class="mob-card-title-row">
+                <span class="mob-card-title">{{ labelsType[conge.type] }}</span>
+                <span class="mob-card-subtitle">{{ conge.duree }} j</span>
+              </div>
+              <div class="mob-card-subtitle">Du {{ conge.dateDebut | slice: 0 : 10 }} au {{ conge.dateFin | slice: 0 : 10 }}</div>
+              @if (conge.motif) {
+                <div class="mob-card-meta">
+                  <span class="mob-card-meta-item"><i class="bi bi-chat-left-text"></i>{{ conge.motif }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </ng-template>
     </app-data-table>
   </div>
 
@@ -41,6 +63,25 @@
       <ng-template appDataTableCell="numero" let-decision>{{ decision.numeroDecision }}</ng-template>
       <ng-template appDataTableCell="dateDecision" let-decision>{{ decision.dateDecision | slice: 0 : 10 }}</ng-template>
       <ng-template appDataTableCell="expiration" let-decision>{{ decision.dateExpiration | slice: 0 : 10 }}</ng-template>
+
+      <ng-template appDataTableMobileItem let-decision>
+        <div class="mob-card">
+          <div class="mob-card-row">
+            <div class="mob-card-icon">
+              <i class="bi bi-file-earmark-check"></i>
+            </div>
+            <div class="mob-card-body">
+              <div class="mob-card-title-row">
+                <span class="mob-card-title">{{ decision.numeroDecision }}</span>
+              </div>
+              <div class="mob-card-meta">
+                <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>Décidée le {{ decision.dateDecision | slice: 0 : 10 }}</span>
+                <span class="mob-card-meta-item"><i class="bi bi-hourglass-split"></i>Expire le {{ decision.dateExpiration | slice: 0 : 10 }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-template>
     </app-data-table>
   </div>
 
@@ -59,6 +100,31 @@
       <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
       <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
       <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+
+      <ng-template appDataTableMobileItem let-demande>
+        <div class="mob-card">
+          <div class="mob-card-row">
+            <div class="mob-card-icon mob-card-icon-{{ badgeClasse(demande.statut) }}">
+              <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="mob-card-body">
+              <div class="mob-card-title-row">
+                <span class="mob-card-title">Demande de décision</span>
+                <span class="status-dot status-dot-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
+              </div>
+              <div class="mob-card-meta">
+                <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>Créée le {{ demande.createdAt | slice: 0 : 10 }}</span>
+                @if (demande.dateTraitement) {
+                  <span class="mob-card-meta-item"><i class="bi bi-check2"></i>Traitée le {{ demande.dateTraitement | slice: 0 : 10 }}</span>
+                }
+              </div>
+              @if (demande.commentaireTraitement) {
+                <div class="mob-card-subtitle">{{ demande.commentaireTraitement }}</div>
+              }
+            </div>
+          </div>
+        </div>
+      </ng-template>
     </app-data-table>
   </div>
 
@@ -77,5 +143,30 @@
     </ng-template>
     <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
     <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+
+    <ng-template appDataTableMobileItem let-demande>
+      <div class="mob-card">
+        <div class="mob-card-row">
+          <div class="mob-card-icon mob-card-icon-{{ badgeClasse(demande.statut) }}">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <div class="mob-card-body">
+            <div class="mob-card-title-row">
+              <span class="mob-card-title">{{ labelsType[demande.type] }}</span>
+              <span class="status-dot status-dot-{{ badgeClasse(demande.statut) }}">{{ labelsStatut[demande.statut ?? ''] }}</span>
+            </div>
+            <div class="mob-card-subtitle">Du {{ demande.dateDebut | slice: 0 : 10 }} au {{ demande.dateFin | slice: 0 : 10 }}</div>
+            @if (demande.dateTraitement) {
+              <div class="mob-card-meta">
+                <span class="mob-card-meta-item"><i class="bi bi-check2"></i>Traitée le {{ demande.dateTraitement | slice: 0 : 10 }}</span>
+              </div>
+            }
+            @if (demande.commentaireTraitement) {
+              <div class="mob-card-subtitle">{{ demande.commentaireTraitement }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    </ng-template>
   </app-data-table>
 }

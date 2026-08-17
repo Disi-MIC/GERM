@@ -9,6 +9,9 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
+  @if (erreurTelechargement) {
+    <div class="alert alert-danger">{{ erreurTelechargement }}</div>
+  }
   <div class="mb-4">
     <app-data-table
       [rows]="cartes"
@@ -34,6 +37,49 @@
           </a>
         }
       </ng-template>
+
+      <ng-template appDataTableMobileItem let-carte>
+        <div class="mob-card">
+          <div class="mob-card-row">
+            <div class="mob-card-icon mob-card-icon-{{ badgeClasseCarte(carte.statut) }}">
+              <i class="bi bi-person-vcard"></i>
+            </div>
+            <div class="mob-card-body">
+              <div class="mob-card-title-row">
+                <span class="mob-card-title">{{ carte.numero }}</span>
+                <span class="status-dot status-dot-{{ badgeClasseCarte(carte.statut) }}">{{ labelsStatutCarte[carte.statut] }}</span>
+              </div>
+              <div class="mob-card-meta">
+                <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>Délivrée le {{ carte.dateDelivrance | slice: 0 : 10 }}</span>
+                @if (carte.dateExpiration) {
+                  <span class="mob-card-meta-item"><i class="bi bi-hourglass-split"></i>Expire le {{ carte.dateExpiration | slice: 0 : 10 }}</span>
+                }
+              </div>
+              @if (carte.valideeParAdminRh && carte.id) {
+                <div class="mob-card-actions">
+                  <a [routerLink]="['/mon-espace/carte-professionnelle', carte.id]" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> Visualiser
+                  </a>
+                  @if (estNatif) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-success"
+                      [disabled]="telechargementEnCoursId === carte.id"
+                      (click)="telecharger(carte.id)"
+                    >
+                      <i class="bi bi-download"></i> Télécharger
+                    </button>
+                  } @else {
+                    <a [href]="cartePdfTelechargerUrl(carte.id)" target="_blank" class="btn btn-sm btn-outline-success">
+                      <i class="bi bi-download"></i> Télécharger
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </ng-template>
     </app-data-table>
   </div>
 
@@ -52,5 +98,30 @@
     <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
     <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
     <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+
+    <ng-template appDataTableMobileItem let-demande>
+      <div class="mob-card">
+        <div class="mob-card-row">
+          <div class="mob-card-icon mob-card-icon-{{ badgeClasseDemande(demande.statut) }}">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <div class="mob-card-body">
+            <div class="mob-card-title-row">
+              <span class="mob-card-title">{{ labelsTypeDemande[demande.typeDemande] }}</span>
+              <span class="status-dot status-dot-{{ badgeClasseDemande(demande.statut) }}">{{ labelsStatutDemande[demande.statut ?? ''] }}</span>
+            </div>
+            <div class="mob-card-meta">
+              <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>Créée le {{ demande.createdAt | slice: 0 : 10 }}</span>
+              @if (demande.dateTraitement) {
+                <span class="mob-card-meta-item"><i class="bi bi-check2"></i>Traitée le {{ demande.dateTraitement | slice: 0 : 10 }}</span>
+              }
+            </div>
+            @if (demande.commentaireTraitement) {
+              <div class="mob-card-subtitle">{{ demande.commentaireTraitement }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    </ng-template>
   </app-data-table>
 }

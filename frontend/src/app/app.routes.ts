@@ -1,17 +1,30 @@
+import { Capacitor } from '@capacitor/core';
 import { Routes } from '@angular/router';
+import { adminAccessGuard } from './core/guards/admin-access.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { homeGuard } from './core/guards/home.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { ShellComponent } from './layout/shell/shell.component';
+import { MobileShellComponent } from './layout/mobile-shell/mobile-shell.component';
 import { LoginComponent } from './pages/login/login.component';
 import { NoAccessComponent } from './pages/no-access/no-access.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+
+/**
+ * L'app native (Capacitor) n'expose que « Mon espace » : coquille dédiée
+ * (barre d'onglets, pas de bascule Administration) plutôt que la sidebar
+ * desktop — voir MobileShellComponent. Le reste de l'arbre de routes est
+ * partagé tel quel : les rubriques admin restent chargées à la demande
+ * (loadComponent/loadChildren), donc leur présence ici ne pèse pas sur le
+ * bundle initial mobile, et homeGuard empêche de toute façon d'y atterrir.
+ */
+const shellComponent = Capacitor.isNativePlatform() ? MobileShellComponent : ShellComponent;
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   {
     path: '',
-    component: ShellComponent,
+    component: shellComponent,
     canActivate: [authGuard],
     children: [
       { path: 'acces-refuse', component: NoAccessComponent },
@@ -130,7 +143,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         // ROLE_ADMIN_RH inclus explicitement : la hiérarchie de rôles Symfony
         // (ROLE_ADMIN_RH → RH_PERSONNEL/RH_CONGE/RH_CARTE_PRO) n'est appliquée
         // que côté serveur, jamais côté Angular (AuthService.hasRole() ne lit
@@ -141,14 +154,14 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard-conges',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'] },
         loadComponent: () =>
           import('./pages/dashboard-conges/dashboard-conges.component').then((m) => m.DashboardCongesComponent),
       },
       {
         path: 'dashboard-cartes-professionnelles',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'] },
         loadComponent: () =>
           import('./pages/dashboard-cartes-professionnelles/dashboard-cartes-professionnelles.component').then(
@@ -157,7 +170,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard-informatique',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'] },
         loadComponent: () =>
           import('./pages/dashboard-informatique/dashboard-informatique.component').then(
@@ -166,21 +179,21 @@ export const routes: Routes = [
       },
       {
         path: 'personnel',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/personnel/personnel.routes').then((m) => m.PERSONNEL_ROUTES),
       },
       {
         path: 'carrieres',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/carriere/carriere.routes').then((m) => m.CARRIERE_ROUTES),
       },
       {
         path: 'documents-administratifs',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/documents-administratifs/documents-administratifs.routes').then(
@@ -189,7 +202,7 @@ export const routes: Routes = [
       },
       {
         path: 'materiel-informatique',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/materiel-informatique/materiel-informatique.routes').then(
@@ -198,14 +211,14 @@ export const routes: Routes = [
       },
       {
         path: 'tickets-informatique',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/tickets-informatique/tickets-informatique.routes').then((m) => m.TICKETS_INFORMATIQUE_ROUTES),
       },
       {
         path: 'maintenance-informatique',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/maintenance-informatique/maintenance-informatique.routes').then(
@@ -214,7 +227,7 @@ export const routes: Routes = [
       },
       {
         path: 'licences-logicielles',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/licences-logicielles/licences-logicielles.routes').then(
@@ -223,21 +236,21 @@ export const routes: Routes = [
       },
       {
         path: 'conges',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/conge/conge.routes').then((m) => m.CONGE_ROUTES),
       },
       {
         path: 'cartes-professionnelles',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/carte-pro/carte-pro.routes').then((m) => m.CARTE_PRO_ROUTES),
       },
       {
         path: 'delegations',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_ADMIN_RH'] },
         loadChildren: () =>
           import('./pages/delegation/delegation.routes').then((m) => m.DELEGATION_ROUTES),

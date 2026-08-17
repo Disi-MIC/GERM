@@ -4,7 +4,10 @@
   <meta charset="utf-8">
   <title>Frontend</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- viewport-fit=cover : nécessaire pour que les variables CSS env(safe-area-inset-*)
+       (encoche/Dynamic Island, indicateur d'accueil) soient renseignées dans l'app
+       native Capacitor — voir mobile-shell.component.scss. Sans effet sur le web. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>

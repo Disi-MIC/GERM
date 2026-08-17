@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,9 +31,15 @@ export class LoginComponent {
         this.submitting = false;
         this.router.navigateByUrl('/');
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.submitting = false;
-        this.error = 'Email ou mot de passe incorrect.';
+        // status 0 : la requête n'a même pas atteint de serveur (backend
+        // injoignable, mauvaise IP/URL, etc.) — message générique "identifiants
+        // incorrects" trompeur ici puisque le serveur n'a rien pu vérifier.
+        this.error =
+          err.status === 0
+            ? "Impossible de contacter le serveur. Vérifiez votre connexion et l'adresse du serveur."
+            : 'Email ou mot de passe incorrect.';
       },
     });
   }

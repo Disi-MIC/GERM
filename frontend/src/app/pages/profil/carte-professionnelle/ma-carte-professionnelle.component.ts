@@ -1,12 +1,15 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { forkJoin } from 'rxjs';
 import { CarteProfessionnelle } from '../../../core/models/carte-professionnelle.model';
 import { DemandeCartePro } from '../../../core/models/demande-carte-pro.model';
+import { NativePdfService } from '../../../core/native-pdf.service';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableMobileItemDirective } from '../../../shared/data-table/data-table-mobile-item.directive';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { ProfilApiService } from '../profil-api.service';
 
@@ -33,10 +36,11 @@ const LABELS_TYPE_DEMANDE: Record<string, string> = {
 @Component({
   selector: 'app-ma-carte-professionnelle',
   standalone: true,
-  imports: [SlicePipe, RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
+  imports: [SlicePipe, RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective, DataTableMobileItemDirective],
   templateUrl: './ma-carte-professionnelle.component.html',
 })
 export class MaCarteProfessionnelleComponent implements OnInit {
+  readonly estNatif = Capacitor.isNativePlatform();
   cartes: CarteProfessionnelle[] = [];
   demandes: DemandeCartePro[] = [];
   loading = true;
@@ -61,7 +65,13 @@ export class MaCarteProfessionnelleComponent implements OnInit {
     { key: 'commentaire', label: 'Commentaire', sortable: false, value: (d) => d.commentaireTraitement ?? '' },
   ];
 
-  constructor(private readonly api: ProfilApiService) {}
+  telechargementEnCoursId: number | null = null;
+  erreurTelechargement: string | null = null;
+
+  constructor(
+    private readonly api: ProfilApiService,
+    private readonly nativePdf: NativePdfService,
+  ) {}
 
   ngOnInit(): void {
     forkJoin({
@@ -86,6 +96,29 @@ export class MaCarteProfessionnelleComponent implements OnInit {
 
   cartePdfTelechargerUrl(id: number): string {
     return this.api.cartePdfTelechargerUrl(id);
+  }
+
+  /**
+   * Sur natif, un <a target="_blank"> n'ouvre rien de perceptible (pas
+   * d'onglet dans WKWebView) — on passe par NativePdfService, seul moyen
+   * d'ouvrir un PDF authentifié sur natif (voir ce service pour le détail :
+   * Browser.open()/SFSafariViewController ne partage pas le cookie de
+   * session de la WebView).
+   */
+  async telecharger(id: number): Promise<void> {
+    if (this.telechargementEnCoursId !== null) {
+      return;
+    }
+    this.telechargementEnCoursId = id;
+    this.erreurTelechargement = null;
+    const carte = this.cartes.find((c) => c.id === id);
+    try {
+      await this.nativePdf.ouvrir(this.cartePdfTelechargerUrl(id), `Carte professionnelle ${carte?.numero ?? id}.pdf`);
+    } catch {
+      this.erreurTelechargement = "Impossible d'ouvrir cette carte pour le moment.";
+    } finally {
+      this.telechargementEnCoursId = null;
+    }
   }
 
   badgeClasseDemande(statut: string | undefined): string {

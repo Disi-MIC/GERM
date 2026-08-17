@@ -1,0 +1,68 @@
+// Rendue au niveau racine (voir le composant) : doit donc primer sur tout le
+// reste, y compris la barre d'onglets fixe et la feuille "Plus" de
+// MobileShellComponent (z-index max 30).
+.admin-access-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.55);
+  z-index: 100;
+}
+
+.admin-access-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  width: min(360px, calc(100vw - 2.5rem));
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 3rem);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.75rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.admin-access-modal-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 0.85rem;
+  border-radius: 50%;
+  background: rgba(26, 187, 156, 0.1);
+  color: var(--bs-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.admin-access-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+}
+
+.admin-access-modal-subtitle {
+  font-size: 0.85rem;
+  color: var(--bs-secondary);
+  margin: 0 0 1.25rem;
+}
+
+.admin-access-modal-erreur {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--bs-danger);
+  text-align: left;
+}
+
+.admin-access-modal-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+
+  .btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}

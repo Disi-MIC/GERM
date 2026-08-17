@@ -1,0 +1,271 @@
+<div class="mobile-shell">
+  <header class="mobile-topbar">
+    @if (estPageRacine()) {
+      <div class="mobile-topbar-logo-badge">
+        <img src="assets/images/logo-mini.png" alt="MinCom" />
+      </div>
+    } @else {
+      <button type="button" class="mobile-topbar-back" (click)="retour()" aria-label="Retour">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    }
+    <div class="mobile-topbar-titles">
+      <span class="mobile-topbar-title">{{ pageTitle.titre() }}</span>
+      @if (estEnAdministration()) {
+        <span class="mobile-topbar-subtitle">Administration</span>
+      }
+    </div>
+    <button type="button" class="mobile-topbar-bell" [class.active]="notifOuvert" (click)="basculerNotif()" aria-label="Notifications">
+      <i class="bi bi-bell"></i>
+      @if (notifications.nombreNonLues(); as n) {
+        @if (n > 0) {
+          <span class="mobile-tab-badge">{{ n }}</span>
+        }
+      }
+    </button>
+  </header>
+  <div class="mobile-topbar-spacer"></div>
+
+  <main class="mobile-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  @if (!estEnAdministration()) {
+    <nav class="mobile-tabbar">
+      <a routerLink="/mon-espace/tableau-de-bord" routerLinkActive="active" (click)="fermerPlus()">
+        <i class="bi bi-speedometer2"></i>
+        <span>Accueil</span>
+      </a>
+      <a routerLink="/mon-espace/conges" routerLinkActive="active" (click)="fermerPlus()">
+        <i class="bi bi-calendar-event"></i>
+        <span>Congés</span>
+        @if (compteurNotifications('/mon-espace/conges'); as n) {
+          @if (n > 0) {
+            <span class="mobile-tab-badge">{{ n }}</span>
+          }
+        }
+      </a>
+      <a routerLink="/mon-espace/tickets" routerLinkActive="active" (click)="fermerPlus()">
+        <i class="bi bi-life-preserver"></i>
+        <span>Tickets</span>
+        @if (compteurNotifications('/mon-espace/tickets'); as n) {
+          @if (n > 0) {
+            <span class="mobile-tab-badge">{{ n }}</span>
+          }
+        }
+      </a>
+      <a routerLink="/profil" routerLinkActive="active" (click)="fermerPlus()">
+        <i class="bi bi-person-circle"></i>
+        <span>Profil</span>
+      </a>
+      <button type="button" class="mobile-tab-more" [class.active]="menuPlusOuvert" (click)="basculerPlus()">
+        <i class="bi bi-grid-3x3-gap"></i>
+        <span>Plus</span>
+      </button>
+    </nav>
+  } @else {
+    <nav class="mobile-tabbar">
+      <a [routerLink]="administrationLandingUrl()" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <i class="bi bi-speedometer2"></i>
+        <span>Tableau de bord</span>
+      </a>
+      <button type="button" class="mobile-tab-more" [class.active]="menuAdminOuvert" (click)="basculerMenuAdmin()">
+        <i class="bi bi-list"></i>
+        <span>Menu</span>
+      </button>
+      <a routerLink="/profil" routerLinkActive="active">
+        <i class="bi bi-person-circle"></i>
+        <span>Profil</span>
+      </a>
+      <button type="button" class="mobile-tab-more" (click)="allerVersMonEspace()">
+        <i class="bi bi-person-workspace"></i>
+        <span>Mon espace</span>
+      </button>
+    </nav>
+  }
+</div>
+
+@if (menuPlusOuvert) {
+  <div class="mobile-plus-backdrop" (click)="fermerPlus()"></div>
+  <div class="mobile-plus-sheet">
+    <a routerLink="/mon-espace/carriere" routerLinkActive="active" (click)="fermerPlus()">
+      <i class="bi bi-graph-up-arrow"></i> Ma carrière
+    </a>
+    <a routerLink="/mon-espace/parc-informatique" routerLinkActive="active" (click)="fermerPlus()">
+      <i class="bi bi-laptop"></i> Mon parc informatique
+    </a>
+    <a routerLink="/mon-espace/parc-automobile" routerLinkActive="active" (click)="fermerPlus()">
+      <i class="bi bi-truck"></i> Mon parc automobile
+    </a>
+    <a routerLink="/mon-espace/carte-professionnelle" routerLinkActive="active" (click)="fermerPlus()">
+      <i class="bi bi-person-vcard"></i> Ma carte professionnelle
+      @if (compteurNotifications('/mon-espace/carte-professionnelle'); as n) {
+        @if (n > 0) {
+          <span class="mobile-tab-badge mobile-tab-badge--inline">{{ n }}</span>
+        }
+      }
+    </a>
+    <a routerLink="/mon-espace/documents" routerLinkActive="active" (click)="fermerPlus()">
+      <i class="bi bi-folder2-open"></i> Mes documents
+    </a>
+    @if (aAccesAdministration()) {
+      <hr />
+      <button type="button" class="mobile-plus-admin" (click)="allerVersAdministration()">
+        <i class="bi bi-building-gear"></i> Administration
+      </button>
+    }
+    <hr />
+    <button type="button" class="mobile-plus-logout" (click)="logout()">
+      <i class="bi bi-box-arrow-right"></i> Déconnexion
+    </button>
+  </div>
+}
+
+@if (menuAdminOuvert) {
+  <div class="mobile-plus-backdrop" (click)="fermerMenuAdmin()"></div>
+  <div class="mobile-admin-sheet">
+    <div class="mobile-admin-sheet-header">
+      <span>Administration</span>
+      <button type="button" class="mobile-admin-sheet-close" (click)="fermerMenuAdmin()" aria-label="Fermer">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="mobile-admin-sheet-body">
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE', 'ROLE_ADMIN_RH'])) {
+        <div class="mobile-admin-sheet-group">Tableaux de bord</div>
+        @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'])) {
+          <a routerLink="/dashboard" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-speedometer2"></i> Personnel</a>
+        }
+        @if (auth.hasAnyRole(['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'])) {
+          <a routerLink="/dashboard-conges" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-calendar-event"></i> Congés</a>
+        }
+        @if (auth.hasAnyRole(['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'])) {
+          <a routerLink="/dashboard-cartes-professionnelles" routerLinkActive="active" (click)="fermerMenuAdmin()">
+            <i class="bi bi-person-vcard"></i> Cartes professionnelles
+          </a>
+        }
+        @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'])) {
+          <a routerLink="/dashboard-informatique" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-laptop"></i> Informatique</a>
+        }
+      }
+
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'])) {
+        <div class="mobile-admin-sheet-group">Ressources humaines</div>
+      }
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'])) {
+        <a routerLink="/personnel" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-people"></i> Personnel</a>
+        <a routerLink="/carrieres" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-graph-up-arrow"></i> Gestion des carrières</a>
+        <a routerLink="/documents-administratifs" routerLinkActive="active" (click)="fermerMenuAdmin()">
+          <i class="bi bi-folder2-open"></i> Documents administratifs
+        </a>
+      }
+      @if (auth.hasAnyRole(['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'])) {
+        <a routerLink="/conges" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenuAdmin()">
+          <i class="bi bi-calendar-event"></i> Gestion des congés
+        </a>
+        <a routerLink="/conges/decisions" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-file-earmark-check"></i> Décisions de congé</a>
+        <a routerLink="/conges/demandes-decision" routerLinkActive="active" (click)="fermerMenuAdmin()">
+          <i class="bi bi-clock-history"></i> Demandes de décision
+          @if (compteurNotifications('/conges/demandes-decision'); as n) {
+            @if (n > 0) {
+              <span class="mobile-tab-badge mobile-tab-badge--inline">{{ n }}</span>
+            }
+          }
+        </a>
+        <a routerLink="/conges/demandes-jouissance" routerLinkActive="active" (click)="fermerMenuAdmin()">
+          <i class="bi bi-clock-history"></i> Demandes de jouissance
+          @if (compteurNotifications('/conges/demandes-jouissance'); as n) {
+            @if (n > 0) {
+              <span class="mobile-tab-badge mobile-tab-badge--inline">{{ n }}</span>
+            }
+          }
+        </a>
+      }
+      @if (auth.hasAnyRole(['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'])) {
+        <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenuAdmin()">
+          <i class="bi bi-person-vcard"></i> Cartes professionnelles
+        </a>
+        <a routerLink="/cartes-professionnelles/demandes" routerLinkActive="active" (click)="fermerMenuAdmin()">
+          <i class="bi bi-clock-history"></i> Demandes de carte
+          @if (compteurNotifications('/cartes-professionnelles/demandes'); as n) {
+            @if (n > 0) {
+              <span class="mobile-tab-badge mobile-tab-badge--inline">{{ n }}</span>
+            }
+          }
+        </a>
+        @if (auth.hasRole('ROLE_ADMIN_RH')) {
+          <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active" (click)="fermerMenuAdmin()">
+            <i class="bi bi-patch-check"></i> Validation des cartes
+          </a>
+        }
+      }
+      @if (auth.hasRole('ROLE_ADMIN_RH')) {
+        <a routerLink="/delegations" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-person-check"></i> Délégations</a>
+      }
+
+      @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'])) {
+        <div class="mobile-admin-sheet-group">Informatique</div>
+        @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'])) {
+          <a routerLink="/materiel-informatique" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenuAdmin()">
+            <i class="bi bi-pc-display"></i> Parc informatique
+          </a>
+          <a routerLink="/materiel-informatique/affectation" routerLinkActive="active" (click)="fermerMenuAdmin()">
+            <i class="bi bi-arrow-left-right"></i> Affectation
+          </a>
+        }
+        @if (auth.hasAnyRole(['ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'])) {
+          <a routerLink="/tickets-informatique" routerLinkActive="active" (click)="fermerMenuAdmin()">
+            <i class="bi bi-life-preserver"></i> Tickets
+            @if (compteurNotifications('/tickets-informatique'); as n) {
+              @if (n > 0) {
+                <span class="mobile-tab-badge mobile-tab-badge--inline">{{ n }}</span>
+              }
+            }
+          </a>
+        }
+        @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'])) {
+          <a routerLink="/maintenance-informatique" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-tools"></i> Maintenance</a>
+          <a routerLink="/licences-logicielles" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-key"></i> Licences logicielles</a>
+        }
+      }
+
+      <hr />
+      <button type="button" class="mobile-plus-logout" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i> Déconnexion
+      </button>
+    </div>
+  </div>
+}
+
+@if (notifOuvert) {
+  <div class="mobile-plus-backdrop" (click)="fermerNotif()"></div>
+  <div class="mobile-notif-sheet">
+    <div class="mobile-admin-sheet-header">
+      <span>Notifications</span>
+      <div class="mobile-notif-header-actions">
+        @if (notifications.nombreNonLues() > 0) {
+          <button type="button" class="mobile-notif-tout-lu" (click)="toutMarquerLu()">Tout marquer comme lu</button>
+        }
+        <button type="button" class="mobile-admin-sheet-close" (click)="fermerNotif()" aria-label="Fermer">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-notif-sheet-body">
+      @for (notif of notifications.recentes(); track notif.id) {
+        <button type="button" class="mobile-notif-item" [class.unread]="!notif.lu" (click)="ouvrirNotification(notif)">
+          <span class="mobile-notif-dot" [class.visible]="!notif.lu"></span>
+          <span class="mobile-notif-content">
+            <span class="mobile-notif-titre">{{ notif.titre }}</span>
+            @if (notif.message) {
+              <span class="mobile-notif-message">{{ notif.message }}</span>
+            }
+            <span class="mobile-notif-date">{{ notif.createdAt | slice: 0 : 10 }}</span>
+          </span>
+        </button>
+      } @empty {
+        <p class="mobile-notif-empty">Aucune notification.</p>
+      }
+    </div>
+  </div>
+}

@@ -1,9 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, ContentChildren, Input, OnChanges, QueryList, TemplateRef } from '@angular/core';
+import { Component, ContentChild, ContentChildren, Input, OnChanges, QueryList, TemplateRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PanelComponent } from '../panel/panel.component';
 import { DataTableCellDirective } from './data-table-cell.directive';
 import { DataTableColumn } from './data-table-column.model';
+import { DataTableMobileItemDirective } from './data-table-mobile-item.directive';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -35,6 +36,7 @@ export class DataTableComponent<T> implements OnChanges {
   @Input() icon?: string;
 
   @ContentChildren(DataTableCellDirective) cellTemplates!: QueryList<DataTableCellDirective>;
+  @ContentChild(DataTableMobileItemDirective) mobileItemTemplate?: DataTableMobileItemDirective;
 
   query = '';
   sortKey: string | null = null;

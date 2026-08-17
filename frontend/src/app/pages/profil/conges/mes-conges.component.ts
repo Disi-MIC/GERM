@@ -6,6 +6,7 @@ import { Conge, DecisionConge, DemandeDecision, DemandeJouissance } from '../../
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableMobileItemDirective } from '../../../shared/data-table/data-table-mobile-item.directive';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { ProfilApiService } from '../profil-api.service';
 
@@ -26,7 +27,7 @@ const LABELS_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-mes-conges',
   standalone: true,
-  imports: [SlicePipe, RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
+  imports: [SlicePipe, RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective, DataTableMobileItemDirective],
   templateUrl: './mes-conges.component.html',
 })
 export class MesCongesComponent implements OnInit {

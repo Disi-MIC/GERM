@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ChartData } from 'chart.js';
 import { DashboardMe, DemandeEnAttenteResume, DomaineDemande } from '../../../core/models/dashboard-me.model';
+import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
 import { StatTileComponent } from '../../../shared/stat-tile/stat-tile.component';
 import { ChartComponent } from '../../../shared/chart/chart.component';
@@ -40,7 +41,7 @@ const CHART_COULEURS_REPARTITION: Record<string, string> = {
 @Component({
   selector: 'app-mon-tableau-de-bord',
   standalone: true,
-  imports: [SlicePipe, RouterLink, FormsModule, StatTileComponent, PanelComponent, ChartComponent],
+  imports: [SlicePipe, RouterLink, FormsModule, PageHeaderComponent, StatTileComponent, PanelComponent, ChartComponent],
   templateUrl: './mon-tableau-de-bord.component.html',
 })
 export class MonTableauDeBordComponent implements OnInit {

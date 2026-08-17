@@ -1,0 +1,512 @@
+// Barre d'onglets fixe façon appli native, avec les marges "safe area"
+// (encoche/Dynamic Island en haut, indicateur d'accueil en bas) — sans quoi
+// le contenu passerait sous ces zones sur un iPhone récent.
+.mobile-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bs-body-bg);
+  // Filet de sécurité : si un élément d'une page déborde un jour en largeur
+  // (ex. un bouton au texte trop long), ceci l'empêche d'entraîner toute la
+  // page — barre d'onglets et en-tête compris — dans un défilement
+  // horizontal complet plutôt que de rester un débordement local contenu.
+  overflow-x: hidden;
+  width: 100%;
+}
+
+// Hauteur totale de .mobile-topbar (marge "safe area" + rembourrages +
+// rangée d'icônes) — dupliquée sur .mobile-topbar-spacer ci-dessous, seul
+// moyen de réserver la place exacte de l'en-tête une fois celui-ci sorti du
+// flux normal par position:fixed (voir pourquoi ci-dessous).
+$mobile-topbar-height: calc(env(safe-area-inset-top) + 3.65rem);
+
+.mobile-topbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  // position:sticky (valeur précédente) ne s'accroche plus depuis que
+  // .mobile-shell porte overflow-x:hidden (filet anti-débordement horizontal,
+  // voir plus bas) : poser overflow-x sur un ancêtre sans overflow-y explicite
+  // force ce dernier à "auto" (règle CSS), ce qui fait de .mobile-shell son
+  // propre conteneur de défilement — l'en-tête glissait alors avec le
+  // contenu au lieu de rester epinglé. position:fixed n'a pas ce problème
+  // (comme .mobile-tabbar, déjà en fixed) : accroché à la fenêtre, pas au
+  // scroll d'un ancêtre.
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: $mobile-topbar-height;
+  padding: calc(env(safe-area-inset-top) + 0.65rem) 1rem 0.65rem;
+  box-sizing: border-box;
+  // Même dégradé que l'icône/écran de lancement de l'app (voir build-icon2.mjs
+  // / build-splash.mjs) — cohérence de marque entre l'icône, le lancement et
+  // l'intérieur de l'app plutôt qu'un aplat uni.
+  background: linear-gradient(135deg, #122032, #0c1622 55%, #1abb9c);
+  color: #fff;
+  // Légère élévation : détache visuellement l'en-tête du contenu qui défile
+  // dessous (fixed le pose déjà au-dessus, l'ombre le rend perceptible).
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+// Réserve dans le flux normal la place exacte de l'en-tête désormais fixed
+// (sinon le contenu remonterait dessous) — voir le commentaire sur
+// .mobile-topbar ci-dessus.
+.mobile-topbar-spacer {
+  flex: none;
+  height: $mobile-topbar-height;
+}
+
+// Pastille blanche derrière le logo plutôt que le filtre "silhouette blanche"
+// précédent : celui-ci aplatissait toute couleur/détail (bandeau vert-jaune-
+// rouge, texte) en un simple blob illisible à 24px. Même principe que la
+// plaque blanche de l'icône/écran de lancement (voir build-icon2.mjs) —
+// cohérence de marque, et le logo reste identifiable sur le dégradé sombre.
+.mobile-topbar-logo-badge {
+  flex: none;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+
+  img {
+    // object-fit cover + position top : cadre sur le bandeau "MINCOM" (partie
+    // haute du fichier), le texte fin du sous-titre en dessous ne serait de
+    // toute façon pas lisible à cette taille — priorité à la reconnaissance
+    // immédiate de la marque plutôt qu'à afficher le logo en entier.
+    width: 100%;
+    height: 140%;
+    object-fit: cover;
+    object-position: top center;
+  }
+}
+
+// Bouton retour (sous-pages) : même gabarit circulaire que la cloche, à
+// gauche — remplace le badge logo quand on n'est pas sur une racine de la
+// barre d'onglets (voir MobileShellComponent.estPageRacine()).
+.mobile-topbar-back {
+  flex: none;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.24);
+  }
+}
+
+// Conteneur titre + repère de mode (Administration) : remplace le "GERM"
+// statique par le titre réel de la page (PageTitleService, alimenté par
+// PageHeaderComponent) — l'en-tête reflète toujours où on se trouve plutôt
+// que d'afficher la même chose partout.
+.mobile-topbar-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.mobile-topbar-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-topbar-subtitle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+// Icône "explicite" dans l'en-tête plutôt qu'un accès aux notifications
+// enfoui dans une sous-page — même principe que la cloche de ShellComponent
+// (desktop), adaptée en bouton rond sur fond semi-transparent pour rester
+// lisible sur le dégradé sombre.
+.mobile-topbar-bell {
+  margin-left: auto;
+  flex: none;
+  position: relative;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+
+  &.active,
+  &:active {
+    background: rgba(255, 255, 255, 0.24);
+  }
+
+  .mobile-tab-badge {
+    top: -2px;
+    right: -2px;
+  }
+}
+
+.mobile-content {
+  flex: 1;
+  min-width: 0;
+  padding: 1rem;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom) + 1rem);
+}
+
+.mobile-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  background: #fff;
+  border-top: 1px solid var(--bs-border-color);
+  padding: 0.4rem 0.5rem env(safe-area-inset-bottom);
+
+  a,
+  .mobile-tab-more {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.4rem 0.25rem;
+    margin: 0 0.15rem;
+    border-radius: 1rem;
+    color: var(--bs-secondary);
+    text-decoration: none;
+    font-size: 0.6875rem;
+    background: none;
+    border: none;
+    position: relative;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+
+    i {
+      font-size: 1.2rem;
+      transition: transform 0.15s ease;
+    }
+
+    // Pastille "flottante" derrière l'onglet actif plutôt qu'un simple
+    // changement de couleur — plus proche de l'énergie visuelle des
+    // templates Ionic pris en référence, en restant dans la palette GERM.
+    &.active {
+      color: var(--bs-primary);
+      background: rgba(26, 187, 156, 0.12);
+
+      i {
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+.mobile-tab-badge {
+  position: absolute;
+  top: 0.25rem;
+  right: calc(50% - 1.1rem);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--bs-danger);
+  color: #fff;
+  font-size: 0.625rem;
+  line-height: 16px;
+  text-align: center;
+
+  &.mobile-tab-badge--inline {
+    position: static;
+    display: inline-block;
+    margin-left: 0.4rem;
+  }
+}
+
+// Feuille "Plus" : les rubriques secondaires, glissées depuis le bas
+// au-dessus de la barre d'onglets plutôt qu'un cinquième+ onglet illisible.
+.mobile-plus-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 25;
+}
+
+.mobile-plus-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  background: #fff;
+  border-radius: 1rem 1rem 0 0;
+  padding: 0.75rem 0 calc(env(safe-area-inset-bottom) + 0.75rem);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+
+  a,
+  .mobile-plus-logout,
+  .mobile-plus-admin {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+
+    i {
+      width: 1.25rem;
+      text-align: center;
+      color: var(--bs-secondary);
+    }
+
+    &.active {
+      color: var(--bs-primary);
+
+      i {
+        color: var(--bs-primary);
+      }
+    }
+  }
+
+  .mobile-plus-logout {
+    color: var(--bs-danger);
+
+    i {
+      color: var(--bs-danger);
+    }
+  }
+
+  .mobile-plus-admin {
+    color: var(--bs-primary);
+
+    i {
+      color: var(--bs-primary);
+    }
+  }
+
+  hr {
+    margin: 0.25rem 0;
+  }
+}
+
+// Feuille "Administration" : contenu du sous-menu admin desktop (voir
+// ShellComponent), en liste plate groupée plutôt qu'en dropdowns repliables
+// façon sidebar — plus simple au doigt, et le nombre de rubriques justifie
+// une feuille scrollable dédiée plutôt qu'un sous-ensemble de "Plus".
+.mobile-admin-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 12vh;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-admin-sheet-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  font-weight: 700;
+  font-size: 1rem;
+  border-bottom: 1px solid var(--bs-border-color);
+  padding-bottom: 0.75rem;
+}
+
+.mobile-admin-sheet-close {
+  background: none;
+  border: none;
+  color: var(--bs-secondary);
+  font-size: 1.1rem;
+  padding: 0.25rem;
+}
+
+.mobile-admin-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0 calc(env(safe-area-inset-bottom) + 0.75rem);
+
+  a,
+  .mobile-plus-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1.25rem;
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+
+    i {
+      width: 1.25rem;
+      text-align: center;
+      color: var(--bs-secondary);
+    }
+
+    &.active {
+      color: var(--bs-primary);
+
+      i {
+        color: var(--bs-primary);
+      }
+    }
+  }
+
+  .mobile-plus-logout {
+    color: var(--bs-danger);
+
+    i {
+      color: var(--bs-danger);
+    }
+  }
+
+  hr {
+    margin: 0.25rem 0;
+  }
+}
+
+.mobile-admin-sheet-group {
+  padding: 0.9rem 1.25rem 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9ba5b1;
+}
+
+// Feuille "Notifications" (cloche de l'en-tête) : même structure que la
+// feuille "Administration" (en-tête + corps scrollable), contenu inspiré du
+// menu déroulant de ShellComponent (desktop) adapté en liste tactile.
+.mobile-notif-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 20vh;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-notif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mobile-notif-tout-lu {
+  background: none;
+  border: none;
+  color: var(--bs-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.mobile-notif-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem 0 calc(env(safe-area-inset-bottom) + 0.75rem);
+}
+
+.mobile-notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--bs-border-color);
+  text-align: left;
+
+  &.unread {
+    background: rgba(26, 187, 156, 0.05);
+  }
+}
+
+.mobile-notif-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 0.4rem;
+  background: transparent;
+
+  &.visible {
+    background: var(--bs-primary);
+  }
+}
+
+.mobile-notif-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mobile-notif-titre {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bs-body-color);
+}
+
+.mobile-notif-message {
+  font-size: 0.78rem;
+  color: var(--bs-secondary);
+}
+
+.mobile-notif-date {
+  font-size: 0.7rem;
+  color: #9ba5b1;
+}
+
+.mobile-notif-empty {
+  text-align: center;
+  color: var(--bs-secondary);
+  font-size: 0.85rem;
+  padding: 2.5rem 1rem;
+  margin: 0;
+}

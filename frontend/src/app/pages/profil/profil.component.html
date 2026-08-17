@@ -6,12 +6,27 @@
   <div class="alert alert-warning" style="max-width: 700px;">{{ error }}</div>
 } @else if (personnel) {
   <app-panel class="d-block mb-3">
+    @if (erreurPhoto) {
+      <div class="alert alert-danger py-2 px-3 mb-3">{{ erreurPhoto }}</div>
+    }
     <div class="d-flex flex-wrap align-items-center gap-4">
-      @if (personnel.hasPhoto) {
-        <img [src]="photoUrl()" alt="Photo" class="rounded-circle" style="width: 96px; height: 96px; object-fit: cover;" />
-      } @else {
-        <div class="germ-profile-avatar">{{ initiales() }}</div>
-      }
+      <div class="germ-profile-photo-wrap">
+        @if (personnel.hasPhoto) {
+          <img [src]="photoUrl()" alt="Photo" class="rounded-circle" style="width: 96px; height: 96px; object-fit: cover;" />
+        } @else {
+          <div class="germ-profile-avatar">{{ initiales() }}</div>
+        }
+        <input #photoInput type="file" accept="image/*" hidden (change)="changerPhoto(photoInput)" />
+        <button
+          type="button"
+          class="germ-profile-photo-edit"
+          [disabled]="photoEnCours"
+          (click)="photoInput.click()"
+          aria-label="Changer ma photo de profil"
+        >
+          <i class="bi" [class.bi-camera-fill]="!photoEnCours" [class.bi-arrow-repeat]="photoEnCours"></i>
+        </button>
+      </div>
       <div class="flex-grow-1">
         <div class="fs-4 fw-semibold">{{ personnel.nomComplet }}</div>
         <div class="text-muted mb-2">{{ personnel.fonction }}</div>

@@ -7,6 +7,7 @@ import { StatutTicket, TicketIncident } from '../../../core/models/ticket-incide
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
+import { DataTableMobileItemDirective } from '../../../shared/data-table/data-table-mobile-item.directive';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { ProfilApiService } from '../profil-api.service';
 
@@ -29,7 +30,7 @@ const BADGES_STATUT: Record<StatutTicket, string> = {
 @Component({
   selector: 'app-mes-tickets',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective, DataTableMobileItemDirective],
   templateUrl: './mes-tickets.component.html',
 })
 export class MesTicketsComponent implements OnInit {

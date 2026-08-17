@@ -177,3 +177,164 @@ $card-box-shadow: $box-shadow-sm;
     color: $secondary;
   }
 }
+
+// Carte de liste pour petit écran (voir DataTableMobileItemDirective /
+// appDataTableMobileItem) : remplace une ligne de <app-data-table> par une
+// carte tactile sur les pages "Mon espace" de l'app mobile (tickets,
+// congés, carrière, carte pro...). Globale plutôt que scopée à
+// <app-data-table> : le contenu vient d'un <ng-template> projeté par la
+// page consommatrice, hors de la portée d'encapsulation de vue du tableau.
+.mob-card {
+  display: block;
+  background: #fff;
+  border: 1px solid $border-color;
+  // Rayon plus généreux qu'ailleurs dans l'app (desktop compris) : c'est le
+  // trait le plus caractéristique des templates Ionic pris en référence pour
+  // le rafraîchissement visuel de l'app mobile — cartes très arrondies,
+  // ombre douce plutôt qu'un liseré discret.
+  border-radius: 1.1rem;
+  box-shadow: 0 2px 10px -2px rgba(18, 32, 50, 0.08);
+  padding: 0.95rem 1.1rem;
+  margin-bottom: 0.7rem;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.mob-card-link {
+    cursor: pointer;
+
+    &:active {
+      transform: scale(0.98);
+      box-shadow: 0 1px 4px -1px rgba(18, 32, 50, 0.1);
+    }
+  }
+}
+
+.mob-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+// Pastille d'icône ronde, même famille visuelle que les vignettes
+// <app-file-grid> (--accent-*-lt = teinte à 6% d'opacité pour le fond),
+// mais plus grande et plus saturée qu'ailleurs — cohérent avec le rayon de
+// carte plus généreux ci-dessus.
+.mob-card-icon {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--accent-primary-lt, #{$primary});
+  background: rgba(26, 187, 156, 0.14);
+
+  &.mob-card-icon-success {
+    color: $success;
+    background: rgba(47, 179, 68, 0.14);
+  }
+  &.mob-card-icon-danger {
+    color: $danger;
+    background: rgba(214, 57, 57, 0.14);
+  }
+  &.mob-card-icon-warning {
+    color: #b45309;
+    background: rgba(245, 159, 0, 0.16);
+  }
+  &.mob-card-icon-info {
+    color: #066fd1;
+    background: rgba(6, 111, 209, 0.14);
+  }
+  &.mob-card-icon-secondary {
+    color: $secondary;
+    background: rgba(98, 109, 125, 0.14);
+  }
+}
+
+.mob-card-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mob-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mob-card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: $body-color;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mob-card-subtitle {
+  font-size: 0.75rem;
+  color: $secondary;
+  margin-top: 0.1rem;
+}
+
+.mob-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.85rem;
+  margin-top: 0.5rem;
+  font-size: 0.71875rem;
+  color: $secondary;
+}
+
+.mob-card-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+
+  i {
+    color: #9ba5b1;
+    font-size: 0.75rem;
+  }
+}
+
+.mob-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+
+  .btn {
+    flex: 1 1 0;
+    // Sans min-width: 0, un item flex ne rétrécit jamais sous la largeur
+    // intrinsèque de son contenu (ici le texte du bouton, insécable) — deux
+    // boutons texte+icône déborderaient alors le viewport plutôt que de se
+    // partager la largeur disponible, entraînant un défilement horizontal
+    // de toute la page (y compris la barre d'onglets, qui suit le pan tant
+    // qu'un scroll horizontal existe quelque part sur la page).
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    // Boutons "pilule" façon templates de référence — un rayon plus marqué
+    // qu'ailleurs dans l'app (desktop compris), assorti au rayon de carte
+    // ci-dessus, sans toucher au $border-radius global de Bootstrap.
+    border-radius: 999px;
+  }
+}
+
+.mob-card-chevron {
+  flex: none;
+  color: #c0c7cf;
+  font-size: 0.9rem;
+  align-self: center;
+}

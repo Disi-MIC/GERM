@@ -21,5 +21,37 @@
         —
       }
     </ng-template>
+
+    <ng-template appDataTableMobileItem let-mouvement>
+      <div class="mob-card">
+        <div class="mob-card-row">
+          <div class="mob-card-icon">
+            <i class="bi {{ iconeMouvement(mouvement) }}"></i>
+          </div>
+          <div class="mob-card-body">
+            <div class="mob-card-title-row">
+              <span class="mob-card-title">{{ labelsTypeMouvement[mouvement.typeMouvement] }}</span>
+              <span class="mob-card-subtitle">{{ mouvement.dateEffet | slice: 0 : 10 }}</span>
+            </div>
+            <div class="mob-card-subtitle">
+              {{ mouvement.fonction }}
+              @if (serviceLabel(mouvement)) {
+                — {{ serviceLabel(mouvement) }}
+              }
+            </div>
+            @if (mouvement.grade || mouvement.numeroDecision) {
+              <div class="mob-card-meta">
+                @if (mouvement.grade) {
+                  <span class="mob-card-meta-item"><i class="bi bi-mortarboard"></i>{{ mouvement.grade }}</span>
+                }
+                @if (mouvement.numeroDecision) {
+                  <span class="mob-card-meta-item"><i class="bi bi-file-earmark-text"></i>{{ mouvement.numeroDecision }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </ng-template>
   </app-data-table>
 }

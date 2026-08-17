@@ -1,5 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, signal } from '@angular/core';
+import { Badge } from '@capawesome/capacitor-badge';
+import { Capacitor } from '@capacitor/core';
 import { API_BASE } from './api-base';
 import { NotificationItem, NotificationsReponse } from './models/notification.model';
 
@@ -10,11 +12,18 @@ import { NotificationItem, NotificationsReponse } from './models/notification.mo
  * rubrique (comptés par préfixe de route sur `lien`, voir ShellComponent)
  * restent donc exacts même au-delà des dernières notifications affichées dans
  * le menu déroulant.
+ *
+ * Sur natif, le compteur synchronise aussi le badge sur l'icône de l'app
+ * (voir synchroniserBadge) — pas de vraies notifications push (exigent un
+ * compte Apple Developer Program payant, absent ici), donc le badge ne se
+ * met à jour qu'aux moments où l'app est ouverte/rafraîchit déjà ses
+ * notifications, pas en temps réel app fermée.
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly recentesSignal = signal<NotificationItem[]>([]);
   private readonly nonLuesSignal = signal<NotificationItem[]>([]);
+  private permissionBadgeDemandee = false;
 
   readonly recentes = this.recentesSignal.asReadonly();
   readonly nonLues = this.nonLuesSignal.asReadonly();
@@ -27,11 +36,42 @@ export class NotificationService {
       next: (reponse) => {
         this.recentesSignal.set(reponse.recentes);
         this.nonLuesSignal.set(reponse.nonLues);
+        this.synchroniserBadge(reponse.nonLues.length);
       },
       error: () => {
         // Pas de session active ou erreur réseau : la cloche reste simplement vide.
       },
     });
+  }
+
+  /** Retire le badge de l'icône — appelé à la déconnexion pour ne pas laisser un compteur obsolète. */
+  async effacerBadge(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+    try {
+      await Badge.clear();
+    } catch {
+      // Plateforme sans badge ou permission refusée : rien à faire de plus.
+    }
+  }
+
+  private async synchroniserBadge(compte: number): Promise<void> {
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+    try {
+      if (!this.permissionBadgeDemandee) {
+        this.permissionBadgeDemandee = true;
+        const statut = await Badge.checkPermissions();
+        if (statut.display !== 'granted') {
+          await Badge.requestPermissions();
+        }
+      }
+      await Badge.set({ count: compte });
+    } catch {
+      // Permission refusée ou plateforme non supportée : le badge reste simplement absent.
+    }
   }
 
   marquerLue(id: number): void {
