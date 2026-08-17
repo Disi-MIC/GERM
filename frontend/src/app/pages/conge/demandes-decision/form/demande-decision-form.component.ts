@@ -6,12 +6,13 @@ import { Personnel } from '../../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../../shared/searchable-select/searchable-select.component';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 @Component({
   selector: 'app-demande-decision-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
   templateUrl: './demande-decision-form.component.html',
 })
 export class DemandeDecisionFormComponent implements OnInit {
@@ -37,6 +38,10 @@ export class DemandeDecisionFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.personnelApi.getAll().subscribe((personnels) => (this.personnels = personnels));
+  }
+
+  get personnelOptions(): SearchableSelectOption[] {
+    return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
   }
 
   onFichier1Change(event: Event): void {

@@ -10,12 +10,13 @@ import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { TicketsInformatiqueApiService } from '../../tickets-informatique/tickets-informatique-api.service';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
 import { MaintenanceInformatiqueApiService } from '../maintenance-informatique-api.service';
 
 @Component({
   selector: 'app-maintenance-informatique-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
   templateUrl: './maintenance-informatique-form.component.html',
 })
 export class MaintenanceInformatiqueFormComponent implements OnInit {
@@ -61,6 +62,14 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
     if (materielParam) {
       this.form.patchValue({ materiel: Number(materielParam) });
     }
+  }
+
+  get materielOptions(): SearchableSelectOption[] {
+    return this.materiels.map((m) => ({ value: m.id, label: `${m.marque} ${m.modele} (${m.numeroInventaire})` }));
+  }
+
+  get personnelOptions(): SearchableSelectOption[] {
+    return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
   }
 
   submit(): void {

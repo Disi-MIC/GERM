@@ -6,12 +6,13 @@ import { Personnel } from '../../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../../shared/searchable-select/searchable-select.component';
 import { CongeApiService } from '../../conge-api.service';
 
 @Component({
   selector: 'app-conge-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
   templateUrl: './conge-form.component.html',
 })
 export class CongeFormComponent implements OnInit {
@@ -63,6 +64,10 @@ export class CongeFormComponent implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  get personnelOptions(): SearchableSelectOption[] {
+    return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
   }
 
   submit(): void {

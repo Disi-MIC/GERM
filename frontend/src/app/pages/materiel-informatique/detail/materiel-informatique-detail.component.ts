@@ -10,12 +10,13 @@ import { LicencesLogiciellesApiService } from '../../licences-logicielles/licenc
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
 @Component({
   selector: 'app-materiel-informatique-detail',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
   templateUrl: './materiel-informatique-detail.component.html',
 })
 export class MaterielInformatiqueDetailComponent implements OnInit {
@@ -127,6 +128,10 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  get personnelOptions(): SearchableSelectOption[] {
+    return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
   }
 
   private logicielCategorie(licence: LicenceLogiciel): string | null {

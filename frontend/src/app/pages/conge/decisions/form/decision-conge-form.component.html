@@ -12,12 +12,7 @@
     <div class="row g-3">
       <div class="col-12">
         <label class="form-label">Agent</label>
-        <select class="form-select" formControlName="personnel">
-          <option [ngValue]="null">Sélectionner...</option>
-          @for (personnel of personnels; track personnel.id) {
-            <option [ngValue]="personnel.id">{{ personnel.nomComplet ?? personnel.matricule }}</option>
-          }
-        </select>
+        <app-searchable-select formControlName="personnel" nullLabel="Sélectionner..." placeholder="Rechercher un agent..." [options]="personnelOptions" />
       </div>
 
       <div class="col-md-4">

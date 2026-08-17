@@ -5,13 +5,14 @@ import { CarteProfessionnelle, StatutCarteProfessionnelle } from '../../../core/
 import { Personnel } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { CarteProApiService } from '../carte-pro-api.service';
 
 @Component({
   selector: 'app-carte-pro-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
   templateUrl: './carte-pro-form.component.html',
 })
 export class CarteProFormComponent implements OnInit {
@@ -64,6 +65,10 @@ export class CarteProFormComponent implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  get personnelOptions(): SearchableSelectOption[] {
+    return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
   }
 
   submit(): void {

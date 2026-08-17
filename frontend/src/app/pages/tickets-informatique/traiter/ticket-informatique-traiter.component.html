@@ -69,12 +69,12 @@
         <form [formGroup]="formAssignation" class="mb-3">
           <label class="form-label">Assigner à un technicien</label>
           <div class="d-flex gap-2">
-            <select class="form-select" formControlName="personnelId">
-              <option [ngValue]="null">Sélectionner...</option>
-              @for (technicien of techniciens; track technicien.id) {
-                <option [ngValue]="technicien.id">{{ technicien.nomComplet }}</option>
-              }
-            </select>
+            <app-searchable-select
+              formControlName="personnelId"
+              nullLabel="Sélectionner..."
+              placeholder="Rechercher un technicien..."
+              [options]="technicienOptions"
+            />
             <button type="button" class="btn btn-primary text-nowrap" [disabled]="saving" (click)="assigner()">
               <i class="bi bi-person-check"></i> Assigner
             </button>

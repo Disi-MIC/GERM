@@ -9,12 +9,7 @@
   <div class="row g-3">
     <div class="col-md-6">
       <label class="form-label">Matériel</label>
-      <select class="form-select" formControlName="materiel">
-        <option [ngValue]="null">Sélectionner...</option>
-        @for (materiel of materiels; track materiel.id) {
-          <option [ngValue]="materiel.id">{{ materiel.marque }} {{ materiel.modele }} ({{ materiel.numeroInventaire }})</option>
-        }
-      </select>
+      <app-searchable-select formControlName="materiel" nullLabel="Sélectionner..." placeholder="Rechercher un matériel..." [options]="materielOptions" />
     </div>
     <div class="col-md-6">
       <label class="form-label">Type</label>
@@ -38,12 +33,7 @@
 
     <div class="col-md-6">
       <label class="form-label">Réalisé par (technicien interne)</label>
-      <select class="form-select" formControlName="realisePar">
-        <option [ngValue]="null">Non renseigné</option>
-        @for (personnel of personnels; track personnel.id) {
-          <option [ngValue]="personnel.id">{{ personnel.nomComplet ?? personnel.matricule }}</option>
-        }
-      </select>
+      <app-searchable-select formControlName="realisePar" nullLabel="Non renseigné" placeholder="Rechercher un agent..." [options]="personnelOptions" />
     </div>
     <div class="col-md-6">
       <label class="form-label">Ou prestataire externe</label>

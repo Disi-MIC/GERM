@@ -7,6 +7,7 @@ import { PageHeaderComponent } from '../../../shared/page-header/page-header.com
 import { DataTableCellDirective } from '../../../shared/data-table/data-table-cell.directive';
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
 type Filtre = 'tous' | 'non_affectes' | 'affectes';
@@ -14,7 +15,7 @@ type Filtre = 'tous' | 'non_affectes' | 'affectes';
 @Component({
   selector: 'app-affectation-materiel',
   standalone: true,
-  imports: [FormsModule, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
+  imports: [FormsModule, PageHeaderComponent, DataTableComponent, DataTableCellDirective, SearchableSelectComponent],
   templateUrl: './affectation-materiel.component.html',
 })
 export class AffectationMaterielComponent implements OnInit {
@@ -90,6 +91,10 @@ export class AffectationMaterielComponent implements OnInit {
   filtrer(filtre: Filtre): void {
     this.filtre = filtre;
     this.appliquerFiltre();
+  }
+
+  get personnelOptions(): SearchableSelectOption[] {
+    return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet || `${p.prenom} ${p.nom}` }));
   }
 
   libelle(ref: ListeValeurRef | string | undefined): string {

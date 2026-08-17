@@ -77,12 +77,7 @@
       </div>
       <div class="col-md-6">
         <label class="form-label">Affecté à</label>
-        <select class="form-select" formControlName="affecteA">
-          <option [ngValue]="null">Non affecté</option>
-          @for (personnel of personnels; track personnel.id) {
-            <option [ngValue]="personnel.id">{{ personnel.nomComplet ?? personnel.matricule }}</option>
-          }
-        </select>
+        <app-searchable-select formControlName="affecteA" nullLabel="Non affecté" placeholder="Rechercher un agent..." [options]="personnelOptions" />
       </div>
 
       <div class="col-md-6">

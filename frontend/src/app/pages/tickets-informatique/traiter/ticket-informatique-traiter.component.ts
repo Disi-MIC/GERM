@@ -9,6 +9,7 @@ import { NiveauTicket, TicketEscalade, TicketIncident } from '../../../core/mode
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
 import { EtapeTimeline, StatusTimelineComponent } from '../../../shared/status-timeline/status-timeline.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
 
 const LABELS_NIVEAU: Record<NiveauTicket, string> = {
@@ -20,7 +21,7 @@ const LABELS_NIVEAU: Record<NiveauTicket, string> = {
 @Component({
   selector: 'app-ticket-informatique-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, StatusTimelineComponent, SearchableSelectComponent],
   templateUrl: './ticket-informatique-traiter.component.html',
 })
 export class TicketInformatiqueTraiterComponent implements OnInit {
@@ -52,6 +53,10 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     if (this.auth.hasRole('ROLE_IT_RESPONSABLE')) {
       this.api.getTechniciens().subscribe((techniciens) => (this.techniciens = techniciens));
     }
+  }
+
+  get technicienOptions(): SearchableSelectOption[] {
+    return this.techniciens.map((t) => ({ value: t.id, label: t.nomComplet ?? '' }));
   }
 
   private charger(): void {

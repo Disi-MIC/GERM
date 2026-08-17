@@ -1,0 +1,34 @@
+<div class="germ-searchable-select">
+  <input
+    #champRecherche
+    type="text"
+    class="form-control"
+    [placeholder]="placeholder"
+    [value]="recherche"
+    [disabled]="disabled"
+    autocomplete="off"
+    (input)="saisir($any($event.target).value)"
+    (focus)="ouvrir()"
+    (blur)="fermer()"
+    (keydown)="onKeydown($event)"
+  />
+  <i class="bi bi-chevron-down germ-searchable-select-chevron"></i>
+
+  @if (ouvert) {
+    <div class="germ-searchable-select-menu">
+      @for (option of optionsFiltrees; track option.value; let i = $index) {
+        <button
+          type="button"
+          class="germ-searchable-select-option"
+          [class.active]="option.value === valeur"
+          [class.highlighted]="i === surligne"
+          (click)="choisir(option)"
+        >
+          {{ option.label }}
+        </button>
+      } @empty {
+        <div class="germ-searchable-select-empty">Aucun résultat.</div>
+      }
+    </div>
+  }
+</div>
