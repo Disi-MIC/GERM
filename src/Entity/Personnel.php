@@ -35,7 +35,14 @@ use Symfony\Component\Validator\Constraints as Assert;
         // dans les formulaires carte/demande de carte professionnelle) et
         // ROLE_IT_STOCK (sélecteurs "Affecté à"/"Réalisé par" des formulaires
         // Matériel informatique et Maintenance, domaine IT distinct du RH).
-        new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_STOCK')"),
+        // paginationEnabled: false — comme MaterielInformatique/Maintenance/
+        // LicenceLogiciel/ListeValeur : le frontend (personnel-list, mais
+        // aussi tous les sélecteurs agent des formulaires carte pro/congés/
+        // matériel) récupère la collection en un seul appel et pagine/filtre
+        // côté client (<app-data-table>) — sans ce réglage, la pagination par
+        // défaut d'API Platform (30 éléments) tronque silencieusement la
+        // liste dès que l'effectif dépasse 30 agents.
+        new GetCollection(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_STOCK')", paginationEnabled: false),
         // Même élargissement que GetCollection ci-dessus : la résolution d'IRI
         // (ex. Maintenance.realisePar envoyé par le formulaire IT) invoque
         // cette opération Get, pas seulement la sécurité de base de la ressource.
