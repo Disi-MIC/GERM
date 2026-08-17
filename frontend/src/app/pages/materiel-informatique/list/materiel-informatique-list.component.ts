@@ -38,6 +38,7 @@ export class MaterielInformatiqueListComponent implements OnInit {
 
   readonly columns: DataTableColumn<MaterielInformatique>[] = [
     { key: 'numeroInventaire', label: "N° inventaire", sortable: true, value: (m) => m.numeroInventaire },
+    { key: 'numeroSerie', label: 'N° série', sortable: true, value: (m) => m.numeroSerie ?? '' },
     { key: 'type', label: 'Type', sortable: true, value: (m) => this.libelle(m.type) },
     { key: 'marqueModele', label: 'Marque / Modèle', sortable: true, value: (m) => `${m.marque} ${m.modele}` },
     { key: 'service', label: 'Service', sortable: true, value: (m) => this.serviceLabel(m) },
