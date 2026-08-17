@@ -9,5 +9,6 @@ export interface DocumentAdministratif {
   dateExpiration?: string | null;
   nomOriginal?: string | null;
   observations?: string | null;
+  soumisParAgent?: boolean;
   createdAt?: string;
 }

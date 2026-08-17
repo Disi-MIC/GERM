@@ -1,4 +1,47 @@
-<app-page-header title="Mes documents administratifs" subtitle="Consultez et téléchargez vos documents administratifs archivés."></app-page-header>
+<app-page-header title="Mes documents administratifs" subtitle="Consultez vos documents archivés par le RH et déposez vos pièces justificatives.">
+  <button type="button" class="btn btn-primary btn-sm" (click)="basculerFormulaire()">
+    <i class="bi" [class.bi-plus-lg]="!afficherFormulaire" [class.bi-x-lg]="afficherFormulaire"></i>
+    {{ afficherFormulaire ? 'Annuler' : 'Déposer un document' }}
+  </button>
+</app-page-header>
+
+@if (afficherFormulaire) {
+  <app-panel title="Déposer un document" icon="bi-upload" class="d-block mb-3">
+    <p class="text-muted small mb-3">
+      Réservé aux pièces justificatives que vous détenez déjà (identité, diplôme, CV...). Les documents à valeur
+      d'acte administratif (décision, attestation, contrat) restent délivrés par le service RH.
+    </p>
+    @if (erreurDepot) {
+      <div class="alert alert-danger py-2">{{ erreurDepot }}</div>
+    }
+    <div class="row g-2">
+      <div class="col-12 col-md-4">
+        <label class="form-label">Type de document</label>
+        <select class="form-select" [(ngModel)]="typeChoisi" name="type">
+          <option value="" disabled>Choisir...</option>
+          @for (type of types; track type.id) {
+            <option [value]="type.code">{{ type.libelle }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">Libellé <span class="text-muted">(optionnel)</span></label>
+        <input type="text" class="form-control" [(ngModel)]="libelleChoisi" name="libelle" placeholder="Ex : Diplôme 2019" />
+      </div>
+      <div class="col-12 col-md-4">
+        <app-file-piece-input label="Fichier" [(fichier)]="fichierChoisi" />
+      </div>
+    </div>
+    <div class="mt-3">
+      <button type="button" class="btn btn-success btn-sm" [disabled]="depotEnCours" (click)="deposer()">
+        @if (depotEnCours) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        Déposer
+      </button>
+    </div>
+  </app-panel>
+}
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>

@@ -12,7 +12,12 @@
   <app-data-table [rows]="documents" [columns]="columns" emptyMessage="Aucun document administratif." searchPlaceholder="Rechercher un document...">
     <ng-template appDataTableCell="agent" let-document>{{ agentLabel(document) }}</ng-template>
     <ng-template appDataTableCell="type" let-document>{{ typeLabel(document) }}</ng-template>
-    <ng-template appDataTableCell="libelle" let-document>{{ document.libelle }}</ng-template>
+    <ng-template appDataTableCell="libelle" let-document>
+      {{ document.libelle }}
+      @if (document.soumisParAgent) {
+        <span class="status-dot status-dot-info ms-1" title="Déposé directement par l'agent">Déposé par l'agent</span>
+      }
+    </ng-template>
     <ng-template appDataTableCell="dateDocument" let-document>{{ document.dateDocument ? (document.dateDocument | slice: 0 : 10) : '—' }}</ng-template>
     <ng-template appDataTableCell="expiration" let-document>
       @if (document.dateExpiration) {

@@ -6,6 +6,7 @@ use App\Controller\AbstractController;
 use App\Entity\DemandeCartePro;
 use App\Entity\DemandeDecision;
 use App\Entity\DemandeJouissance;
+use App\Entity\DocumentAdministratif;
 use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\Personnel;
@@ -29,8 +30,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Auto-service : tout agent (même sans rôle RH) peut déposer ses propres
- * demandes de carte professionnelle, de décision de congé et de jouissance
- * de congé — toujours rattachées à sa propre fiche Personnel, jamais celle
+ * demandes de carte professionnelle, de décision de congé, de jouissance
+ * de congé et certains documents administratifs justificatifs — toujours
+ * rattachées à sa propre fiche Personnel, jamais celle
  * envoyée par le client (voir personnelConnecte(), appelée après
  * désérialisation pour écraser toute valeur reçue). Même logique de
  * validation que les contrôleurs RH équivalents (Api/DemandeCarteProController,
@@ -44,6 +46,16 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[IsGranted('ROLE_AGENT')]
 class MeDemandesController extends AbstractController
 {
+    /**
+     * Types de document-administratif (ListeValeur, catégorie type-document)
+     * qu'un agent peut déposer lui-même : uniquement des pièces justificatives
+     * qu'il détient déjà (identité, diplôme, CV...), jamais un type à valeur
+     * d'acte administratif produit par le RH (decision_nomination, attestation,
+     * contrat) — ceux-là ne s'obtiennent que via Api/DocumentAdministratifController::create(),
+     * réservé à ROLE_RH_PERSONNEL, pour garder le dossier officiel fiable.
+     */
+    private const TYPES_DOCUMENT_AGENT = ['cni', 'passeport', 'acte_naissance', 'diplome', 'certificat_medical', 'casier_judiciaire', 'cv'];
+
     public function __construct(
         private readonly SerializerInterface $serializer,
         private readonly ValidatorInterface $validator,
@@ -339,6 +351,82 @@ class MeDemandesController extends AbstractController
         );
 
         return $this->json($ticket, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * Types de document-administratif que l'agent a le droit de déposer
+     * lui-même (voir TYPES_DOCUMENT_AGENT) — ListeValeur étant réservée à
+     * ROLE_RH_PERSONNEL/ROLE_IT_STOCK, ce sous-ensemble filtré est le seul
+     * moyen pour le sélecteur du formulaire "Mes documents" de connaître les
+     * id/libellés à proposer.
+     */
+    #[Route('/api/me/documents-administratifs/types', name: 'api_me_document_administratif_types', methods: ['GET'])]
+    public function typesDocumentAdministratif(): JsonResponse
+    {
+        $types = array_values(array_filter(array_map(
+            fn (string $code) => $this->listeValeurRepository->findOneByCategorieAndCode(CategorieListeValeur::TYPE_DOCUMENT, $code),
+            self::TYPES_DOCUMENT_AGENT,
+        )));
+
+        return $this->json($types, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * Dépôt direct par l'agent d'une pièce justificative (voir
+     * TYPES_DOCUMENT_AGENT) — toujours rattaché à sa propre fiche, marqué
+     * soumisParAgent pour que le RH Personnel distingue ces dépôts des
+     * documents qu'il archive lui-même (Api/DocumentAdministratifController).
+     */
+    #[Route('/api/me/documents-administratifs', name: 'api_me_document_administratif_create', methods: ['POST'])]
+    public function creerDocumentAdministratif(Request $request): JsonResponse
+    {
+        $personnel = $this->personnelConnecte();
+        if (!$personnel) {
+            return $this->reponsePersonnelManquant();
+        }
+
+        $codeType = (string) $request->request->get('type');
+        if (!\in_array($codeType, self::TYPES_DOCUMENT_AGENT, true)) {
+            return $this->json(['errors' => ['type' => "Ce type de document doit être déposé par le service RH."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $type = $this->listeValeurRepository->findOneByCategorieAndCode(CategorieListeValeur::TYPE_DOCUMENT, $codeType);
+        if (!$type) {
+            return $this->json(['errors' => ['type' => 'Le type de document est invalide.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $file = $request->files->get('fichier');
+        if ($erreur = $this->fileStorage->erreurValidation($file)) {
+            return $this->json(['errors' => ['fichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $document = new DocumentAdministratif();
+        $document->setPersonnel($personnel);
+        $document->setType($type);
+        $libelle = trim((string) $request->request->get('libelle'));
+        $document->setLibelle('' !== $libelle ? $libelle : $type->getLibelle());
+        $document->setSoumisParAgent(true);
+
+        $violations = $this->validator->validate($document);
+        if (\count($violations) > 0) {
+            return $this->violationsResponse($violations);
+        }
+
+        $stocke = $this->fileStorage->store($file, 'document-administratif');
+        $document->setCheminFichier($stocke['path']);
+        $document->setNomOriginal($stocke['originalName']);
+
+        $this->em->persist($document);
+        $this->em->flush();
+
+        $this->notificationService->notifierRole(
+            User::ROLE_RH_PERSONNEL,
+            'Nouveau document déposé par un agent',
+            '/documents-administratifs',
+            \sprintf('%s a déposé un document : "%s".', $personnel->getNomComplet(), $document->getLibelle()),
+        );
+
+        return $this->json($document, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
     }
 
     private function personnelConnecte(): ?Personnel

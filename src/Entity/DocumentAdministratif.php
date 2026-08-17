@@ -77,6 +77,18 @@ class DocumentAdministratif
     #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
+    /**
+     * true si déposé par l'agent lui-même (Api/MeDemandesController::creerDocumentAdministratif,
+     * limité à un type-document "justificatif" — CNI, diplôme, CV... — jamais
+     * aux types à valeur d'acte RH comme decision_nomination/attestation/contrat,
+     * qui restent exclusivement créés par le RH Personnel), false si déposé
+     * par le RH Personnel (Api/DocumentAdministratifController::create). Sert
+     * uniquement de repère visuel côté liste RH, aucun effet sur les droits.
+     */
+    #[ORM\Column]
+    #[Groups(['api:read'])]
+    private bool $soumisParAgent = false;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -186,6 +198,18 @@ class DocumentAdministratif
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function isSoumisParAgent(): bool
+    {
+        return $this->soumisParAgent;
+    }
+
+    public function setSoumisParAgent(bool $soumisParAgent): static
+    {
+        $this->soumisParAgent = $soumisParAgent;
+
+        return $this;
     }
 
     public function __toString(): string
