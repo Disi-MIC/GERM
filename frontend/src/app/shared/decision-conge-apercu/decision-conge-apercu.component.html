@@ -7,13 +7,14 @@
 
     <div class="decision-apercu-imprimable">
       <div class="decision-apercu-entete">
-        <img src="assets/images/logo-mini.png" alt="" class="decision-apercu-logo" />
-        <div class="decision-apercu-entete-texte">
-          <div class="decision-apercu-republique">République du Sénégal</div>
-          <div class="decision-apercu-devise">Un Peuple - Un But - Une Foi</div>
-          <div class="decision-apercu-ministere">Ministère de l'Industrie et du Commerce</div>
+        <img
+          src="assets/images/entete-republique-senegal.jpeg"
+          alt="République du Sénégal — Un Peuple, Un But, Une Foi — Ministère de l'Industrie et du Commerce"
+          class="decision-apercu-entete-image"
+        />
+        <div class="decision-apercu-numero">
+          N° <span class="decision-apercu-numero-cachet" title="Réservé au cachet du service RH"></span>{{ decision.numeroDecision }}
         </div>
-        <div class="decision-apercu-numero">N° {{ decision.numeroDecision }}</div>
       </div>
 
       <span class="status-dot" [class.status-dot-success]="decision.valide" [class.status-dot-secondary]="!decision.valide">
