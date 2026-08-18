@@ -12,8 +12,15 @@
           alt="République du Sénégal — Un Peuple, Un But, Une Foi — Ministère de l'Industrie et du Commerce"
           class="decision-apercu-entete-image"
         />
-        <div class="decision-apercu-numero">
-          N° <span class="decision-apercu-numero-cachet" title="Réservé au cachet du service RH"></span>{{ decision.numeroDecision }}
+        <div class="decision-apercu-entete-droite">
+          <div class="decision-apercu-numero">
+            N° <span class="decision-apercu-numero-cachet" title="Réservé au cachet du service RH"></span>{{ decision.numeroDecision }}
+          </div>
+          <p class="decision-apercu-analyse">
+            <strong class="decision-apercu-souligne">ANALYSE</strong> : Décision accordant un congé administratif à
+            {{ agentCivilite }} <strong>{{ agentNomComplet }}</strong>, {{ agentFonction }}, matricule de solde
+            <strong>n°{{ agentMatricule }}</strong>.
+          </p>
         </div>
       </div>
 
@@ -21,25 +28,17 @@
         {{ decision.valide ? 'Valide' : 'Expirée' }}
       </span>
 
-      <p class="decision-apercu-analyse"><strong>ANALYSE</strong> : {{ analyseTexte }}</p>
-
       <h2 class="decision-apercu-titre">Le Ministre de l'Industrie et du Commerce</h2>
 
-      @if (visasFixes.length > 0 || decision.numeroDerniereDecisionReferencee || decision.numeroAttestationNonJouissance) {
+      @if (visasComplets.length > 0) {
         <div class="decision-apercu-visas">
-          @for (visa of visasFixes; track $index) {
-            <p>{{ visa }}</p>
-          }
-          @if (decision.numeroDerniereDecisionReferencee) {
-            <p>VU la décision de congé n°{{ decision.numeroDerniereDecisionReferencee }} du {{ dateFr(decision.periodeDebut) }} ;</p>
-          }
-          @if (decision.numeroAttestationNonJouissance) {
+          @for (visa of visasComplets; track $index) {
             <p>
-              VU l'attestation de non jouissance de congé n°{{ decision.numeroAttestationNonJouissance
-              }}{{ decision.dateAttestationNonJouissance ? ' du ' + dateFr(decision.dateAttestationNonJouissance) : '' }} ;
+              @if (visa.prefixe) {
+                <strong>{{ visa.prefixe }}</strong>
+              }{{ visa.reste }}
             </p>
           }
-          <p>Après avis favorable du supérieur hiérarchique.</p>
         </div>
       }
 
@@ -47,7 +46,7 @@
 
       <div class="decision-apercu-articles">
         <p>
-          <strong>Article premier.</strong> – Un congé administratif de
+          <strong class="decision-apercu-souligne">Article premier.</strong> – Un congé administratif de
           <strong>{{ nombreJoursEnLettres }} ({{ decision.nombreJours }}) jours</strong> est accordé à {{ agentCivilite }}
           <strong>{{ agentNomComplet }}</strong>, {{ agentFonction }}, matricule de solde
           <strong>n°{{ agentMatricule }}</strong>, pour ses services effectués durant la période du
@@ -55,11 +54,11 @@
         </p>
 
         @if (decision.article2) {
-          <p><strong>Article 2.</strong> - {{ decision.article2 }}</p>
+          <p><strong class="decision-apercu-souligne">Article 2</strong>. - {{ decision.article2 }}</p>
         }
 
         @if (decision.article3) {
-          <p><strong>Article 3.</strong> - {{ decision.article3 }}</p>
+          <p><strong class="decision-apercu-souligne">Article 3</strong>. - {{ decision.article3 }}</p>
         }
       </div>
 

@@ -4,10 +4,9 @@ import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
 import { DecisionConge, DemandeDecision } from '../../core/models/conge.model';
 
+/** dateDecision/dateExpiration ne sont plus envoyées : calculées côté serveur (aujourd'hui, puis +3 ans) — voir genererEtTransmettre(). */
 export interface GenererEtTransmettrePayload {
   numero: string;
-  dateDecision: string;
-  dateExpiration: string;
   nombreJours: number;
   dateDerniereDecision?: string | null;
   numeroAttestationNonJouissance?: string | null;

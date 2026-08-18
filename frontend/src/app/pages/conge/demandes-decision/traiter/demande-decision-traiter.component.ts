@@ -9,6 +9,8 @@ import { PageHeaderComponent } from '../../../../shared/page-header/page-header.
 import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { EtapeTimeline, StatusTimelineComponent } from '../../../../shared/status-timeline/status-timeline.component';
 import { DecisionCongeApercuComponent } from '../../../../shared/decision-conge-apercu/decision-conge-apercu.component';
+import { dateFr } from '../../../../shared/date-fr';
+import { etapesTimelineDemandeDecision } from '../../../../shared/demande-decision-etapes';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
@@ -41,13 +43,20 @@ export class DemandeDecisionTraiterComponent implements OnInit {
 
   formGeneration = this.fb.nonNullable.group({
     numero: ['', Validators.required],
-    dateDecision: ['', Validators.required],
-    dateExpiration: ['', Validators.required],
     dateDerniereDecision: [''],
     nombreJours: [null as number | null, [Validators.required, Validators.min(1), Validators.max(90)]],
     numeroAttestationNonJouissance: [''],
     dateAttestationNonJouissance: [''],
   });
+
+  /** Date d'octroi = toujours la date de génération (aujourd'hui) ; expiration = octroi + 3 ans. Non saisies, affichées à titre informatif — voir genererEtTransmettre() côté serveur, seule source de vérité. */
+  readonly dateOctroiPrevue = new Date();
+  readonly dateExpirationPrevue = new Date(
+    this.dateOctroiPrevue.getFullYear() + 3,
+    this.dateOctroiPrevue.getMonth(),
+    this.dateOctroiPrevue.getDate(),
+  );
+  readonly dateFr = dateFr;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -79,43 +88,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
   }
 
   get etapesTimeline(): EtapeTimeline[] {
-    const d = this.demande;
-    if (!d) {
-      return [];
-    }
-    const creee: EtapeTimeline = { label: 'Créée', sousTitre: this.formatDate(d.createdAt), etat: 'termine' };
-
-    if (d.statut === 'refusee') {
-      return [creee, { label: 'Refusée', sousTitre: this.formatDate(d.dateTraitement), etat: 'rejete' }];
-    }
-
-    const valideeFaite = d.statut !== 'en_attente';
-    const deposeeFaite = d.statut === 'deposee_courrier' || d.statut === 'retournee' || d.statut === 'transmise_agent';
-    const retourneeFaite = d.statut === 'retournee' || d.statut === 'transmise_agent';
-
-    return [
-      creee,
-      { label: 'Validée par le RH Congé', sousTitre: valideeFaite ? 'Fait' : null, etat: valideeFaite ? 'termine' : 'actuel' },
-      {
-        label: 'Déposée au service courrier',
-        sousTitre: deposeeFaite ? 'Fait' : null,
-        etat: deposeeFaite ? 'termine' : valideeFaite ? 'actuel' : 'a-venir',
-      },
-      {
-        label: 'Revenue du circuit (RH Admin)',
-        sousTitre: retourneeFaite ? 'Fait' : null,
-        etat: retourneeFaite ? 'termine' : deposeeFaite ? 'actuel' : 'a-venir',
-      },
-      {
-        label: "Transmise à l'agent",
-        sousTitre: d.statut === 'transmise_agent' ? this.formatDate(d.dateTraitement) : null,
-        etat: d.statut === 'transmise_agent' ? 'termine' : retourneeFaite ? 'actuel' : 'a-venir',
-      },
-    ];
-  }
-
-  private formatDate(iso?: string | null): string | null {
-    return iso ? `${iso.slice(0, 10)} · ${iso.slice(11, 16)}` : null;
+    return this.demande ? etapesTimelineDemandeDecision(this.demande) : [];
   }
 
   agentLabel(): string {
@@ -225,8 +198,6 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     this.api
       .genererEtTransmettre(this.demande.id, {
         numero: raw.numero.trim(),
-        dateDecision: raw.dateDecision,
-        dateExpiration: raw.dateExpiration,
         nombreJours: raw.nombreJours!,
         dateDerniereDecision: raw.dateDerniereDecision || null,
         numeroAttestationNonJouissance: raw.numeroAttestationNonJouissance.trim() || null,

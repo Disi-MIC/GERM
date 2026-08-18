@@ -9,6 +9,7 @@ import { DataTableColumn } from '../../../shared/data-table/data-table-column.mo
 import { DataTableMobileItemDirective } from '../../../shared/data-table/data-table-mobile-item.directive';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { DecisionCongeApercuComponent } from '../../../shared/decision-conge-apercu/decision-conge-apercu.component';
+import { DemandeDecisionApercuComponent } from '../../../shared/demande-decision-apercu/demande-decision-apercu.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -39,6 +40,7 @@ const LABELS_STATUT: Record<string, string> = {
     DataTableCellDirective,
     DataTableMobileItemDirective,
     DecisionCongeApercuComponent,
+    DemandeDecisionApercuComponent,
   ],
   templateUrl: './mes-conges.component.html',
 })
@@ -52,6 +54,7 @@ export class MesCongesComponent implements OnInit {
   confirmationEnCoursId: number | null = null;
   erreurConfirmation: string | null = null;
   decisionEnApercu: DecisionConge | null = null;
+  demandeEnApercu: DemandeDecision | null = null;
   readonly labelsType = LABELS_TYPE;
   readonly labelsStatut = LABELS_STATUT;
 
@@ -111,6 +114,10 @@ export class MesCongesComponent implements OnInit {
 
   voirApercu(decision: DecisionConge): void {
     this.decisionEnApercu = decision;
+  }
+
+  voirApercuDemande(demande: DemandeDecision): void {
+    this.demandeEnApercu = demande;
   }
 
   badgeClasse(statut: string | undefined): string {

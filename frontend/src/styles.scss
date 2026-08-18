@@ -346,6 +346,11 @@ $card-box-shadow: $box-shadow-sm;
 // (menu, en-tête...). On masque tout via visibility (hérité, contrairement
 // à display) puis on ne réaffiche que le sous-arbre imprimable.
 @media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
   body.decision-apercu-impression {
     visibility: hidden;
   }
@@ -355,10 +360,28 @@ $card-box-shadow: $box-shadow-sm;
     visibility: visible;
   }
 
+  // Le modal (position: fixed, max-height/overflow-y limités à la fenêtre,
+  // voir decision-conge-apercu.component.scss) tronquerait sinon le contenu
+  // imprimé à sa hauteur d'écran plutôt que de laisser le document s'étaler
+  // sur la page — annulé ici pour l'impression uniquement.
+  body.decision-apercu-impression .decision-apercu-modal {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
   body.decision-apercu-impression .decision-apercu-imprimable {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    // Vise une tenue sur une seule page A4 (voir @page ci-dessus) : le
+    // contenu est déjà compact, cette réduction supplémentaire absorbe les
+    // variantes de texte légal (visas, ampliations) plus longues que le
+    // modèle de référence sans passer à une deuxième page.
+    font-size: 0.82rem;
   }
 }

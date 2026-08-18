@@ -2,6 +2,7 @@ import { SlicePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DecisionConge } from '../../core/models/conge.model';
 import { Personnel } from '../../core/models/personnel.model';
+import { dateFr } from '../date-fr';
 import { nombreEnLettresFr } from '../nombre-en-lettres';
 
 /**
@@ -69,10 +70,6 @@ export class DecisionCongeApercuComponent {
     return typeof typeContrat === 'string' ? typeContrat : typeContrat.libelle;
   }
 
-  get analyseTexte(): string {
-    return `Décision accordant un congé administratif à ${this.agentCivilite} ${this.agentNomComplet}, ${this.agentFonction}, matricule de solde n°${this.agentMatricule}.`;
-  }
-
   get nombreJoursEnLettres(): string {
     const n = this.decision?.nombreJours;
     if (n === null || n === undefined) {
@@ -82,12 +79,30 @@ export class DecisionCongeApercuComponent {
     return mots.charAt(0).toUpperCase() + mots.slice(1);
   }
 
-  /** Une "VU ..." par ligne, texte fixe saisi par le RH Admin (voir ParametresDecisionConge) — vide si aucun réglage renseigné. */
-  get visasFixes(): string[] {
-    return (this.decision?.visasDecrets ?? '')
+  /**
+   * Préambule complet — texte fixe saisi par le RH Admin (visas des décrets,
+   * voir ParametresDecisionConge) suivi des deux visas propres à cette
+   * décision (décision antérieure de l'agent, attestation de non
+   * jouissance — omis si absents) puis de la clause de clôture, toujours
+   * présente. Chaque ligne pré-découpée en préfixe "VU" (mis en gras, comme
+   * sur le modèle papier) et reste du texte.
+   */
+  get visasComplets(): { prefixe: string; reste: string }[] {
+    const lignes = (this.decision?.visasDecrets ?? '')
       .split('\n')
       .map((ligne) => ligne.trim())
       .filter((ligne) => ligne.length > 0);
+
+    if (this.decision?.numeroDerniereDecisionReferencee) {
+      lignes.push(`VU la décision de congé n°${this.decision.numeroDerniereDecisionReferencee} du ${this.dateFr(this.decision.periodeDebut)} ;`);
+    }
+    if (this.decision?.numeroAttestationNonJouissance) {
+      const dateSuffixe = this.decision.dateAttestationNonJouissance ? ` du ${this.dateFr(this.decision.dateAttestationNonJouissance)}` : '';
+      lignes.push(`VU l'attestation de non jouissance de congé n°${this.decision.numeroAttestationNonJouissance}${dateSuffixe} ;`);
+    }
+    lignes.push('Après avis favorable du supérieur hiérarchique.');
+
+    return lignes.map((ligne) => (ligne.startsWith('VU ') ? { prefixe: 'VU', reste: ligne.slice(2) } : { prefixe: '', reste: ligne }));
   }
 
   /** Une destination par ligne (voir ParametresDecisionConge::$ampliations). */
@@ -98,32 +113,7 @@ export class DecisionCongeApercuComponent {
       .filter((ligne) => ligne.length > 0);
   }
 
-  private static readonly MOIS_FR = [
-    'janvier',
-    'février',
-    'mars',
-    'avril',
-    'mai',
-    'juin',
-    'juillet',
-    'août',
-    'septembre',
-    'octobre',
-    'novembre',
-    'décembre',
-  ];
-
-  /** "2023-03-24" -> "24 mars 2023", convention du document papier (voir le modèle fourni par le ministère). */
-  dateFr(iso: string | null | undefined): string {
-    if (!iso) {
-      return '';
-    }
-    const [annee, mois, jour] = iso.slice(0, 10).split('-').map(Number);
-    if (!annee || !mois || !jour) {
-      return iso.slice(0, 10);
-    }
-    return `${jour} ${DecisionCongeApercuComponent.MOIS_FR[mois - 1]} ${annee}`;
-  }
+  readonly dateFr = dateFr;
 
   /**
    * N'imprime que le contenu du document (.decision-apercu-imprimable, voir

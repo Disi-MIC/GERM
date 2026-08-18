@@ -35,6 +35,10 @@
         <a [routerLink]="['/conges/demandes-decision', demande.id, 'traiter']" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-check2-square"></i> Traiter
         </a>
+      } @else {
+        <a [routerLink]="['/conges/demandes-decision', demande.id, 'traiter']" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-eye"></i> Voir
+        </a>
       }
     </ng-template>
   </app-data-table>

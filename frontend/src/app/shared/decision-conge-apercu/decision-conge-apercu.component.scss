@@ -46,17 +46,21 @@
 }
 
 .decision-apercu-entete-image {
-  width: min(240px, 60%);
+  flex: none;
+  width: min(200px, 42%);
   height: auto;
   object-fit: contain;
 }
 
+.decision-apercu-entete-droite {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .decision-apercu-numero {
-  flex: none;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
-  padding-top: 0.25rem;
 }
 
 .decision-apercu-numero-cachet {
@@ -66,10 +70,14 @@
   margin: 0 0.15rem -0.15rem;
 }
 
+/** Souligné, comme sur le modèle papier : "ANALYSE", "Article premier.", "Article 2/3". */
+.decision-apercu-souligne {
+  text-decoration: underline;
+}
+
 .decision-apercu-analyse {
-  margin: 1rem 0 0;
-  font-size: 0.85rem;
-  color: var(--bs-secondary);
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
 }
 
 .decision-apercu-titre {
@@ -77,6 +85,7 @@
   font-size: 1rem;
   font-weight: 700;
   text-align: center;
+  text-transform: uppercase;
 }
 
 .decision-apercu-visas {
@@ -92,6 +101,8 @@
   margin: 1.25rem 0 0.75rem;
   font-size: 0.95rem;
   font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: underline;
 }
 
 .decision-apercu-articles {
@@ -111,6 +122,9 @@
 
   &-titre {
     font-weight: 700;
+    font-style: italic;
+    text-transform: uppercase;
+    text-decoration: underline;
     margin: 0 0 0.4rem;
   }
 
@@ -163,8 +177,8 @@
     flex-wrap: wrap;
   }
 
-  .decision-apercu-numero {
-    margin-left: auto;
+  .decision-apercu-entete-droite {
+    flex-basis: 100%;
   }
 
   .decision-apercu-meta {

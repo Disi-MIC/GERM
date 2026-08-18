@@ -144,19 +144,18 @@
       </div>
 
       @if (peutGenererEtTransmettre()) {
+        <dl class="row mb-3">
+          <dt class="col-sm-4">Date d'octroi</dt>
+          <dd class="col-sm-8">{{ dateFr(dateOctroiPrevue) }} <span class="text-muted small">(date du jour, automatique)</span></dd>
+          <dt class="col-sm-4">Date d'expiration</dt>
+          <dd class="col-sm-8">{{ dateFr(dateExpirationPrevue) }} <span class="text-muted small">(octroi + 3 ans, automatique)</span></dd>
+        </dl>
+
         <form [formGroup]="formGeneration">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Numéro de décision</label>
               <input type="text" class="form-control" formControlName="numero" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Date d'octroi</label>
-              <input type="date" class="form-control" formControlName="dateDecision" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Date d'expiration</label>
-              <input type="date" class="form-control" formControlName="dateExpiration" />
             </div>
             <div class="col-md-6">
               <label class="form-label">Date de la dernière demande</label>

@@ -118,6 +118,9 @@
       <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
       <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
       <ng-template appDataTableCell="action" let-demande>
+        <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="voirApercuDemande(demande)">
+          <i class="bi bi-eye"></i> Statut
+        </button>
         @if (demande.statut === 'validee') {
           <button
             type="button"
@@ -130,8 +133,6 @@
             }
             J'ai déposé au courrier
           </button>
-        } @else {
-          <span class="text-muted">—</span>
         }
       </ng-template>
 
@@ -155,25 +156,32 @@
               @if (demande.commentaireTraitement) {
                 <div class="mob-card-subtitle">{{ demande.commentaireTraitement }}</div>
               }
-              @if (demande.statut === 'validee') {
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary mt-2"
-                  [disabled]="confirmationEnCoursId === demande.id"
-                  (click)="confirmerDepotCourrier(demande)"
-                >
-                  @if (confirmationEnCoursId === demande.id) {
-                    <span class="spinner-border spinner-border-sm me-1"></span>
-                  }
-                  J'ai déposé au courrier
+              <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="voirApercuDemande(demande)">
+                  <i class="bi bi-eye"></i> Statut
                 </button>
-              }
+                @if (demande.statut === 'validee') {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-primary ms-1"
+                    [disabled]="confirmationEnCoursId === demande.id"
+                    (click)="confirmerDepotCourrier(demande)"
+                  >
+                    @if (confirmationEnCoursId === demande.id) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    J'ai déposé au courrier
+                  </button>
+                }
+              </div>
             </div>
           </div>
         </div>
       </ng-template>
     </app-data-table>
   </div>
+
+  <app-demande-decision-apercu [demande]="demandeEnApercu" (fermer)="demandeEnApercu = null" />
 
   <app-data-table
     [rows]="demandesJouissance"

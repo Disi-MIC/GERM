@@ -301,7 +301,9 @@ class DemandeDecisionController extends AbstractController
      * jours, crée la DecisionConge et clôt la demande. Un seul appel plutôt
      * qu'un "générer" puis "transmettre" séparés — même simplification que
      * les autres étapes de ce circuit (une vérification/action humaine =
-     * un clic).
+     * un clic). Date d'octroi/d'expiration ne sont plus saisies : la
+     * première est toujours la date de génération, la seconde toujours
+     * octroi + 3 ans — aucune marge d'appréciation RH sur ces deux dates.
      */
     #[Route('/api/demandes-decision/{id}/generer-et-transmettre', name: 'api_demande_decision_generer_et_transmettre', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function genererEtTransmettre(DemandeDecision $demande, Request $request): JsonResponse
@@ -312,12 +314,11 @@ class DemandeDecisionController extends AbstractController
 
         $data = json_decode($request->getContent(), true) ?? [];
         $numero = trim((string) ($data['numero'] ?? ''));
-        $dateDecision = isset($data['dateDecision'])
-            ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateDecision']) ?: null
-            : null;
-        $dateExpiration = isset($data['dateExpiration'])
-            ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateExpiration']) ?: null
-            : null;
+        // Date d'octroi = date de délivrance de la décision (aujourd'hui, à
+        // cette étape) ; date d'expiration = octroi + 3 ans — plus de saisie
+        // manuelle, ces deux dates n'ont rien de discrétionnaire.
+        $dateDecision = new \DateTimeImmutable('today');
+        $dateExpiration = $dateDecision->modify('+3 years');
         $nombreJours = isset($data['nombreJours']) ? (int) round((float) $data['nombreJours']) : null;
         $dateDerniereDecision = isset($data['dateDerniereDecision'])
             ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateDerniereDecision']) ?: null
@@ -329,8 +330,8 @@ class DemandeDecisionController extends AbstractController
             ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateAttestationNonJouissance']) ?: null
             : null;
 
-        if ('' === $numero || null === $dateDecision || null === $dateExpiration || $dateExpiration <= $dateDecision || null === $nombreJours || $nombreJours <= 0) {
-            return $this->json(['errors' => ['numero' => "Merci de renseigner un numéro, un nombre de jours et des dates valides (date d'expiration postérieure à la date d'octroi) pour générer la décision."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        if ('' === $numero || null === $nombreJours || $nombreJours <= 0) {
+            return $this->json(['errors' => ['numero' => 'Merci de renseigner un numéro et un nombre de jours valides pour générer la décision.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($nombreJours > 90) {
