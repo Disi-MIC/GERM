@@ -65,8 +65,8 @@
   box-sizing: border-box;
   background: #fff;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  font-size: 9.5px;
-  line-height: 1.35;
+  font-size: 13px;
+  line-height: 1.5;
 
   p {
     text-align: justify;
@@ -87,7 +87,7 @@
 
 .decision-apercu-entete-image {
   width: 100%;
-  max-width: 44mm;
+  max-width: 50mm;
   height: auto;
   object-fit: contain;
 }
@@ -118,15 +118,16 @@
   text-decoration: underline;
 }
 
-// Décalée vers le bas par rapport au N°, plutôt que collée dessous.
+// Décalée vers le bas par rapport au N° pour s'aligner avec le bas du logo
+// (colonne de gauche), plutôt que collée juste sous le numéro.
 .decision-apercu-analyse {
-  margin: 0.9em 0 0;
+  margin: 2.6em 0 0;
   font-size: 0.85em;
   text-align: left;
 }
 
 .decision-apercu-titre {
-  margin: 1.1em 0 0;
+  margin: 1.6em 0 0;
   font-size: 1.05em;
   font-weight: 700;
   text-align: center;
@@ -134,15 +135,15 @@
 }
 
 .decision-apercu-visas {
-  margin: 0.9em 0 0;
+  margin: 1.3em 0 0;
 
   p {
-    margin: 0 0 0.35em;
+    margin: 0 0 0.55em;
   }
 }
 
 .decision-apercu-decide {
-  margin: 1.1em 0 0.6em;
+  margin: 1.5em 0 0.8em;
   font-size: 1em;
   font-weight: 700;
   text-transform: uppercase;
@@ -151,13 +152,13 @@
 
 .decision-apercu-articles {
   p {
-    margin: 0 0 0.6em;
+    margin: 0 0 0.8em;
   }
 }
 
 .decision-apercu-ampliations {
-  margin-top: 1em;
-  padding-top: 0.75em;
+  margin-top: 1.5em;
+  padding-top: 1em;
   border-top: 1px solid rgba(15, 20, 30, 0.08);
 
   &-titre {
@@ -165,7 +166,7 @@
     font-style: italic;
     text-transform: uppercase;
     text-decoration: underline;
-    margin: 0 0 0.35em;
+    margin: 0 0 0.5em;
   }
 
   ul {
@@ -174,35 +175,12 @@
   }
 
   li {
-    margin-bottom: 0.1em;
+    margin-bottom: 0.2em;
   }
 }
 
-.decision-apercu-signature-note {
+.decision-apercu-observations {
   margin: 1em 0 0;
-  font-size: 0.85em;
-  font-style: italic;
-  color: var(--bs-secondary);
-}
-
-.decision-apercu-meta {
-  margin: 0.75em 0 0;
-  padding-top: 0.5em;
-  border-top: 1px dashed rgba(15, 20, 30, 0.12);
-  display: grid;
-  grid-template-columns: minmax(0, 9em) 1fr;
-  row-gap: 0.2em;
-  column-gap: 0.75em;
-  font-size: 0.8em;
-  color: var(--bs-secondary);
-
-  dt {
-    font-weight: 600;
-  }
-
-  dd {
-    margin: 0;
-  }
 }
 
 .decision-apercu-actions {

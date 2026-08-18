@@ -1,4 +1,3 @@
-import { SlicePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DecisionConge } from '../../core/models/conge.model';
 import { Personnel } from '../../core/models/personnel.model';
@@ -20,7 +19,6 @@ import { nombreEnLettresFr } from '../nombre-en-lettres';
 @Component({
   selector: 'app-decision-conge-apercu',
   standalone: true,
-  imports: [SlicePipe],
   templateUrl: './decision-conge-apercu.component.html',
   styleUrl: './decision-conge-apercu.component.scss',
 })

@@ -24,10 +24,6 @@
         </div>
       </div>
 
-      <span class="status-dot" [class.status-dot-success]="decision.valide" [class.status-dot-secondary]="!decision.valide">
-        {{ decision.valide ? 'Valide' : 'Expirée' }}
-      </span>
-
       <h2 class="decision-apercu-titre">Le Ministre de l'Industrie et du Commerce</h2>
 
       @if (visasComplets.length > 0) {
@@ -73,18 +69,9 @@
         </div>
       }
 
-      <p class="decision-apercu-signature-note">Signature et cachet apposés sur le document physique à l'issue du circuit ministériel.</p>
-
-      <dl class="decision-apercu-meta">
-        @if (decision.observations) {
-          <dt>Observations</dt>
-          <dd>{{ decision.observations }}</dd>
-        }
-        <dt>Générée par</dt>
-        <dd>{{ decision.genereeParNom ?? '—' }}</dd>
-        <dt>Date de création</dt>
-        <dd>{{ decision.createdAt | slice: 0 : 10 }}</dd>
-      </dl>
+      @if (decision.observations) {
+        <p class="decision-apercu-observations"><strong>Observations</strong> : {{ decision.observations }}</p>
+      }
     </div>
 
     <div class="decision-apercu-actions">
