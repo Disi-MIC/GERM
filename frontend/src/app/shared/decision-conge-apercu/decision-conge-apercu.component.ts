@@ -116,20 +116,53 @@ export class DecisionCongeApercuComponent {
   readonly dateFr = dateFr;
 
   /**
-   * N'imprime que le contenu du document (.decision-apercu-imprimable, voir
-   * styles.scss) plutôt que la page entière (menu, en-tête...) — bascule un
-   * marqueur sur <body> le temps de l'impression, seule façon fiable de
-   * cibler ce sous-arbre quel que soit l'endroit où ce composant est monté
-   * dans l'arbre (impossible à exprimer avec un simple @media print local
-   * au composant, portée à l'élément hôte uniquement).
+   * Imprime dans une fenêtre séparée, ne contenant que le document
+   * (.decision-apercu-imprimable cloné, avec les mêmes feuilles de style que
+   * l'appli). Tenter d'imprimer seulement ce sous-arbre depuis la page SPA
+   * elle-même (en masquant le reste via visibility puis en repositionnant ce
+   * sous-arbre en position: absolute) s'est révélé peu fiable à l'export PDF
+   * sous Chrome (texte tronqué, contenu décalé), quelles que soient les
+   * combinaisons de hauteur fixe/overflow/centrage essayées — une fenêtre
+   * dédiée n'a plus aucun autre élément avec lequel entrer en conflit : le
+   * document y est simplement le seul contenu de la page, en flux normal.
    */
   imprimer(): void {
-    document.body.classList.add('decision-apercu-impression');
-    const nettoyer = () => {
-      document.body.classList.remove('decision-apercu-impression');
-      window.removeEventListener('afterprint', nettoyer);
-    };
-    window.addEventListener('afterprint', nettoyer);
-    window.print();
+    const contenu = document.querySelector('.decision-apercu-imprimable');
+    if (!contenu) {
+      return;
+    }
+
+    const feuillesDeStyle = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map((element) => element.outerHTML)
+      .join('\n');
+
+    const fenetre = window.open('', '_blank', 'width=900,height=1200');
+    if (!fenetre) {
+      return;
+    }
+
+    fenetre.document.open();
+    fenetre.document.write(`<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <base href="${document.baseURI}" />
+    <title>Décision de congé</title>
+    ${feuillesDeStyle}
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .decision-apercu-imprimable { margin: 0; box-shadow: none; }
+    </style>
+  </head>
+  <body>${contenu.outerHTML}</body>
+</html>`);
+    fenetre.document.close();
+
+    fenetre.addEventListener('load', () => {
+      fenetre.focus();
+      fenetre.print();
+    });
+    fenetre.addEventListener('afterprint', () => fenetre.close());
   }
 }

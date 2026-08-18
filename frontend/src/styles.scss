@@ -339,51 +339,9 @@ $card-box-shadow: $box-shadow-sm;
   align-self: center;
 }
 
-// Impression ciblée du contenu d'app-decision-conge-apercu (voir son
-// imprimer()) : ce composant peut être monté n'importe où dans l'arbre
-// (liste RH, page de traitement, mes-conges), donc un simple @media print
-// local au composant ne suffit pas à masquer tout le reste de la page
-// (menu, en-tête...). On masque tout via visibility (hérité, contrairement
-// à display) puis on ne réaffiche que le sous-arbre imprimable.
-@media print {
-  // Marge nulle ici : .decision-apercu-imprimable a déjà sa propre marge
-  // interne de 7mm (padding, voir decision-conge-apercu.component.scss) —
-  // une marge @page en plus la doublerait et pousserait le contenu hors de
-  // la page 210x297mm fixe.
-  @page {
-    size: A4 portrait;
-    margin: 0;
-  }
-
-  body.decision-apercu-impression {
-    visibility: hidden;
-  }
-
-  body.decision-apercu-impression .decision-apercu-imprimable,
-  body.decision-apercu-impression .decision-apercu-imprimable * {
-    visibility: visible;
-  }
-
-  // Le modal (position: fixed, max-width/max-height/overflow limités à la
-  // fenêtre) ne doit plus contraindre la page à l'impression : sa propre
-  // largeur fixe (210mm) suffit.
-  body.decision-apercu-impression .decision-apercu-modal {
-    position: static !important;
-    max-width: none !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  // Centrée sur la largeur de la page (left: 50% + translateX) plutôt que
-  // calée à left: 0 : si la zone imprimable calculée par le moteur PDF
-  // diffère ne serait-ce que légèrement des 210mm déclarés, un calage à
-  // gauche stricte pousse tout le contenu vers un bord — centrer absorbe
-  // cet écart sans perdre le format.
-  body.decision-apercu-impression .decision-apercu-imprimable {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-    box-shadow: none !important;
-  }
-}
+// L'impression du document de décision de congé (app-decision-conge-apercu)
+// ne passe plus par un @media print local : essayer d'extraire un seul
+// sous-arbre de la page SPA (via visibility + position: absolute) s'est
+// montré peu fiable à l'export PDF sous Chrome, quelles que soient les
+// combinaisons de hauteur/overflow essayées (voir imprimer() du composant,
+// qui ouvre désormais une fenêtre séparée ne contenant que le document).
