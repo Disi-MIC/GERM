@@ -1,6 +1,6 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth.service';
 import { DemandeDecision } from '../../../../core/models/conge.model';
@@ -12,14 +12,15 @@ import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 /**
- * Circuit à quatre étapes, même logique que DemandeCarteProTraiterComponent :
- * chaque rôle (RH Congé puis RH Admin puis à nouveau RH Congé) ne voit les
- * actions qui lui reviennent que si le statut courant le permet.
+ * Circuit à cinq étapes — voir le commentaire de classe de DemandeDecision
+ * (backend) pour le détail complet. Chaque rôle (RH Congé, puis l'agent
+ * lui-même hors de cette page, puis RH Admin, puis à nouveau RH Congé) ne
+ * voit les actions qui lui reviennent que si le statut courant le permet.
  */
 @Component({
   selector: 'app-demande-decision-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
   templateUrl: './demande-decision-traiter.component.html',
 })
 export class DemandeDecisionTraiterComponent implements OnInit {
@@ -29,19 +30,19 @@ export class DemandeDecisionTraiterComponent implements OnInit {
   saving = false;
   error: string | null = null;
 
-  /** Contrôle de premier niveau du RH Congé, comme pour les cartes pro : coché explicitement avant de pouvoir transmettre. */
-  piecesVerifiees = false;
-
-  formTransmission = this.fb.nonNullable.group({
-    numero: ['', Validators.required],
-    dateDecision: ['', Validators.required],
-    dateExpiration: ['', Validators.required],
-    nombreJours: [null as number | null, Validators.required],
-  });
+  fichierRetour: File | null = null;
 
   formRejet = this.fb.nonNullable.group({
     motifRejet: [null as number | null, Validators.required],
     commentaire: [''],
+  });
+
+  formGeneration = this.fb.nonNullable.group({
+    numero: ['', Validators.required],
+    dateDecision: ['', Validators.required],
+    dateExpiration: ['', Validators.required],
+    dateDerniereDecision: [''],
+    nombreJours: [null as number | null, Validators.required],
   });
 
   constructor(
@@ -59,6 +60,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     this.api.getOne(id).subscribe({
       next: (demande) => {
         this.demande = demande;
+        this.preremplirGeneration();
         this.loading = false;
       },
       error: () => {
@@ -83,26 +85,22 @@ export class DemandeDecisionTraiterComponent implements OnInit {
       return [creee, { label: 'Refusée', sousTitre: this.formatDate(d.dateTraitement), etat: 'rejete' }];
     }
 
-    const transmiseFaite = d.statut !== 'en_attente';
-    const approuveeFaite = d.statut === 'approuvee' || d.statut === 'retournee' || d.statut === 'transmise_agent';
+    const valideeFaite = d.statut !== 'en_attente';
+    const deposeeFaite = d.statut === 'deposee_courrier' || d.statut === 'retournee' || d.statut === 'transmise_agent';
     const retourneeFaite = d.statut === 'retournee' || d.statut === 'transmise_agent';
 
     return [
       creee,
+      { label: 'Validée par le RH Congé', sousTitre: valideeFaite ? 'Fait' : null, etat: valideeFaite ? 'termine' : 'actuel' },
       {
-        label: 'Transmise au RH Admin',
-        sousTitre: transmiseFaite ? 'Fait' : null,
-        etat: transmiseFaite ? 'termine' : 'actuel',
+        label: 'Déposée au service courrier',
+        sousTitre: deposeeFaite ? 'Fait' : null,
+        etat: deposeeFaite ? 'termine' : valideeFaite ? 'actuel' : 'a-venir',
       },
       {
-        label: 'Approuvée (circuit de signature)',
-        sousTitre: approuveeFaite ? 'Fait' : null,
-        etat: approuveeFaite ? 'termine' : transmiseFaite ? 'actuel' : 'a-venir',
-      },
-      {
-        label: 'Signée, retournée au RH Congé',
+        label: 'Revenue du circuit (RH Admin)',
         sousTitre: retourneeFaite ? 'Fait' : null,
-        etat: retourneeFaite ? 'termine' : approuveeFaite ? 'actuel' : 'a-venir',
+        etat: retourneeFaite ? 'termine' : deposeeFaite ? 'actuel' : 'a-venir',
       },
       {
         label: "Transmise à l'agent",
@@ -135,45 +133,36 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     return this.api.pieceUrl(pieceId);
   }
 
-  /** Transmettre/rejeter depuis "en_attente" : réservé au RH Congé. */
-  peutTransmettreOuRejeter(): boolean {
+  documentRetourUrl(): string {
+    return this.demande?.id ? this.api.documentRetourUrl(this.demande.id) : '';
+  }
+
+  /** Valider/rejeter depuis "en_attente" : réservé au RH Congé. */
+  peutValiderOuRejeter(): boolean {
     return !!this.demande?.enAttente && this.auth.hasRole('ROLE_RH_CONGE');
   }
 
-  /** Approuver depuis "transmise" : réservé au RH Admin. */
-  peutApprouver(): boolean {
-    return !!this.demande?.transmise && this.auth.hasRole('ROLE_ADMIN_RH');
+  /** Déposer le retour du circuit depuis "deposee_courrier" : réservé au RH Admin. */
+  peutDeposerRetour(): boolean {
+    return !!this.demande?.deposeeCourrier && this.auth.hasRole('ROLE_ADMIN_RH');
   }
 
-  /** Rejeter depuis "transmise" (filet de sécurité) : aussi réservé au RH Admin. */
-  peutRejeterApresTransmission(): boolean {
-    return !!this.demande?.transmise && this.auth.hasRole('ROLE_ADMIN_RH');
+  /** Générer et transmettre depuis "retournee" : réservé au RH Congé. */
+  peutGenererEtTransmettre(): boolean {
+    return !!this.demande?.retournee && this.auth.hasRole('ROLE_RH_CONGE');
   }
 
-  /** Confirmer le retour du circuit papier depuis "approuvee" : réservé au RH Admin. */
-  peutConfirmerRetour(): boolean {
-    return this.demande?.statut === 'approuvee' && this.auth.hasRole('ROLE_ADMIN_RH');
-  }
-
-  /** Confirmer la remise physique depuis "retournee" : réservé au RH Congé. */
-  peutTransmettreAgent(): boolean {
-    return this.demande?.statut === 'retournee' && this.auth.hasRole('ROLE_RH_CONGE');
-  }
-
-  transmettre(): void {
-    if (!this.demande?.id || this.formTransmission.invalid || !this.piecesVerifiees) {
-      this.formTransmission.markAllAsTouched();
+  valider(): void {
+    if (!this.demande?.id) {
       return;
     }
-    const raw = this.formTransmission.getRawValue();
-
     this.saving = true;
     this.error = null;
-    this.api.transmettre(this.demande.id, raw.numero.trim(), raw.dateDecision, raw.dateExpiration, raw.nombreJours!).subscribe({
+    this.api.valider(this.demande.id).subscribe({
       next: () => this.router.navigateByUrl('/conges/demandes-decision'),
       error: (err) => {
         this.saving = false;
-        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la transmission de la demande.';
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la validation de la demande.';
       },
     });
   }
@@ -196,48 +185,93 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     });
   }
 
-  approuver(): void {
-    if (!this.demande?.id) {
+  deposerRetour(): void {
+    if (!this.demande?.id || !this.fichierRetour) {
+      this.error = 'Merci de joindre le document scanné.';
       return;
     }
     this.saving = true;
     this.error = null;
-    this.api.approuver(this.demande.id).subscribe({
+    this.api.retour(this.demande.id, this.fichierRetour).subscribe({
       next: () => this.router.navigateByUrl('/conges/demandes-decision'),
       error: (err) => {
         this.saving = false;
-        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'approbation de la demande.";
+        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors du dépôt du document de retour.';
       },
     });
   }
 
-  confirmerRetour(): void {
-    if (!this.demande?.id) {
+  genererEtTransmettre(): void {
+    if (!this.demande?.id || this.formGeneration.invalid) {
+      this.formGeneration.markAllAsTouched();
       return;
     }
+    const raw = this.formGeneration.getRawValue();
+
     this.saving = true;
     this.error = null;
-    this.api.confirmerRetour(this.demande.id).subscribe({
-      next: () => this.router.navigateByUrl('/conges/demandes-decision'),
-      error: (err) => {
-        this.saving = false;
-        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la confirmation du retour.';
-      },
-    });
+    this.api
+      .genererEtTransmettre(this.demande.id, {
+        numero: raw.numero.trim(),
+        dateDecision: raw.dateDecision,
+        dateExpiration: raw.dateExpiration,
+        nombreJours: raw.nombreJours!,
+        dateDerniereDecision: raw.dateDerniereDecision || null,
+      })
+      .subscribe({
+        next: () => this.router.navigateByUrl('/conges/demandes-decision'),
+        error: (err) => {
+          this.saving = false;
+          this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la génération de la décision.';
+        },
+      });
   }
 
-  transmettreAgent(): void {
-    if (!this.demande?.id) {
+  private preremplirGeneration(): void {
+    const d = this.demande;
+    if (!d || typeof d.personnel === 'string') {
       return;
     }
-    this.saving = true;
-    this.error = null;
-    this.api.transmettreAgent(this.demande.id).subscribe({
-      next: () => this.router.navigateByUrl('/conges/demandes-decision'),
-      error: (err) => {
-        this.saving = false;
-        this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la confirmation de remise.';
-      },
-    });
+    const personnel = d.personnel;
+    const dateDebutSuggeree = d.dateDerniereDecision ?? personnel.dateEmbauche ?? null;
+    if (dateDebutSuggeree) {
+      this.formGeneration.patchValue({ dateDerniereDecision: dateDebutSuggeree.substring(0, 10) });
+    }
+
+    const nombreJours = this.calculerSuggestionNombreJours();
+    if (nombreJours !== null) {
+      this.formGeneration.patchValue({ nombreJours });
+    }
+  }
+
+  /**
+   * Suggestion calculée côté client (mois écoulés entre la dernière décision
+   * — ou la date d'embauche si l'agent n'en a jamais eu — et le dépôt de
+   * cette demande, × 30 jours / 11 mois pour un fonctionnaire ou / 12 mois
+   * sinon) : le RH Congé peut toujours l'ajuster avant de générer, la valeur
+   * soumise fait foi côté serveur (voir genererEtTransmettre()).
+   */
+  private calculerSuggestionNombreJours(): number | null {
+    const d = this.demande;
+    if (!d || typeof d.personnel === 'string') {
+      return null;
+    }
+    const personnel = d.personnel;
+    const typeContrat = typeof personnel.typeContrat === 'string' ? null : personnel.typeContrat;
+    const diviseur = typeContrat?.code === 'fonctionnaire' ? 11 : 12;
+
+    const dateDebutBrute = d.dateDerniereDecision ?? personnel.dateEmbauche;
+    const dateFinBrute = d.createdAt;
+    if (!dateDebutBrute || !dateFinBrute) {
+      return null;
+    }
+
+    const debut = new Date(dateDebutBrute);
+    const fin = new Date(dateFinBrute);
+    let mois = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth());
+    const joursDansMoisFin = new Date(fin.getFullYear(), fin.getMonth() + 1, 0).getDate();
+    mois += (fin.getDate() - debut.getDate()) / joursDansMoisFin;
+
+    return Math.round(((mois * 30) / diviseur) * 10) / 10;
   }
 }

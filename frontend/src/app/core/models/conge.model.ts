@@ -1,8 +1,8 @@
 import { ListeValeurRef, Personnel } from './personnel.model';
 
 export type TypeConge = 'annuel' | 'maladie' | 'maternite_paternite' | 'sans_solde' | 'autre';
-/** Tous sauf en_attente/approuvee/refusee ne concernent que DemandeDecision (circuit à 5 étapes) — jamais DemandeJouissance (3 états). */
-export type StatutDemande = 'en_attente' | 'transmise' | 'approuvee' | 'retournee' | 'refusee' | 'transmise_agent';
+/** validee/deposee_courrier/retournee/transmise_agent : DemandeDecision uniquement (circuit à 5 étapes). approuvee : DemandeJouissance uniquement (3 états). refusee/en_attente : les deux. */
+export type StatutDemande = 'en_attente' | 'validee' | 'deposee_courrier' | 'retournee' | 'approuvee' | 'refusee' | 'transmise_agent';
 
 export interface Conge {
   id?: number;
@@ -24,9 +24,6 @@ export interface DecisionConge {
   observations?: string | null;
   nombreJours?: number | null;
   genereeParNom?: string | null;
-  valideeParAdminRh?: boolean;
-  valideeParNom?: string | null;
-  valideeLe?: string | null;
   createdAt?: string;
   isValide?: boolean;
 }
@@ -50,10 +47,12 @@ export interface DemandeDecision {
   decisionCreee?: DecisionConge | string | null;
   motifRejet?: ListeValeurRef | string | null;
   pieces?: PieceJustificative[];
+  nomOriginalDocumentRetour?: string | null;
+  hasDocumentRetour?: boolean;
   createdAt?: string;
   enAttente?: boolean;
-  transmise?: boolean;
-  approuvee?: boolean;
+  validee?: boolean;
+  deposeeCourrier?: boolean;
   retournee?: boolean;
 }
 

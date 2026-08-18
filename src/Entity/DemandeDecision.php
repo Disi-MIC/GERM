@@ -15,21 +15,24 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Demande de décision de congé : pour un agent qui n'en a jamais eu, ou dont la
- * dernière a expiré/atteint son terme. Circuit à cinq étapes :
+ * dernière a expiré/atteint son terme. Circuit à cinq étapes — voir le
+ * commentaire de StatutDemande pour le détail :
  *
- *  1. Le RH Congé vérifie les pièces et génère la DecisionConge (transmettre())
+ *  1. RH Congé vérifie les pièces, valide (Api/DemandeDecisionController::valider())
  *     ou rejette pour un motif prédéterminé (rejeter()) ;
- *  2. le RH Admin valide la décision déjà créée (approuver(), ne crée rien de
- *     nouveau — voir DecisionConge::valider()), ce qui déclenche hors
- *     application l'impression, le passage au service courrier et la
- *     signature de l'autorité ;
- *  3. une fois le papier signé revenu, le RH Admin le vérifie et le transmet
- *     au RH Congé (confirmerRetour()) ;
- *  4. le RH Congé remet enfin la décision à l'agent, physiquement et dans
- *     l'application (transmettreAgent()).
+ *  2. l'agent dépose physiquement au service courrier et le confirme
+ *     (Api/MeDemandesController::confirmerDepotCourrierDecision()) ;
+ *  3. circuit ministériel hors application ;
+ *  4. RH Admin dépose les documents scannés du retour (retour()) ;
+ *  5. RH Congé calcule le nombre de jours, génère la DecisionConge et
+ *     transmet à l'agent (genererEtTransmettre()) — seule étape qui crée
+ *     effectivement la DecisionConge, contrairement aux versions précédentes
+ *     de ce circuit.
  *
  * Exposée en lecture seule côté API : toutes les écritures passent par
- * src/Controller/Api/DemandeDecisionController.php.
+ * src/Controller/Api/DemandeDecisionController.php (et
+ * Api/MeDemandesController.php pour la confirmation de dépôt courrier, action
+ * de l'agent lui-même).
  */
 #[ORM\Entity(repositoryClass: DemandeDecisionRepository::class)]
 #[ORM\Table(name: 'demande_decision')]
@@ -102,6 +105,14 @@ class DemandeDecision
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['api:read'])]
     private ?DecisionConge $decisionCreee = null;
+
+    /** Documents scannés déposés par le RH Admin au retour du circuit papier (statut RETOURNEE) — voir retour(). */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cheminDocumentRetour = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $nomOriginalDocumentRetour = null;
 
     #[ORM\OneToMany(mappedBy: 'demande', targetEntity: PieceJustificativeDecision::class, cascade: ['persist'], orphanRemoval: true)]
     #[Groups(['api:read'])]
@@ -242,6 +253,36 @@ class DemandeDecision
         return $this;
     }
 
+    public function getCheminDocumentRetour(): ?string
+    {
+        return $this->cheminDocumentRetour;
+    }
+
+    public function setCheminDocumentRetour(?string $cheminDocumentRetour): static
+    {
+        $this->cheminDocumentRetour = $cheminDocumentRetour;
+
+        return $this;
+    }
+
+    public function getNomOriginalDocumentRetour(): ?string
+    {
+        return $this->nomOriginalDocumentRetour;
+    }
+
+    public function setNomOriginalDocumentRetour(?string $nomOriginalDocumentRetour): static
+    {
+        $this->nomOriginalDocumentRetour = $nomOriginalDocumentRetour;
+
+        return $this;
+    }
+
+    #[Groups(['api:read'])]
+    public function isHasDocumentRetour(): bool
+    {
+        return null !== $this->cheminDocumentRetour;
+    }
+
     /**
      * @return Collection<int, PieceJustificativeDecision>
      */
@@ -262,15 +303,15 @@ class DemandeDecision
     }
 
     #[Groups(['api:read'])]
-    public function isTransmise(): bool
+    public function isValidee(): bool
     {
-        return StatutDemande::TRANSMISE === $this->statut;
+        return StatutDemande::VALIDEE === $this->statut;
     }
 
     #[Groups(['api:read'])]
-    public function isApprouvee(): bool
+    public function isDeposeeCourrier(): bool
     {
-        return StatutDemande::APPROUVEE === $this->statut;
+        return StatutDemande::DEPOSEE_COURRIER === $this->statut;
     }
 
     #[Groups(['api:read'])]

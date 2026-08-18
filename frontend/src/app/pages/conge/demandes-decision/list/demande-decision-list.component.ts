@@ -11,9 +11,9 @@ import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
   en_attente: 'En attente',
-  transmise: 'Transmise au RH Admin',
-  approuvee: 'Approuvée, circuit de signature',
-  retournee: 'Signée, transmise au RH Congé',
+  validee: 'Validée, à déposer au courrier',
+  deposee_courrier: 'Déposée au service courrier',
+  retournee: 'Revenue du circuit, à finaliser',
   transmise_agent: "Transmise à l'agent",
   refusee: 'Refusée',
 };
@@ -91,10 +91,10 @@ export class DemandeDecisionListComponent implements OnInit {
 
   badgeClass(statut: string | undefined): string {
     switch (statut) {
-      case 'transmise':
+      case 'validee':
         return 'info';
-      case 'approuvee':
-        return 'primary';
+      case 'deposee_courrier':
+        return 'warning';
       case 'retournee':
         return 'primary';
       case 'transmise_agent':

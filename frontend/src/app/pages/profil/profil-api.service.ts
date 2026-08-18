@@ -162,6 +162,11 @@ export class ProfilApiService {
     return this.http.post<DemandeDecision>(`${API_BASE}/me/demandes-decision/${id}/piece2`, formData);
   }
 
+  /** Confirme le dépôt physique au service courrier, une fois la demande validée par le RH Congé. */
+  confirmerDepotCourrierDecision(id: number): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/me/demandes-decision/${id}/confirmer-depot-courrier`, {});
+  }
+
   creerDemandeJouissance(demande: DemandeJouissanceSelfPayload): Observable<DemandeJouissance> {
     return this.http.post<DemandeJouissance>(`${API_BASE}/me/demandes-jouissance`, demande);
   }

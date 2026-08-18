@@ -12,6 +12,13 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else {
+  @if (erreurConfirmation) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ erreurConfirmation }}
+      <button type="button" class="btn-close" (click)="erreurConfirmation = null"></button>
+    </div>
+  }
+
   <div class="mb-4">
     <app-data-table
       [rows]="conges"
@@ -100,6 +107,23 @@
       <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
       <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
       <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+      <ng-template appDataTableCell="action" let-demande>
+        @if (demande.statut === 'validee') {
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            [disabled]="confirmationEnCoursId === demande.id"
+            (click)="confirmerDepotCourrier(demande)"
+          >
+            @if (confirmationEnCoursId === demande.id) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            J'ai déposé au courrier
+          </button>
+        } @else {
+          <span class="text-muted">—</span>
+        }
+      </ng-template>
 
       <ng-template appDataTableMobileItem let-demande>
         <div class="mob-card">
@@ -120,6 +144,19 @@
               </div>
               @if (demande.commentaireTraitement) {
                 <div class="mob-card-subtitle">{{ demande.commentaireTraitement }}</div>
+              }
+              @if (demande.statut === 'validee') {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary mt-2"
+                  [disabled]="confirmationEnCoursId === demande.id"
+                  (click)="confirmerDepotCourrier(demande)"
+                >
+                  @if (confirmationEnCoursId === demande.id) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  J'ai déposé au courrier
+                </button>
               }
             </div>
           </div>

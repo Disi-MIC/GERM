@@ -8,6 +8,7 @@ use App\Entity\DemandeDecision;
 use App\Entity\DemandeJouissance;
 use App\Entity\DocumentAdministratif;
 use App\Entity\Enum\CategorieListeValeur;
+use App\Entity\Enum\StatutDemande;
 use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\Personnel;
 use App\Entity\PieceJustificativeDecision;
@@ -213,6 +214,38 @@ class MeDemandesController extends AbstractController
         $piece->setNomOriginal($stocke['originalName']);
         $this->em->persist($piece);
         $this->em->flush();
+
+        return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * L'agent confirme lui-même avoir déposé physiquement son dossier au
+     * service courrier, une fois sa demande validée par le RH Congé (pièces
+     * complètes) — voir le commentaire de classe de DemandeDecision pour le
+     * circuit complet. Rien à joindre ici : le dossier physique déposé est
+     * celui dont les pièces ont déjà été vérifiées à l'étape précédente.
+     */
+    #[Route('/api/me/demandes-decision/{id}/confirmer-depot-courrier', name: 'api_me_demande_decision_confirmer_depot_courrier', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function confirmerDepotCourrierDecision(DemandeDecision $demande): JsonResponse
+    {
+        if (!$this->appartientAMoi($demande->getPersonnel())) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$demande->isValidee()) {
+            return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être validée par le RH Congé avant de confirmer le dépôt au service courrier."]], JsonResponse::HTTP_CONFLICT);
+        }
+
+        $demande->setStatut(StatutDemande::DEPOSEE_COURRIER);
+        $demande->setDateTraitement(new \DateTimeImmutable());
+        $this->em->flush();
+
+        $this->notificationService->notifierRole(
+            User::ROLE_RH_CONGE,
+            'Dossier déposé au service courrier',
+            '/conges/demandes-decision',
+            \sprintf('%s a confirmé le dépôt physique de son dossier au service courrier.', $demande->getPersonnel()?->getNomComplet()),
+        );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }

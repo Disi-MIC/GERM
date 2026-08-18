@@ -4,6 +4,14 @@ import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
 import { DemandeDecision } from '../../core/models/conge.model';
 
+export interface GenererEtTransmettrePayload {
+  numero: string;
+  dateDecision: string;
+  dateExpiration: string;
+  nombreJours: number;
+  dateDerniereDecision?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DemandeDecisionApiService {
   constructor(private readonly http: HttpClient) {}
@@ -32,34 +40,30 @@ export class DemandeDecisionApiService {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/piece2`, formData);
   }
 
-  /** RH Congé : vérifie les pièces, génère la DecisionConge (numéro/dates/nombre de jours) et transmet au RH Admin. */
-  transmettre(id: number, numero: string, dateDecision: string, dateExpiration: string, nombreJours: number): Observable<DemandeDecision> {
-    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/transmettre`, {
-      numero,
-      dateDecision,
-      dateExpiration,
-      nombreJours,
-    });
+  /** RH Congé, depuis "en_attente" — vérifie que les pièces attendues sont présentes, autorise l'agent à déposer au courrier. */
+  valider(id: number): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/valider`, {});
   }
 
-  /** RH Congé (avant transmission, pièces incomplètes) ou RH Admin (après transmission, filet de sécurité). */
+  /** RH Congé, depuis "en_attente" — motif prédéterminé obligatoire (pièces incomplètes). */
   rejeter(id: number, motifRejet: number, commentaire?: string | null): Observable<DemandeDecision> {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/rejeter`, { motifRejet, commentaire });
   }
 
-  /** RH Admin uniquement, depuis l'état "transmise" — valide la DecisionConge déjà créée, n'en crée pas de nouvelle. Déclenche le circuit papier hors application. */
-  approuver(id: number): Observable<DemandeDecision> {
-    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/approuver`, {});
+  /** RH Admin, depuis "deposee_courrier" — dépose les documents scannés reçus en retour du circuit ministériel. */
+  retour(id: number, fichier: File): Observable<DemandeDecision> {
+    const formData = new FormData();
+    formData.append('fichier', fichier);
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/retour`, formData);
   }
 
-  /** RH Admin uniquement, depuis l'état "approuvee" — confirme la vérification du papier signé revenu du circuit et le transmet au RH Congé. */
-  confirmerRetour(id: number): Observable<DemandeDecision> {
-    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/confirmer-retour`, {});
+  documentRetourUrl(id: number): string {
+    return `${API_BASE}/demandes-decision/${id}/document-retour`;
   }
 
-  /** RH Congé uniquement, depuis l'état "retournee" — confirme la remise physique et électronique à l'agent. */
-  transmettreAgent(id: number): Observable<DemandeDecision> {
-    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/transmettre-agent`, {});
+  /** RH Congé, depuis "retournee" — calcule/valide le nombre de jours, crée la DecisionConge, transmet à l'agent. */
+  genererEtTransmettre(id: number, payload: GenererEtTransmettrePayload): Observable<DemandeDecision> {
+    return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/generer-et-transmettre`, payload);
   }
 
   delete(id: number): Observable<void> {

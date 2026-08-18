@@ -37,6 +37,13 @@
         <div class="form-text">{{ piecesAttendues() }} pièce(s) attendue(s), {{ demande.pieces?.length ?? 0 }} fournie(s).</div>
       </dd>
 
+      @if (demande.hasDocumentRetour) {
+        <dt class="col-sm-4">Document du retour circuit</dt>
+        <dd class="col-sm-8">
+          <a [href]="documentRetourUrl()" target="_blank"><i class="bi bi-file-earmark-arrow-down"></i> {{ demande.nomOriginalDocumentRetour }}</a>
+        </dd>
+      }
+
       @if (demande.decisionCreee && demande.decisionCreee !== null) {
         @if ($any(demande.decisionCreee).numeroDecision; as numero) {
           <dt class="col-sm-4">Décision générée</dt>
@@ -44,12 +51,6 @@
             {{ numero }} — {{ $any(demande.decisionCreee).nombreJours }} j
             (du {{ $any(demande.decisionCreee).dateDecision | slice: 0 : 10 }} au {{ $any(demande.decisionCreee).dateExpiration | slice: 0 : 10 }})
             <div class="text-muted small">Générée par {{ $any(demande.decisionCreee).genereeParNom ?? '—' }}</div>
-            @if ($any(demande.decisionCreee).valideeParAdminRh) {
-              <div class="text-success small">
-                <i class="bi bi-patch-check-fill"></i> Validée par {{ $any(demande.decisionCreee).valideeParNom }}
-                le {{ $any(demande.decisionCreee).valideeLe | slice: 0 : 10 }}
-              </div>
-            }
           </dd>
         }
       }
@@ -66,51 +67,16 @@
     </dl>
 
     @if (demande.enAttente) {
-      @if (peutTransmettreOuRejeter()) {
+      @if (peutValiderOuRejeter()) {
         <div class="alert alert-info small">
-          Vérifiez que les pièces attendues sont complètes avant de générer la décision et de la transmettre au RH Admin, ou rejetez la demande pour un motif déterminé.
+          Vérifiez que les pièces attendues sont complètes avant de valider — l'agent pourra alors déposer son dossier au service courrier — ou rejetez pour un motif déterminé.
         </div>
 
-        <div class="card bg-light border-0 mb-3">
-          <div class="card-body py-3">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="piecesVerifiees" [(ngModel)]="piecesVerifiees" [ngModelOptions]="{ standalone: true }" />
-              <label class="form-check-label" for="piecesVerifiees">J'ai vérifié que les pièces jointes sont complètes et conformes</label>
-            </div>
-          </div>
+        <div class="d-flex gap-2 mb-4">
+          <button type="button" class="btn btn-success" [disabled]="saving" (click)="valider()">
+            <i class="bi bi-check-lg"></i> Valider
+          </button>
         </div>
-
-        <form [formGroup]="formTransmission">
-          <h6 class="text-muted text-uppercase small mb-2">Générer la décision</h6>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Numéro de décision</label>
-              <input type="text" class="form-control" formControlName="numero" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Nombre de jours</label>
-              <input type="number" min="1" class="form-control" formControlName="nombreJours" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Date d'octroi</label>
-              <input type="date" class="form-control" formControlName="dateDecision" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Date d'expiration</label>
-              <input type="date" class="form-control" formControlName="dateExpiration" />
-            </div>
-          </div>
-          <div class="mt-3 d-flex gap-2">
-            <button type="button" class="btn btn-primary" [disabled]="saving || !piecesVerifiees" (click)="transmettre()">
-              <i class="bi bi-send"></i> Générer et transmettre au RH Admin
-            </button>
-          </div>
-          @if (!piecesVerifiees) {
-            <div class="form-text">Cochez la vérification des pièces pour activer la transmission.</div>
-          }
-        </form>
-
-        <hr class="my-4" />
 
         <form [formGroup]="formRejet">
           <h6 class="text-muted text-uppercase small mb-2">Rejeter</h6>
@@ -136,74 +102,75 @@
           </div>
         </form>
       } @else {
-        <div class="alert alert-secondary small">Seul le RH Congé peut transmettre ou rejeter une demande en attente.</div>
-        <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Retour</a>
+        <div class="alert alert-secondary small">Seul le RH Congé peut valider ou rejeter une demande en attente.</div>
       }
-    } @else if (demande.transmise) {
-      <div class="alert alert-warning small">Décision générée par le RH Congé, en attente de validation par le RH Admin.</div>
+      <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary mt-3">Retour</a>
+    } @else if (demande.statut === 'validee') {
+      <div class="alert alert-info small">
+        Demande validée : l'agent doit maintenant déposer son dossier physiquement au service courrier, puis confirmer ce dépôt dans l'application.
+      </div>
+      <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Retour</a>
+    } @else if (demande.deposeeCourrier) {
+      <div class="alert alert-info small">
+        Dossier déposé au service courrier — en circuit ministériel (courrier, SG, Ministre, DAGE), entièrement hors application. Déposez ici les documents scannés dès leur retour.
+      </div>
 
-      @if (peutApprouver()) {
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-success" [disabled]="saving" (click)="approuver()">
-            <i class="bi bi-check-lg"></i> Approuver
+      @if (peutDeposerRetour()) {
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Documents scannés du retour</label>
+            <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="fichierRetour = $any($event.target).files[0] ?? null" />
+          </div>
+        </div>
+        <div class="mt-3">
+          <button type="button" class="btn btn-primary" [disabled]="saving || !fichierRetour" (click)="deposerRetour()">
+            <i class="bi bi-file-earmark-arrow-up"></i> Déposer et transmettre au RH Congé
           </button>
         </div>
+      } @else {
+        <div class="alert alert-secondary small">Seul le RH Admin peut déposer le retour du circuit papier.</div>
+      }
+      <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary mt-3">Retour</a>
+    } @else if (demande.retournee) {
+      <div class="alert alert-success small">
+        Documents de retour déposés par le RH Admin. Calculez le nombre de jours et générez la décision pour clôturer la demande.
+      </div>
 
-        <hr class="my-4" />
-
-        <form [formGroup]="formRejet">
-          <h6 class="text-muted text-uppercase small mb-2">Rejeter (filet de sécurité)</h6>
+      @if (peutGenererEtTransmettre()) {
+        <form [formGroup]="formGeneration">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Motif du rejet</label>
-              <select class="form-select" formControlName="motifRejet">
-                <option [ngValue]="null" disabled>Choisir...</option>
-                @for (motif of motifsRejet; track motif.id) {
-                  <option [ngValue]="motif.id">{{ motif.libelle }}</option>
-                }
-              </select>
+              <label class="form-label">Numéro de décision</label>
+              <input type="text" class="form-control" formControlName="numero" />
             </div>
             <div class="col-md-6">
-              <label class="form-label">Commentaire (optionnel)</label>
-              <input type="text" class="form-control" formControlName="commentaire" />
+              <label class="form-label">Date d'octroi</label>
+              <input type="date" class="form-control" formControlName="dateDecision" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date d'expiration</label>
+              <input type="date" class="form-control" formControlName="dateExpiration" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date de la dernière demande</label>
+              <input type="date" class="form-control" formControlName="dateDerniereDecision" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nombre de jours</label>
+              <input type="number" min="1" step="0.5" class="form-control" formControlName="nombreJours" />
+              <div class="form-text">Suggéré automatiquement à partir de la période écoulée — modifiable.</div>
             </div>
           </div>
           <div class="mt-3">
-            <button type="button" class="btn btn-danger" [disabled]="saving" (click)="rejeter()">
-              <i class="bi bi-x-lg"></i> Rejeter
+            <button type="button" class="btn btn-primary" [disabled]="saving" (click)="genererEtTransmettre()">
+              <i class="bi bi-send-check"></i> Générer et transmettre à l'agent
             </button>
           </div>
         </form>
       } @else {
-        <div class="alert alert-secondary small">Seul le RH Admin peut approuver ou rejeter une demande transmise.</div>
+        <div class="alert alert-secondary small">Seul le RH Congé peut générer et transmettre la décision.</div>
       }
       <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary mt-3">Retour</a>
-    } @else if (demande.statut === 'approuvee') {
-      <div class="alert alert-success small">
-        Décision validée par le RH Admin : impression, service courrier et signature de l'autorité en cours, hors application. Confirmez ici quand le papier signé est revenu et vérifié.
-      </div>
-
-      @if (peutConfirmerRetour()) {
-        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="confirmerRetour()">
-          <i class="bi bi-file-earmark-check"></i> Confirmer le retour et transmettre au RH Congé
-        </button>
-      } @else {
-        <div class="alert alert-secondary small">Seul le RH Admin peut confirmer le retour du circuit papier.</div>
-      }
-      <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary ms-2">Retour</a>
-    } @else if (demande.statut === 'retournee') {
-      <div class="alert alert-success small">
-        Décision signée et vérifiée par le RH Admin. Remettez-la à l'agent (physiquement et dans l'application) pour clôturer la demande.
-      </div>
-
-      @if (peutTransmettreAgent()) {
-        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="transmettreAgent()">
-          <i class="bi bi-check2-all"></i> Marquer transmise à l'agent
-        </button>
-      } @else {
-        <div class="alert alert-secondary small">Seul le RH Congé peut confirmer la remise à l'agent.</div>
-      }
-      <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary ms-2">Retour</a>
     } @else {
       <div class="alert alert-secondary">Cette demande a déjà été traitée.</div>
       <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Retour</a>

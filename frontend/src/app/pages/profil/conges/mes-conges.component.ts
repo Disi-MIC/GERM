@@ -20,9 +20,9 @@ const LABELS_TYPE: Record<string, string> = {
 
 const LABELS_STATUT: Record<string, string> = {
   en_attente: 'En attente',
-  transmise: 'En cours de validation',
-  approuvee: 'Validée, en préparation',
-  retournee: 'Signée, en cours de remise',
+  validee: 'Validée — à déposer au courrier',
+  deposee_courrier: 'Déposée au courrier',
+  retournee: 'En cours de finalisation',
   transmise_agent: 'Reçue',
   refusee: 'Refusée',
 };
@@ -40,6 +40,8 @@ export class MesCongesComponent implements OnInit {
   demandesJouissance: DemandeJouissance[] = [];
   loading = true;
   error: string | null = null;
+  confirmationEnCoursId: number | null = null;
+  erreurConfirmation: string | null = null;
   readonly labelsType = LABELS_TYPE;
   readonly labelsStatut = LABELS_STATUT;
 
@@ -62,6 +64,7 @@ export class MesCongesComponent implements OnInit {
     { key: 'creeeLe', label: 'Créée le', sortable: true, value: (d) => d.createdAt },
     { key: 'traiteeLe', label: 'Traitée le', sortable: true, value: (d) => d.dateTraitement ?? '' },
     { key: 'commentaire', label: 'Commentaire', sortable: false, value: (d) => d.commentaireTraitement ?? '' },
+    { key: 'action', label: 'Action', align: 'end', alwaysVisible: true },
   ];
 
   readonly colonnesDemandesJouissance: DataTableColumn<DemandeJouissance>[] = [
@@ -97,10 +100,10 @@ export class MesCongesComponent implements OnInit {
 
   badgeClasse(statut: string | undefined): string {
     switch (statut) {
-      case 'transmise':
+      case 'validee':
         return 'info';
-      case 'approuvee':
-        return 'primary';
+      case 'deposee_courrier':
+        return 'warning';
       case 'retournee':
         return 'primary';
       case 'transmise_agent':
@@ -110,5 +113,27 @@ export class MesCongesComponent implements OnInit {
       default:
         return 'secondary';
     }
+  }
+
+  /** L'agent confirme lui-même avoir déposé physiquement son dossier au service courrier, une fois la demande validée par le RH Congé. */
+  confirmerDepotCourrier(demande: DemandeDecision): void {
+    if (!demande.id) {
+      return;
+    }
+    this.confirmationEnCoursId = demande.id;
+    this.erreurConfirmation = null;
+    this.api.confirmerDepotCourrierDecision(demande.id).subscribe({
+      next: (miseAJour) => {
+        const index = this.demandesDecision.findIndex((d) => d.id === demande.id);
+        if (index !== -1) {
+          this.demandesDecision[index] = miseAJour;
+        }
+        this.confirmationEnCoursId = null;
+      },
+      error: (err) => {
+        this.confirmationEnCoursId = null;
+        this.erreurConfirmation = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la confirmation du dépôt.';
+      },
+    });
   }
 }

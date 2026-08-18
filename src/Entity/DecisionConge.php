@@ -15,15 +15,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Décision de congé (annuel) : autorisation formelle, avec une période de validité,
  * sur laquelle une ou plusieurs demandes de jouissance peuvent s'appuyer tant qu'elle
- * n'a pas expiré. Créée automatiquement quand le RH Congé transmet une DemandeDecision
- * (DemandeDecisionController::transmettre(), $genereePar/$nombreJours renseignés,
- * $valideeParAdminRh=false), ou directement pour enregistrer une décision papier
- * antérieure à l'application (decision-conge-form, superadmin) — dans ce second cas,
- * $valideeParAdminRh reste à sa valeur par défaut (true) : sans circuit de transmission,
- * il n'y a pas de second palier à valider. isValide() reste volontairement basé sur la
- * seule date d'expiration : $valideeParAdminRh est une information d'audit sur l'origine
- * de la décision, pas un filtre d'utilisabilité (une DemandeJouissance ne doit pas se
- * retrouver bloquée par une validation RH Admin qui ne la concerne pas).
+ * n'a pas expiré. Créée automatiquement par le RH Congé à la dernière étape du
+ * circuit d'une DemandeDecision (Api/DemandeDecisionController::genererEtTransmettre(),
+ * $genereePar/$nombreJours renseignés à cette occasion — le circuit d'approbation
+ * ministériel a déjà eu lieu physiquement avant, voir DemandeDecision), ou
+ * directement pour enregistrer une décision papier antérieure à l'application
+ * (decision-conge-form, superadmin).
  *
  * Exposée en lecture seule côté API : les écritures passent par
  * src/Controller/Api/DecisionCongeController.php (la suppression y est
@@ -80,20 +77,9 @@ class DecisionConge
     #[Groups(['api:read'])]
     private ?int $nombreJours = null;
 
-    /** L'opérateur RH Congé ayant généré la décision — voir DemandeDecisionController::transmettre(). */
+    /** L'opérateur RH Congé ayant généré la décision — voir DemandeDecisionController::genererEtTransmettre(). */
     #[ORM\ManyToOne(targetEntity: User::class)]
     private ?User $genereePar = null;
-
-    #[ORM\Column(options: ['default' => true])]
-    #[Groups(['api:read'])]
-    private bool $valideeParAdminRh = true;
-
-    #[ORM\ManyToOne(targetEntity: User::class)]
-    private ?User $valideePar = null;
-
-    #[ORM\Column(nullable: true)]
-    #[Groups(['api:read'])]
-    private ?\DateTimeImmutable $valideeLe = null;
 
     #[ORM\OneToMany(mappedBy: 'decision', targetEntity: DemandeJouissance::class)]
     private Collection $demandesJouissance;
@@ -201,48 +187,6 @@ class DecisionConge
     public function getGenereeParNom(): ?string
     {
         return $this->genereePar?->getNomComplet();
-    }
-
-    public function isValideeParAdminRh(): bool
-    {
-        return $this->valideeParAdminRh;
-    }
-
-    /**
-     * Volontairement distinct de valider() ci-dessous : n'appelable qu'à la
-     * création par DemandeDecisionController::transmettre(), pour repasser
-     * la décision en attente de validation RH Admin (défaut true — voir le
-     * commentaire de classe) sans passer par un constructeur dédié.
-     */
-    public function marquerEnAttenteValidationAdminRh(): static
-    {
-        $this->valideeParAdminRh = false;
-
-        return $this;
-    }
-
-    public function getValideePar(): ?User
-    {
-        return $this->valideePar;
-    }
-
-    #[Groups(['api:read'])]
-    public function getValideeParNom(): ?string
-    {
-        return $this->valideePar?->getNomComplet();
-    }
-
-    public function getValideeLe(): ?\DateTimeImmutable
-    {
-        return $this->valideeLe;
-    }
-
-    /** Marque la décision (déjà créée par transmettre()) comme validée par le RH Admin — ne crée rien, contrairement à CarteProfessionnelle::valider(). */
-    public function valider(User $validateur): void
-    {
-        $this->valideeParAdminRh = true;
-        $this->valideePar = $validateur;
-        $this->valideeLe = new \DateTimeImmutable();
     }
 
     /**
