@@ -12,7 +12,9 @@ export class ParametresDecisionCongeApiService {
     return this.http.get<ParametresDecisionConge>(`${API_BASE}/parametres-decision-conge`);
   }
 
-  update(parametres: Pick<ParametresDecisionConge, 'visasDecrets' | 'article2' | 'article3'>): Observable<ParametresDecisionConge> {
+  update(
+    parametres: Pick<ParametresDecisionConge, 'visasDecrets' | 'article2' | 'article3' | 'ampliations'>,
+  ): Observable<ParametresDecisionConge> {
     return this.http.put<ParametresDecisionConge>(`${API_BASE}/parametres-decision-conge`, parametres);
   }
 }

@@ -10,6 +10,8 @@ export interface GenererEtTransmettrePayload {
   dateExpiration: string;
   nombreJours: number;
   dateDerniereDecision?: string | null;
+  numeroAttestationNonJouissance?: string | null;
+  dateAttestationNonJouissance?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

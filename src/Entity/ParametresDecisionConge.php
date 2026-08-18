@@ -41,6 +41,11 @@ class ParametresDecisionConge
     #[Groups(['api:read'])]
     private ?string $article3 = null;
 
+    /** Liste de diffusion (une entrée par ligne) — voir le bloc AMPLIATIONS du document papier. */
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $ampliations = null;
+
     #[ORM\Column(nullable: true)]
     #[Groups(['api:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
@@ -85,6 +90,18 @@ class ParametresDecisionConge
     public function setArticle3(?string $article3): static
     {
         $this->article3 = $article3;
+
+        return $this;
+    }
+
+    public function getAmpliations(): ?string
+    {
+        return $this->ampliations;
+    }
+
+    public function setAmpliations(?string $ampliations): static
+    {
+        $this->ampliations = $ampliations;
 
         return $this;
     }

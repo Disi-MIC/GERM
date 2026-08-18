@@ -2,16 +2,19 @@ import { SlicePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DecisionConge } from '../../core/models/conge.model';
 import { Personnel } from '../../core/models/personnel.model';
+import { nombreEnLettresFr } from '../nombre-en-lettres';
 
 /**
- * Aperçu du document final de décision de congé — informations déjà
- * disponibles côté API (voir DecisionConge côté serveur), sans texte légal
- * (articles, formule exécutoire...) puisque ce libellé n'a pas encore été
- * fourni : affiche les données, pas un fac-similé du document papier signé.
- * Utilisé à l'identique par l'agent (mes-conges), le RH Congé et le RH Admin
- * (decision-conge-list, demande-decision-traiter) — mêmes informations pour
- * les trois, seule la source des données (déjà chargée par le composant
- * parent) diffère selon le contexte d'accès.
+ * Aperçu du document final de décision de congé, mis en page pour se
+ * rapprocher du modèle papier réel du ministère (visas, article premier,
+ * articles 2/3, ampliations) — informations déjà disponibles côté API (voir
+ * DecisionConge côté serveur). Le texte légal fixe (visas des décrets,
+ * articles 2/3, ampliations) vient de ParametresDecisionConge, copié sur la
+ * décision au moment de sa génération ; les deux visas variables (décision
+ * antérieure de l'agent, attestation de non jouissance) et la clause "Après
+ * avis favorable..." sont assemblés ici, propres à chaque décision. Utilisé
+ * à l'identique par l'agent (mes-conges), le RH Congé et le RH Admin
+ * (decision-conge-list, demande-decision-traiter).
  */
 @Component({
   selector: 'app-decision-conge-apercu',
@@ -27,6 +30,10 @@ export class DecisionCongeApercuComponent {
   private get personnel(): Personnel | null {
     const p = this.decision?.personnel;
     return p && typeof p !== 'string' ? p : null;
+  }
+
+  get agentCivilite(): string {
+    return this.personnel?.sexe === 'F' ? 'Madame' : 'Monsieur';
   }
 
   get agentNomComplet(): string {
@@ -60,6 +67,62 @@ export class DecisionCongeApercuComponent {
       return '—';
     }
     return typeof typeContrat === 'string' ? typeContrat : typeContrat.libelle;
+  }
+
+  get analyseTexte(): string {
+    return `Décision accordant un congé administratif à ${this.agentCivilite} ${this.agentNomComplet}, ${this.agentFonction}, matricule de solde n°${this.agentMatricule}.`;
+  }
+
+  get nombreJoursEnLettres(): string {
+    const n = this.decision?.nombreJours;
+    if (n === null || n === undefined) {
+      return '';
+    }
+    const mots = nombreEnLettresFr(n);
+    return mots.charAt(0).toUpperCase() + mots.slice(1);
+  }
+
+  /** Une "VU ..." par ligne, texte fixe saisi par le RH Admin (voir ParametresDecisionConge) — vide si aucun réglage renseigné. */
+  get visasFixes(): string[] {
+    return (this.decision?.visasDecrets ?? '')
+      .split('\n')
+      .map((ligne) => ligne.trim())
+      .filter((ligne) => ligne.length > 0);
+  }
+
+  /** Une destination par ligne (voir ParametresDecisionConge::$ampliations). */
+  get ampliationsListe(): string[] {
+    return (this.decision?.ampliations ?? '')
+      .split('\n')
+      .map((ligne) => ligne.trim())
+      .filter((ligne) => ligne.length > 0);
+  }
+
+  private static readonly MOIS_FR = [
+    'janvier',
+    'février',
+    'mars',
+    'avril',
+    'mai',
+    'juin',
+    'juillet',
+    'août',
+    'septembre',
+    'octobre',
+    'novembre',
+    'décembre',
+  ];
+
+  /** "2023-03-24" -> "24 mars 2023", convention du document papier (voir le modèle fourni par le ministère). */
+  dateFr(iso: string | null | undefined): string {
+    if (!iso) {
+      return '';
+    }
+    const [annee, mois, jour] = iso.slice(0, 10).split('-').map(Number);
+    if (!annee || !mois || !jour) {
+      return iso.slice(0, 10);
+    }
+    return `${jour} ${DecisionCongeApercuComponent.MOIS_FR[mois - 1]} ${annee}`;
   }
 
   /**

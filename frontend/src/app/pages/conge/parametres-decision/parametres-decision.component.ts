@@ -7,11 +7,17 @@ import { ParametresDecisionCongeApiService } from '../parametres-decision-conge-
 
 /**
  * Réglages RH Admin du texte légal par défaut (visas des décrets, articles 2
- * et 3) inséré automatiquement dans chaque décision de congé générée par le
- * RH Congé — voir ParametresDecisionConge et
+ * et 3, ampliations) inséré automatiquement dans chaque décision de congé
+ * générée par le RH Congé — voir ParametresDecisionConge et
  * DemandeDecisionController::genererEtTransmettre() côté serveur. Ce texte
  * n'est jamais saisi à la main par le RH Congé, qui n'a pas accès à cette
  * page (route gardée ROLE_ADMIN_RH, voir conge.routes.ts).
+ *
+ * Les deux visas variables (décision de congé antérieure de l'agent,
+ * attestation de non jouissance) et la clause "Après avis favorable..." ne
+ * sont volontairement pas dans $visasDecrets : ils sont insérés par
+ * DecisionCongeApercuComponent entre ce texte et "DECIDE :", puisqu'ils
+ * dépendent de l'agent/de la demande plutôt que d'être fixes.
  */
 @Component({
   selector: 'app-parametres-decision',
@@ -31,6 +37,7 @@ export class ParametresDecisionComponent implements OnInit {
     visasDecrets: [''],
     article2: [''],
     article3: [''],
+    ampliations: [''],
   });
 
   constructor(
@@ -45,6 +52,7 @@ export class ParametresDecisionComponent implements OnInit {
           visasDecrets: parametres.visasDecrets ?? '',
           article2: parametres.article2 ?? '',
           article3: parametres.article3 ?? '',
+          ampliations: parametres.ampliations ?? '',
         });
         this.misAJourParNom = parametres.misAJourParNom ?? null;
         this.updatedAt = parametres.updatedAt ?? null;
@@ -67,6 +75,7 @@ export class ParametresDecisionComponent implements OnInit {
         visasDecrets: raw.visasDecrets.trim() || null,
         article2: raw.article2.trim() || null,
         article3: raw.article3.trim() || null,
+        ampliations: raw.ampliations.trim() || null,
       })
       .subscribe({
         next: (parametres) => {

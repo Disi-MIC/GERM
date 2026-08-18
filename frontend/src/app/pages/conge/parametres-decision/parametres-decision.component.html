@@ -26,17 +26,33 @@
 
       <div class="mb-3">
         <label class="form-label">Visas des décrets en vigueur</label>
-        <textarea class="form-control" rows="4" formControlName="visasDecrets" placeholder="Vu le décret n°... du..."></textarea>
+        <textarea
+          class="form-control"
+          rows="10"
+          formControlName="visasDecrets"
+          placeholder="VU la Constitution ;&#10;VU la loi n°... ;&#10;VU le décret n°... ;"
+        ></textarea>
+        <div class="form-text">
+          Une ligne par visa (chacune commençant par "VU"). Le visa de la décision de congé antérieure de l'agent, celui de
+          l'attestation de non jouissance et la clause "Après avis favorable du supérieur hiérarchique." sont ajoutés
+          automatiquement à la suite, propres à chaque demande.
+        </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Article 2</label>
-        <textarea class="form-control" rows="4" formControlName="article2"></textarea>
+        <textarea class="form-control" rows="3" formControlName="article2"></textarea>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Article 3</label>
-        <textarea class="form-control" rows="4" formControlName="article3"></textarea>
+        <textarea class="form-control" rows="3" formControlName="article3"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Ampliations</label>
+        <textarea class="form-control" rows="7" formControlName="ampliations" placeholder="PR/SGG&#10;MEFP/DS&#10;..."></textarea>
+        <div class="form-text">Une destination par ligne.</div>
       </div>
 
       @if (updatedAt) {

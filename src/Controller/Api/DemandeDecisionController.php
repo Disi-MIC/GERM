@@ -322,6 +322,12 @@ class DemandeDecisionController extends AbstractController
         $dateDerniereDecision = isset($data['dateDerniereDecision'])
             ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateDerniereDecision']) ?: null
             : null;
+        $numeroAttestationNonJouissance = isset($data['numeroAttestationNonJouissance'])
+            ? trim((string) $data['numeroAttestationNonJouissance']) ?: null
+            : null;
+        $dateAttestationNonJouissance = isset($data['dateAttestationNonJouissance'])
+            ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateAttestationNonJouissance']) ?: null
+            : null;
 
         if ('' === $numero || null === $dateDecision || null === $dateExpiration || $dateExpiration <= $dateDecision || null === $nombreJours || $nombreJours <= 0) {
             return $this->json(['errors' => ['numero' => "Merci de renseigner un numéro, un nombre de jours et des dates valides (date d'expiration postérieure à la date d'octroi) pour générer la décision."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
@@ -352,9 +358,13 @@ class DemandeDecisionController extends AbstractController
         $nouvelleDecision->setDateExpiration($dateExpiration);
         $nouvelleDecision->setNombreJours($nombreJours);
         $nouvelleDecision->setPeriodeDebut($demande->getDateDerniereDecision() ?? $demande->getDatePriseDeService());
+        $nouvelleDecision->setNumeroDerniereDecisionReferencee($demande->getNumeroDerniereDecision());
         $nouvelleDecision->setVisasDecrets($parametres->getVisasDecrets());
         $nouvelleDecision->setArticle2($parametres->getArticle2());
         $nouvelleDecision->setArticle3($parametres->getArticle3());
+        $nouvelleDecision->setAmpliations($parametres->getAmpliations());
+        $nouvelleDecision->setNumeroAttestationNonJouissance($numeroAttestationNonJouissance);
+        $nouvelleDecision->setDateAttestationNonJouissance($dateAttestationNonJouissance);
         $nouvelleDecision->setGenereePar($operateur);
         $this->em->persist($nouvelleDecision);
 

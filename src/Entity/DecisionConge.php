@@ -89,6 +89,17 @@ class DecisionConge
     private ?\DateTimeImmutable $periodeDebut = null;
 
     /**
+     * Numéro de la précédente décision de congé de l'agent (absent si
+     * nouvellement affecté, qui n'en a jamais eu) — copié depuis
+     * DemandeDecision::$numeroDerniereDecision au moment de la génération,
+     * visé dans le préambule légal du document ("VU la décision de congé
+     * n°... du..." — date : $periodeDebut ci-dessus).
+     */
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $numeroDerniereDecisionReferencee = null;
+
+    /**
      * Texte légal par défaut au moment de la génération — copié depuis
      * ParametresDecisionConge (réglages RH Admin, voir son commentaire de
      * classe) plutôt que référencé dynamiquement, pour qu'une modification
@@ -106,6 +117,24 @@ class DecisionConge
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read'])]
     private ?string $article3 = null;
+
+    /** Liste de diffusion (une entrée par ligne) — copiée depuis ParametresDecisionConge, même logique que $visasDecrets ci-dessus. */
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $ampliations = null;
+
+    /**
+     * Référence de l'attestation de non jouissance de congé, visée dans le
+     * préambule légal du document (numéro + date) — saisie par le RH Congé
+     * au moment de la génération, au même titre que $numeroDecision.
+     */
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $numeroAttestationNonJouissance = null;
+
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read'])]
+    private ?\DateTimeImmutable $dateAttestationNonJouissance = null;
 
     /** L'opérateur RH Congé ayant généré la décision — voir DemandeDecisionController::genererEtTransmettre(). */
     #[ORM\ManyToOne(targetEntity: User::class)]
@@ -213,6 +242,18 @@ class DecisionConge
         return $this;
     }
 
+    public function getNumeroDerniereDecisionReferencee(): ?string
+    {
+        return $this->numeroDerniereDecisionReferencee;
+    }
+
+    public function setNumeroDerniereDecisionReferencee(?string $numeroDerniereDecisionReferencee): static
+    {
+        $this->numeroDerniereDecisionReferencee = $numeroDerniereDecisionReferencee;
+
+        return $this;
+    }
+
     public function getVisasDecrets(): ?string
     {
         return $this->visasDecrets;
@@ -245,6 +286,42 @@ class DecisionConge
     public function setArticle3(?string $article3): static
     {
         $this->article3 = $article3;
+
+        return $this;
+    }
+
+    public function getAmpliations(): ?string
+    {
+        return $this->ampliations;
+    }
+
+    public function setAmpliations(?string $ampliations): static
+    {
+        $this->ampliations = $ampliations;
+
+        return $this;
+    }
+
+    public function getNumeroAttestationNonJouissance(): ?string
+    {
+        return $this->numeroAttestationNonJouissance;
+    }
+
+    public function setNumeroAttestationNonJouissance(?string $numeroAttestationNonJouissance): static
+    {
+        $this->numeroAttestationNonJouissance = $numeroAttestationNonJouissance;
+
+        return $this;
+    }
+
+    public function getDateAttestationNonJouissance(): ?\DateTimeImmutable
+    {
+        return $this->dateAttestationNonJouissance;
+    }
+
+    public function setDateAttestationNonJouissance(?\DateTimeImmutable $dateAttestationNonJouissance): static
+    {
+        $this->dateAttestationNonJouissance = $dateAttestationNonJouissance;
 
         return $this;
     }

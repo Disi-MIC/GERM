@@ -8,71 +8,83 @@
     <div class="decision-apercu-imprimable">
       <div class="decision-apercu-entete">
         <img src="assets/images/logo-mini.png" alt="" class="decision-apercu-logo" />
-        <div>
+        <div class="decision-apercu-entete-texte">
+          <div class="decision-apercu-republique">République du Sénégal</div>
+          <div class="decision-apercu-devise">Un Peuple - Un But - Une Foi</div>
           <div class="decision-apercu-ministere">Ministère de l'Industrie et du Commerce</div>
-          <div class="decision-apercu-soustitre">République du Sénégal</div>
         </div>
+        <div class="decision-apercu-numero">N° {{ decision.numeroDecision }}</div>
       </div>
-
-      <h2 class="decision-apercu-titre">Décision de congé n° {{ decision.numeroDecision }}</h2>
 
       <span class="status-dot" [class.status-dot-success]="decision.valide" [class.status-dot-secondary]="!decision.valide">
         {{ decision.valide ? 'Valide' : 'Expirée' }}
       </span>
 
-      @if (decision.visasDecrets) {
-        <p class="decision-apercu-visas">{{ decision.visasDecrets }}</p>
+      <p class="decision-apercu-analyse"><strong>ANALYSE</strong> : {{ analyseTexte }}</p>
+
+      <h2 class="decision-apercu-titre">Le Ministre de l'Industrie et du Commerce</h2>
+
+      @if (visasFixes.length > 0 || decision.numeroDerniereDecisionReferencee || decision.numeroAttestationNonJouissance) {
+        <div class="decision-apercu-visas">
+          @for (visa of visasFixes; track $index) {
+            <p>{{ visa }}</p>
+          }
+          @if (decision.numeroDerniereDecisionReferencee) {
+            <p>VU la décision de congé n°{{ decision.numeroDerniereDecisionReferencee }} du {{ dateFr(decision.periodeDebut) }} ;</p>
+          }
+          @if (decision.numeroAttestationNonJouissance) {
+            <p>
+              VU l'attestation de non jouissance de congé n°{{ decision.numeroAttestationNonJouissance
+              }}{{ decision.dateAttestationNonJouissance ? ' du ' + dateFr(decision.dateAttestationNonJouissance) : '' }} ;
+            </p>
+          }
+          <p>Après avis favorable du supérieur hiérarchique.</p>
+        </div>
       }
 
-      <dl class="decision-apercu-infos">
-        <dt>Agent</dt>
-        <dd>{{ agentNomComplet }} — matricule {{ agentMatricule }}</dd>
+      <h3 class="decision-apercu-decide">Décide :</h3>
 
-        <dt>Fonction</dt>
-        <dd>{{ agentFonction }}{{ agentGrade ? ' (' + agentGrade + ')' : '' }}</dd>
+      <div class="decision-apercu-articles">
+        <p>
+          <strong>Article premier.</strong> – Un congé administratif de
+          <strong>{{ nombreJoursEnLettres }} ({{ decision.nombreJours }}) jours</strong> est accordé à {{ agentCivilite }}
+          <strong>{{ agentNomComplet }}</strong>, {{ agentFonction }}, matricule de solde
+          <strong>n°{{ agentMatricule }}</strong>, pour ses services effectués durant la période du
+          <strong>{{ dateFr(decision.periodeDebut) }}</strong> au <strong>{{ dateFr(decision.dateDecision) }}</strong>.
+        </p>
 
-        <dt>Service</dt>
-        <dd>{{ agentService }}</dd>
-
-        <dt>Statut de l'agent</dt>
-        <dd>{{ agentTypeContrat }}</dd>
-
-        @if (decision.periodeDebut) {
-          <dt>Période de service effectuée</dt>
-          <dd>Du {{ decision.periodeDebut | slice: 0 : 10 }} au {{ decision.dateDecision | slice: 0 : 10 }}</dd>
+        @if (decision.article2) {
+          <p><strong>Article 2.</strong> - {{ decision.article2 }}</p>
         }
 
-        <dt>Nombre de jours accordés</dt>
-        <dd>{{ decision.nombreJours ?? '—' }} jour(s)</dd>
+        @if (decision.article3) {
+          <p><strong>Article 3.</strong> - {{ decision.article3 }}</p>
+        }
+      </div>
 
-        <dt>Date d'octroi</dt>
-        <dd>{{ decision.dateDecision | slice: 0 : 10 }}</dd>
+      @if (ampliationsListe.length > 0) {
+        <div class="decision-apercu-ampliations">
+          <p class="decision-apercu-ampliations-titre">Ampliations :</p>
+          <ul>
+            @for (a of ampliationsListe; track $index) {
+              <li>{{ a }}</li>
+            }
+          </ul>
+        </div>
+      }
 
-        <dt>Date d'expiration</dt>
-        <dd>{{ decision.dateExpiration | slice: 0 : 10 }}</dd>
+      <p class="decision-apercu-signature-note">Signature et cachet apposés sur le document physique à l'issue du circuit ministériel.</p>
 
+      <dl class="decision-apercu-meta">
         @if (decision.observations) {
           <dt>Observations</dt>
           <dd>{{ decision.observations }}</dd>
         }
-
         <dt>Générée par</dt>
         <dd>{{ decision.genereeParNom ?? '—' }}</dd>
-
         <dt>Date de création</dt>
         <dd>{{ decision.createdAt | slice: 0 : 10 }}</dd>
       </dl>
-
-      @if (decision.article2 || decision.article3) {
-        <div class="decision-apercu-articles">
-          @if (decision.article2) {
-            <p><strong>Article 2</strong> — {{ decision.article2 }}</p>
-          }
-          @if (decision.article3) {
-            <p><strong>Article 3</strong> — {{ decision.article3 }}</p>
-          }
-        </div>
-      }
     </div>
 
     <div class="decision-apercu-actions">

@@ -43,6 +43,7 @@ class ParametresDecisionCongeController extends AbstractController
         $parametres->setVisasDecrets(isset($data['visasDecrets']) ? (string) $data['visasDecrets'] : null);
         $parametres->setArticle2(isset($data['article2']) ? (string) $data['article2'] : null);
         $parametres->setArticle3(isset($data['article3']) ? (string) $data['article3'] : null);
+        $parametres->setAmpliations(isset($data['ampliations']) ? (string) $data['ampliations'] : null);
         $parametres->setUpdatedAt(new \DateTimeImmutable());
         /** @var User $operateur */
         $operateur = $this->getUser();

@@ -45,6 +45,8 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     dateExpiration: ['', Validators.required],
     dateDerniereDecision: [''],
     nombreJours: [null as number | null, [Validators.required, Validators.min(1), Validators.max(90)]],
+    numeroAttestationNonJouissance: [''],
+    dateAttestationNonJouissance: [''],
   });
 
   constructor(
@@ -227,6 +229,8 @@ export class DemandeDecisionTraiterComponent implements OnInit {
         dateExpiration: raw.dateExpiration,
         nombreJours: raw.nombreJours!,
         dateDerniereDecision: raw.dateDerniereDecision || null,
+        numeroAttestationNonJouissance: raw.numeroAttestationNonJouissance.trim() || null,
+        dateAttestationNonJouissance: raw.dateAttestationNonJouissance || null,
       })
       .subscribe({
         next: () => this.router.navigateByUrl('/conges/demandes-decision'),
