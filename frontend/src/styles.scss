@@ -347,8 +347,10 @@ $card-box-shadow: $box-shadow-sm;
 // à display) puis on ne réaffiche que le sous-arbre imprimable.
 @media print {
   @page {
-    size: A4;
-    margin: 14mm;
+    size: A4 portrait;
+    // Marge étroite (convention Word : 1,27 cm/0,5 pouce sur chaque bord),
+    // demandée explicitement pour maximiser la surface utile sur la page.
+    margin: 12.7mm;
   }
 
   body.decision-apercu-impression {
