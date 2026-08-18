@@ -46,19 +46,26 @@
   font-size: 0.8rem;
 }
 
-// Format A4 strict (210 x 297 mm), quel que soit le support (écran ou
-// impression, voir @media print dans styles.scss) : les unités mm sont
-// toujours résolues à 96dpi/25,4mm-par-pouce en CSS, donc cette page a la
-// même taille physique à l'écran qu'imprimée — vraie prévisualisation
-// WYSIWYG plutôt qu'un format proportionnel approximatif. La marge (0,7cm)
-// est le padding interne de ce conteneur, jamais une marge @page, pour
-// qu'elle soit garantie identique dans les deux contextes.
+// Format A4 (210 x 297 mm), quel que soit le support (écran ou impression,
+// voir @media print dans styles.scss) : les unités mm sont toujours
+// résolues à 96dpi/25,4mm-par-pouce en CSS, donc cette page a la même
+// taille physique à l'écran qu'imprimée. La marge (0,7cm) est le padding
+// interne de ce conteneur, jamais une marge @page, pour qu'elle soit
+// garantie identique dans les deux contextes.
+//
+// min-height (pas height) + pas d'overflow: hidden : une hauteur strictement
+// fixe combinée à overflow: hidden a provoqué un bug d'export PDF sous
+// Chrome (lignes de texte tronquées à gauche, voir capture fournie) — la
+// hauteur fixe garantissait le format sur l'écran mais cassait le rendu à
+// l'impression. min-height garde l'apparence d'une page pleine quand le
+// contenu est court, sans jamais rien découper si un réglage RH Admin (voir
+// ParametresDecisionConge) produit un texte légal plus long que prévu.
 .decision-apercu-imprimable {
   width: 210mm;
-  height: 297mm;
+  min-height: 297mm;
+  margin: 0 auto;
   padding: 7mm;
   box-sizing: border-box;
-  overflow: hidden;
   background: #fff;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   font-size: 9.5px;

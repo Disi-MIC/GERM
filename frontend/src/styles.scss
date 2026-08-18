@@ -365,10 +365,8 @@ $card-box-shadow: $box-shadow-sm;
   }
 
   // Le modal (position: fixed, max-width/max-height/overflow limités à la
-  // fenêtre) ne doit plus contraindre la page à l'impression : ses propres
-  // dimensions fixes (210mm x 297mm) suffisent, et overflow: hidden sur
-  // .decision-apercu-imprimable garantit qu'elle ne déborde jamais sur une
-  // deuxième page même si le texte légal saisi est plus long que prévu.
+  // fenêtre) ne doit plus contraindre la page à l'impression : sa propre
+  // largeur fixe (210mm) suffit.
   body.decision-apercu-impression .decision-apercu-modal {
     position: static !important;
     max-width: none !important;
@@ -376,10 +374,16 @@ $card-box-shadow: $box-shadow-sm;
     overflow: visible !important;
   }
 
+  // Centrée sur la largeur de la page (left: 50% + translateX) plutôt que
+  // calée à left: 0 : si la zone imprimable calculée par le moteur PDF
+  // diffère ne serait-ce que légèrement des 210mm déclarés, un calage à
+  // gauche stricte pousse tout le contenu vers un bord — centrer absorbe
+  // cet écart sans perdre le format.
   body.decision-apercu-impression .decision-apercu-imprimable {
     position: absolute;
-    left: 0;
+    left: 50%;
     top: 0;
+    transform: translateX(-50%);
     box-shadow: none !important;
   }
 }
