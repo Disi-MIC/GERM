@@ -16,13 +16,16 @@
     <ng-template appDataTableCell="octroi" let-decision>{{ decision.dateDecision | slice: 0 : 10 }}</ng-template>
     <ng-template appDataTableCell="expiration" let-decision>{{ decision.dateExpiration | slice: 0 : 10 }}</ng-template>
     <ng-template appDataTableCell="statut" let-decision>
-      @if (decision.isValide) {
+      @if (decision.valide) {
         <span class="status-dot status-dot-success">Valide</span>
       } @else {
         <span class="status-dot status-dot-secondary">Expirée</span>
       }
     </ng-template>
     <ng-template appDataTableCell="actions" let-decision>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="voirApercu(decision)">
+        <i class="bi bi-eye"></i>
+      </button>
       <a [routerLink]="['/conges/decisions', decision.id, 'edit']" class="btn btn-sm btn-outline-primary">
         <i class="bi bi-pencil"></i>
       </a>
@@ -32,3 +35,5 @@
     </ng-template>
   </app-data-table>
 }
+
+<app-decision-conge-apercu [decision]="decisionEnApercu" (fermer)="decisionEnApercu = null" />

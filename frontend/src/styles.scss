@@ -338,3 +338,27 @@ $card-box-shadow: $box-shadow-sm;
   font-size: 0.9rem;
   align-self: center;
 }
+
+// Impression ciblée du contenu d'app-decision-conge-apercu (voir son
+// imprimer()) : ce composant peut être monté n'importe où dans l'arbre
+// (liste RH, page de traitement, mes-conges), donc un simple @media print
+// local au composant ne suffit pas à masquer tout le reste de la page
+// (menu, en-tête...). On masque tout via visibility (hérité, contrairement
+// à display) puis on ne réaffiche que le sous-arbre imprimable.
+@media print {
+  body.decision-apercu-impression {
+    visibility: hidden;
+  }
+
+  body.decision-apercu-impression .decision-apercu-imprimable,
+  body.decision-apercu-impression .decision-apercu-imprimable * {
+    visibility: visible;
+  }
+
+  body.decision-apercu-impression .decision-apercu-imprimable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

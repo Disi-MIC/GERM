@@ -8,6 +8,7 @@ import { DataTableCellDirective } from '../../../shared/data-table/data-table-ce
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
 import { DataTableMobileItemDirective } from '../../../shared/data-table/data-table-mobile-item.directive';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { DecisionCongeApercuComponent } from '../../../shared/decision-conge-apercu/decision-conge-apercu.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_TYPE: Record<string, string> = {
@@ -30,7 +31,15 @@ const LABELS_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-mes-conges',
   standalone: true,
-  imports: [SlicePipe, RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective, DataTableMobileItemDirective],
+  imports: [
+    SlicePipe,
+    RouterLink,
+    PageHeaderComponent,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileItemDirective,
+    DecisionCongeApercuComponent,
+  ],
   templateUrl: './mes-conges.component.html',
 })
 export class MesCongesComponent implements OnInit {
@@ -42,6 +51,7 @@ export class MesCongesComponent implements OnInit {
   error: string | null = null;
   confirmationEnCoursId: number | null = null;
   erreurConfirmation: string | null = null;
+  decisionEnApercu: DecisionConge | null = null;
   readonly labelsType = LABELS_TYPE;
   readonly labelsStatut = LABELS_STATUT;
 
@@ -57,6 +67,7 @@ export class MesCongesComponent implements OnInit {
     { key: 'numero', label: 'Numéro', sortable: true, value: (d) => d.numeroDecision },
     { key: 'dateDecision', label: 'Date de décision', sortable: true, value: (d) => d.dateDecision },
     { key: 'expiration', label: 'Expire le', sortable: true, value: (d) => d.dateExpiration },
+    { key: 'action', label: 'Action', align: 'end', alwaysVisible: true },
   ];
 
   readonly colonnesDemandesDecision: DataTableColumn<DemandeDecision>[] = [
@@ -96,6 +107,10 @@ export class MesCongesComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  voirApercu(decision: DecisionConge): void {
+    this.decisionEnApercu = decision;
   }
 
   badgeClasse(statut: string | undefined): string {

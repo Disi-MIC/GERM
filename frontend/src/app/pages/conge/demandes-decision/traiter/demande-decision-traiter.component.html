@@ -51,6 +51,9 @@
             {{ numero }} — {{ $any(demande.decisionCreee).nombreJours }} j
             (du {{ $any(demande.decisionCreee).dateDecision | slice: 0 : 10 }} au {{ $any(demande.decisionCreee).dateExpiration | slice: 0 : 10 }})
             <div class="text-muted small">Générée par {{ $any(demande.decisionCreee).genereeParNom ?? '—' }}</div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" (click)="voirApercuDecision()">
+              <i class="bi bi-eye"></i> Aperçu du document
+            </button>
           </dd>
         }
       }
@@ -176,4 +179,6 @@
       <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Retour</a>
     }
   </app-panel>
+
+  <app-decision-conge-apercu [decision]="decisionEnApercu" (fermer)="decisionEnApercu = null" />
 }

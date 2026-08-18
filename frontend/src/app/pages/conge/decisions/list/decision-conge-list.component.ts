@@ -7,25 +7,27 @@ import { PageHeaderComponent } from '../../../../shared/page-header/page-header.
 import { DataTableCellDirective } from '../../../../shared/data-table/data-table-cell.directive';
 import { DataTableColumn } from '../../../../shared/data-table/data-table-column.model';
 import { DataTableComponent } from '../../../../shared/data-table/data-table.component';
+import { DecisionCongeApercuComponent } from '../../../../shared/decision-conge-apercu/decision-conge-apercu.component';
 import { DecisionCongeApiService } from '../../decision-conge-api.service';
 
 @Component({
   selector: 'app-decision-conge-list',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective, DecisionCongeApercuComponent],
   templateUrl: './decision-conge-list.component.html',
 })
 export class DecisionCongeListComponent implements OnInit {
   decisions: DecisionConge[] = [];
   loading = true;
   error: string | null = null;
+  decisionEnApercu: DecisionConge | null = null;
 
   readonly columns: DataTableColumn<DecisionConge>[] = [
     { key: 'numero', label: 'Numéro', sortable: true, value: (d) => d.numeroDecision },
     { key: 'agent', label: 'Agent', sortable: true, value: (d) => this.agentLabel(d) },
     { key: 'octroi', label: 'Octroi', sortable: true, value: (d) => d.dateDecision },
     { key: 'expiration', label: 'Expiration', sortable: true, value: (d) => d.dateExpiration },
-    { key: 'statut', label: 'Statut', sortable: true, value: (d) => (d.isValide ? 'Valide' : 'Expirée') },
+    { key: 'statut', label: 'Statut', sortable: true, value: (d) => (d.valide ? 'Valide' : 'Expirée') },
     { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
   ];
 
@@ -42,6 +44,10 @@ export class DecisionCongeListComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  voirApercu(decision: DecisionConge): void {
+    this.decisionEnApercu = decision;
   }
 
   agentLabel(decision: DecisionConge): string {

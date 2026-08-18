@@ -70,6 +70,11 @@
       <ng-template appDataTableCell="numero" let-decision>{{ decision.numeroDecision }}</ng-template>
       <ng-template appDataTableCell="dateDecision" let-decision>{{ decision.dateDecision | slice: 0 : 10 }}</ng-template>
       <ng-template appDataTableCell="expiration" let-decision>{{ decision.dateExpiration | slice: 0 : 10 }}</ng-template>
+      <ng-template appDataTableCell="action" let-decision>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="voirApercu(decision)">
+          <i class="bi bi-eye"></i> Aperçu
+        </button>
+      </ng-template>
 
       <ng-template appDataTableMobileItem let-decision>
         <div class="mob-card">
@@ -85,12 +90,17 @@
                 <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>Décidée le {{ decision.dateDecision | slice: 0 : 10 }}</span>
                 <span class="mob-card-meta-item"><i class="bi bi-hourglass-split"></i>Expire le {{ decision.dateExpiration | slice: 0 : 10 }}</span>
               </div>
+              <button type="button" class="btn btn-sm btn-outline-secondary mt-2" (click)="voirApercu(decision)">
+                <i class="bi bi-eye"></i> Aperçu
+              </button>
             </div>
           </div>
         </div>
       </ng-template>
     </app-data-table>
   </div>
+
+  <app-decision-conge-apercu [decision]="decisionEnApercu" (fermer)="decisionEnApercu = null" />
 
   <div class="mb-4">
     <app-data-table

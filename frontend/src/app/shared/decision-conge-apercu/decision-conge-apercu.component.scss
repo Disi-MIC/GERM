@@ -1,0 +1,103 @@
+// Rendu à divers endroits de l'arbre (liste RH, traiter, mes-conges) : doit
+// donc primer sur tout le reste, comme admin-access-modal.
+.decision-apercu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.55);
+  z-index: 100;
+}
+
+.decision-apercu-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  width: min(560px, calc(100vw - 2.5rem));
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 3rem);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem 1.75rem 1.5rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.decision-apercu-fermer {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 20, 30, 0.06);
+  color: var(--bs-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.decision-apercu-entete {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.decision-apercu-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.decision-apercu-ministere {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.decision-apercu-soustitre {
+  font-size: 0.8rem;
+  color: var(--bs-secondary);
+}
+
+.decision-apercu-titre {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+
+.decision-apercu-infos {
+  margin: 1.25rem 0 0;
+  display: grid;
+  grid-template-columns: minmax(0, 180px) 1fr;
+  row-gap: 0.6rem;
+  column-gap: 1rem;
+
+  dt {
+    font-weight: 600;
+    color: var(--bs-secondary);
+    font-size: 0.85rem;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.decision-apercu-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 576px) {
+  .decision-apercu-infos {
+    grid-template-columns: 1fr;
+    row-gap: 0.25rem;
+
+    dt {
+      margin-top: 0.5rem;
+    }
+  }
+}

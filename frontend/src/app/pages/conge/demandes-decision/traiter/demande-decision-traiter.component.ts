@@ -3,11 +3,12 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth.service';
-import { DemandeDecision } from '../../../../core/models/conge.model';
+import { DecisionConge, DemandeDecision } from '../../../../core/models/conge.model';
 import { ListeValeurRef, Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { EtapeTimeline, StatusTimelineComponent } from '../../../../shared/status-timeline/status-timeline.component';
+import { DecisionCongeApercuComponent } from '../../../../shared/decision-conge-apercu/decision-conge-apercu.component';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 
@@ -20,7 +21,7 @@ import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 @Component({
   selector: 'app-demande-decision-traiter',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, StatusTimelineComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, StatusTimelineComponent, DecisionCongeApercuComponent],
   templateUrl: './demande-decision-traiter.component.html',
 })
 export class DemandeDecisionTraiterComponent implements OnInit {
@@ -28,6 +29,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
   motifsRejet: ListeValeurRef[] = [];
   loading = true;
   saving = false;
+  decisionEnApercu: DecisionConge | null = null;
   error: string | null = null;
 
   fichierRetour: File | null = null;
@@ -135,6 +137,13 @@ export class DemandeDecisionTraiterComponent implements OnInit {
 
   documentRetourUrl(): string {
     return this.demande?.id ? this.api.documentRetourUrl(this.demande.id) : '';
+  }
+
+  voirApercuDecision(): void {
+    const decision = this.demande?.decisionCreee;
+    if (decision && typeof decision !== 'string') {
+      this.decisionEnApercu = decision;
+    }
   }
 
   /** Valider/rejeter depuis "en_attente" : réservé au RH Congé. */

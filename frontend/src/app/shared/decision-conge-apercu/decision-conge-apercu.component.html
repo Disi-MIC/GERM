@@ -1,0 +1,65 @@
+@if (decision) {
+  <div class="decision-apercu-backdrop" (click)="fermer.emit()"></div>
+  <div class="decision-apercu-modal">
+    <button type="button" class="decision-apercu-fermer" (click)="fermer.emit()" aria-label="Fermer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+
+    <div class="decision-apercu-imprimable">
+      <div class="decision-apercu-entete">
+        <img src="assets/images/logo-mini.png" alt="" class="decision-apercu-logo" />
+        <div>
+          <div class="decision-apercu-ministere">Ministère de l'Industrie et du Commerce</div>
+          <div class="decision-apercu-soustitre">République du Sénégal</div>
+        </div>
+      </div>
+
+      <h2 class="decision-apercu-titre">Décision de congé n° {{ decision.numeroDecision }}</h2>
+
+      <span class="status-dot" [class.status-dot-success]="decision.valide" [class.status-dot-secondary]="!decision.valide">
+        {{ decision.valide ? 'Valide' : 'Expirée' }}
+      </span>
+
+      <dl class="decision-apercu-infos">
+        <dt>Agent</dt>
+        <dd>{{ agentNomComplet }} — matricule {{ agentMatricule }}</dd>
+
+        <dt>Fonction</dt>
+        <dd>{{ agentFonction }}{{ agentGrade ? ' (' + agentGrade + ')' : '' }}</dd>
+
+        <dt>Service</dt>
+        <dd>{{ agentService }}</dd>
+
+        <dt>Statut de l'agent</dt>
+        <dd>{{ agentTypeContrat }}</dd>
+
+        <dt>Nombre de jours accordés</dt>
+        <dd>{{ decision.nombreJours ?? '—' }} jour(s)</dd>
+
+        <dt>Date d'octroi</dt>
+        <dd>{{ decision.dateDecision | slice: 0 : 10 }}</dd>
+
+        <dt>Date d'expiration</dt>
+        <dd>{{ decision.dateExpiration | slice: 0 : 10 }}</dd>
+
+        @if (decision.observations) {
+          <dt>Observations</dt>
+          <dd>{{ decision.observations }}</dd>
+        }
+
+        <dt>Générée par</dt>
+        <dd>{{ decision.genereeParNom ?? '—' }}</dd>
+
+        <dt>Date de création</dt>
+        <dd>{{ decision.createdAt | slice: 0 : 10 }}</dd>
+      </dl>
+    </div>
+
+    <div class="decision-apercu-actions">
+      <button type="button" class="btn btn-outline-secondary" (click)="fermer.emit()">Fermer</button>
+      <button type="button" class="btn btn-primary" (click)="imprimer()">
+        <i class="bi bi-printer"></i> Imprimer
+      </button>
+    </div>
+  </div>
+}

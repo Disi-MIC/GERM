@@ -25,7 +25,7 @@ export interface DecisionConge {
   nombreJours?: number | null;
   genereeParNom?: string | null;
   createdAt?: string;
-  isValide?: boolean;
+  valide?: boolean;
 }
 
 export interface PieceJustificative {
