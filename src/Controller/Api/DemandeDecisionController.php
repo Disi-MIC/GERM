@@ -7,8 +7,10 @@ use App\Entity\DecisionConge;
 use App\Entity\DemandeDecision;
 use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\Enum\StatutDemande;
+use App\Entity\Personnel;
 use App\Entity\PieceJustificativeDecision;
 use App\Entity\User;
+use App\Repository\DecisionCongeRepository;
 use App\Repository\ListeValeurRepository;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
@@ -50,6 +52,7 @@ class DemandeDecisionController extends AbstractController
         private readonly FileStorage $fileStorage,
         private readonly NotificationService $notificationService,
         private readonly ListeValeurRepository $listeValeurRepository,
+        private readonly DecisionCongeRepository $decisionCongeRepository,
     ) {
     }
 
@@ -63,10 +66,57 @@ class DemandeDecisionController extends AbstractController
             return $this->violationsResponse($violations);
         }
 
+        if ($erreur = $this->erreurDecisionEnCours($demande->getPersonnel(), 'Cet agent dispose déjà')) {
+            return $erreur;
+        }
+
         $this->em->persist($demande);
         $this->em->flush();
 
         return $this->json($demande, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * Une demande de décision n'a de sens que si l'agent n'a plus de congé
+     * annuel disponible : tant qu'une DecisionConge valide (non expirée)
+     * existe déjà pour lui, inutile — et source de doublons pour le RH Congé
+     * — d'en déposer une nouvelle. Utilisé à la création (create() côté RH,
+     * MeDemandesController::creerDemandeDecision() côté agent) ainsi que par
+     * decisionValide(), qui permet au formulaire RH de vérifier par avance,
+     * dès la sélection de l'agent, avant même la soumission.
+     */
+    private function erreurDecisionEnCours(?Personnel $personnel, string $sujet): ?JsonResponse
+    {
+        if (!$personnel) {
+            return null;
+        }
+
+        $decisionsValides = $this->decisionCongeRepository->findValides($personnel);
+        if (!$decisionsValides) {
+            return null;
+        }
+
+        $decision = $decisionsValides[0];
+
+        return $this->json(['errors' => ['decision' => \sprintf(
+            "%s d'une décision de congé valide (%s), jusqu'au %s. Une nouvelle demande ne peut être déposée qu'après son expiration.",
+            $sujet,
+            $decision->getNumeroDecision(),
+            $decision->getDateExpiration()?->format('d/m/Y'),
+        )]], JsonResponse::HTTP_CONFLICT);
+    }
+
+    /**
+     * Permet au formulaire RH de vérifier, dès la sélection de l'agent et
+     * avant toute soumission, si celui-ci dispose déjà d'une décision de
+     * congé valide — voir erreurDecisionEnCours().
+     */
+    #[Route('/api/personnels/{id}/decision-valide', name: 'api_personnel_decision_valide', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function decisionValide(Personnel $personnel): JsonResponse
+    {
+        $decisions = $this->decisionCongeRepository->findValides($personnel);
+
+        return $this->json($decisions[0] ?? null, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
 
     #[Route('/api/demandes-decision/{id}/piece1', name: 'api_demande_decision_piece1', methods: ['POST'], requirements: ['id' => '\d+'])]

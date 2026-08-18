@@ -10,6 +10,14 @@
     <div class="col-12">
       <label class="form-label">Agent</label>
       <app-searchable-select formControlName="personnel" nullLabel="Sélectionner..." placeholder="Rechercher un agent..." [options]="personnelOptions" />
+      @if (verificationDecisionEnCours) {
+        <div class="form-text">Vérification des décisions en cours...</div>
+      } @else if (decisionValide) {
+        <div class="alert alert-warning mt-2 mb-0">
+          Cet agent dispose déjà d'une décision de congé valide <strong>{{ decisionValide.numeroDecision }}</strong>, jusqu'au
+          {{ decisionValide.dateExpiration | slice: 0 : 10 }}. Une nouvelle demande ne peut être déposée qu'après son expiration.
+        </div>
+      }
     </div>
 
     <div class="col-12">
@@ -50,7 +58,7 @@
   </div>
 
   <div class="mt-3 d-flex gap-2">
-    <button type="submit" class="btn btn-primary" [disabled]="saving">
+    <button type="submit" class="btn btn-primary" [disabled]="saving || !!decisionValide">
       <i class="bi bi-check-lg"></i> Enregistrer
     </button>
     <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary">Annuler</a>

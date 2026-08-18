@@ -1,52 +1,62 @@
 <app-page-header title="Nouvelle demande de décision de congé"></app-page-header>
 
-@if (error) {
-  <div class="alert alert-danger">{{ error }}</div>
+@if (chargementDecision) {
+  <p class="text-muted">Chargement...</p>
+} @else if (decisionValide) {
+  <div class="alert alert-warning">
+    Vous disposez déjà d'une décision de congé valide <strong>{{ decisionValide.numeroDecision }}</strong>, jusqu'au
+    {{ decisionValide.dateExpiration | slice: 0 : 10 }}. Une nouvelle demande ne peut être déposée qu'après son expiration.
+  </div>
+  <a routerLink="/mon-espace/conges" class="btn btn-outline-secondary">Retour à mes congés</a>
+} @else {
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  <app-panel>
+  <form [formGroup]="form" (ngSubmit)="submit()" style="max-width: 700px;">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Êtes-vous nouvellement affecté(e) à votre poste ? <span class="text-danger">*</span></label>
+        <select class="form-select" formControlName="nouvellementAffecte">
+          <option [ngValue]="null" disabled>Choisir...</option>
+          <option [ngValue]="true">Oui — je n'ai jamais eu de décision de congé</option>
+          <option [ngValue]="false">Non — j'ai déjà une décision de congé</option>
+        </select>
+      </div>
+
+      @if (form.value.nouvellementAffecte === false) {
+        <div class="col-md-6">
+          <label class="form-label">Numéro de ma dernière décision <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Année d'obtention de ma dernière décision <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" formControlName="anneeDerniereDecision" min="1960" [max]="anneeMax" placeholder="ex. 2022" />
+        </div>
+      }
+
+      <div class="col-12">
+        <label class="form-label">Motif</label>
+        <textarea class="form-control" rows="3" formControlName="motif"></textarea>
+      </div>
+
+      <div class="col-md-6">
+        <app-file-piece-input label="Prise de service" [requis]="true" [(fichier)]="fichierPriseDeService" />
+      </div>
+      @if (form.value.nouvellementAffecte === false) {
+        <div class="col-md-6">
+          <app-file-piece-input label="Ancienne décision de congé" [requis]="true" [(fichier)]="fichierAncienneDecision" />
+        </div>
+      }
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="saving">
+        <i class="bi bi-check-lg"></i> Enregistrer
+      </button>
+      <a routerLink="/mon-espace/conges" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+  </form>
+  </app-panel>
 }
-
-<app-panel>
-<form [formGroup]="form" (ngSubmit)="submit()" style="max-width: 700px;">
-  <div class="row g-3">
-    <div class="col-12">
-      <label class="form-label">Êtes-vous nouvellement affecté(e) à votre poste ? <span class="text-danger">*</span></label>
-      <select class="form-select" formControlName="nouvellementAffecte">
-        <option [ngValue]="null" disabled>Choisir...</option>
-        <option [ngValue]="true">Oui — je n'ai jamais eu de décision de congé</option>
-        <option [ngValue]="false">Non — j'ai déjà une décision de congé</option>
-      </select>
-    </div>
-
-    @if (form.value.nouvellementAffecte === false) {
-      <div class="col-md-6">
-        <label class="form-label">Numéro de ma dernière décision <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Année d'obtention de ma dernière décision <span class="text-danger">*</span></label>
-        <input type="number" class="form-control" formControlName="anneeDerniereDecision" min="1960" [max]="anneeMax" placeholder="ex. 2022" />
-      </div>
-    }
-
-    <div class="col-12">
-      <label class="form-label">Motif</label>
-      <textarea class="form-control" rows="3" formControlName="motif"></textarea>
-    </div>
-
-    <div class="col-md-6">
-      <app-file-piece-input label="Prise de service" [requis]="true" [(fichier)]="fichierPriseDeService" />
-    </div>
-    @if (form.value.nouvellementAffecte === false) {
-      <div class="col-md-6">
-        <app-file-piece-input label="Ancienne décision de congé" [requis]="true" [(fichier)]="fichierAncienneDecision" />
-      </div>
-    }
-  </div>
-
-  <div class="mt-3 d-flex gap-2">
-    <button type="submit" class="btn btn-primary" [disabled]="saving">
-      <i class="bi bi-check-lg"></i> Enregistrer
-    </button>
-    <a routerLink="/mon-espace/conges" class="btn btn-outline-secondary">Annuler</a>
-  </div>
-</form>
-</app-panel>

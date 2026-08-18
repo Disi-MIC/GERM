@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
-import { DemandeDecision } from '../../core/models/conge.model';
+import { DecisionConge, DemandeDecision } from '../../core/models/conge.model';
 
 export interface GenererEtTransmettrePayload {
   numero: string;
@@ -26,6 +26,11 @@ export class DemandeDecisionApiService {
 
   create(demande: DemandeDecision): Observable<DemandeDecision> {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision`, demande);
+  }
+
+  /** Décision de congé valide (non expirée) de cet agent, ou null — vérifiée dès la sélection de l'agent sur le formulaire RH. */
+  decisionValide(personnelId: number): Observable<DecisionConge | null> {
+    return this.http.get<DecisionConge | null>(`${API_BASE}/personnels/${personnelId}/decision-valide`);
   }
 
   uploadPiece1(id: number, fichier: File): Observable<DemandeDecision> {

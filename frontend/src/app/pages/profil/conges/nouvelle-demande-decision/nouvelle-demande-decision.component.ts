@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { SlicePipe } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { DemandeDecision } from '../../../../core/models/conge.model';
+import { DecisionConge, DemandeDecision } from '../../../../core/models/conge.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { FilePieceInputComponent } from '../../../../shared/file-piece-input/file-piece-input.component';
@@ -12,19 +13,28 @@ import { ProfilApiService } from '../../profil-api.service';
  * prise de service est exigée. Sinon, l'ancienne décision est exigée en plus
  * (voir DemandeDecision::$nouvellementAffecte côté serveur, source de vérité
  * partagée avec le formulaire RH demande-decision-form).
+ *
+ * Tant qu'une décision de congé valide (non expirée) existe déjà pour
+ * l'agent connecté, une nouvelle demande n'a pas de sens (congé encore
+ * disponible sous l'ancienne décision) : on l'en informe et on masque le
+ * formulaire plutôt que de le laisser déposer un doublon que le RH Congé
+ * devrait de toute façon rejeter (voir MeDemandesController::creerDemandeDecision(),
+ * qui applique la même règle côté serveur).
  */
 @Component({
   selector: 'app-nouvelle-demande-decision',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, FilePieceInputComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, FilePieceInputComponent],
   templateUrl: './nouvelle-demande-decision.component.html',
 })
-export class NouvelleDemandeDecisionComponent {
+export class NouvelleDemandeDecisionComponent implements OnInit {
   saving = false;
   error: string | null = null;
   fichierPriseDeService: File | null = null;
   fichierAncienneDecision: File | null = null;
   readonly anneeMax = new Date().getFullYear();
+  chargementDecision = true;
+  decisionValide: DecisionConge | null = null;
 
   form = this.fb.nonNullable.group({
     nouvellementAffecte: [null as boolean | null, Validators.required],
@@ -38,6 +48,18 @@ export class NouvelleDemandeDecisionComponent {
     private readonly api: ProfilApiService,
     private readonly router: Router,
   ) {}
+
+  ngOnInit(): void {
+    this.api.getMesDecisionsConge().subscribe({
+      next: (decisions) => {
+        this.decisionValide = decisions[0] ?? null;
+        this.chargementDecision = false;
+      },
+      error: () => {
+        this.chargementDecision = false;
+      },
+    });
+  }
 
   submit(): void {
     if (this.form.invalid) {

@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { DemandeDecision } from '../../../../core/models/conge.model';
+import { SlicePipe } from '@angular/common';
+import { DecisionConge, DemandeDecision } from '../../../../core/models/conge.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
@@ -12,7 +13,7 @@ import { DemandeDecisionApiService } from '../../demande-decision-api.service';
 @Component({
   selector: 'app-demande-decision-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
+  imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
   templateUrl: './demande-decision-form.component.html',
 })
 export class DemandeDecisionFormComponent implements OnInit {
@@ -22,6 +23,8 @@ export class DemandeDecisionFormComponent implements OnInit {
   fichierPriseDeService: File | null = null;
   fichierAncienneDecision: File | null = null;
   readonly anneeMax = new Date().getFullYear();
+  decisionValide: DecisionConge | null = null;
+  verificationDecisionEnCours = false;
 
   form = this.fb.nonNullable.group({
     personnel: [null as number | null, Validators.required],
@@ -40,6 +43,23 @@ export class DemandeDecisionFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.personnelApi.getAll().subscribe((personnels) => (this.personnels = personnels));
+
+    this.form.controls.personnel.valueChanges.subscribe((personnelId) => {
+      this.decisionValide = null;
+      if (!personnelId) {
+        return;
+      }
+      this.verificationDecisionEnCours = true;
+      this.api.decisionValide(personnelId).subscribe({
+        next: (decision) => {
+          this.decisionValide = decision;
+          this.verificationDecisionEnCours = false;
+        },
+        error: () => {
+          this.verificationDecisionEnCours = false;
+        },
+      });
+    });
   }
 
   get personnelOptions(): SearchableSelectOption[] {
@@ -47,6 +67,11 @@ export class DemandeDecisionFormComponent implements OnInit {
   }
 
   submit(): void {
+    if (this.decisionValide) {
+      this.error = "Cet agent dispose déjà d'une décision de congé valide : impossible de déposer une nouvelle demande.";
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.error = "Merci de sélectionner l'agent et d'indiquer s'il est nouvellement affecté.";

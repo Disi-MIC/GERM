@@ -162,6 +162,17 @@ class MeDemandesController extends AbstractController
             return $this->reponsePersonnelManquant();
         }
 
+        $decisionsValides = $this->decisionCongeRepository->findValides($personnel);
+        if ($decisionsValides) {
+            $decision = $decisionsValides[0];
+
+            return $this->json(['errors' => ['decision' => \sprintf(
+                "Vous disposez déjà d'une décision de congé valide (%s), jusqu'au %s. Une nouvelle demande ne peut être déposée qu'après son expiration.",
+                $decision->getNumeroDecision(),
+                $decision->getDateExpiration()?->format('d/m/Y'),
+            )]], JsonResponse::HTTP_CONFLICT);
+        }
+
         /** @var DemandeDecision $demande */
         $demande = $this->serializer->deserialize($request->getContent(), DemandeDecision::class, 'json', ['groups' => ['api:write']]);
         $demande->setPersonnel($personnel);
