@@ -42,7 +42,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     dateDecision: ['', Validators.required],
     dateExpiration: ['', Validators.required],
     dateDerniereDecision: [''],
-    nombreJours: [null as number | null, Validators.required],
+    nombreJours: [null as number | null, [Validators.required, Validators.min(1), Validators.max(90)]],
   });
 
   constructor(
@@ -249,7 +249,11 @@ export class DemandeDecisionTraiterComponent implements OnInit {
    * — ou la date d'embauche si l'agent n'en a jamais eu — et le dépôt de
    * cette demande, × 30 jours / 11 mois pour un fonctionnaire ou / 12 mois
    * sinon) : le RH Congé peut toujours l'ajuster avant de générer, la valeur
-   * soumise fait foi côté serveur (voir genererEtTransmettre()).
+   * soumise fait foi côté serveur (voir genererEtTransmettre()), qui rejette
+   * toute valeur supérieure à 90. Au-delà de 3 ans d'écart entre les deux
+   * demandes, le congé annuel est plafonné à 90 jours directement (le cumul
+   * théorique n'est jamais dû) ; en-deçà, la formule est également bornée à
+   * 90 par sécurité.
    */
   private calculerSuggestionNombreJours(): number | null {
     const d = this.demande;
@@ -272,6 +276,10 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     const joursDansMoisFin = new Date(fin.getFullYear(), fin.getMonth() + 1, 0).getDate();
     mois += (fin.getDate() - debut.getDate()) / joursDansMoisFin;
 
-    return Math.round(((mois * 30) / diviseur) * 10) / 10;
+    if (mois > 36) {
+      return 90;
+    }
+
+    return Math.min(Math.round(((mois * 30) / diviseur) * 10) / 10, 90);
   }
 }

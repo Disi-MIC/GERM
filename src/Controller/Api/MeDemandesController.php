@@ -180,6 +180,12 @@ class MeDemandesController extends AbstractController
             '/conges/demandes-decision',
             \sprintf('%s a soumis une demande de décision de congé.', $personnel->getNomComplet()),
         );
+        $this->notificationService->notifierRole(
+            User::ROLE_ADMIN_RH,
+            'Nouvelle demande de décision de congé',
+            '/conges/demandes-decision',
+            \sprintf('%s a soumis une demande de décision de congé.', $personnel->getNomComplet()),
+        );
 
         return $this->json($demande, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
     }
@@ -242,6 +248,12 @@ class MeDemandesController extends AbstractController
 
         $this->notificationService->notifierRole(
             User::ROLE_RH_CONGE,
+            'Dossier déposé au service courrier',
+            '/conges/demandes-decision',
+            \sprintf('%s a confirmé le dépôt physique de son dossier au service courrier.', $demande->getPersonnel()?->getNomComplet()),
+        );
+        $this->notificationService->notifierRole(
+            User::ROLE_ADMIN_RH,
             'Dossier déposé au service courrier',
             '/conges/demandes-decision',
             \sprintf('%s a confirmé le dépôt physique de son dossier au service courrier.', $demande->getPersonnel()?->getNomComplet()),

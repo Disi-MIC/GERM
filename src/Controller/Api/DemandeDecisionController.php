@@ -143,6 +143,12 @@ class DemandeDecisionController extends AbstractController
             '/mon-espace/conges',
             'Pièces vérifiées : vous pouvez déposer votre dossier au service courrier, puis confirmer le dépôt dans l\'application.',
         );
+        $this->notificationService->notifierRole(
+            User::ROLE_ADMIN_RH,
+            'Décision de congé validée par le RH Congé',
+            '/conges/demandes-decision',
+            \sprintf('Le RH Congé a validé la demande de %s : pièces complètes, en attente du dépôt au service courrier.', $demande->getPersonnel()?->getNomComplet()),
+        );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
@@ -171,6 +177,12 @@ class DemandeDecisionController extends AbstractController
             'Votre demande de décision de congé a été refusée',
             '/mon-espace/conges',
             $motif->getLibelle().($demande->getCommentaireTraitement() ? ' — '.$demande->getCommentaireTraitement() : ''),
+        );
+        $this->notificationService->notifierRole(
+            User::ROLE_ADMIN_RH,
+            'Décision de congé rejetée par le RH Congé',
+            '/conges/demandes-decision',
+            \sprintf('Le RH Congé a rejeté la demande de %s (%s).', $demande->getPersonnel()?->getNomComplet(), $motif->getLibelle()),
         );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
@@ -265,6 +277,10 @@ class DemandeDecisionController extends AbstractController
             return $this->json(['errors' => ['numero' => "Merci de renseigner un numéro, un nombre de jours et des dates valides (date d'expiration postérieure à la date d'octroi) pour générer la décision."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        if ($nombreJours > 90) {
+            return $this->json(['errors' => ['nombreJours' => 'Le nombre de jours de congé ne peut pas dépasser 90 jours.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         if ($dateDerniereDecision) {
             $demande->setDateDerniereDecision($dateDerniereDecision);
         }
@@ -291,6 +307,12 @@ class DemandeDecisionController extends AbstractController
             'Votre décision de congé est disponible',
             '/mon-espace/conges',
             \sprintf('Votre décision de congé (%d jours) vous a été remise.', $nombreJours),
+        );
+        $this->notificationService->notifierRole(
+            User::ROLE_ADMIN_RH,
+            'Décision de congé générée et transmise',
+            '/conges/demandes-decision',
+            \sprintf('Le RH Congé a généré la décision de %s (%d jours) et l\'a transmise à l\'agent.', $demande->getPersonnel()?->getNomComplet(), $nombreJours),
         );
 
         return $this->json($demande, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
