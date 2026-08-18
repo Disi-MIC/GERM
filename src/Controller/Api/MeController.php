@@ -181,7 +181,17 @@ class MeController extends AbstractController
 
         foreach ($demandeDecisionRepository->findBy(['personnel' => $personnel]) as $demande) {
             $statut = $demande->getStatut()->value;
-            ++$repartition[$statut];
+            // DemandeDecision suit un circuit à 5 états (voir StatutDemande) plus
+            // fin que les 4 catégories de ce widget, partagées avec DemandeCartePro
+            // et DemandeJouissance : les états intermédiaires du circuit papier
+            // rejoignent "transmise" (en cours, non résolu), l'état terminal
+            // "transmise_agent" rejoint "approuvee" (résolu favorablement).
+            $statutRepartition = match ($statut) {
+                'validee', 'deposee_courrier', 'retournee' => 'transmise',
+                'transmise_agent' => 'approuvee',
+                default => $statut,
+            };
+            ++$repartition[$statutRepartition];
             if ('en_attente' === $statut) {
                 $enAttente[] = [
                     'domaine' => 'decision',
