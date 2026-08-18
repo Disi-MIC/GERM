@@ -42,7 +42,6 @@ export class DemandeDecisionTraiterComponent implements OnInit {
   });
 
   formGeneration = this.fb.nonNullable.group({
-    numero: ['', Validators.required],
     dateDerniereDecision: [''],
     nombreJours: [null as number | null, [Validators.required, Validators.min(1), Validators.max(90)]],
     numeroAttestationNonJouissance: [''],
@@ -57,6 +56,16 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     this.dateOctroiPrevue.getDate(),
   );
   readonly dateFr = dateFr;
+
+  /** Aperçu du numéro qui sera généré côté serveur — "MIC/DAGE/RH/" + initiales de l'opérateur connecté, voir genererEtTransmettre(). */
+  get numeroPrevu(): string {
+    const u = this.auth.currentUser();
+    if (!u) {
+      return 'MIC/DAGE/RH/…';
+    }
+    const initiales = `${u.prenom.charAt(0)}${u.nom.charAt(0)}`.toLowerCase();
+    return `MIC/DAGE/RH/${initiales}`;
+  }
 
   constructor(
     private readonly fb: FormBuilder,
@@ -205,7 +214,6 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     this.error = null;
     this.api
       .genererEtTransmettre(this.demande.id, {
-        numero: raw.numero.trim(),
         nombreJours: raw.nombreJours!,
         dateDerniereDecision: raw.dateDerniereDecision || null,
         numeroAttestationNonJouissance: raw.numeroAttestationNonJouissance.trim() || null,

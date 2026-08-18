@@ -7,36 +7,34 @@
   z-index: 100;
 }
 
+// Simple cadre de défilement autour de la page — la mise en forme "papier"
+// (fond, ombre, dimensions) vit sur .decision-apercu-imprimable ci-dessous,
+// pas ici, pour qu'elle soit strictement identique à l'écran et à
+// l'impression (voir styles.scss, @media print).
 .decision-apercu-modal {
   position: fixed;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 101;
-  // Format A4 (210 x 297 mm) — 794px est la largeur usuelle d'une page A4 à
-  // 96dpi (même convention qu'un aperçu de page Google Docs/Word Online) ;
-  // aspect-ratio conserve les proportions quand la largeur doit rétrécir
-  // sur un petit écran.
-  width: min(794px, calc(100vw - 2rem));
-  aspect-ratio: 210 / 297;
-  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
-  overflow-y: auto;
-  background: #fff;
-  border-radius: 0.25rem;
-  // Marge étroite (convention Word : 1,27 cm/0,5 pouce) — en %, donc
-  // toujours relative à la largeur de la page même en haut/bas (règle CSS
-  // standard du padding en pourcentage), ce qui préserve une marge visuelle
-  // cohérente sur les 4 côtés à toute taille d'écran.
-  padding: 6.05%;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  max-width: calc(100vw - 1.5rem);
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1.5rem);
+  overflow: auto;
+  background: transparent;
+  padding: 0;
 }
 
+// Ancré au coin du contenu (7mm, même repère que le padding de la page) —
+// pas au-dessus de la page : sur une page quasi pleine hauteur (297mm), un
+// bouton positionné au-dessus déborderait hors de l'écran sur la plupart
+// des fenêtres. .decision-apercu-entete-droite réserve l'espace qu'il
+// occupe pour que le numéro/l'analyse ne passent jamais dessous.
 .decision-apercu-fermer {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 32px;
-  height: 32px;
+  top: 7mm;
+  right: 7mm;
+  width: 26px;
+  height: 26px;
   border: none;
   border-radius: 50%;
   background: rgba(15, 20, 30, 0.06);
@@ -44,39 +42,71 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
+  font-size: 0.8rem;
+}
+
+// Format A4 strict (210 x 297 mm), quel que soit le support (écran ou
+// impression, voir @media print dans styles.scss) : les unités mm sont
+// toujours résolues à 96dpi/25,4mm-par-pouce en CSS, donc cette page a la
+// même taille physique à l'écran qu'imprimée — vraie prévisualisation
+// WYSIWYG plutôt qu'un format proportionnel approximatif. La marge (0,7cm)
+// est le padding interne de ce conteneur, jamais une marge @page, pour
+// qu'elle soit garantie identique dans les deux contextes.
+.decision-apercu-imprimable {
+  width: 210mm;
+  height: 297mm;
+  padding: 7mm;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  font-size: 9.5px;
+  line-height: 1.35;
+
+  p {
+    text-align: justify;
+  }
 }
 
 .decision-apercu-entete {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  // Deux colonnes de largeur égale : le logo et le bloc numéro/analyse sont
+  // ainsi toujours équidistants du milieu de la page, quel que soit leur
+  // contenu — l'écart entre les deux (gap) matérialise l'espace demandé au
+  // centre, chaque bloc restant sur son côté.
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 6mm;
+  align-items: start;
   margin-bottom: 1rem;
 }
 
 .decision-apercu-entete-image {
-  flex: none;
-  width: min(200px, 42%);
+  width: 100%;
+  max-width: 44mm;
   height: auto;
   object-fit: contain;
 }
 
 .decision-apercu-entete-droite {
-  flex: 1 1 auto;
   min-width: 0;
+  text-align: right;
+  // Réserve la place du bouton fermer (voir .decision-apercu-fermer),
+  // ancré au même coin, pour que le texte ne passe jamais dessous.
+  padding-right: 2rem;
 }
 
 .decision-apercu-numero {
-  font-size: 0.8rem;
+  font-size: 0.85em;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .decision-apercu-numero-cachet {
   display: inline-block;
-  width: 4.5rem;
+  width: 3.5em;
   border-bottom: 1px solid #000;
-  margin: 0 0.15rem -0.15rem;
+  margin: 0 0.15em -0.15em;
 }
 
 /** Souligné, comme sur le modèle papier : "ANALYSE", "Article premier.", "Article 2/3". */
@@ -84,85 +114,82 @@
   text-decoration: underline;
 }
 
+// Décalée vers le bas par rapport au N°, plutôt que collée dessous.
 .decision-apercu-analyse {
-  margin: 0.5rem 0 0;
-  font-size: 0.8rem;
+  margin: 0.9em 0 0;
+  font-size: 0.85em;
+  text-align: left;
 }
 
 .decision-apercu-titre {
-  margin: 1.25rem 0 0;
-  font-size: 1rem;
+  margin: 1.1em 0 0;
+  font-size: 1.05em;
   font-weight: 700;
   text-align: center;
   text-transform: uppercase;
 }
 
 .decision-apercu-visas {
-  margin: 1rem 0 0;
-  font-size: 0.85rem;
+  margin: 0.9em 0 0;
 
   p {
-    margin: 0 0 0.4rem;
+    margin: 0 0 0.35em;
   }
 }
 
 .decision-apercu-decide {
-  margin: 1.25rem 0 0.75rem;
-  font-size: 0.95rem;
+  margin: 1.1em 0 0.6em;
+  font-size: 1em;
   font-weight: 700;
   text-transform: uppercase;
   text-decoration: underline;
 }
 
 .decision-apercu-articles {
-  font-size: 0.9rem;
-
   p {
-    margin: 0 0 0.75rem;
-    text-align: justify;
+    margin: 0 0 0.6em;
   }
 }
 
 .decision-apercu-ampliations {
-  margin-top: 1.25rem;
-  padding-top: 1rem;
+  margin-top: 1em;
+  padding-top: 0.75em;
   border-top: 1px solid rgba(15, 20, 30, 0.08);
-  font-size: 0.85rem;
 
   &-titre {
     font-weight: 700;
     font-style: italic;
     text-transform: uppercase;
     text-decoration: underline;
-    margin: 0 0 0.4rem;
+    margin: 0 0 0.35em;
   }
 
   ul {
     margin: 0;
-    padding-left: 1.2rem;
+    padding-left: 1.2em;
   }
 
   li {
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.1em;
   }
 }
 
 .decision-apercu-signature-note {
-  margin: 1.25rem 0 0;
-  font-size: 0.8rem;
+  margin: 1em 0 0;
+  font-size: 0.85em;
   font-style: italic;
   color: var(--bs-secondary);
 }
 
 .decision-apercu-meta {
-  margin: 1rem 0 0;
-  padding-top: 0.75rem;
+  margin: 0.75em 0 0;
+  padding-top: 0.5em;
   border-top: 1px dashed rgba(15, 20, 30, 0.12);
   display: grid;
-  grid-template-columns: minmax(0, 140px) 1fr;
-  row-gap: 0.3rem;
-  column-gap: 1rem;
-  font-size: 0.8rem;
+  grid-template-columns: minmax(0, 9em) 1fr;
+  row-gap: 0.2em;
+  column-gap: 0.75em;
+  font-size: 0.8em;
   color: var(--bs-secondary);
 
   dt {
@@ -178,24 +205,5 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
-  margin-top: 1.5rem;
-}
-
-@media (max-width: 576px) {
-  .decision-apercu-entete {
-    flex-wrap: wrap;
-  }
-
-  .decision-apercu-entete-droite {
-    flex-basis: 100%;
-  }
-
-  .decision-apercu-meta {
-    grid-template-columns: 1fr;
-    row-gap: 0.15rem;
-
-    dt {
-      margin-top: 0.4rem;
-    }
-  }
+  margin-top: 0.75rem;
 }

@@ -346,11 +346,13 @@ $card-box-shadow: $box-shadow-sm;
 // (menu, en-tête...). On masque tout via visibility (hérité, contrairement
 // à display) puis on ne réaffiche que le sous-arbre imprimable.
 @media print {
+  // Marge nulle ici : .decision-apercu-imprimable a déjà sa propre marge
+  // interne de 7mm (padding, voir decision-conge-apercu.component.scss) —
+  // une marge @page en plus la doublerait et pousserait le contenu hors de
+  // la page 210x297mm fixe.
   @page {
     size: A4 portrait;
-    // Marge étroite (convention Word : 1,27 cm/0,5 pouce sur chaque bord),
-    // demandée explicitement pour maximiser la surface utile sur la page.
-    margin: 12.7mm;
+    margin: 0;
   }
 
   body.decision-apercu-impression {
@@ -362,28 +364,22 @@ $card-box-shadow: $box-shadow-sm;
     visibility: visible;
   }
 
-  // Le modal (position: fixed, max-height/overflow-y limités à la fenêtre,
-  // voir decision-conge-apercu.component.scss) tronquerait sinon le contenu
-  // imprimé à sa hauteur d'écran plutôt que de laisser le document s'étaler
-  // sur la page — annulé ici pour l'impression uniquement.
+  // Le modal (position: fixed, max-width/max-height/overflow limités à la
+  // fenêtre) ne doit plus contraindre la page à l'impression : ses propres
+  // dimensions fixes (210mm x 297mm) suffisent, et overflow: hidden sur
+  // .decision-apercu-imprimable garantit qu'elle ne déborde jamais sur une
+  // deuxième page même si le texte légal saisi est plus long que prévu.
   body.decision-apercu-impression .decision-apercu-modal {
     position: static !important;
+    max-width: none !important;
     max-height: none !important;
     overflow: visible !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    width: 100% !important;
   }
 
   body.decision-apercu-impression .decision-apercu-imprimable {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    // Vise une tenue sur une seule page A4 (voir @page ci-dessus) : le
-    // contenu est déjà compact, cette réduction supplémentaire absorbe les
-    // variantes de texte légal (visas, ampliations) plus longues que le
-    // modèle de référence sans passer à une deuxième page.
-    font-size: 0.82rem;
+    box-shadow: none !important;
   }
 }

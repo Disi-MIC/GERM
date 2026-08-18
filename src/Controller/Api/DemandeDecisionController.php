@@ -109,6 +109,19 @@ class DemandeDecisionController extends AbstractController
     }
 
     /**
+     * Initiales de l'opérateur RH Congé qui traite la demande — dernier
+     * segment du numéro de décision ("MIC/DAGE/RH/cd"), jamais saisi
+     * librement (voir genererEtTransmettre()).
+     */
+    private function initialesOperateur(User $operateur): string
+    {
+        $prenom = mb_substr((string) $operateur->getPrenom(), 0, 1);
+        $nom = mb_substr((string) $operateur->getNom(), 0, 1);
+
+        return mb_strtolower($prenom.$nom);
+    }
+
+    /**
      * Permet au formulaire RH de vérifier, dès la sélection de l'agent et
      * avant toute soumission, si celui-ci dispose déjà d'une décision de
      * congé valide — voir erreurDecisionEnCours().
@@ -313,7 +326,6 @@ class DemandeDecisionController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true) ?? [];
-        $numero = trim((string) ($data['numero'] ?? ''));
         // Date d'octroi = date de délivrance de la décision (aujourd'hui, à
         // cette étape) ; date d'expiration = octroi + 3 ans — plus de saisie
         // manuelle, ces deux dates n'ont rien de discrétionnaire.
@@ -330,8 +342,8 @@ class DemandeDecisionController extends AbstractController
             ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateAttestationNonJouissance']) ?: null
             : null;
 
-        if ('' === $numero || null === $nombreJours || $nombreJours <= 0) {
-            return $this->json(['errors' => ['numero' => 'Merci de renseigner un numéro et un nombre de jours valides pour générer la décision.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        if (null === $nombreJours || $nombreJours <= 0) {
+            return $this->json(['errors' => ['nombreJours' => 'Merci de renseigner un nombre de jours valide pour générer la décision.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($nombreJours > 90) {
@@ -351,6 +363,10 @@ class DemandeDecisionController extends AbstractController
 
         /** @var User $operateur */
         $operateur = $this->getUser();
+        // Le dernier segment du numéro ("MIC/DAGE/RH/cd") n'est pas saisi :
+        // ce sont les initiales de l'opérateur RH Congé qui traite la
+        // demande, jamais un texte libre — voir initialesOperateur().
+        $numero = \sprintf('MIC/DAGE/RH/%s', $this->initialesOperateur($operateur));
 
         // Texte légal par défaut (visas des décrets, articles 2 et 3) et
         // début de la période de service ouvrant droit à ce congé, copiés
