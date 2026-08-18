@@ -12,6 +12,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * Demande de décision de congé : pour un agent qui n'en a jamais eu, ou dont la
@@ -179,6 +180,35 @@ class DemandeDecision
         $this->nouvellementAffecte = $nouvellementAffecte;
 
         return $this;
+    }
+
+    /**
+     * Un agent qui n'est pas nouvellement affecté a forcément déjà eu une
+     * décision de congé : le numéro et l'année d'obtention de cette dernière
+     * décision sont donc exigés en plus de la pièce jointe correspondante
+     * (voir les formulaires Angular nouvelle-demande-decision et
+     * demande-decision-form, qui ne collectent que l'année — stockée ici au
+     * 1er janvier de cette année, affinée si besoin par le RH Congé à la
+     * génération de la décision, voir DemandeDecisionController::genererEtTransmettre()).
+     */
+    #[Assert\Callback]
+    public function validerInformationsDerniereDecision(ExecutionContextInterface $context): void
+    {
+        if (false !== $this->nouvellementAffecte) {
+            return;
+        }
+
+        if (!$this->numeroDerniereDecision) {
+            $context->buildViolation("Merci d'indiquer le numéro de la dernière décision de congé.")
+                ->atPath('numeroDerniereDecision')
+                ->addViolation();
+        }
+
+        if (!$this->dateDerniereDecision) {
+            $context->buildViolation("Merci d'indiquer l'année d'obtention de la dernière décision de congé.")
+                ->atPath('dateDerniereDecision')
+                ->addViolation();
+        }
     }
 
     public function getMotif(): ?string

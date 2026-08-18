@@ -18,12 +18,12 @@
 
     @if (form.value.nouvellementAffecte === false) {
       <div class="col-md-6">
-        <label class="form-label">Numéro de ma dernière décision (si connu)</label>
+        <label class="form-label">Numéro de ma dernière décision <span class="text-danger">*</span></label>
         <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
       </div>
       <div class="col-md-6">
-        <label class="form-label">Date de ma dernière décision (si connue)</label>
-        <input type="date" class="form-control" formControlName="dateDerniereDecision" />
+        <label class="form-label">Année d'obtention de ma dernière décision <span class="text-danger">*</span></label>
+        <input type="number" class="form-control" formControlName="anneeDerniereDecision" min="1960" [max]="anneeMax" placeholder="ex. 2022" />
       </div>
     }
 

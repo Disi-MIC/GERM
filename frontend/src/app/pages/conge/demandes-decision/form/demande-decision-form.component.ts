@@ -21,12 +21,13 @@ export class DemandeDecisionFormComponent implements OnInit {
   error: string | null = null;
   fichierPriseDeService: File | null = null;
   fichierAncienneDecision: File | null = null;
+  readonly anneeMax = new Date().getFullYear();
 
   form = this.fb.nonNullable.group({
     personnel: [null as number | null, Validators.required],
     nouvellementAffecte: [null as boolean | null, Validators.required],
     numeroDerniereDecision: [''],
-    dateDerniereDecision: [''],
+    anneeDerniereDecision: [null as number | null, [Validators.min(1960), Validators.max(this.anneeMax)]],
     motif: [''],
   });
 
@@ -59,16 +60,22 @@ export class DemandeDecisionFormComponent implements OnInit {
       this.error = 'Merci de joindre la prise de service.';
       return;
     }
-    if (!nouvellementAffecte && !this.fichierAncienneDecision) {
-      this.error = "Merci de joindre l'ancienne décision de congé.";
-      return;
+    if (!nouvellementAffecte) {
+      if (!this.fichierAncienneDecision) {
+        this.error = "Merci de joindre l'ancienne décision de congé.";
+        return;
+      }
+      if (!raw.numeroDerniereDecision.trim() || !raw.anneeDerniereDecision) {
+        this.error = "Merci d'indiquer le numéro et l'année d'obtention de la dernière décision de congé.";
+        return;
+      }
     }
 
     const payload: DemandeDecision = {
       personnel: `/api/personnels/${raw.personnel}`,
       nouvellementAffecte,
-      numeroDerniereDecision: nouvellementAffecte ? null : raw.numeroDerniereDecision || null,
-      dateDerniereDecision: nouvellementAffecte ? null : raw.dateDerniereDecision || null,
+      numeroDerniereDecision: nouvellementAffecte ? null : raw.numeroDerniereDecision.trim(),
+      dateDerniereDecision: nouvellementAffecte ? null : `${raw.anneeDerniereDecision}-01-01`,
       motif: raw.motif || null,
     };
 

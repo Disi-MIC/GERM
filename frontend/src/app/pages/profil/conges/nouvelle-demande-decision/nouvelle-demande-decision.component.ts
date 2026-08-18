@@ -24,11 +24,12 @@ export class NouvelleDemandeDecisionComponent {
   error: string | null = null;
   fichierPriseDeService: File | null = null;
   fichierAncienneDecision: File | null = null;
+  readonly anneeMax = new Date().getFullYear();
 
   form = this.fb.nonNullable.group({
     nouvellementAffecte: [null as boolean | null, Validators.required],
     numeroDerniereDecision: [''],
-    dateDerniereDecision: [''],
+    anneeDerniereDecision: [null as number | null, [Validators.min(1960), Validators.max(this.anneeMax)]],
     motif: [''],
   });
 
@@ -52,17 +53,23 @@ export class NouvelleDemandeDecisionComponent {
       this.error = 'Merci de joindre votre prise de service.';
       return;
     }
-    if (!nouvellementAffecte && !this.fichierAncienneDecision) {
-      this.error = 'Merci de joindre votre ancienne décision de congé.';
-      return;
+    if (!nouvellementAffecte) {
+      if (!this.fichierAncienneDecision) {
+        this.error = 'Merci de joindre votre ancienne décision de congé.';
+        return;
+      }
+      if (!raw.numeroDerniereDecision.trim() || !raw.anneeDerniereDecision) {
+        this.error = "Merci d'indiquer le numéro et l'année d'obtention de votre dernière décision de congé.";
+        return;
+      }
     }
 
     // 'personnel' est volontairement omis : le serveur le déduit toujours du compte
     // connecté (voir MeDemandesController) et une IRI vide ferait échouer la désérialisation.
     const payload = {
       nouvellementAffecte,
-      numeroDerniereDecision: nouvellementAffecte ? null : raw.numeroDerniereDecision || null,
-      dateDerniereDecision: nouvellementAffecte ? null : raw.dateDerniereDecision || null,
+      numeroDerniereDecision: nouvellementAffecte ? null : raw.numeroDerniereDecision.trim(),
+      dateDerniereDecision: nouvellementAffecte ? null : `${raw.anneeDerniereDecision}-01-01`,
       motif: raw.motif || null,
     } as DemandeDecision;
 
