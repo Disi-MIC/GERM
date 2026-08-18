@@ -338,6 +338,13 @@ class DemandeDecisionController extends AbstractController
             return $this->json(['errors' => ['nombreJours' => 'Le nombre de jours de congé ne peut pas dépasser 90 jours.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        // L'attestation de non jouissance, comme la décision de congé
+        // antérieure, n'a de sens que pour un agent qui en a déjà une : un
+        // nouvel agent n'a jamais pu jouir d'un congé qu'il n'a jamais eu.
+        if (!$demande->isNouvellementAffecte() && (null === $numeroAttestationNonJouissance || null === $dateAttestationNonJouissance)) {
+            return $this->json(['errors' => ['numeroAttestationNonJouissance' => "Merci de renseigner le numéro et la date de l'attestation de non jouissance de congé."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         if ($dateDerniereDecision) {
             $demande->setDateDerniereDecision($dateDerniereDecision);
         }

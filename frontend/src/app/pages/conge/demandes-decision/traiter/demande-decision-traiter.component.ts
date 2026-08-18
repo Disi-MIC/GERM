@@ -193,6 +193,14 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     }
     const raw = this.formGeneration.getRawValue();
 
+    // L'attestation de non jouissance, comme la décision de congé
+    // antérieure, ne concerne que les agents qui en avaient déjà une —
+    // voir genererEtTransmettre() côté serveur, même règle.
+    if (!this.demande.nouvellementAffecte && (!raw.numeroAttestationNonJouissance.trim() || !raw.dateAttestationNonJouissance)) {
+      this.error = "Merci d'indiquer le numéro et la date de l'attestation de non jouissance de congé.";
+      return;
+    }
+
     this.saving = true;
     this.error = null;
     this.api
