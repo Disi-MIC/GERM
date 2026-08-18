@@ -73,6 +73,25 @@
   }
 }
 
+// zoom (pas transform: scale) : contrairement à transform, zoom redimensionne
+// aussi la boîte de mise en page elle-même, donc la page A4 tient dans la
+// largeur de l'écran sans scroll horizontal ni JS pour recalculer une
+// hauteur de conteneur. L'utilisateur garde le pincer-zoomer du navigateur
+// (voir index.html, pas de maximum-scale) pour lire le détail. Sans effet
+// sur l'impression : imprimer() force zoom:1 dans la fenêtre dédiée (voir
+// decision-conge-apercu.component.ts), quelle que soit la taille d'écran.
+@media (max-width: 640px) {
+  .decision-apercu-imprimable {
+    zoom: 0.42;
+  }
+}
+
+@media (max-width: 400px) {
+  .decision-apercu-imprimable {
+    zoom: 0.38;
+  }
+}
+
 .decision-apercu-entete {
   // Deux colonnes de largeur égale : le logo et le bloc numéro/analyse sont
   // ainsi toujours équidistants du milieu de la page, quel que soit leur
@@ -121,7 +140,7 @@
 // Décalée vers le bas par rapport au N° pour s'aligner avec le bas du logo
 // (colonne de gauche), plutôt que collée juste sous le numéro.
 .decision-apercu-analyse {
-  margin: 2.6em 0 0;
+  margin: calc(2.6em + 0.8cm) 0 0;
   font-size: 0.85em;
   text-align: left;
 }

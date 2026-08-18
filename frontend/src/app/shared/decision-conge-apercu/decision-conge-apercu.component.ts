@@ -150,7 +150,7 @@ export class DecisionCongeApercuComponent {
     <style>
       @page { size: A4 portrait; margin: 0; }
       html, body { margin: 0; padding: 0; background: #fff; }
-      .decision-apercu-imprimable { margin: 0; box-shadow: none; }
+      .decision-apercu-imprimable { margin: 0; box-shadow: none; zoom: 1 !important; }
     </style>
   </head>
   <body>${contenu.outerHTML}</body>
