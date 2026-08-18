@@ -23,6 +23,10 @@ export interface DecisionConge {
   dateExpiration: string | null;
   observations?: string | null;
   nombreJours?: number | null;
+  periodeDebut?: string | null;
+  visasDecrets?: string | null;
+  article2?: string | null;
+  article3?: string | null;
   genereeParNom?: string | null;
   createdAt?: string;
   valide?: boolean;

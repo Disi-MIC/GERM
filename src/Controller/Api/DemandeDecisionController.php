@@ -12,6 +12,7 @@ use App\Entity\PieceJustificativeDecision;
 use App\Entity\User;
 use App\Repository\DecisionCongeRepository;
 use App\Repository\ListeValeurRepository;
+use App\Repository\ParametresDecisionCongeRepository;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,6 +54,7 @@ class DemandeDecisionController extends AbstractController
         private readonly NotificationService $notificationService,
         private readonly ListeValeurRepository $listeValeurRepository,
         private readonly DecisionCongeRepository $decisionCongeRepository,
+        private readonly ParametresDecisionCongeRepository $parametresDecisionCongeRepository,
     ) {
     }
 
@@ -336,12 +338,23 @@ class DemandeDecisionController extends AbstractController
         /** @var User $operateur */
         $operateur = $this->getUser();
 
+        // Texte légal par défaut (visas des décrets, articles 2 et 3) et
+        // début de la période de service ouvrant droit à ce congé, copiés
+        // ici une fois pour toutes plutôt que référencés dynamiquement — une
+        // modification ultérieure des réglages ne doit pas changer le
+        // contenu d'une décision déjà délivrée (voir ParametresDecisionConge).
+        $parametres = $this->parametresDecisionCongeRepository->recupererOuCreer();
+
         $nouvelleDecision = new DecisionConge();
         $nouvelleDecision->setPersonnel($demande->getPersonnel());
         $nouvelleDecision->setNumeroDecision($numero);
         $nouvelleDecision->setDateDecision($dateDecision);
         $nouvelleDecision->setDateExpiration($dateExpiration);
         $nouvelleDecision->setNombreJours($nombreJours);
+        $nouvelleDecision->setPeriodeDebut($demande->getDateDerniereDecision() ?? $demande->getDatePriseDeService());
+        $nouvelleDecision->setVisasDecrets($parametres->getVisasDecrets());
+        $nouvelleDecision->setArticle2($parametres->getArticle2());
+        $nouvelleDecision->setArticle3($parametres->getArticle3());
         $nouvelleDecision->setGenereePar($operateur);
         $this->em->persist($nouvelleDecision);
 

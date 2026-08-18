@@ -77,6 +77,36 @@ class DecisionConge
     #[Groups(['api:read'])]
     private ?int $nombreJours = null;
 
+    /**
+     * Début de la période de service ayant ouvert droit à ce congé (fin :
+     * $dateDecision ci-dessus) — copié depuis DemandeDecision::$dateDerniereDecision
+     * ou $datePriseDeService au moment de la génération (voir
+     * DemandeDecisionController::genererEtTransmettre()), absent pour les
+     * décisions saisies directement.
+     */
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read'])]
+    private ?\DateTimeImmutable $periodeDebut = null;
+
+    /**
+     * Texte légal par défaut au moment de la génération — copié depuis
+     * ParametresDecisionConge (réglages RH Admin, voir son commentaire de
+     * classe) plutôt que référencé dynamiquement, pour qu'une modification
+     * ultérieure des réglages ne change jamais le contenu d'une décision
+     * déjà délivrée.
+     */
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $visasDecrets = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $article2 = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $article3 = null;
+
     /** L'opérateur RH Congé ayant généré la décision — voir DemandeDecisionController::genererEtTransmettre(). */
     #[ORM\ManyToOne(targetEntity: User::class)]
     private ?User $genereePar = null;
@@ -167,6 +197,54 @@ class DecisionConge
     public function setNombreJours(?int $nombreJours): static
     {
         $this->nombreJours = $nombreJours;
+
+        return $this;
+    }
+
+    public function getPeriodeDebut(): ?\DateTimeImmutable
+    {
+        return $this->periodeDebut;
+    }
+
+    public function setPeriodeDebut(?\DateTimeImmutable $periodeDebut): static
+    {
+        $this->periodeDebut = $periodeDebut;
+
+        return $this;
+    }
+
+    public function getVisasDecrets(): ?string
+    {
+        return $this->visasDecrets;
+    }
+
+    public function setVisasDecrets(?string $visasDecrets): static
+    {
+        $this->visasDecrets = $visasDecrets;
+
+        return $this;
+    }
+
+    public function getArticle2(): ?string
+    {
+        return $this->article2;
+    }
+
+    public function setArticle2(?string $article2): static
+    {
+        $this->article2 = $article2;
+
+        return $this;
+    }
+
+    public function getArticle3(): ?string
+    {
+        return $this->article3;
+    }
+
+    public function setArticle3(?string $article3): static
+    {
+        $this->article3 = $article3;
 
         return $this;
     }

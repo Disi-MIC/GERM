@@ -66,6 +66,26 @@
   margin: 0 0 0.5rem;
 }
 
+.decision-apercu-visas {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--bs-secondary);
+  white-space: pre-line;
+}
+
+.decision-apercu-articles {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(15, 20, 30, 0.08);
+  font-size: 0.9rem;
+
+  p {
+    margin: 0 0 0.6rem;
+    white-space: pre-line;
+  }
+}
+
 .decision-apercu-infos {
   margin: 1.25rem 0 0;
   display: grid;

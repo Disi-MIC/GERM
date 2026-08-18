@@ -143,6 +143,9 @@
               }
             }
           </a>
+          @if (auth.hasRole('ROLE_ADMIN_RH')) {
+            <a routerLink="/conges/parametres-decision" routerLinkActive="active">Paramètres décision</a>
+          }
         </div>
       }
 

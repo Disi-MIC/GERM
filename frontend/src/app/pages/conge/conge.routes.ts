@@ -1,9 +1,17 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '../../core/guards/role.guard';
 
 export const CONGE_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./conges/list/conge-list.component').then((m) => m.CongeListComponent),
+  },
+  {
+    path: 'parametres-decision',
+    canActivate: [roleGuard],
+    data: { roles: ['ROLE_ADMIN_RH'] },
+    loadComponent: () =>
+      import('./parametres-decision/parametres-decision.component').then((m) => m.ParametresDecisionComponent),
   },
   {
     path: 'new',
