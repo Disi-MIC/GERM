@@ -40,6 +40,7 @@ export interface DemandeDecision {
   nouvellementAffecte: boolean;
   dateDerniereDecision?: string | null;
   numeroDerniereDecision?: string | null;
+  datePriseDeService?: string | null;
   motif?: string | null;
   statut?: StatutDemande;
   dateTraitement?: string | null;

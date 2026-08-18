@@ -25,7 +25,12 @@
         </select>
       </div>
 
-      @if (form.value.nouvellementAffecte === false) {
+      @if (form.value.nouvellementAffecte === true) {
+        <div class="col-md-6">
+          <label class="form-label">Date de ma prise de service <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" formControlName="datePriseDeService" />
+        </div>
+      } @else if (form.value.nouvellementAffecte === false) {
         <div class="col-md-6">
           <label class="form-label">Numéro de ma dernière décision <span class="text-danger">*</span></label>
           <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
@@ -44,9 +49,9 @@
       <div class="col-md-6">
         <app-file-piece-input label="Prise de service" [requis]="true" [(fichier)]="fichierPriseDeService" />
       </div>
-      @if (form.value.nouvellementAffecte === false) {
+      @if (form.value.nouvellementAffecte !== null) {
         <div class="col-md-6">
-          <app-file-piece-input label="Ancienne décision de congé" [requis]="true" [(fichier)]="fichierAncienneDecision" />
+          <app-file-piece-input [label]="labelPiece2" [requis]="true" [(fichier)]="fichierPiece2" />
         </div>
       }
     </div>

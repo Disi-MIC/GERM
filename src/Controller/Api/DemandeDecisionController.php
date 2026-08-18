@@ -173,12 +173,10 @@ class DemandeDecisionController extends AbstractController
             return $this->json(['errors' => ['statut' => 'Cette demande a déjà été traitée.']], JsonResponse::HTTP_CONFLICT);
         }
 
-        $piecesAttendues = $demande->isNouvellementAffecte() ? 1 : 2;
-        if ($demande->getPieces()->count() < $piecesAttendues) {
+        if ($demande->getPieces()->count() < 2) {
             return $this->json(['errors' => ['pieces' => \sprintf(
-                'Pièces incomplètes : %d attendue(s) (%s), %d fournie(s).',
-                $piecesAttendues,
-                $demande->isNouvellementAffecte() ? 'prise de service' : 'prise de service + ancienne décision',
+                'Pièces incomplètes : 2 attendues (%s), %d fournie(s).',
+                $demande->isNouvellementAffecte() ? 'prise de service + acte d\'engagement' : 'prise de service + ancienne décision',
                 $demande->getPieces()->count(),
             )]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }

@@ -29,7 +29,12 @@
       </select>
     </div>
 
-    @if (form.value.nouvellementAffecte === false) {
+    @if (form.value.nouvellementAffecte === true) {
+      <div class="col-md-6">
+        <label class="form-label">Date de prise de service <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" formControlName="datePriseDeService" />
+      </div>
+    } @else if (form.value.nouvellementAffecte === false) {
       <div class="col-md-6">
         <label class="form-label">Numéro de la dernière décision <span class="text-danger">*</span></label>
         <input type="text" class="form-control" formControlName="numeroDerniereDecision" />
@@ -49,10 +54,10 @@
       <label class="form-label">Prise de service <span class="text-danger">*</span></label>
       <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="fichierPriseDeService = $any($event.target).files[0] ?? null" />
     </div>
-    @if (form.value.nouvellementAffecte === false) {
+    @if (form.value.nouvellementAffecte !== null) {
       <div class="col-md-6">
-        <label class="form-label">Ancienne décision de congé <span class="text-danger">*</span></label>
-        <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="fichierAncienneDecision = $any($event.target).files[0] ?? null" />
+        <label class="form-label">{{ labelPiece2 }} <span class="text-danger">*</span></label>
+        <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" (change)="fichierPiece2 = $any($event.target).files[0] ?? null" />
       </div>
     }
   </div>

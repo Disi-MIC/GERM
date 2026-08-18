@@ -9,9 +9,12 @@ import { FilePieceInputComponent } from '../../../../shared/file-piece-input/fil
 import { ProfilApiService } from '../../profil-api.service';
 
 /**
- * Un agent nouvellement affecté n'a jamais eu de décision de congé : seule sa
- * prise de service est exigée. Sinon, l'ancienne décision est exigée en plus
- * (voir DemandeDecision::$nouvellementAffecte côté serveur, source de vérité
+ * Un agent nouvellement affecté n'a jamais eu de décision de congé : sa
+ * prise de service (piece1) et son acte d'engagement délivré par la fonction
+ * publique sénégalaise (piece2) sont exigés, ainsi que la date effective de
+ * sa prise de service. Sinon, sa prise de service et son ancienne décision de
+ * congé (numéro + année) sont exigés à la place (voir
+ * DemandeDecision::$nouvellementAffecte côté serveur, source de vérité
  * partagée avec le formulaire RH demande-decision-form).
  *
  * Tant qu'une décision de congé valide (non expirée) existe déjà pour
@@ -31,13 +34,14 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
   saving = false;
   error: string | null = null;
   fichierPriseDeService: File | null = null;
-  fichierAncienneDecision: File | null = null;
+  fichierPiece2: File | null = null;
   readonly anneeMax = new Date().getFullYear();
   chargementDecision = true;
   decisionValide: DecisionConge | null = null;
 
   form = this.fb.nonNullable.group({
     nouvellementAffecte: [null as boolean | null, Validators.required],
+    datePriseDeService: [''],
     numeroDerniereDecision: [''],
     anneeDerniereDecision: [null as number | null, [Validators.min(1960), Validators.max(this.anneeMax)]],
     motif: [''],
@@ -61,6 +65,11 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
     });
   }
 
+  /** Libellé de la pièce 2, dépendant de nouvellementAffecte — voir DemandeDecision côté serveur. */
+  get labelPiece2(): string {
+    return this.form.value.nouvellementAffecte ? "Acte d'engagement" : 'Ancienne décision de congé';
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -75,21 +84,27 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
       this.error = 'Merci de joindre votre prise de service.';
       return;
     }
-    if (!nouvellementAffecte) {
-      if (!this.fichierAncienneDecision) {
-        this.error = 'Merci de joindre votre ancienne décision de congé.';
+    if (!this.fichierPiece2) {
+      this.error = nouvellementAffecte
+        ? "Merci de joindre votre acte d'engagement."
+        : 'Merci de joindre votre ancienne décision de congé.';
+      return;
+    }
+    if (nouvellementAffecte) {
+      if (!raw.datePriseDeService) {
+        this.error = 'Merci d\'indiquer la date de votre prise de service.';
         return;
       }
-      if (!raw.numeroDerniereDecision.trim() || !raw.anneeDerniereDecision) {
-        this.error = "Merci d'indiquer le numéro et l'année d'obtention de votre dernière décision de congé.";
-        return;
-      }
+    } else if (!raw.numeroDerniereDecision.trim() || !raw.anneeDerniereDecision) {
+      this.error = "Merci d'indiquer le numéro et l'année d'obtention de votre dernière décision de congé.";
+      return;
     }
 
     // 'personnel' est volontairement omis : le serveur le déduit toujours du compte
     // connecté (voir MeDemandesController) et une IRI vide ferait échouer la désérialisation.
     const payload = {
       nouvellementAffecte,
+      datePriseDeService: nouvellementAffecte ? raw.datePriseDeService : null,
       numeroDerniereDecision: nouvellementAffecte ? null : raw.numeroDerniereDecision.trim(),
       dateDerniereDecision: nouvellementAffecte ? null : `${raw.anneeDerniereDecision}-01-01`,
       motif: raw.motif || null,
@@ -98,7 +113,7 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
     this.saving = true;
     this.error = null;
     this.api.creerDemandeDecision(payload).subscribe({
-      next: (demande) => this.uploadPiecesEtRediriger(demande, nouvellementAffecte),
+      next: (demande) => this.uploadPiecesEtRediriger(demande),
       error: (err) => {
         this.saving = false;
         this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'enregistrement de la demande.";
@@ -106,7 +121,7 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
     });
   }
 
-  private uploadPiecesEtRediriger(demande: DemandeDecision, nouvellementAffecte: boolean): void {
+  private uploadPiecesEtRediriger(demande: DemandeDecision): void {
     const id = demande.id;
     if (!id) {
       this.router.navigateByUrl('/mon-espace/conges');
@@ -123,13 +138,7 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
     };
 
     this.api.uploadPieceDecision1(id, this.fichierPriseDeService!).subscribe({
-      next: () => {
-        if (!nouvellementAffecte && this.fichierAncienneDecision) {
-          this.api.uploadPieceDecision2(id, this.fichierAncienneDecision).subscribe({ next: done, error: onError });
-        } else {
-          done();
-        }
-      },
+      next: () => this.api.uploadPieceDecision2(id, this.fichierPiece2!).subscribe({ next: done, error: onError }),
       error: onError,
     });
   }

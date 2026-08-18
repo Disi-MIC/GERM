@@ -127,8 +127,9 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     return personnel.nomComplet ?? `${personnel.prenom} ${personnel.nom}`;
   }
 
-  piecesAttendues(): number {
-    return this.demande?.nouvellementAffecte ? 1 : 2;
+  /** Labels des deux pièces attendues (toujours 2, voir DemandeDecision côté serveur), dépendants de nouvellementAffecte. */
+  get labelsPiecesAttendues(): string {
+    return this.demande?.nouvellementAffecte ? "Prise de service + acte d'engagement" : 'Prise de service + ancienne décision';
   }
 
   pieceUrl(pieceId: number): string {
@@ -242,7 +243,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
       return;
     }
     const personnel = d.personnel;
-    const dateDebutSuggeree = d.dateDerniereDecision ?? personnel.dateEmbauche ?? null;
+    const dateDebutSuggeree = d.dateDerniereDecision ?? d.datePriseDeService ?? personnel.dateEmbauche ?? null;
     if (dateDebutSuggeree) {
       this.formGeneration.patchValue({ dateDerniereDecision: dateDebutSuggeree.substring(0, 10) });
     }
@@ -255,14 +256,15 @@ export class DemandeDecisionTraiterComponent implements OnInit {
 
   /**
    * Suggestion calculée côté client (mois écoulés entre la dernière décision
-   * — ou la date d'embauche si l'agent n'en a jamais eu — et le dépôt de
-   * cette demande, × 30 jours / 11 mois pour un fonctionnaire ou / 12 mois
-   * sinon) : le RH Congé peut toujours l'ajuster avant de générer, la valeur
-   * soumise fait foi côté serveur (voir genererEtTransmettre()), qui rejette
-   * toute valeur supérieure à 90. Au-delà de 3 ans d'écart entre les deux
-   * demandes, le congé annuel est plafonné à 90 jours directement (le cumul
-   * théorique n'est jamais dû) ; en-deçà, la formule est également bornée à
-   * 90 par sécurité.
+   * — ou la date de prise de service si l'agent n'en a jamais eu, ou la date
+   * d'embauche de sa fiche Personnel en dernier recours si aucune des deux
+   * n'est renseignée — et le dépôt de cette demande, × 30 jours / 11 mois
+   * pour un fonctionnaire ou / 12 mois sinon) : le RH Congé peut toujours
+   * l'ajuster avant de générer, la valeur soumise fait foi côté serveur (voir
+   * genererEtTransmettre()), qui rejette toute valeur supérieure à 90.
+   * Au-delà de 3 ans d'écart entre les deux demandes, le congé annuel est
+   * plafonné à 90 jours directement (le cumul théorique n'est jamais dû) ;
+   * en-deçà, la formule est également bornée à 90 par sécurité.
    */
   private calculerSuggestionNombreJours(): number | null {
     const d = this.demande;
@@ -273,7 +275,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     const typeContrat = typeof personnel.typeContrat === 'string' ? null : personnel.typeContrat;
     const diviseur = typeContrat?.code === 'fonctionnaire' ? 11 : 12;
 
-    const dateDebutBrute = d.dateDerniereDecision ?? personnel.dateEmbauche;
+    const dateDebutBrute = d.dateDerniereDecision ?? d.datePriseDeService ?? personnel.dateEmbauche;
     const dateFinBrute = d.createdAt;
     if (!dateDebutBrute || !dateFinBrute) {
       return null;

@@ -68,12 +68,27 @@ class DemandeDecision
     private ?string $numeroDerniereDecision = null;
 
     /**
-     * Détermine les pièces attendues : un agent nouvellement affecté ne peut
-     * pas encore avoir de décision de congé antérieure, donc seule sa prise
-     * de service est exigée (piece1) ; sinon l'ancienne décision (piece2)
-     * est exigée en plus — voir piece1()/piece2() côté contrôleur et les
-     * formulaires Angular (demande-decision-form, nouvelle-demande-decision)
-     * qui adaptent labels et champs requis sur ce booléen.
+     * Un agent nouvellement affecté n'a pas encore de décision de congé
+     * antérieure, mais doit renseigner la date effective de sa prise de
+     * service — point de départ du calcul du nombre de jours à sa place
+     * (voir DemandeDecisionTraiterComponent::calculerSuggestionNombreJours()
+     * côté Angular) plutôt que Personnel::$dateEmbauche, qui peut différer
+     * (date de signature du contrat/de l'acte d'engagement, pas forcément
+     * celle de la prise de service effective).
+     */
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?\DateTimeImmutable $datePriseDeService = null;
+
+    /**
+     * Détermine les pièces attendues, toujours au nombre de deux (piece1 +
+     * piece2 — voir piece1()/piece2() côté contrôleur) mais dont la nature
+     * dépend de ce booléen : un agent nouvellement affecté fournit sa prise
+     * de service (piece1) et son acte d'engagement délivré par la fonction
+     * publique (piece2) ; sinon sa prise de service et son ancienne décision
+     * de congé — voir les formulaires Angular (demande-decision-form,
+     * nouvelle-demande-decision) qui adaptent labels et champs requis sur ce
+     * booléen.
      */
     #[ORM\Column]
     #[Assert\NotNull(message: "Merci d'indiquer si l'agent est nouvellement affecté.")]
@@ -182,18 +197,40 @@ class DemandeDecision
         return $this;
     }
 
+    public function getDatePriseDeService(): ?\DateTimeImmutable
+    {
+        return $this->datePriseDeService;
+    }
+
+    public function setDatePriseDeService(?\DateTimeImmutable $datePriseDeService): static
+    {
+        $this->datePriseDeService = $datePriseDeService;
+
+        return $this;
+    }
+
     /**
-     * Un agent qui n'est pas nouvellement affecté a forcément déjà eu une
-     * décision de congé : le numéro et l'année d'obtention de cette dernière
-     * décision sont donc exigés en plus de la pièce jointe correspondante
-     * (voir les formulaires Angular nouvelle-demande-decision et
-     * demande-decision-form, qui ne collectent que l'année — stockée ici au
-     * 1er janvier de cette année, affinée si besoin par le RH Congé à la
-     * génération de la décision, voir DemandeDecisionController::genererEtTransmettre()).
+     * Selon que l'agent est nouvellement affecté ou non, des informations
+     * différentes sont exigées en plus des pièces jointes elles-mêmes :
+     * date de prise de service pour un nouvel agent (numéro/année n'ont pas
+     * de sens, il n'a jamais eu de décision), numéro et année de la dernière
+     * décision sinon — stockée au 1er janvier de cette année, affinée si
+     * besoin par le RH Congé à la génération de la décision (voir
+     * DemandeDecisionController::genererEtTransmettre()).
      */
     #[Assert\Callback]
     public function validerInformationsDerniereDecision(ExecutionContextInterface $context): void
     {
+        if (true === $this->nouvellementAffecte) {
+            if (!$this->datePriseDeService) {
+                $context->buildViolation('Merci d\'indiquer la date de prise de service.')
+                    ->atPath('datePriseDeService')
+                    ->addViolation();
+            }
+
+            return;
+        }
+
         if (false !== $this->nouvellementAffecte) {
             return;
         }

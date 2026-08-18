@@ -13,6 +13,10 @@
     <dl class="row mb-3">
       <dt class="col-sm-4">Agent nouvellement affecté</dt>
       <dd class="col-sm-8">{{ demande.nouvellementAffecte ? 'Oui' : 'Non' }}</dd>
+      @if (demande.datePriseDeService) {
+        <dt class="col-sm-4">Date de prise de service</dt>
+        <dd class="col-sm-8">{{ demande.datePriseDeService | slice: 0 : 10 }}</dd>
+      }
       @if (demande.numeroDerniereDecision) {
         <dt class="col-sm-4">Dernière décision connue</dt>
         <dd class="col-sm-8">{{ demande.numeroDerniereDecision }}</dd>
@@ -34,7 +38,7 @@
         } @else {
           <span class="text-danger">Aucune pièce jointe.</span>
         }
-        <div class="form-text">{{ piecesAttendues() }} pièce(s) attendue(s), {{ demande.pieces?.length ?? 0 }} fournie(s).</div>
+        <div class="form-text">2 pièces attendues ({{ labelsPiecesAttendues }}), {{ demande.pieces?.length ?? 0 }} fournie(s).</div>
       </dd>
 
       @if (demande.hasDocumentRetour) {
