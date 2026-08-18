@@ -13,12 +13,21 @@
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 101;
-  width: min(640px, calc(100vw - 2.5rem));
-  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 3rem);
+  // Format A4 (210 x 297 mm) — 794px est la largeur usuelle d'une page A4 à
+  // 96dpi (même convention qu'un aperçu de page Google Docs/Word Online) ;
+  // aspect-ratio conserve les proportions quand la largeur doit rétrécir
+  // sur un petit écran.
+  width: min(794px, calc(100vw - 2rem));
+  aspect-ratio: 210 / 297;
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
   overflow-y: auto;
   background: #fff;
-  border-radius: 1rem;
-  padding: 2rem 1.75rem 1.5rem;
+  border-radius: 0.25rem;
+  // Marge étroite (convention Word : 1,27 cm/0,5 pouce) — en %, donc
+  // toujours relative à la largeur de la page même en haut/bas (règle CSS
+  // standard du padding en pourcentage), ce qui préserve une marge visuelle
+  // cohérente sur les 4 côtés à toute taille d'écran.
+  padding: 6.05%;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
 }
 
