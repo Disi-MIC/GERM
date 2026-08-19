@@ -1,0 +1,34 @@
+<app-page-header title="Services" subtitle="Services du Ministère.">
+  <a routerLink="/services/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouveau service
+  </a>
+</app-page-header>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  @if (deleteError) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ deleteError }}
+      <button type="button" class="btn-close" (click)="deleteError = null"></button>
+    </div>
+  }
+
+  <app-data-table [rows]="services" [columns]="columns" emptyMessage="Aucun service enregistré." searchPlaceholder="Rechercher un service...">
+    <ng-template appDataTableCell="code" let-service>{{ service.code }}</ng-template>
+    <ng-template appDataTableCell="nom" let-service>{{ service.nom }}</ng-template>
+    <ng-template appDataTableCell="direction" let-service>{{ directionLabel(service) }}</ng-template>
+    <ng-template appDataTableCell="responsable" let-service>{{ service.responsableNom || '—' }}</ng-template>
+    <ng-template appDataTableCell="actif" let-service>{{ service.actif ? 'Oui' : 'Non' }}</ng-template>
+    <ng-template appDataTableCell="actions" let-service>
+      <a [routerLink]="['/services', service.id]" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(service)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </ng-template>
+  </app-data-table>
+}

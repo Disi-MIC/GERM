@@ -8,12 +8,15 @@ use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 
 class DirectionType extends AbstractType
 {
@@ -35,6 +38,23 @@ class DirectionType extends AbstractType
             ->add('actif', CheckboxType::class, [
                 'label' => 'Direction active',
                 'required' => false,
+            ])
+            ->add('noteServiceNumero', TextType::class, [
+                'label' => 'N° note de service',
+                'required' => false,
+                'help' => 'Obligatoire dès qu\'un directeur est désigné (voir Direction::validerNoteService()).',
+            ])
+            ->add('noteServiceDate', DateType::class, [
+                'label' => 'Date de la note de service',
+                'required' => false,
+                'widget' => 'single_text',
+            ])
+            // Non-mappé : voir ServiceType::noteServiceFichierUpload pour la raison.
+            ->add('noteServiceFichierUpload', FileType::class, [
+                'label' => 'Note de service scannée (facultatif)',
+                'required' => false,
+                'mapped' => false,
+                'constraints' => [new File(maxSize: '10M', mimeTypes: ['application/pdf', 'image/jpeg', 'image/png'])],
             ])
         ;
 

@@ -6,16 +6,22 @@ use App\Controller\AbstractController;
 use App\Entity\Service;
 use App\Form\ServiceType;
 use App\Repository\ServiceRepository;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/service', name: 'admin_service_')]
-#[IsGranted('ROLE_RH_RESPONSABLE')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class ServiceController extends AbstractController
 {
+    public function __construct(private readonly FileStorage $fileStorage)
+    {
+    }
+
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(ServiceRepository $repository): Response
     {
@@ -32,6 +38,7 @@ class ServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->stockerNoteServiceFichier($form, $service);
             $em->persist($service);
             $em->flush();
 
@@ -53,6 +60,7 @@ class ServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->stockerNoteServiceFichier($form, $service);
             $em->flush();
 
             $this->addFlash('success', 'Service mis à jour.');
@@ -73,6 +81,9 @@ class ServiceController extends AbstractController
             if (!$service->getPersonnels()->isEmpty() || !$service->getMateriels()->isEmpty() || !$service->getVehicules()->isEmpty() || !$service->getHistoriqueAffectations()->isEmpty()) {
                 $this->addFlash('danger', 'Impossible de supprimer ce service : du personnel, du matériel, des véhicules ou un historique de carrière y sont encore rattachés.');
             } else {
+                if ($service->getNoteServiceFichier()) {
+                    $this->fileStorage->delete($service->getNoteServiceFichier());
+                }
                 $em->remove($service);
                 $em->flush();
                 $this->addFlash('success', 'Service supprimé.');
@@ -80,5 +91,26 @@ class ServiceController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_service_index');
+    }
+
+    /**
+     * Champ 'noteServiceFichierUpload' non-mappé (voir ServiceType) : stocké
+     * ici manuellement, même logique que ServiceController (Api) mais en un
+     * seul aller-retour puisque le formulaire Twig envoie tout ensemble.
+     */
+    private function stockerNoteServiceFichier(FormInterface $form, Service $service): void
+    {
+        $fichier = $form->get('noteServiceFichierUpload')->getData();
+        if (!$fichier) {
+            return;
+        }
+
+        if ($service->getNoteServiceFichier()) {
+            $this->fileStorage->delete($service->getNoteServiceFichier());
+        }
+
+        $stocke = $this->fileStorage->store($fichier, 'note-service-service');
+        $service->setNoteServiceFichier($stocke['path']);
+        $service->setNoteServiceNomOriginal($stocke['originalName']);
     }
 }

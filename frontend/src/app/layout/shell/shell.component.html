@@ -197,13 +197,10 @@
         <a routerLink="/delegations" routerLinkActive="active">
           <i class="bi bi-person-check"></i> Délégations
         </a>
-        <!-- Gestion Directions/Services : encore une page Twig classique
-             (pas de route Angular), voir ServiceController/DirectionController
-             — d'où un <a href> qui quitte la SPA plutôt qu'un routerLink. -->
-        <a href="/admin/direction">
+        <a routerLink="/directions" routerLinkActive="active">
           <i class="bi bi-building"></i> Directions
         </a>
-        <a href="/admin/service">
+        <a routerLink="/services" routerLinkActive="active">
           <i class="bi bi-diagram-3"></i> Services
         </a>
       }

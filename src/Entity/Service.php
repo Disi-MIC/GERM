@@ -12,24 +12,29 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * Service ou Direction du Ministère (ex: Direction des Systèmes d'Information,
  * Direction des Ressources Humaines, Direction de la Communication...).
  *
- * Exposé en lecture seule côté API (pilote Angular) : pour peupler le
- * sélecteur "Service" des formulaires Personnel et Matériel informatique
- * (deux domaines distincts, RH et IT Stock, d'où les deux rôles) — la gestion
- * complète des services reste Twig-only pour l'instant.
+ * Exposé en lecture seule côté API Platform (liste + détail, pour peupler le
+ * sélecteur "Service" des formulaires Personnel et Matériel informatique,
+ * deux domaines distincts d'où les deux rôles en plus de ROLE_RH_RESPONSABLE) ;
+ * la création, l'édition et la note de service justifiant un responsable
+ * passent par src/Controller/Api/ServiceController.php — même choix que
+ * Personnel/MaterielInformatique. Twig (Admin/ServiceController) reste
+ * accessible au superadmin, en secours.
  */
 #[ORM\Entity(repositoryClass: ServiceRepository::class)]
 #[ORM\Table(name: 'service')]
 #[UniqueEntity(fields: ['code'], message: 'Ce code est déjà utilisé par un autre service.')]
 #[ApiResource(
     operations: [new GetCollection(), new Get()],
-    security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_STOCK')",
+    security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_STOCK') or is_granted('ROLE_RH_RESPONSABLE')",
     normalizationContext: ['groups' => ['api:read']],
 )]
+#[Assert\Callback(callback: 'validerNoteService')]
 class Service
 {
     #[ORM\Id]
@@ -41,29 +46,51 @@ class Service
     #[ORM\Column(length: 20, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
-    #[Groups(['api:read'])]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $code = null;
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 150)]
-    #[Groups(['api:read'])]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $nom = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
     private ?bool $actif = true;
 
     #[ORM\ManyToOne(targetEntity: Direction::class, inversedBy: 'services')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'La direction de rattachement est obligatoire.')]
+    #[Groups(['api:read', 'api:write'])]
     private ?Direction $direction = null;
 
-    /** Chef de service / coordonnateur, désigné par le RH Admin — voir ApercuOrganisationController. */
+    /** Chef de service / coordonnateur, désigné par le RH Responsable — voir ApercuOrganisationController. */
     #[ORM\ManyToOne(targetEntity: Personnel::class)]
+    #[Groups(['api:read', 'api:write'])]
     private ?Personnel $responsable = null;
+
+    // Justificatif de la nomination du responsable — voir Direction::$noteServiceNumero
+    // pour le même choix (numéro/date obligatoires, fichier facultatif, pas
+    // d'historique des responsables précédents).
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?string $noteServiceNumero = null;
+
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?\DateTimeImmutable $noteServiceDate = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $noteServiceFichier = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $noteServiceNomOriginal = null;
 
     #[ORM\OneToMany(mappedBy: 'service', targetEntity: Personnel::class)]
     private Collection $personnels;
@@ -83,6 +110,15 @@ class Service
         $this->materiels = new ArrayCollection();
         $this->vehicules = new ArrayCollection();
         $this->historiqueAffectations = new ArrayCollection();
+    }
+
+    public function validerNoteService(ExecutionContextInterface $context): void
+    {
+        if (null !== $this->responsable && (null === $this->noteServiceNumero || null === $this->noteServiceDate)) {
+            $context->buildViolation('Le numéro et la date de la note de service sont obligatoires pour désigner un responsable.')
+                ->atPath('noteServiceNumero')
+                ->addViolation();
+        }
     }
 
     public function getId(): ?int
@@ -166,6 +202,60 @@ class Service
     public function getResponsableNom(): ?string
     {
         return $this->responsable?->getNomComplet();
+    }
+
+    public function getNoteServiceNumero(): ?string
+    {
+        return $this->noteServiceNumero;
+    }
+
+    public function setNoteServiceNumero(?string $noteServiceNumero): static
+    {
+        $this->noteServiceNumero = $noteServiceNumero;
+
+        return $this;
+    }
+
+    public function getNoteServiceDate(): ?\DateTimeImmutable
+    {
+        return $this->noteServiceDate;
+    }
+
+    public function setNoteServiceDate(?\DateTimeImmutable $noteServiceDate): static
+    {
+        $this->noteServiceDate = $noteServiceDate;
+
+        return $this;
+    }
+
+    public function getNoteServiceFichier(): ?string
+    {
+        return $this->noteServiceFichier;
+    }
+
+    public function setNoteServiceFichier(?string $noteServiceFichier): static
+    {
+        $this->noteServiceFichier = $noteServiceFichier;
+
+        return $this;
+    }
+
+    public function getNoteServiceNomOriginal(): ?string
+    {
+        return $this->noteServiceNomOriginal;
+    }
+
+    public function setNoteServiceNomOriginal(?string $noteServiceNomOriginal): static
+    {
+        $this->noteServiceNomOriginal = $noteServiceNomOriginal;
+
+        return $this;
+    }
+
+    #[Groups(['api:read'])]
+    public function isHasNoteServiceFichier(): bool
+    {
+        return null !== $this->noteServiceFichier;
     }
 
     /**

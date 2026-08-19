@@ -1,0 +1,33 @@
+<app-page-header title="Directions" subtitle="Directions du Ministère.">
+  <a routerLink="/directions/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouvelle direction
+  </a>
+</app-page-header>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  @if (deleteError) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ deleteError }}
+      <button type="button" class="btn-close" (click)="deleteError = null"></button>
+    </div>
+  }
+
+  <app-data-table [rows]="directions" [columns]="columns" emptyMessage="Aucune direction enregistrée." searchPlaceholder="Rechercher une direction...">
+    <ng-template appDataTableCell="code" let-direction>{{ direction.code }}</ng-template>
+    <ng-template appDataTableCell="nom" let-direction>{{ direction.nom }}</ng-template>
+    <ng-template appDataTableCell="directeur" let-direction>{{ direction.directeurNom || '—' }}</ng-template>
+    <ng-template appDataTableCell="actif" let-direction>{{ direction.actif ? 'Oui' : 'Non' }}</ng-template>
+    <ng-template appDataTableCell="actions" let-direction>
+      <a [routerLink]="['/directions', direction.id]" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(direction)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </ng-template>
+  </app-data-table>
+}

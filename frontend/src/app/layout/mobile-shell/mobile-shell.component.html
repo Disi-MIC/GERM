@@ -214,10 +214,8 @@
       }
       @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a routerLink="/delegations" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-person-check"></i> Délégations</a>
-        <!-- Gestion Directions/Services : page Twig classique (pas de route
-             Angular), voir ShellComponent (web) pour la même note. -->
-        <a href="/admin/direction" (click)="fermerMenuAdmin()"><i class="bi bi-building"></i> Directions</a>
-        <a href="/admin/service" (click)="fermerMenuAdmin()"><i class="bi bi-diagram-3"></i> Services</a>
+        <a routerLink="/directions" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-building"></i> Directions</a>
+        <a routerLink="/services" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-diagram-3"></i> Services</a>
       }
 
       @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'])) {

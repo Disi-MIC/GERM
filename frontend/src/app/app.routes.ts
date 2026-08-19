@@ -285,6 +285,20 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./pages/delegation/delegation.routes').then((m) => m.DELEGATION_ROUTES),
       },
+      {
+        path: 'directions',
+        canActivate: [roleGuard, adminAccessGuard],
+        data: { roles: ['ROLE_RH_RESPONSABLE'] },
+        loadChildren: () =>
+          import('./pages/directions/directions.routes').then((m) => m.DIRECTIONS_ROUTES),
+      },
+      {
+        path: 'services',
+        canActivate: [roleGuard, adminAccessGuard],
+        data: { roles: ['ROLE_RH_RESPONSABLE'] },
+        loadChildren: () =>
+          import('./pages/services/services.routes').then((m) => m.SERVICES_ROUTES),
+      },
       { path: '', pathMatch: 'full', canActivate: [homeGuard], children: [] },
     ],
   },

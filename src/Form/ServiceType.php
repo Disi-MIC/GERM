@@ -9,12 +9,15 @@ use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 
 class ServiceType extends AbstractType
 {
@@ -42,6 +45,25 @@ class ServiceType extends AbstractType
             ->add('actif', CheckboxType::class, [
                 'label' => 'Service actif',
                 'required' => false,
+            ])
+            ->add('noteServiceNumero', TextType::class, [
+                'label' => 'N° note de service',
+                'required' => false,
+                'help' => 'Obligatoire dès qu\'un responsable est désigné (voir Service::validerNoteService()).',
+            ])
+            ->add('noteServiceDate', DateType::class, [
+                'label' => 'Date de la note de service',
+                'required' => false,
+                'widget' => 'single_text',
+            ])
+            // Non-mappé : le champ entité $noteServiceFichier stocke un chemin, pas
+            // un UploadedFile — ServiceController::gererNoteServiceFichier() s'occupe
+            // du stockage, même principe que UserType::personnel (voir son commentaire).
+            ->add('noteServiceFichierUpload', FileType::class, [
+                'label' => 'Note de service scannée (facultatif)',
+                'required' => false,
+                'mapped' => false,
+                'constraints' => [new File(maxSize: '10M', mimeTypes: ['application/pdf', 'image/jpeg', 'image/png'])],
             ])
         ;
 

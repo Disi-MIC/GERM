@@ -6,16 +6,22 @@ use App\Controller\AbstractController;
 use App\Entity\Direction;
 use App\Form\DirectionType;
 use App\Repository\DirectionRepository;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/direction', name: 'admin_direction_')]
-#[IsGranted('ROLE_RH_RESPONSABLE')]
+#[IsGranted('ROLE_SUPERADMIN')]
 class DirectionController extends AbstractController
 {
+    public function __construct(private readonly FileStorage $fileStorage)
+    {
+    }
+
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(DirectionRepository $repository): Response
     {
@@ -32,6 +38,7 @@ class DirectionController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->stockerNoteServiceFichier($form, $direction);
             $em->persist($direction);
             $em->flush();
 
@@ -53,6 +60,7 @@ class DirectionController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->stockerNoteServiceFichier($form, $direction);
             $em->flush();
 
             $this->addFlash('success', 'Direction mise à jour.');
@@ -73,6 +81,9 @@ class DirectionController extends AbstractController
             if (!$direction->getServices()->isEmpty()) {
                 $this->addFlash('danger', 'Impossible de supprimer cette direction : des services y sont encore rattachés.');
             } else {
+                if ($direction->getNoteServiceFichier()) {
+                    $this->fileStorage->delete($direction->getNoteServiceFichier());
+                }
                 $em->remove($direction);
                 $em->flush();
                 $this->addFlash('success', 'Direction supprimée.');
@@ -80,5 +91,25 @@ class DirectionController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_direction_index');
+    }
+
+    /**
+     * Champ 'noteServiceFichierUpload' non-mappé (voir DirectionType) : voir
+     * ServiceController pour la même logique.
+     */
+    private function stockerNoteServiceFichier(FormInterface $form, Direction $direction): void
+    {
+        $fichier = $form->get('noteServiceFichierUpload')->getData();
+        if (!$fichier) {
+            return;
+        }
+
+        if ($direction->getNoteServiceFichier()) {
+            $this->fileStorage->delete($direction->getNoteServiceFichier());
+        }
+
+        $stocke = $this->fileStorage->store($fichier, 'note-service-direction');
+        $direction->setNoteServiceFichier($stocke['path']);
+        $direction->setNoteServiceNomOriginal($stocke['originalName']);
     }
 }
