@@ -171,7 +171,13 @@
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-vehicule'}) }}" class="{{ categorie_actuelle == 'type-vehicule' ? 'active' }}">Types de véhicule</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'etat-vehicule'}) }}" class="{{ categorie_actuelle == 'etat-vehicule' ? 'active' }}">États des véhicules</a>
                 </div>
+            {% endif %}
 
+            {# Directions/Services : seule partie de cette rubrique Twig sans équivalent
+               Angular (tout le reste ici est un repli superadmin, voir le commentaire
+               plus haut) — ouverte en plus au responsable RH, qui en a besoin pour
+               désigner les responsables de service/directeurs. #}
+            {% if is_granted('ROLE_RH_RESPONSABLE') %}
                 <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Administration</div>
                 <a href="{{ path('admin_direction_index') }}" class="{{ 'admin_direction' in route ? 'active' }}">
                     <i class="bi bi-building"></i> Directions
@@ -179,6 +185,9 @@
                 <a href="{{ path('admin_service_index') }}" class="{{ 'admin_service' in route ? 'active' }}">
                     <i class="bi bi-diagram-3"></i> Services
                 </a>
+            {% endif %}
+
+            {% if is_granted('ROLE_SUPERADMIN') %}
                 <a href="{{ path('admin_agent_index') }}" class="{{ 'admin_agent' in route ? 'active' }}">
                     <i class="bi bi-person-badge"></i> Comptes agents
                 </a>

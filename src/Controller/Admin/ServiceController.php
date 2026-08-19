@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/service', name: 'admin_service_')]
-#[IsGranted('ROLE_SUPERADMIN')]
+#[IsGranted('ROLE_RH_RESPONSABLE')]
 class ServiceController extends AbstractController
 {
     #[Route('', name: 'index', methods: ['GET'])]
