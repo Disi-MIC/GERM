@@ -11,6 +11,13 @@
 // sa source ici (voir angular.json, qui ne référence plus bootstrap.min.css) au lieu
 // d'être importé pré-compilé.
 
+// Variables locales (mêmes noms/valeurs qu'avant) gardées à part de la
+// configuration Bootstrap ci-dessous : le reste de ce fichier les utilise
+// abondamment dans ses propres sélecteurs (--red/--green/..., .status-dot,
+// etc.), et @use (contrairement à @import) donne aux variables d'un module
+// un espace de noms séparé (bootstrap.$primary) — les garder en local ici
+// évite de préfixer des dizaines d'usages sans rapport avec la config
+// Bootstrap elle-même.
 $primary: #1abb9c;
 $secondary: #626d7d;
 $success: #2fb344;
@@ -43,7 +50,32 @@ $box-shadow: 0 0 0 1px rgba(4, 32, 69, 0.08), 0 2px 4px 0 rgba(30, 38, 51, 0.04)
 $card-border-color: $border-color;
 $card-box-shadow: $box-shadow-sm;
 
-@import 'bootstrap/scss/bootstrap';
+// @use ... with (...) plutôt que @import : Sass déprécie @import (retiré
+// dans Dart Sass 3.0) — with() est la façon dont @use surcharge les
+// variables !default d'un module, en repassant simplement les variables
+// locales ci-dessus déjà en portée à ce stade du fichier.
+@use 'bootstrap/scss/bootstrap' with (
+  $primary: $primary,
+  $secondary: $secondary,
+  $success: $success,
+  $info: $info,
+  $warning: $warning,
+  $danger: $danger,
+  $light: $light,
+  $dark: $dark,
+  $body-bg: $body-bg,
+  $body-color: $body-color,
+  $border-color: $border-color,
+  $font-family-sans-serif: $font-family-sans-serif,
+  $font-size-base: $font-size-base,
+  $border-radius: $border-radius,
+  $border-radius-sm: $border-radius-sm,
+  $border-radius-lg: $border-radius-lg,
+  $box-shadow-sm: $box-shadow-sm,
+  $box-shadow: $box-shadow,
+  $card-border-color: $card-border-color,
+  $card-box-shadow: $card-box-shadow
+);
 
 // Palette d'accent façon vignettes "file manager" Gentelella v4 (voir
 // file_manager.html) : une couleur pleine pour l'icône/texte + une teinte
