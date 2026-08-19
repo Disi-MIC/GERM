@@ -58,7 +58,13 @@ security:
         ROLE_IT_STOCK: [ROLE_AGENT]
         ROLE_IT_TICKETS: [ROLE_AGENT]
         ROLE_IT_RESPONSABLE: [ROLE_IT_STOCK, ROLE_IT_TICKETS]
-        ROLE_SUPERADMIN: [ROLE_ADMIN, ROLE_ADMIN_RH, ROLE_IT_RESPONSABLE, ROLE_ALLOWED_TO_SWITCH]
+        # ROLE_DIRECTION_MINISTERIELLE (directeurs) / ROLE_AUTORITE (SG, DC,
+        # Ministre — hiérarchie au-dessus des directeurs) : l'accès à "Aperçu
+        # de ma direction" reste indépendant de ces rôles (voir
+        # Direction::$directeur) ; seul l'aperçu global du Ministère est
+        # réservé à ROLE_AUTORITE.
+        ROLE_AUTORITE: [ROLE_DIRECTION_MINISTERIELLE]
+        ROLE_SUPERADMIN: [ROLE_ADMIN, ROLE_ADMIN_RH, ROLE_IT_RESPONSABLE, ROLE_AUTORITE, ROLE_ALLOWED_TO_SWITCH]
 
     access_control:
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }

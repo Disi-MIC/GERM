@@ -201,7 +201,7 @@ export const routes: Routes = [
       {
         path: 'apercu-ministere',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_DIRECTION_MINISTERIELLE'] },
+        data: { roles: ['ROLE_AUTORITE'] },
         loadComponent: () =>
           import('./pages/apercu-organisation/ministere/apercu-ministere.component').then(
             (m) => m.ApercuMinistereComponent,

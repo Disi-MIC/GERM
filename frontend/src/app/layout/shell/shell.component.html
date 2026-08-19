@@ -65,7 +65,7 @@
     }
 
     @if (estEnAdministration()) {
-      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE') || auth.hasRole('ROLE_ADMIN_RH') || auth.hasRole('ROLE_DIRECTION_MINISTERIELLE')) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE') || auth.hasRole('ROLE_ADMIN_RH') || auth.hasRole('ROLE_AUTORITE')) {
         <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
       }
       @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
@@ -88,7 +88,7 @@
           <i class="bi bi-laptop"></i> Informatique
         </a>
       }
-      @if (auth.hasRole('ROLE_DIRECTION_MINISTERIELLE')) {
+      @if (auth.hasRole('ROLE_AUTORITE')) {
         <a routerLink="/apercu-ministere" routerLinkActive="active">
           <i class="bi bi-building"></i> Aperçu du Ministère
         </a>

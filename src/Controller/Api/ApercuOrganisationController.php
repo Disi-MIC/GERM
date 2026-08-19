@@ -20,12 +20,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Aperçus organisationnels scopés au rôle hiérarchique de l'utilisateur
  * connecté : chef de service (Service::$responsable), directeur
- * (Direction::$directeur) ou direction ministérielle (SG/DC/Ministre,
- * ROLE_DIRECTION_MINISTERIELLE — vue globale du Ministère). Les deux
- * premiers ne sont jamais gérés par rôle Symfony : l'accès découle
- * directement du champ responsable/directeur assigné par le RH Admin
- * (voir ServiceType/DirectionType), une seule source de vérité plutôt que
- * de dupliquer l'information dans un rôle à maintenir à part.
+ * (Direction::$directeur) ou autorité ministérielle (SG/DC/Ministre,
+ * ROLE_AUTORITE — hiérarchie au-dessus des directeurs — vue globale du
+ * Ministère). Les deux premiers ne sont jamais gérés par rôle Symfony :
+ * l'accès découle directement du champ responsable/directeur assigné par le
+ * RH Admin (voir ServiceType/DirectionType), une seule source de vérité
+ * plutôt que de dupliquer l'information dans un rôle à maintenir à part.
  */
 #[IsGranted('ROLE_AGENT')]
 class ApercuOrganisationController extends AbstractController
@@ -133,7 +133,7 @@ class ApercuOrganisationController extends AbstractController
      * jamais d'autre donnée personnelle. Le détail tickets/SLA/licences
      * reste propre au tableau de bord IT (ROLE_IT_*), hors périmètre ici.
      */
-    #[IsGranted('ROLE_DIRECTION_MINISTERIELLE')]
+    #[IsGranted('ROLE_AUTORITE')]
     #[Route('/api/apercu-organisation/ministere', name: 'api_apercu_organisation_ministere', methods: ['GET'])]
     public function ministere(
         Request $request,

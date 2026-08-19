@@ -141,7 +141,7 @@
       </button>
     </div>
     <div class="mobile-admin-sheet-body">
-      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE', 'ROLE_ADMIN_RH', 'ROLE_DIRECTION_MINISTERIELLE'])) {
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE', 'ROLE_ADMIN_RH', 'ROLE_AUTORITE'])) {
         <div class="mobile-admin-sheet-group">Tableaux de bord</div>
         @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'])) {
           <a routerLink="/dashboard" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-speedometer2"></i> Personnel</a>
@@ -157,7 +157,7 @@
         @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'])) {
           <a routerLink="/dashboard-informatique" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-laptop"></i> Informatique</a>
         }
-        @if (auth.hasRole('ROLE_DIRECTION_MINISTERIELLE')) {
+        @if (auth.hasRole('ROLE_AUTORITE')) {
           <a routerLink="/apercu-ministere" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-building"></i> Aperçu du Ministère</a>
         }
       }
