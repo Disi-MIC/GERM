@@ -53,7 +53,7 @@ export interface ApercuMinistere {
   directions: { id: number; nom: string; nbServices: number; directeur: DirecteurCarriere | null }[];
   services: { id: number; nom: string }[];
   grades: string[];
-  materiel: { total: number; parEtat: Record<string, number> };
+  materiel: { total: number; parEtat: Record<string, number>; parVulnerabilite: Record<string, number> };
   filtreDirection: number | null;
   filtreService: number | null;
   filtreGrade: string | null;

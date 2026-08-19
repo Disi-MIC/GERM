@@ -160,6 +160,15 @@ class MaterielInformatique
     #[Groups(['api:read', 'api:write'])]
     private ?ListeValeur $etat = null;
 
+    // Nullable (contrairement à $etat) : ajouté après coup, tout le parc
+    // existant n'a pas encore été évalué — voir CategorieListeValeur::
+    // NIVEAU_VULNERABILITE, gérée par le RH Admin comme les autres listes
+    // de valeurs (états, types...).
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?ListeValeur $niveauVulnerabilite = null;
+
     // Optionnel : un agent affecté (voir $affecteA) est déjà rattaché à un
     // service bien précis (Personnel::$service), donc ce champ ferait double
     // emploi dans ce cas — getService() délègue alors à
@@ -373,6 +382,18 @@ class MaterielInformatique
     public function setEtat(?ListeValeur $etat): static
     {
         $this->etat = $etat;
+
+        return $this;
+    }
+
+    public function getNiveauVulnerabilite(): ?ListeValeur
+    {
+        return $this->niveauVulnerabilite;
+    }
+
+    public function setNiveauVulnerabilite(?ListeValeur $niveauVulnerabilite): static
+    {
+        $this->niveauVulnerabilite = $niveauVulnerabilite;
 
         return $this;
     }

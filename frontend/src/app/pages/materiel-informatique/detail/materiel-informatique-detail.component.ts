@@ -24,6 +24,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
   services: ServiceRef[] = [];
   typesMateriel: ListeValeurRef[] = [];
   etatsMateriel: ListeValeurRef[] = [];
+  niveauxVulnerabilite: ListeValeurRef[] = [];
   /** Licences disponibles par catégorie de logiciel — voir LicenceLogiciel.logiciel.categorie. */
   licencesOs: LicenceLogiciel[] = [];
   licencesBureautique: LicenceLogiciel[] = [];
@@ -51,6 +52,9 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     suiteBureautique: [null as number | null],
     antivirus: [null as number | null],
     etat: [null as number | null, Validators.required],
+    // Optionnel : ajouté après coup, tout le parc existant n'a pas encore
+    // été évalué (voir MaterielInformatique::$niveauVulnerabilite côté serveur).
+    niveauVulnerabilite: [null as number | null],
     // Pas de Validators.required : dérivé automatiquement de l'agent affecté
     // (voir MaterielInformatique::getService() côté serveur), et pas
     // nécessaire du tout pour un matériel en stock ou réformé.
@@ -77,6 +81,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     this.personnelApi.getTypesContrat().subscribe((valeurs) => {
       this.typesMateriel = valeurs.filter((v) => v.categorie === 'type-materiel');
       this.etatsMateriel = valeurs.filter((v) => v.categorie === 'etat-materiel');
+      this.niveauxVulnerabilite = valeurs.filter((v) => v.categorie === 'niveau-vulnerabilite');
     });
     // Une licence n'est proposée que si elle existe déjà dans le registre
     // (voir LicenceLogicielController) : impossible de rattacher un logiciel
@@ -111,6 +116,10 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
                 : null,
             antivirus: materiel.antivirus && typeof materiel.antivirus !== 'string' ? materiel.antivirus.id : null,
             etat: typeof materiel.etat === 'string' ? null : materiel.etat.id,
+            niveauVulnerabilite:
+              materiel.niveauVulnerabilite && typeof materiel.niveauVulnerabilite !== 'string'
+                ? materiel.niveauVulnerabilite.id
+                : null,
             service: materiel.service && typeof materiel.service !== 'string' ? materiel.service.id : null,
             affecteA:
               materiel.affecteA && typeof materiel.affecteA !== 'string' ? (materiel.affecteA.id ?? null) : null,
@@ -199,6 +208,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
       suiteBureautique: raw.suiteBureautique ? `/api/licences-logicielles/${raw.suiteBureautique}` : null,
       antivirus: raw.antivirus ? `/api/licences-logicielles/${raw.antivirus}` : null,
       etat: `/api/liste_valeurs/${raw.etat}`,
+      niveauVulnerabilite: raw.niveauVulnerabilite ? `/api/liste_valeurs/${raw.niveauVulnerabilite}` : null,
       service: raw.service ? `/api/services/${raw.service}` : null,
       affecteA: raw.affecteA ? `/api/personnels/${raw.affecteA}` : null,
       observations: raw.observations || null,
