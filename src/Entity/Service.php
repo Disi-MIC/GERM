@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -69,8 +70,14 @@ class Service
     #[Groups(['api:read', 'api:write'])]
     private ?Direction $direction = null;
 
-    /** Chef de service / coordonnateur, désigné par le RH Responsable — voir ApercuOrganisationController. */
+    /**
+     * Chef de service / coordonnateur, désigné par le RH Responsable — voir
+     * ApercuOrganisationController. readableLink: false — voir
+     * Direction::$directeur pour la raison (même cycle Personnel -> service
+     * -> responsable -> Personnel).
+     */
     #[ORM\ManyToOne(targetEntity: Personnel::class)]
+    #[ApiProperty(readableLink: false)]
     #[Groups(['api:read', 'api:write'])]
     private ?Personnel $responsable = null;
 

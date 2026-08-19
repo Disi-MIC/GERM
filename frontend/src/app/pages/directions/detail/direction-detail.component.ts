@@ -69,7 +69,7 @@ export class DirectionDetailComponent implements OnInit {
             nom: direction.nom,
             description: direction.description ?? '',
             actif: direction.actif,
-            directeur: direction.directeur && typeof direction.directeur !== 'string' ? direction.directeur.id : null,
+            directeur: this.idDepuisIri(direction.directeur),
             noteServiceNumero: direction.noteServiceNumero ?? '',
             noteServiceDate: direction.noteServiceDate?.substring(0, 10) ?? '',
           });
@@ -91,6 +91,18 @@ export class DirectionDetailComponent implements OnInit {
       return null;
     }
     return service.direction.id;
+  }
+
+  /** `directeur` est renvoyé en IRI (ApiProperty readableLink: false côté entité, voir Direction::$directeur) — jamais en objet imbriqué. */
+  private idDepuisIri(iri: string | { id: number } | null | undefined): number | null {
+    if (!iri) {
+      return null;
+    }
+    if (typeof iri !== 'string') {
+      return iri.id;
+    }
+    const id = Number(iri.split('/').pop());
+    return Number.isFinite(id) ? id : null;
   }
 
   get agentsEligibles(): SearchableSelectOption[] {

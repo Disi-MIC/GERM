@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -63,8 +64,17 @@ class Direction
     #[ORM\OneToMany(mappedBy: 'direction', targetEntity: Service::class)]
     private Collection $services;
 
-    /** Directeur, désigné par le RH Responsable — voir ApercuOrganisationController. */
+    /**
+     * Directeur, désigné par le RH Responsable — voir ApercuOrganisationController.
+     * readableLink: false — sinon Personnel -> service -> direction ->
+     * directeur (-> Personnel, cycle) fait exploser le nombre de jointures
+     * du chargement anticipé d'API Platform dès qu'on liste le personnel
+     * (voir api_platform.yaml, eager_loading.max_joins). Reste une IRI en
+     * lecture ; getDirecteurNom() ci-dessous fournit déjà le nom pour
+     * l'affichage sans avoir besoin de l'objet imbriqué.
+     */
     #[ORM\ManyToOne(targetEntity: Personnel::class)]
+    #[ApiProperty(readableLink: false)]
     #[Groups(['api:read', 'api:write'])]
     private ?Personnel $directeur = null;
 

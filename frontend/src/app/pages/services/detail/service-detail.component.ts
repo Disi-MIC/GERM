@@ -64,7 +64,7 @@ export class ServiceDetailComponent implements OnInit {
             description: service.description ?? '',
             actif: service.actif,
             direction: service.direction && typeof service.direction !== 'string' ? service.direction.id : null,
-            responsable: service.responsable && typeof service.responsable !== 'string' ? service.responsable.id : null,
+            responsable: this.idDepuisIri(service.responsable),
             noteServiceNumero: service.noteServiceNumero ?? '',
             noteServiceDate: service.noteServiceDate?.substring(0, 10) ?? '',
           });
@@ -79,6 +79,18 @@ export class ServiceDetailComponent implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  /** `responsable` est renvoyé en IRI (ApiProperty readableLink: false côté entité, voir Service::$responsable) — jamais en objet imbriqué. */
+  private idDepuisIri(iri: string | { id: number } | null | undefined): number | null {
+    if (!iri) {
+      return null;
+    }
+    if (typeof iri !== 'string') {
+      return iri.id;
+    }
+    const id = Number(iri.split('/').pop());
+    return Number.isFinite(id) ? id : null;
   }
 
   get agentsEligibles(): SearchableSelectOption[] {
