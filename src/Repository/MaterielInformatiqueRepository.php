@@ -75,25 +75,9 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
     }
 
     /**
-     * Nombre de matériels rattachés à un service, directement ou via l'agent
-     * auquel ils sont affectés — même règle que MaterielInformatique::getService()
-     * (affecteA prévaut), pour que ce compteur corresponde à ce qui s'affiche
-     * réellement comme "service" du matériel.
-     */
-    public function countPourService(Service $service): int
-    {
-        return (int) $this->createQueryBuilder('m')
-            ->select('COUNT(m.id)')
-            ->leftJoin('m.affecteA', 'p')
-            ->andWhere('m.service = :service OR p.service = :service')
-            ->setParameter('service', $service)
-            ->getQuery()
-            ->getSingleScalarResult();
-    }
-
-    /**
      * Matériel filtré par direction et/ou service (directement ou via
-     * l'agent affecté, même règle que countPourService()) — pour l'aperçu
+     * l'agent affecté, même règle que MaterielInformatique::getService(),
+     * où affecteA prévaut) — pour l'aperçu
      * Ministère (ApercuOrganisationController), où le filtre agents
      * (direction/service) doit aussi resserrer les statistiques du parc.
      * Si un service est précisé, il prévaut sur la direction.

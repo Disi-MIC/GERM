@@ -11,6 +11,12 @@ export interface AgentApercuAvecService extends AgentApercu {
   serviceNom: string | null;
 }
 
+export interface RepartitionMateriel {
+  total: number;
+  parEtat: Record<string, number>;
+  parVulnerabilite: Record<string, number>;
+}
+
 export interface ApercuMonService {
   service: {
     id: number;
@@ -19,7 +25,8 @@ export interface ApercuMonService {
     direction: { id: number; nom: string } | null;
   };
   nbAgents: number;
-  nbMateriels: number;
+  parGrade: Record<string, number>;
+  materiel: RepartitionMateriel;
   agents: AgentApercu[];
 }
 
@@ -27,6 +34,8 @@ export interface ApercuMaDirection {
   direction: { id: number; nom: string; code: string };
   nbServices: number;
   nbAgents: number;
+  parGrade: Record<string, number>;
+  materiel: RepartitionMateriel;
   services: { id: number; nom: string; nbAgents: number }[];
   agents: AgentApercuAvecService[];
 }

@@ -1,4 +1,4 @@
-<app-page-header title="Aperçu de mon service" subtitle="Effectif et liste des agents de votre service." />
+<app-page-header title="Aperçu de mon service" subtitle="Effectif, répartition des ressources et liste des agents de votre service." />
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
@@ -17,7 +17,37 @@
       <app-stat-tile icon="bi-people" color="primary" [value]="data.nbAgents" label="Agents" />
     </div>
     <div class="col-md-4 col-6">
-      <app-stat-tile icon="bi-pc-display" color="info" [value]="data.nbMateriels" label="Matériels informatiques" />
+      <app-stat-tile icon="bi-pc-display" color="info" [value]="data.materiel.total" label="Matériels informatiques" />
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <app-panel title="Agents par grade" icon="bi-award">
+        @if (chartParGrade.labels && chartParGrade.labels.length > 0) {
+          <app-chart type="bar" [data]="chartParGrade" [options]="chartOptionsGrade" [height]="220" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
+    </div>
+    <div class="col-md-4">
+      <app-panel title="Matériel par état" icon="bi-pc-display">
+        @if (chartMaterielParEtat.labels && chartMaterielParEtat.labels.length > 0) {
+          <app-chart type="doughnut" [data]="chartMaterielParEtat" [height]="220" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
+    </div>
+    <div class="col-md-4">
+      <app-panel title="Matériel par vulnérabilité" icon="bi-shield-exclamation">
+        @if (chartMaterielParVulnerabilite.labels && chartMaterielParVulnerabilite.labels.length > 0) {
+          <app-chart type="bar" [data]="chartMaterielParVulnerabilite" [options]="chartOptionsVulnerabilite" [height]="220" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
     </div>
   </div>
 

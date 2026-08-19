@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\Direction;
+use App\Entity\MaterielInformatique;
 use App\Entity\Personnel;
 use App\Entity\Service;
 use App\Entity\User;
@@ -49,6 +50,7 @@ class ApercuOrganisationController extends AbstractController
         }
 
         $agents = $personnelRepository->findBy(['service' => $service], ['grade' => 'ASC', 'nom' => 'ASC']);
+        $materiels = $materielRepository->findForStats(null, $service);
 
         return $this->json([
             'service' => [
@@ -61,7 +63,8 @@ class ApercuOrganisationController extends AbstractController
                 ] : null,
             ],
             'nbAgents' => \count($agents),
-            'nbMateriels' => $materielRepository->countPourService($service),
+            'parGrade' => $this->repartitionParGrade($agents),
+            'materiel' => $this->repartitionMateriel($materiels),
             'agents' => array_map($this->agentVersTableau(...), $agents),
         ]);
     }
@@ -75,6 +78,7 @@ class ApercuOrganisationController extends AbstractController
     public function maDirection(
         DirectionRepository $directionRepository,
         PersonnelRepository $personnelRepository,
+        MaterielInformatiqueRepository $materielRepository,
     ): JsonResponse {
         $personnel = $this->personnelConnecte();
         $direction = $personnel ? $directionRepository->findOneBy(['directeur' => $personnel]) : null;
@@ -84,6 +88,7 @@ class ApercuOrganisationController extends AbstractController
         }
 
         $agents = $personnelRepository->findForStats($direction, null);
+        $materiels = $materielRepository->findForStats($direction, null);
         usort($agents, fn (Personnel $a, Personnel $b) => [$a->getService()?->getNom(), $a->getGrade(), $a->getNom()]
             <=> [$b->getService()?->getNom(), $b->getGrade(), $b->getNom()]);
 
@@ -106,6 +111,8 @@ class ApercuOrganisationController extends AbstractController
             ],
             'nbServices' => \count($services),
             'nbAgents' => \count($agents),
+            'parGrade' => $this->repartitionParGrade($agents),
+            'materiel' => $this->repartitionMateriel($materiels),
             'services' => $servicesTableau,
             'agents' => array_map(
                 fn (Personnel $p) => [...$this->agentVersTableau($p), 'serviceNom' => $p->getService()?->getNom()],
@@ -176,18 +183,6 @@ class ApercuOrganisationController extends AbstractController
         // direction/service le resserrent (voir MaterielInformatiqueRepository::findForStats()).
         $materielsFiltres = $materielRepository->findForStats($filtreDirection, $filtreService);
 
-        $parEtat = [];
-        $parVulnerabilite = [];
-        foreach ($materielsFiltres as $materiel) {
-            $etatLibelle = $materiel->getEtat()?->getLibelle() ?? 'Non renseigné';
-            $parEtat[$etatLibelle] = ($parEtat[$etatLibelle] ?? 0) + 1;
-
-            $vulnerabiliteLibelle = $materiel->getNiveauVulnerabilite()?->getLibelle() ?? 'Non évalué';
-            $parVulnerabilite[$vulnerabiliteLibelle] = ($parVulnerabilite[$vulnerabiliteLibelle] ?? 0) + 1;
-        }
-        ksort($parEtat);
-        ksort($parVulnerabilite);
-
         // nbServices/nbDirections suivent aussi le filtre : resserrés à 1
         // sur l'entité filtrée elle-même, ou au nombre de services de la
         // direction filtrée — pas de sens de garder un compteur global à
@@ -227,15 +222,60 @@ class ApercuOrganisationController extends AbstractController
                 $serviceRepository->findBy([], ['nom' => 'ASC']),
             ),
             'grades' => $personnelRepository->findDistinctGrades(),
-            'materiel' => [
-                'total' => \count($materielsFiltres),
-                'parEtat' => $parEtat,
-                'parVulnerabilite' => $parVulnerabilite,
-            ],
+            'materiel' => $this->repartitionMateriel($materielsFiltres),
             'filtreDirection' => $filtreDirection?->getId(),
             'filtreService' => $filtreService?->getId(),
             'filtreGrade' => $filtreGrade,
         ]);
+    }
+
+    /**
+     * Répartition d'un groupe d'agents par grade — la brique "ressources
+     * humaines" de la répartition des ressources affichée à mon-service et
+     * ma-direction (voir aussi ministere(), qui construit la même chose mais
+     * déclinée hommes/femmes en plus).
+     *
+     * @param Personnel[] $agents
+     *
+     * @return array<string, int>
+     */
+    private function repartitionParGrade(array $agents): array
+    {
+        $parGrade = [];
+        foreach ($agents as $agent) {
+            $gradeNom = $agent->getGrade() ?: 'Non renseigné';
+            $parGrade[$gradeNom] = ($parGrade[$gradeNom] ?? 0) + 1;
+        }
+        ksort($parGrade);
+
+        return $parGrade;
+    }
+
+    /**
+     * Répartition d'un parc de matériel par état et par niveau de
+     * vulnérabilité — la brique "ressources informatiques" de la
+     * répartition des ressources affichée à mon-service et ma-direction
+     * (même calcul que ministere(), scopé au service/à la direction ici).
+     *
+     * @param MaterielInformatique[] $materiels
+     *
+     * @return array{total: int, parEtat: array<string, int>, parVulnerabilite: array<string, int>}
+     */
+    private function repartitionMateriel(array $materiels): array
+    {
+        $parEtat = [];
+        $parVulnerabilite = [];
+        foreach ($materiels as $materiel) {
+            $etatLibelle = $materiel->getEtat()?->getLibelle() ?? 'Non renseigné';
+            $parEtat[$etatLibelle] = ($parEtat[$etatLibelle] ?? 0) + 1;
+
+            $vulnerabiliteLibelle = $materiel->getNiveauVulnerabilite()?->getLibelle() ?? 'Non évalué';
+            $parVulnerabilite[$vulnerabiliteLibelle] = ($parVulnerabilite[$vulnerabiliteLibelle] ?? 0) + 1;
+        }
+        ksort($parEtat);
+        ksort($parVulnerabilite);
+
+        return ['total' => \count($materiels), 'parEtat' => $parEtat, 'parVulnerabilite' => $parVulnerabilite];
     }
 
     /**

@@ -32,11 +32,20 @@ export class ApercuDirectionComponent implements OnInit {
   error: string | null = null;
   readonly labelsStatut = LABELS_STATUT;
 
-  /** Objet reconstruit une seule fois par chargement — voir dashboard.component.ts pour la raison (éviter de rejouer l'animation Chart.js à chaque cycle de détection). */
+  /** Objets reconstruits une seule fois par chargement — voir dashboard.component.ts pour la raison (éviter de rejouer l'animation Chart.js à chaque cycle de détection). */
   chartParService: ChartData<'bar'> = { labels: [], datasets: [] };
+  chartParGrade: ChartData<'bar'> = { labels: [], datasets: [] };
+  chartMaterielParEtat: ChartData<'doughnut'> = { labels: [], datasets: [] };
+  chartMaterielParVulnerabilite: ChartData<'bar'> = { labels: [], datasets: [] };
 
   readonly chartOptions = {
     scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    plugins: { legend: { display: false } },
+  };
+
+  readonly chartOptionsVulnerabilite = {
+    indexAxis: 'y' as const,
+    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
     plugins: { legend: { display: false } },
   };
 
@@ -58,6 +67,20 @@ export class ApercuDirectionComponent implements OnInit {
         this.chartParService = {
           labels: data.services.map((s) => s.nom),
           datasets: [{ label: 'Agents', data: data.services.map((s) => s.nbAgents), backgroundColor: CHART_COLORS.primary }],
+        };
+        this.chartParGrade = {
+          labels: Object.keys(data.parGrade),
+          datasets: [{ label: 'Agents', data: Object.values(data.parGrade), backgroundColor: CHART_COLORS.info }],
+        };
+        this.chartMaterielParEtat = {
+          labels: Object.keys(data.materiel.parEtat),
+          datasets: [{ data: Object.values(data.materiel.parEtat), backgroundColor: Object.values(CHART_COLORS) }],
+        };
+        this.chartMaterielParVulnerabilite = {
+          labels: Object.keys(data.materiel.parVulnerabilite),
+          datasets: [
+            { label: 'Matériels', data: Object.values(data.materiel.parVulnerabilite), backgroundColor: CHART_COLORS.danger },
+          ],
         };
         this.loading = false;
       },

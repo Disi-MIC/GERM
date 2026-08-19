@@ -1,4 +1,7 @@
-<app-page-header title="Aperçu de ma direction" subtitle="Effectif et répartition par service, liste des agents de la direction." />
+<app-page-header
+  title="Aperçu de ma direction"
+  subtitle="Effectif, répartition des ressources et liste des services et agents de la direction."
+/>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>
@@ -10,19 +13,52 @@
   </div>
 
   <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6">
+    <div class="col-md-4 col-6">
       <app-stat-tile icon="bi-people" color="primary" [value]="data.nbAgents" label="Agents" />
     </div>
-    <div class="col-md-3 col-6">
+    <div class="col-md-4 col-6">
       <app-stat-tile icon="bi-diagram-3" color="info" [value]="data.nbServices" label="Services" />
+    </div>
+    <div class="col-md-4 col-6">
+      <app-stat-tile icon="bi-pc-display" color="warning" [value]="data.materiel.total" label="Matériels informatiques" />
     </div>
   </div>
 
   <div class="row g-3 mb-4">
-    <div class="col-12">
+    <div class="col-md-6">
       <app-panel title="Répartition par service" icon="bi-diagram-3">
         @if (chartParService.labels && chartParService.labels.length > 0) {
           <app-chart type="bar" [data]="chartParService" [options]="chartOptions" [height]="240" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
+    </div>
+    <div class="col-md-6">
+      <app-panel title="Répartition par grade" icon="bi-award">
+        @if (chartParGrade.labels && chartParGrade.labels.length > 0) {
+          <app-chart type="bar" [data]="chartParGrade" [options]="chartOptions" [height]="240" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <app-panel title="Matériel par état" icon="bi-pc-display">
+        @if (chartMaterielParEtat.labels && chartMaterielParEtat.labels.length > 0) {
+          <app-chart type="doughnut" [data]="chartMaterielParEtat" [height]="240" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
+    </div>
+    <div class="col-md-6">
+      <app-panel title="Matériel par niveau de vulnérabilité" icon="bi-shield-exclamation">
+        @if (chartMaterielParVulnerabilite.labels && chartMaterielParVulnerabilite.labels.length > 0) {
+          <app-chart type="bar" [data]="chartMaterielParVulnerabilite" [options]="chartOptionsVulnerabilite" [height]="240" />
         } @else {
           <p class="text-muted small mb-0">Aucune donnée.</p>
         }
