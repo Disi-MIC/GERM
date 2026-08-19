@@ -31,6 +31,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
@@ -50,6 +51,7 @@ class MeController extends AbstractController
         private readonly PersonnelPhotoService $photoService,
         private readonly ServiceRepository $serviceRepository,
         private readonly DirectionRepository $directionRepository,
+        private readonly RoleHierarchyInterface $roleHierarchy,
     ) {
     }
 
@@ -59,6 +61,13 @@ class MeController extends AbstractController
      * Symfony dédié, voir ApercuOrganisationController) — permettent au
      * frontend d'afficher/masquer les liens "Aperçu de mon service/ma
      * direction" sans appel réseau supplémentaire, comme pour les rôles.
+     *
+     * roles : passés par RoleHierarchyInterface plutôt que renvoyés bruts —
+     * la hiérarchie de security.yaml (ex. ROLE_SUPERADMIN englobant
+     * ROLE_AUTORITE/ROLE_RH_RESPONSABLE/...) n'existe que côté Symfony, un
+     * compte n'ayant que le rôle littéral "ROLE_SUPERADMIN" en base ne
+     * verrait sinon aucun lien de navigation réservé aux rôles hérités (le
+     * frontend fait un simple test d'appartenance, voir AuthService.hasRole).
      */
     #[Route('/api/me', name: 'api_me', methods: ['GET'])]
     public function moi(): JsonResponse
@@ -72,7 +81,7 @@ class MeController extends AbstractController
             'email' => $user->getEmail(),
             'nom' => $user->getNom(),
             'prenom' => $user->getPrenom(),
-            'roles' => $user->getRoles(),
+            'roles' => $this->roleHierarchy->getReachableRoleNames($user->getRoles()),
             'serviceResponsableId' => $personnel ? $this->serviceRepository->findOneBy(['responsable' => $personnel])?->getId() : null,
             'directionDirigeeId' => $personnel ? $this->directionRepository->findOneBy(['directeur' => $personnel])?->getId() : null,
         ]);
