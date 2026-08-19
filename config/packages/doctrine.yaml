@@ -10,6 +10,12 @@ doctrine:
         validate_xml_mapping: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
+        # Explicite plutôt que la valeur par défaut (dépréciée, passera à false
+        # dans une prochaine version) : plusieurs actions (ex.
+        # MeController::cartePdf()) résolvent une entité directement depuis un
+        # paramètre de route ({id}), ce qui dépend de ce comportement.
+        controller_resolver:
+            auto_mapping: true
         mappings:
             App:
                 type: attribute

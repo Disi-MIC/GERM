@@ -183,9 +183,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
+    #[\Deprecated('Aucune donnée sensible temporaire à effacer sur ce compte — méthode intentionnellement vide.')]
     public function eraseCredentials(): void
     {
-        // Si on stocke des données sensibles temporaires sur l'utilisateur, les effacer ici
     }
 
     public function getNom(): ?string

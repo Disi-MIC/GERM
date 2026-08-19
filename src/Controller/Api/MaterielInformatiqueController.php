@@ -203,7 +203,6 @@ class MaterielInformatiqueController extends AbstractController
         ob_start();
         imagepng($image);
         $png = ob_get_clean();
-        imagedestroy($image);
 
         return $png;
     }
