@@ -180,14 +180,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @see UserInterface
-     */
-    #[\Deprecated('Aucune donnée sensible temporaire à effacer sur ce compte — méthode intentionnellement vide.')]
-    public function eraseCredentials(): void
-    {
-    }
-
     public function getNom(): ?string
     {
         return $this->personnel?->getNom() ?? $this->nom;
