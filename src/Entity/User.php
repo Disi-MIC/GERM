@@ -59,6 +59,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const ROLE_IT_STOCK = 'ROLE_IT_STOCK';
     public const ROLE_IT_TICKETS = 'ROLE_IT_TICKETS';
     public const ROLE_IT_RESPONSABLE = 'ROLE_IT_RESPONSABLE';
+    /** Chefs de service — voir aussi Service::$responsable, qui pilote l'accès à "Aperçu de mon service" indépendamment de ce rôle. */
+    public const ROLE_RESPONSABLE_SERVICE = 'ROLE_RESPONSABLE_SERVICE';
     /** Directeurs — voir aussi Direction::$directeur, qui pilote l'accès à "Aperçu de ma direction" indépendamment de ce rôle. */
     public const ROLE_DIRECTION_MINISTERIELLE = 'ROLE_DIRECTION_MINISTERIELLE';
     /** SG, DC, Ministre — hiérarchie au-dessus des directeurs ; aperçu global du Ministère (agents, services, directions, matériel), voir ApercuOrganisationController. */

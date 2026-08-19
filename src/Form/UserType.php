@@ -63,6 +63,7 @@ class UserType extends AbstractType
                     'Gestion du stock informatique' => User::ROLE_IT_STOCK,
                     'Technicien informatique (traitement des tickets)' => User::ROLE_IT_TICKETS,
                     'Responsable informatique' => User::ROLE_IT_RESPONSABLE,
+                    'Responsable de service (Chefs de service)' => User::ROLE_RESPONSABLE_SERVICE,
                     'Direction ministérielle (Directeurs)' => User::ROLE_DIRECTION_MINISTERIELLE,
                     'Autorité (SG / DC / Ministre)' => User::ROLE_AUTORITE,
                     'Super administrateur' => User::ROLE_SUPERADMIN,
