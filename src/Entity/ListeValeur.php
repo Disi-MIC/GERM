@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Enum\CategorieListeValeur;
 use App\Repository\ListeValeurRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -32,6 +33,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ListeValeurRepository::class)]
 #[ORM\Table(name: 'liste_valeur')]
 #[ORM\UniqueConstraint(name: 'UNIQ_LISTE_VALEUR_CAT_CODE', columns: ['categorie', 'code'])]
+#[UniqueEntity(fields: ['categorie', 'code'], message: 'Ce code existe déjà pour cette catégorie.')]
 #[ApiResource(
     operations: [new GetCollection(paginationEnabled: false), new Get()],
     security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_STOCK') or is_granted('ROLE_RH_CONGE')",

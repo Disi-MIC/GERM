@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Enum\Carburant;
 use App\Repository\VehiculeRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -19,6 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: VehiculeRepository::class)]
 #[ORM\Table(name: 'vehicule')]
 #[ORM\UniqueConstraint(name: 'UNIQ_VEHICULE_IMMATRICULATION', columns: ['immatriculation'])]
+#[UniqueEntity(fields: ['immatriculation'], message: 'Cette immatriculation est déjà utilisée par un autre véhicule.')]
 class Vehicule
 {
     #[ORM\Id]

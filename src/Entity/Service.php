@@ -9,6 +9,7 @@ use App\Repository\ServiceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -23,6 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity(repositoryClass: ServiceRepository::class)]
 #[ORM\Table(name: 'service')]
+#[UniqueEntity(fields: ['code'], message: 'Ce code est déjà utilisé par un autre service.')]
 #[ApiResource(
     operations: [new GetCollection(), new Get()],
     security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_IT_STOCK')",
