@@ -64,6 +64,15 @@
           }
         </select>
       </div>
+      <div class="col-md-6">
+        <label class="form-label">Niveau de vulnérabilité</label>
+        <select class="form-select" formControlName="niveauVulnerabilite">
+          <option [ngValue]="null">Non évalué</option>
+          @for (niveau of niveauxVulnerabilite; track niveau.id) {
+            <option [ngValue]="niveau.id">{{ niveau.libelle }}</option>
+          }
+        </select>
+      </div>
 
       <div class="col-md-6">
         <label class="form-label">Service / Direction</label>

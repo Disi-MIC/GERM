@@ -29,12 +29,19 @@ export class ApercuMinistereComponent implements OnInit {
   chartParService: ChartData<'bar'> = { labels: [], datasets: [] };
   chartParGrade: ChartData<'bar'> = { labels: [], datasets: [] };
   chartMaterielParEtat: ChartData<'doughnut'> = { labels: [], datasets: [] };
+  chartMaterielParVulnerabilite: ChartData<'bar'> = { labels: [], datasets: [] };
 
   readonly chartOptionsSexe = {
     scales: {
       x: { stacked: true },
       y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
     },
+  };
+
+  readonly chartOptionsVulnerabilite = {
+    indexAxis: 'y' as const,
+    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+    plugins: { legend: { display: false } },
   };
 
   constructor(private readonly api: ApercuOrganisationApiService) {}
@@ -61,6 +68,12 @@ export class ApercuMinistereComponent implements OnInit {
         this.chartMaterielParEtat = {
           labels: Object.keys(data.materiel.parEtat),
           datasets: [{ data: Object.values(data.materiel.parEtat), backgroundColor: Object.values(CHART_COLORS) }],
+        };
+        this.chartMaterielParVulnerabilite = {
+          labels: Object.keys(data.materiel.parVulnerabilite),
+          datasets: [
+            { label: 'Matériels', data: Object.values(data.materiel.parVulnerabilite), backgroundColor: CHART_COLORS.danger },
+          ],
         };
         this.loading = false;
       },

@@ -4,6 +4,14 @@ api_platform:
     # JSON simple (pas JSON-LD/Hydra) pour rester léger côté client Angular.
     formats:
         json: ['application/json']
+    # Sans ce réglage explicite, api_platform utilise sa liste par défaut
+    # (jsonld en tête) pour les réponses d'erreur, quel que soit "formats"
+    # ci-dessus — jsonld n'a alors aucun normaliseur enregistré (absent de
+    # "formats") et toute erreur sur une ressource API Platform (401, 404,
+    # validation...) plante en 500 "Serialization for the format jsonld is
+    # not supported" au lieu de renvoyer l'erreur normalement.
+    error_formats:
+        json: ['application/problem+json', 'application/json']
     defaults:
         # Authentification par cookie de session (firewall "api"), pas par
         # jeton : les ressources ne peuvent donc pas être "stateless" (ce

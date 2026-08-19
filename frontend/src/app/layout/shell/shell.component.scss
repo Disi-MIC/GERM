@@ -1,8 +1,18 @@
 // Palette navy/sarcelle reprise des tokens sidebar de Gentelella v4
 // (--sidebar-bg/--sidebar-text/--sidebar-hover/--sidebar-active), voir styles.scss
 // pour le reste du thème (variables Bootstrap).
+//
+// position: fixed + défilement propre à elle (comme la vraie sidebar
+// Gentelella) plutôt que min-height: 100vh : une fois la liste de liens
+// devenue plus haute que l'écran (rubriques Aperçu de service/direction/
+// Ministère ajoutées), une sidebar en flux normal étirait toute la page
+// au lieu de rester cadrée — le contenu débordait en bas de l'écran.
 .germ-sidebar {
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
   width: 252px;
   background: #1a2332;
   color: #7b8fa3;
@@ -77,8 +87,25 @@
   padding-right: 1.5rem;
 }
 
+// Décalé de la largeur de la sidebar (désormais position: fixed ci-dessus)
+// plutôt qu'un simple voisin de flex — min-height: 100vh garde le pied de
+// page en bas de l'écran (pas au milieu) sur les pages courtes, flex-grow-1
+// sur <main> (voir le template) absorbant l'espace restant au-dessus de lui.
 .germ-main {
   min-width: 0;
+  min-height: 100vh;
+  margin-left: 252px;
+}
+
+// Pied de page façon Gentelella (v4 footer.html) : liséré discret au-dessus,
+// texte petit et centré plutôt qu'un bloc chargé — cohérent avec la sobriété
+// du reste du thème (voir .germ-topbar).
+.germ-footer {
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid #e6e7eb;
+  font-size: 0.75rem;
+  color: var(--bs-secondary);
+  text-align: center;
 }
 
 // Menu utilisateur de la topbar : avatar rond à initiales (façon Gentelella

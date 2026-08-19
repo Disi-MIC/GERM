@@ -116,16 +116,15 @@ class ApercuOrganisationController extends AbstractController
 
     /**
      * Vue globale du Ministère (SG/DC/Ministre) : répartitions par
-     * direction/service/grade (chacune déclinée hommes/femmes), filtrables
-     * par direction, service et grade — mêmes principe et repository que
-     * DashboardController::personnel(), étendu au grade. Les compteurs
-     * "nbAgents/nbServices/nbDirections" restent toujours globaux (non
-     * filtrés), seules les répartitions ci-dessous suivent le filtre —
-     * même convention que DashboardComponent (filtrer resserre les
-     * graphiques, pas les compteurs globaux). Plus un résumé du parc
-     * informatique (le détail tickets/SLA/licences reste propre au tableau
-     * de bord IT, ROLE_IT_*) et, par direction, l'âge/l'ancienneté de son
-     * directeur — jamais d'autre donnée personnelle.
+     * direction/service/grade (chacune déclinée hommes/femmes) et parc
+     * informatique par état et par niveau de vulnérabilité, filtrables par
+     * direction, service et grade. Le filtre direction/service resserre
+     * tout le tableau de bord (effectifs, nombre de services/directions,
+     * parc informatique) — pas seulement les graphiques de répartition —
+     * le grade ne resserre que les statistiques d'agents (le parc n'a pas
+     * de grade). Plus, par direction, l'âge/l'ancienneté de son directeur —
+     * jamais d'autre donnée personnelle. Le détail tickets/SLA/licences
+     * reste propre au tableau de bord IT (ROLE_IT_*), hors périmètre ici.
      */
     #[IsGranted('ROLE_DIRECTION_MINISTERIELLE')]
     #[Route('/api/apercu-organisation/ministere', name: 'api_apercu_organisation_ministere', methods: ['GET'])]
@@ -173,17 +172,41 @@ class ApercuOrganisationController extends AbstractController
         ksort($repartitionParService);
         ksort($repartitionParGrade);
 
+        // Le grade n'a pas de sens pour le parc informatique : seuls
+        // direction/service le resserrent (voir MaterielInformatiqueRepository::findForStats()).
+        $materielsFiltres = $materielRepository->findForStats($filtreDirection, $filtreService);
+
         $parEtat = [];
-        foreach ($materielRepository->findAll() as $materiel) {
+        $parVulnerabilite = [];
+        foreach ($materielsFiltres as $materiel) {
             $etatLibelle = $materiel->getEtat()?->getLibelle() ?? 'Non renseigné';
             $parEtat[$etatLibelle] = ($parEtat[$etatLibelle] ?? 0) + 1;
+
+            $vulnerabiliteLibelle = $materiel->getNiveauVulnerabilite()?->getLibelle() ?? 'Non évalué';
+            $parVulnerabilite[$vulnerabiliteLibelle] = ($parVulnerabilite[$vulnerabiliteLibelle] ?? 0) + 1;
         }
         ksort($parEtat);
+        ksort($parVulnerabilite);
+
+        // nbServices/nbDirections suivent aussi le filtre : resserrés à 1
+        // sur l'entité filtrée elle-même, ou au nombre de services de la
+        // direction filtrée — pas de sens de garder un compteur global à
+        // côté de graphiques déjà resserrés au même filtre.
+        if ($filtreService) {
+            $nbServices = 1;
+            $nbDirections = 1;
+        } elseif ($filtreDirection) {
+            $nbServices = $serviceRepository->count(['direction' => $filtreDirection]);
+            $nbDirections = 1;
+        } else {
+            $nbServices = $serviceRepository->count([]);
+            $nbDirections = $directionRepository->count([]);
+        }
 
         return $this->json([
-            'nbAgents' => $personnelRepository->count([]),
-            'nbServices' => $serviceRepository->count([]),
-            'nbDirections' => $directionRepository->count([]),
+            'nbAgents' => \count($personnelsFiltres),
+            'nbServices' => $nbServices,
+            'nbDirections' => $nbDirections,
             'parDirection' => $repartitionParDirection,
             'parService' => $repartitionParService,
             'parGrade' => $repartitionParGrade,
@@ -205,8 +228,9 @@ class ApercuOrganisationController extends AbstractController
             ),
             'grades' => $personnelRepository->findDistinctGrades(),
             'materiel' => [
-                'total' => $materielRepository->count([]),
+                'total' => \count($materielsFiltres),
                 'parEtat' => $parEtat,
+                'parVulnerabilite' => $parVulnerabilite,
             ],
             'filtreDirection' => $filtreDirection?->getId(),
             'filtreService' => $filtreService?->getId(),

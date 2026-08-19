@@ -20,6 +20,8 @@ export interface MaterielInformatique {
   suiteBureautique?: LicenceLogiciel | string | null;
   antivirus?: LicenceLogiciel | string | null;
   etat: ListeValeurRef | string;
+  /** Optionnel — ajouté après coup, tout le parc existant n'a pas encore été évalué. */
+  niveauVulnerabilite?: ListeValeurRef | string | null;
   /** Dérivé de l'agent affecté quand affecteA est renseigné (voir MaterielInformatique::getService() côté serveur) ; sinon propre au matériel, absent pour un matériel en stock/réformé sans service connu. */
   service: ServiceRef | string | null;
   affecteA?: Personnel | string | null;

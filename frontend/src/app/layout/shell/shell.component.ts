@@ -19,6 +19,7 @@ const INTERVALLE_RAFRAICHISSEMENT_NOTIFICATIONS_MS = 60_000;
 })
 export class ShellComponent implements OnInit, OnDestroy {
   private readonly subscriptions = new Subscription();
+  readonly anneeCourante = new Date().getFullYear();
 
   constructor(
     readonly auth: AuthService,

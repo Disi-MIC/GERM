@@ -16,6 +16,7 @@ enum CategorieListeValeur: string
     case LOGICIEL_ANTIVIRUS = 'logiciel-antivirus';
     case LOGICIEL_BUREAUTIQUE = 'logiciel-bureautique';
     case MOTIF_REJET_DECISION_CONGE = 'motif-rejet-decision-conge';
+    case NIVEAU_VULNERABILITE = 'niveau-vulnerabilite';
 
     public function label(): string
     {
@@ -32,6 +33,7 @@ enum CategorieListeValeur: string
             self::LOGICIEL_ANTIVIRUS => 'Antivirus',
             self::LOGICIEL_BUREAUTIQUE => 'Suites bureautiques',
             self::MOTIF_REJET_DECISION_CONGE => 'Motifs de rejet — demande de décision de congé',
+            self::NIVEAU_VULNERABILITE => 'Niveaux de vulnérabilité — matériel informatique',
         };
     }
 }

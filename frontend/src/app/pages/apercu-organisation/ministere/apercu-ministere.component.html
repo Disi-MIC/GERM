@@ -80,8 +80,8 @@
     </div>
   </div>
 
-  <div class="row g-3">
-    <div class="col-md-5">
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
       <app-panel title="Parc informatique par état" icon="bi-pc-display">
         @if (chartMaterielParEtat.labels && chartMaterielParEtat.labels.length > 0) {
           <app-chart type="doughnut" [data]="chartMaterielParEtat" [height]="240" />
@@ -90,7 +90,19 @@
         }
       </app-panel>
     </div>
-    <div class="col-md-7">
+    <div class="col-md-6">
+      <app-panel title="Parc informatique par niveau de vulnérabilité" icon="bi-shield-exclamation">
+        @if (chartMaterielParVulnerabilite.labels && chartMaterielParVulnerabilite.labels.length > 0) {
+          <app-chart type="bar" [data]="chartMaterielParVulnerabilite" [options]="chartOptionsVulnerabilite" [height]="240" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12">
       <app-panel title="Directions" icon="bi-building">
         <ul class="list-unstyled mb-0">
           @for (d of data.directions; track d.id) {

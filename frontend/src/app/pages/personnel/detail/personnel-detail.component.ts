@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,7 +8,7 @@ import { PageHeaderComponent } from '../../../shared/page-header/page-header.com
 @Component({
   selector: 'app-personnel-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, PageHeaderComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent],
   templateUrl: './personnel-detail.component.html',
 })
 export class PersonnelDetailComponent implements OnInit {

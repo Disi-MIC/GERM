@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Direction;
 use App\Entity\LicenceLogiciel;
 use App\Entity\MaterielInformatique;
 use App\Entity\Service;
@@ -88,5 +89,35 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
             ->setParameter('service', $service)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * Matériel filtré par direction et/ou service (directement ou via
+     * l'agent affecté, même règle que countPourService()) — pour l'aperçu
+     * Ministère (ApercuOrganisationController), où le filtre agents
+     * (direction/service) doit aussi resserrer les statistiques du parc.
+     * Si un service est précisé, il prévaut sur la direction.
+     *
+     * @return MaterielInformatique[]
+     */
+    public function findForStats(?Direction $direction, ?Service $service): array
+    {
+        $qb = $this->createQueryBuilder('m')
+            ->leftJoin('m.etat', 'e')->addSelect('e')
+            ->leftJoin('m.niveauVulnerabilite', 'v')->addSelect('v')
+            ->leftJoin('m.affecteA', 'p')->addSelect('p');
+
+        if ($service) {
+            $qb->andWhere('m.service = :service OR p.service = :service')->setParameter('service', $service);
+        } elseif ($direction) {
+            $qb->leftJoin('m.service', 's')
+                ->leftJoin('s.direction', 'sd')
+                ->leftJoin('p.service', 'ps')
+                ->leftJoin('ps.direction', 'psd')
+                ->andWhere('sd = :direction OR psd = :direction')
+                ->setParameter('direction', $direction);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 }

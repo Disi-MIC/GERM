@@ -154,6 +154,7 @@
                     <a href="{{ path('admin_materiel_index') }}" class="{{ 'admin_materiel' in route ? 'active' }}">Parc informatique</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-materiel'}) }}" class="{{ categorie_actuelle == 'type-materiel' ? 'active' }}">Types de matériel</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'etat-materiel'}) }}" class="{{ categorie_actuelle == 'etat-materiel' ? 'active' }}">États du matériel</a>
+                    <a href="{{ path('admin_liste_valeur_index', {categorie: 'niveau-vulnerabilite'}) }}" class="{{ categorie_actuelle == 'niveau-vulnerabilite' ? 'active' }}">Niveaux de vulnérabilité</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'priorite-ticket'}) }}" class="{{ categorie_actuelle == 'priorite-ticket' ? 'active' }}">Priorités de ticket</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'type-maintenance'}) }}" class="{{ categorie_actuelle == 'type-maintenance' ? 'active' }}">Types de maintenance</a>
                     <a href="{{ path('admin_liste_valeur_index', {categorie: 'logiciel-os'}) }}" class="{{ categorie_actuelle == 'logiciel-os' ? 'active' }}">Systèmes d'exploitation</a>

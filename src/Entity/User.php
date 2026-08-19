@@ -180,14 +180,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @see UserInterface
-     */
-    public function eraseCredentials(): void
-    {
-        // Si on stocke des données sensibles temporaires sur l'utilisateur, les effacer ici
-    }
-
     public function getNom(): ?string
     {
         return $this->personnel?->getNom() ?? $this->nom;
