@@ -108,6 +108,16 @@
     <a routerLink="/mon-espace/documents" routerLinkActive="active" (click)="fermerPlus()">
       <i class="bi bi-folder2-open"></i> Mes documents
     </a>
+    @if (auth.currentUser()?.serviceResponsableId) {
+      <a routerLink="/mon-espace/apercu-service" routerLinkActive="active" (click)="fermerPlus()">
+        <i class="bi bi-people"></i> Aperçu de mon service
+      </a>
+    }
+    @if (auth.currentUser()?.directionDirigeeId) {
+      <a routerLink="/mon-espace/apercu-direction" routerLinkActive="active" (click)="fermerPlus()">
+        <i class="bi bi-diagram-3"></i> Aperçu de ma direction
+      </a>
+    }
     @if (aAccesAdministration()) {
       <hr />
       <button type="button" class="mobile-plus-admin" (click)="allerVersAdministration()">
@@ -131,7 +141,7 @@
       </button>
     </div>
     <div class="mobile-admin-sheet-body">
-      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE', 'ROLE_ADMIN_RH'])) {
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE', 'ROLE_ADMIN_RH', 'ROLE_DIRECTION_MINISTERIELLE'])) {
         <div class="mobile-admin-sheet-group">Tableaux de bord</div>
         @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'])) {
           <a routerLink="/dashboard" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-speedometer2"></i> Personnel</a>
@@ -146,6 +156,9 @@
         }
         @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'])) {
           <a routerLink="/dashboard-informatique" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-laptop"></i> Informatique</a>
+        }
+        @if (auth.hasRole('ROLE_DIRECTION_MINISTERIELLE')) {
+          <a routerLink="/apercu-ministere" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-building"></i> Aperçu du Ministère</a>
         }
       }
 

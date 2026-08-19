@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\LicenceLogiciel;
 use App\Entity\MaterielInformatique;
+use App\Entity\Service;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -68,6 +69,23 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
             ->select('COUNT(m.id)')
             ->andWhere('m.systemeExploitation = :licence OR m.suiteBureautique = :licence OR m.antivirus = :licence')
             ->setParameter('licence', $licence)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Nombre de matériels rattachés à un service, directement ou via l'agent
+     * auquel ils sont affectés — même règle que MaterielInformatique::getService()
+     * (affecteA prévaut), pour que ce compteur corresponde à ce qui s'affiche
+     * réellement comme "service" du matériel.
+     */
+    public function countPourService(Service $service): int
+    {
+        return (int) $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->leftJoin('m.affecteA', 'p')
+            ->andWhere('m.service = :service OR p.service = :service')
+            ->setParameter('service', $service)
             ->getQuery()
             ->getSingleScalarResult();
     }

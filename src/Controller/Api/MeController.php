@@ -17,7 +17,9 @@ use App\Repository\DemandeDecisionRepository;
 use App\Repository\DemandeJouissanceRepository;
 use App\Repository\HistoriqueAffectationRepository;
 use App\Repository\MaterielInformatiqueRepository;
+use App\Repository\DirectionRepository;
 use App\Repository\NotificationRepository;
+use App\Repository\ServiceRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Repository\VehiculeRepository;
 use App\Service\FileStorage;
@@ -46,14 +48,24 @@ class MeController extends AbstractController
         private readonly FileStorage $fileStorage,
         private readonly EntityManagerInterface $em,
         private readonly PersonnelPhotoService $photoService,
+        private readonly ServiceRepository $serviceRepository,
+        private readonly DirectionRepository $directionRepository,
     ) {
     }
 
+    /**
+     * serviceResponsableId/directionDirigeeId : dérivés des champs
+     * Service::$responsable / Direction::$directeur (jamais d'un rôle
+     * Symfony dédié, voir ApercuOrganisationController) — permettent au
+     * frontend d'afficher/masquer les liens "Aperçu de mon service/ma
+     * direction" sans appel réseau supplémentaire, comme pour les rôles.
+     */
     #[Route('/api/me', name: 'api_me', methods: ['GET'])]
     public function moi(): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
+        $personnel = $user->getPersonnel();
 
         return $this->json([
             'id' => $user->getId(),
@@ -61,6 +73,8 @@ class MeController extends AbstractController
             'nom' => $user->getNom(),
             'prenom' => $user->getPrenom(),
             'roles' => $user->getRoles(),
+            'serviceResponsableId' => $personnel ? $this->serviceRepository->findOneBy(['responsable' => $personnel])?->getId() : null,
+            'directionDirigeeId' => $personnel ? $this->directionRepository->findOneBy(['directeur' => $personnel])?->getId() : null,
         ]);
     }
 

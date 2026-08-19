@@ -56,12 +56,13 @@ class PersonnelRepository extends ServiceEntityRepository
     }
 
     /**
-     * Personnel filtré par direction et/ou service, pour les statistiques du tableau de bord.
+     * Personnel filtré par direction et/ou service et/ou grade, pour les
+     * statistiques du tableau de bord (voir aussi ApercuOrganisationController).
      * Si un service est précisé, il prévaut sur la direction.
      *
      * @return Personnel[]
      */
-    public function findForStats(?Direction $direction, ?Service $service): array
+    public function findForStats(?Direction $direction, ?Service $service, ?string $grade = null): array
     {
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.service', 's')->addSelect('s')
@@ -73,6 +74,29 @@ class PersonnelRepository extends ServiceEntityRepository
             $qb->andWhere('d = :direction')->setParameter('direction', $direction);
         }
 
+        if ($grade) {
+            $qb->andWhere('p.grade = :grade')->setParameter('grade', $grade);
+        }
+
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Grades distincts renseignés, pour peupler le filtre "hiérarchie" de
+     * l'aperçu Ministère (ApercuOrganisationController) — Personnel::$grade
+     * est un champ texte libre, pas une liste de valeurs.
+     *
+     * @return string[]
+     */
+    public function findDistinctGrades(): array
+    {
+        $resultats = $this->createQueryBuilder('p')
+            ->select('DISTINCT p.grade')
+            ->andWhere('p.grade IS NOT NULL')
+            ->orderBy('p.grade', 'ASC')
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_column($resultats, 'grade');
     }
 }

@@ -59,6 +59,10 @@ class Service
     #[Assert\NotNull(message: 'La direction de rattachement est obligatoire.')]
     private ?Direction $direction = null;
 
+    /** Chef de service / coordonnateur, désigné par le RH Admin — voir ApercuOrganisationController. */
+    #[ORM\ManyToOne(targetEntity: Personnel::class)]
+    private ?Personnel $responsable = null;
+
     #[ORM\OneToMany(mappedBy: 'service', targetEntity: Personnel::class)]
     private Collection $personnels;
 
@@ -142,6 +146,24 @@ class Service
         $this->direction = $direction;
 
         return $this;
+    }
+
+    public function getResponsable(): ?Personnel
+    {
+        return $this->responsable;
+    }
+
+    public function setResponsable(?Personnel $responsable): static
+    {
+        $this->responsable = $responsable;
+
+        return $this;
+    }
+
+    #[Groups(['api:read'])]
+    public function getResponsableNom(): ?string
+    {
+        return $this->responsable?->getNomComplet();
     }
 
     /**

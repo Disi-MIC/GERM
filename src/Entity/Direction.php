@@ -39,6 +39,10 @@ class Direction
     #[ORM\OneToMany(mappedBy: 'direction', targetEntity: Service::class)]
     private Collection $services;
 
+    /** Directeur, désigné par le RH Admin — voir ApercuOrganisationController. */
+    #[ORM\ManyToOne(targetEntity: Personnel::class)]
+    private ?Personnel $directeur = null;
+
     public function __construct()
     {
         $this->services = new ArrayCollection();
@@ -103,6 +107,23 @@ class Direction
     public function getServices(): Collection
     {
         return $this->services;
+    }
+
+    public function getDirecteur(): ?Personnel
+    {
+        return $this->directeur;
+    }
+
+    public function setDirecteur(?Personnel $directeur): static
+    {
+        $this->directeur = $directeur;
+
+        return $this;
+    }
+
+    public function getDirecteurNom(): ?string
+    {
+        return $this->directeur?->getNomComplet();
     }
 
     public function __toString(): string

@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { adminAccessGuard } from './core/guards/admin-access.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { homeGuard } from './core/guards/home.guard';
+import { organisationScopeGuard } from './core/guards/organisation-scope.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 import { MobileShellComponent } from './layout/mobile-shell/mobile-shell.component';
@@ -142,6 +143,26 @@ export const routes: Routes = [
           ),
       },
       {
+        // Accès dérivé de Service::$responsable (voir /api/me), pas d'un rôle.
+        path: 'mon-espace/apercu-service',
+        canActivate: [roleGuard, organisationScopeGuard],
+        data: { roles: ['ROLE_AGENT'], champ: 'serviceResponsableId' },
+        loadComponent: () =>
+          import('./pages/apercu-organisation/mon-service/apercu-service.component').then(
+            (m) => m.ApercuServiceComponent,
+          ),
+      },
+      {
+        // Accès dérivé de Direction::$directeur (voir /api/me), pas d'un rôle.
+        path: 'mon-espace/apercu-direction',
+        canActivate: [roleGuard, organisationScopeGuard],
+        data: { roles: ['ROLE_AGENT'], champ: 'directionDirigeeId' },
+        loadComponent: () =>
+          import('./pages/apercu-organisation/ma-direction/apercu-direction.component').then(
+            (m) => m.ApercuDirectionComponent,
+          ),
+      },
+      {
         path: 'dashboard',
         canActivate: [roleGuard, adminAccessGuard],
         // ROLE_ADMIN_RH inclus explicitement : la hiérarchie de rôles Symfony
@@ -175,6 +196,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/dashboard-informatique/dashboard-informatique.component').then(
             (m) => m.DashboardInformatiqueComponent,
+          ),
+      },
+      {
+        path: 'apercu-ministere',
+        canActivate: [roleGuard, adminAccessGuard],
+        data: { roles: ['ROLE_DIRECTION_MINISTERIELLE'] },
+        loadComponent: () =>
+          import('./pages/apercu-organisation/ministere/apercu-ministere.component').then(
+            (m) => m.ApercuMinistereComponent,
           ),
       },
       {

@@ -26,6 +26,9 @@ export function administrationLandingUrl(auth: AuthService): string {
     // tous les deux à la fois.
     return '/dashboard-informatique';
   }
+  if (auth.hasRole('ROLE_DIRECTION_MINISTERIELLE')) {
+    return '/apercu-ministere';
+  }
 
   return '/profil';
 }

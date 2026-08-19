@@ -58,6 +58,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const ROLE_IT_STOCK = 'ROLE_IT_STOCK';
     public const ROLE_IT_TICKETS = 'ROLE_IT_TICKETS';
     public const ROLE_IT_RESPONSABLE = 'ROLE_IT_RESPONSABLE';
+    /** SG, DC, Ministre — aperçu global du Ministère (agents, services, directions, matériel), voir ApercuOrganisationController. */
+    public const ROLE_DIRECTION_MINISTERIELLE = 'ROLE_DIRECTION_MINISTERIELLE';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -3,6 +3,8 @@
 namespace App\Form;
 
 use App\Entity\Direction;
+use App\Entity\Personnel;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -26,6 +28,13 @@ class DirectionType extends AbstractType
                 'label' => 'Description',
                 'required' => false,
                 'attr' => ['rows' => 3],
+            ])
+            ->add('directeur', EntityType::class, [
+                'label' => 'Directeur',
+                'class' => Personnel::class,
+                'choice_label' => 'nomComplet',
+                'placeholder' => 'Aucun',
+                'required' => false,
             ])
             ->add('actif', CheckboxType::class, [
                 'label' => 'Direction active',

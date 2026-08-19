@@ -1,0 +1,38 @@
+<app-page-header title="Aperçu de mon service" subtitle="Effectif et liste des agents de votre service." />
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else if (data) {
+  <div class="mb-3">
+    <h5 class="mb-0">{{ data.service.nom }}</h5>
+    @if (data.service.direction) {
+      <p class="text-muted small mb-0">{{ data.service.direction.nom }}</p>
+    }
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4 col-6">
+      <app-stat-tile icon="bi-people" color="primary" [value]="data.nbAgents" label="Agents" />
+    </div>
+    <div class="col-md-4 col-6">
+      <app-stat-tile icon="bi-pc-display" color="info" [value]="data.nbMateriels" label="Matériels informatiques" />
+    </div>
+  </div>
+
+  <app-panel title="Agents du service" icon="bi-people">
+    <app-data-table
+      [rows]="data.agents"
+      [columns]="columns"
+      emptyMessage="Aucun agent dans ce service."
+      searchPlaceholder="Rechercher un agent..."
+    >
+      <ng-template appDataTableCell="matricule" let-agent>{{ agent.matricule || '—' }}</ng-template>
+      <ng-template appDataTableCell="nomComplet" let-agent>{{ agent.nomComplet }}</ng-template>
+      <ng-template appDataTableCell="grade" let-agent>{{ agent.grade || '—' }}</ng-template>
+      <ng-template appDataTableCell="fonction" let-agent>{{ agent.fonction || '—' }}</ng-template>
+      <ng-template appDataTableCell="statut" let-agent>{{ labelsStatut[agent.statut ?? ''] ?? agent.statut ?? '—' }}</ng-template>
+    </app-data-table>
+  </app-panel>
+}

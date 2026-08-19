@@ -1,0 +1,48 @@
+<app-page-header title="Aperçu de ma direction" subtitle="Effectif et répartition par service, liste des agents de la direction." />
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else if (data) {
+  <div class="mb-3">
+    <h5 class="mb-0">{{ data.direction.nom }}</h5>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <app-stat-tile icon="bi-people" color="primary" [value]="data.nbAgents" label="Agents" />
+    </div>
+    <div class="col-md-3 col-6">
+      <app-stat-tile icon="bi-diagram-3" color="info" [value]="data.nbServices" label="Services" />
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <app-panel title="Répartition par service" icon="bi-diagram-3">
+        @if (chartParService.labels && chartParService.labels.length > 0) {
+          <app-chart type="bar" [data]="chartParService" [options]="chartOptions" [height]="240" />
+        } @else {
+          <p class="text-muted small mb-0">Aucune donnée.</p>
+        }
+      </app-panel>
+    </div>
+  </div>
+
+  <app-panel title="Agents de la direction" icon="bi-people">
+    <app-data-table
+      [rows]="data.agents"
+      [columns]="columns"
+      emptyMessage="Aucun agent dans cette direction."
+      searchPlaceholder="Rechercher un agent..."
+    >
+      <ng-template appDataTableCell="matricule" let-agent>{{ agent.matricule || '—' }}</ng-template>
+      <ng-template appDataTableCell="nomComplet" let-agent>{{ agent.nomComplet }}</ng-template>
+      <ng-template appDataTableCell="serviceNom" let-agent>{{ agent.serviceNom || '—' }}</ng-template>
+      <ng-template appDataTableCell="grade" let-agent>{{ agent.grade || '—' }}</ng-template>
+      <ng-template appDataTableCell="fonction" let-agent>{{ agent.fonction || '—' }}</ng-template>
+      <ng-template appDataTableCell="statut" let-agent>{{ labelsStatut[agent.statut ?? ''] ?? agent.statut ?? '—' }}</ng-template>
+    </app-data-table>
+  </app-panel>
+}

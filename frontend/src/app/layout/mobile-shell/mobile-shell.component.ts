@@ -128,6 +128,7 @@ export class MobileShellComponent implements OnInit, OnDestroy {
       'ROLE_IT_STOCK',
       'ROLE_IT_TICKETS',
       'ROLE_IT_RESPONSABLE',
+      'ROLE_DIRECTION_MINISTERIELLE',
     ]);
   }
 
