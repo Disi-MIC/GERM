@@ -30,7 +30,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new GetCollection(uriTemplate: '/delegations', order: ['createdAt' => 'DESC']),
         new Get(uriTemplate: '/delegations/{id}'),
     ],
-    security: "is_granted('ROLE_ADMIN_RH')",
+    security: "is_granted('ROLE_RH_RESPONSABLE')",
     normalizationContext: ['groups' => ['api:read']],
 )]
 class Delegation

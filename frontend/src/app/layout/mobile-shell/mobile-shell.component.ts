@@ -124,7 +124,7 @@ export class MobileShellComponent implements OnInit, OnDestroy {
       'ROLE_RH_PERSONNEL',
       'ROLE_RH_CONGE',
       'ROLE_RH_CARTE_PRO',
-      'ROLE_ADMIN_RH',
+      'ROLE_RH_RESPONSABLE',
       'ROLE_IT_STOCK',
       'ROLE_IT_TICKETS',
       'ROLE_IT_RESPONSABLE',

@@ -2,7 +2,7 @@
   <a routerLink="/cartes-professionnelles/demandes" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-inbox"></i> Demandes
   </a>
-  @if (auth.hasRole('ROLE_ADMIN_RH')) {
+  @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
     <a routerLink="/cartes-professionnelles/validation" class="btn btn-outline-warning btn-sm">
       <i class="bi bi-patch-check"></i> Validation
       @if (enAttenteValidation > 0) {

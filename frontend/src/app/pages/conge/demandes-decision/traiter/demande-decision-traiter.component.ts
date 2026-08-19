@@ -138,7 +138,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
 
   /** Déposer le retour du circuit depuis "deposee_courrier" : réservé au RH Admin. */
   peutDeposerRetour(): boolean {
-    return !!this.demande?.deposeeCourrier && this.auth.hasRole('ROLE_ADMIN_RH');
+    return !!this.demande?.deposeeCourrier && this.auth.hasRole('ROLE_RH_RESPONSABLE');
   }
 
   /** Générer et transmettre depuis "retournee" : réservé au RH Congé. */

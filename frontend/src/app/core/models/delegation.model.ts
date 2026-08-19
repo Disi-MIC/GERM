@@ -1,6 +1,6 @@
 import { UserRef } from './user.model';
 
-export type RoleDelegable = 'ROLE_ADMIN_RH' | 'ROLE_RH_PERSONNEL' | 'ROLE_RH_CONGE' | 'ROLE_RH_CARTE_PRO';
+export type RoleDelegable = 'ROLE_RH_RESPONSABLE' | 'ROLE_RH_PERSONNEL' | 'ROLE_RH_CONGE' | 'ROLE_RH_CARTE_PRO';
 export type StatutDelegation = 'active' | 'revoquee';
 
 export interface StatutAffiche {

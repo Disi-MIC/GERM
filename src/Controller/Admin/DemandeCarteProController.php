@@ -33,7 +33,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * le statut de l'éventuelle ancienne carte référencée (laissé à l'admin).
  *
  * Ce module est désormais géré côté Angular (voir src/Controller/Api/
- * DemandeCarteProController.php) pour ROLE_RH_CARTE_PRO/ROLE_ADMIN_RH ;
+ * DemandeCarteProController.php) pour ROLE_RH_CARTE_PRO/ROLE_RH_RESPONSABLE ;
  * cette interface Twig reste accessible uniquement au superadmin, en secours.
  */
 #[IsGranted('ROLE_SUPERADMIN')]
@@ -158,7 +158,7 @@ class DemandeCarteProController extends AbstractController
         if ($demande->isTransmise()) {
             // Une fois transmise, seul le RH Admin peut encore rejeter (filet
             // de sécurité) — le RH Carte Pro ne peut plus revenir dessus.
-            $this->denyAccessUnlessGranted('ROLE_ADMIN_RH');
+            $this->denyAccessUnlessGranted('ROLE_RH_RESPONSABLE');
         } elseif (!$demande->isEnAttente()) {
             $this->addFlash('danger', 'Cette demande a déjà été traitée.');
 
@@ -176,7 +176,7 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/demande-carte-pro/{id}/approuver', name: 'admin_demande_carte_pro_approuver', methods: ['POST'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_ADMIN_RH')]
+    #[IsGranted('ROLE_RH_RESPONSABLE')]
     public function approuver(DemandeCartePro $demande, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
     {
         if (!$this->isCsrfTokenValid('traiter-demande-carte-pro-'.$demande->getId(), $request->request->get('_token'))) {

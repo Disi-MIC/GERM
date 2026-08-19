@@ -141,15 +141,15 @@
       </button>
     </div>
     <div class="mobile-admin-sheet-body">
-      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE', 'ROLE_ADMIN_RH', 'ROLE_AUTORITE'])) {
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_IT_STOCK', 'ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE', 'ROLE_RH_RESPONSABLE', 'ROLE_AUTORITE'])) {
         <div class="mobile-admin-sheet-group">Tableaux de bord</div>
-        @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'])) {
+        @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_RESPONSABLE'])) {
           <a routerLink="/dashboard" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-speedometer2"></i> Personnel</a>
         }
-        @if (auth.hasAnyRole(['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'])) {
+        @if (auth.hasAnyRole(['ROLE_RH_CONGE', 'ROLE_RH_RESPONSABLE'])) {
           <a routerLink="/dashboard-conges" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-calendar-event"></i> Congés</a>
         }
-        @if (auth.hasAnyRole(['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'])) {
+        @if (auth.hasAnyRole(['ROLE_RH_CARTE_PRO', 'ROLE_RH_RESPONSABLE'])) {
           <a routerLink="/dashboard-cartes-professionnelles" routerLinkActive="active" (click)="fermerMenuAdmin()">
             <i class="bi bi-person-vcard"></i> Cartes professionnelles
           </a>
@@ -162,17 +162,17 @@
         }
       }
 
-      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'])) {
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_CONGE', 'ROLE_RH_CARTE_PRO', 'ROLE_RH_RESPONSABLE'])) {
         <div class="mobile-admin-sheet-group">Ressources humaines</div>
       }
-      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'])) {
+      @if (auth.hasAnyRole(['ROLE_RH_PERSONNEL', 'ROLE_RH_RESPONSABLE'])) {
         <a routerLink="/personnel" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-people"></i> Personnel</a>
         <a routerLink="/carrieres" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-graph-up-arrow"></i> Gestion des carrières</a>
         <a routerLink="/documents-administratifs" routerLinkActive="active" (click)="fermerMenuAdmin()">
           <i class="bi bi-folder2-open"></i> Documents administratifs
         </a>
       }
-      @if (auth.hasAnyRole(['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'])) {
+      @if (auth.hasAnyRole(['ROLE_RH_CONGE', 'ROLE_RH_RESPONSABLE'])) {
         <a routerLink="/conges" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenuAdmin()">
           <i class="bi bi-calendar-event"></i> Gestion des congés
         </a>
@@ -194,7 +194,7 @@
           }
         </a>
       }
-      @if (auth.hasAnyRole(['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'])) {
+      @if (auth.hasAnyRole(['ROLE_RH_CARTE_PRO', 'ROLE_RH_RESPONSABLE'])) {
         <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenuAdmin()">
           <i class="bi bi-person-vcard"></i> Cartes professionnelles
         </a>
@@ -206,13 +206,13 @@
             }
           }
         </a>
-        @if (auth.hasRole('ROLE_ADMIN_RH')) {
+        @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
           <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active" (click)="fermerMenuAdmin()">
             <i class="bi bi-patch-check"></i> Validation des cartes
           </a>
         }
       }
-      @if (auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a routerLink="/delegations" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-person-check"></i> Délégations</a>
       }
 

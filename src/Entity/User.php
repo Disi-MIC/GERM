@@ -44,16 +44,15 @@ use Symfony\Component\Validator\Constraints as Assert;
         new GetCollection(uriTemplate: '/users'),
         new Get(uriTemplate: '/users/{id}'),
     ],
-    security: "is_granted('ROLE_ADMIN_RH')",
+    security: "is_granted('ROLE_RH_RESPONSABLE')",
     normalizationContext: ['groups' => ['api:read']],
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['actif'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const ROLE_AGENT = 'ROLE_AGENT';
-    public const ROLE_ADMIN = 'ROLE_ADMIN';
     public const ROLE_SUPERADMIN = 'ROLE_SUPERADMIN';
-    public const ROLE_ADMIN_RH = 'ROLE_ADMIN_RH';
+    public const ROLE_RH_RESPONSABLE = 'ROLE_RH_RESPONSABLE';
     public const ROLE_RH_PERSONNEL = 'ROLE_RH_PERSONNEL';
     public const ROLE_RH_CONGE = 'ROLE_RH_CONGE';
     public const ROLE_RH_CARTE_PRO = 'ROLE_RH_CARTE_PRO';

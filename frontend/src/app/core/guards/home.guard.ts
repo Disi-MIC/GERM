@@ -16,7 +16,7 @@ export function administrationLandingUrl(auth: AuthService): string {
   if (auth.hasRole('ROLE_RH_CONGE')) {
     return '/conges';
   }
-  if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+  if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
     return '/cartes-professionnelles';
   }
   if (auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE')) {

@@ -9,7 +9,7 @@ export const CONGE_ROUTES: Routes = [
   {
     path: 'parametres-decision',
     canActivate: [roleGuard],
-    data: { roles: ['ROLE_ADMIN_RH'] },
+    data: { roles: ['ROLE_RH_RESPONSABLE'] },
     loadComponent: () =>
       import('./parametres-decision/parametres-decision.component').then((m) => m.ParametresDecisionComponent),
   },

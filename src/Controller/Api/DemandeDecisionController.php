@@ -207,7 +207,7 @@ class DemandeDecisionController extends AbstractController
             'Pièces vérifiées : vous pouvez déposer votre dossier au service courrier, puis confirmer le dépôt dans l\'application.',
         );
         $this->notificationService->notifierRole(
-            User::ROLE_ADMIN_RH,
+            User::ROLE_RH_RESPONSABLE,
             'Décision de congé validée par le RH Congé',
             '/conges/demandes-decision',
             \sprintf('Le RH Congé a validé la demande de %s : pièces complètes, en attente du dépôt au service courrier.', $demande->getPersonnel()?->getNomComplet()),
@@ -242,7 +242,7 @@ class DemandeDecisionController extends AbstractController
             $motif->getLibelle().($demande->getCommentaireTraitement() ? ' — '.$demande->getCommentaireTraitement() : ''),
         );
         $this->notificationService->notifierRole(
-            User::ROLE_ADMIN_RH,
+            User::ROLE_RH_RESPONSABLE,
             'Décision de congé rejetée par le RH Congé',
             '/conges/demandes-decision',
             \sprintf('Le RH Congé a rejeté la demande de %s (%s).', $demande->getPersonnel()?->getNomComplet(), $motif->getLibelle()),
@@ -259,7 +259,7 @@ class DemandeDecisionController extends AbstractController
      * demande visible au RH Congé pour traitement final.
      */
     #[Route('/api/demandes-decision/{id}/retour', name: 'api_demande_decision_retour', methods: ['POST'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_ADMIN_RH')]
+    #[IsGranted('ROLE_RH_RESPONSABLE')]
     public function retour(DemandeDecision $demande, Request $request): JsonResponse
     {
         if (!$demande->isDeposeeCourrier()) {
@@ -404,7 +404,7 @@ class DemandeDecisionController extends AbstractController
             \sprintf('Votre décision de congé (%d jours) vous a été remise.', $nombreJours),
         );
         $this->notificationService->notifierRole(
-            User::ROLE_ADMIN_RH,
+            User::ROLE_RH_RESPONSABLE,
             'Décision de congé générée et transmise',
             '/conges/demandes-decision',
             \sprintf('Le RH Congé a généré la décision de %s (%d jours) et l\'a transmise à l\'agent.', $demande->getPersonnel()?->getNomComplet(), $nombreJours),

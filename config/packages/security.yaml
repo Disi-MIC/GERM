@@ -39,22 +39,21 @@ security:
             entry_point: App\Security\LoginFormAuthenticator
 
     # Hiérarchie des rôles : le superadmin hérite de tous les droits.
-    # ROLE_ADMIN_RH hérite des 3 rôles rubrique RH ; la restriction fine par
+    # ROLE_RH_RESPONSABLE hérite des 3 rôles rubrique RH ; la restriction fine par
     # contrôleur se fait via #[IsGranted] sur un rôle unique, la hiérarchie
     # se charge de laisser passer les rôles englobants automatiquement.
     # L'informatique (parc, tickets, maintenance) est un domaine séparé du RH,
-    # volontairement pas rattaché à ROLE_ADMIN_RH. Séparation des tâches à
+    # volontairement pas rattaché à ROLE_RH_RESPONSABLE. Séparation des tâches à
     # deux profils métier indépendants (ni l'un n'hérite de l'autre) : Stock
     # (matériel, affectations, maintenance) et Tickets (traitement des
     # incidents) ; ROLE_IT_RESPONSABLE (le directeur) hérite des deux, pour
     # garder tous les droits en plus de la validation qui lui est réservée.
     role_hierarchy:
         ROLE_AGENT: []
-        ROLE_ADMIN: [ROLE_AGENT]
         ROLE_RH_PERSONNEL: [ROLE_AGENT]
         ROLE_RH_CONGE: [ROLE_AGENT]
         ROLE_RH_CARTE_PRO: [ROLE_AGENT]
-        ROLE_ADMIN_RH: [ROLE_RH_PERSONNEL, ROLE_RH_CONGE, ROLE_RH_CARTE_PRO]
+        ROLE_RH_RESPONSABLE: [ROLE_RH_PERSONNEL, ROLE_RH_CONGE, ROLE_RH_CARTE_PRO]
         ROLE_IT_STOCK: [ROLE_AGENT]
         ROLE_IT_TICKETS: [ROLE_AGENT]
         ROLE_IT_RESPONSABLE: [ROLE_IT_STOCK, ROLE_IT_TICKETS]
@@ -64,7 +63,7 @@ security:
         # Direction::$directeur) ; seul l'aperçu global du Ministère est
         # réservé à ROLE_AUTORITE.
         ROLE_AUTORITE: [ROLE_DIRECTION_MINISTERIELLE]
-        ROLE_SUPERADMIN: [ROLE_ADMIN, ROLE_ADMIN_RH, ROLE_IT_RESPONSABLE, ROLE_AUTORITE, ROLE_ALLOWED_TO_SWITCH]
+        ROLE_SUPERADMIN: [ROLE_RH_RESPONSABLE, ROLE_IT_RESPONSABLE, ROLE_AUTORITE, ROLE_ALLOWED_TO_SWITCH]
 
     access_control:
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }

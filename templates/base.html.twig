@@ -91,7 +91,7 @@
             {% if is_granted('ROLE_SUPERADMIN') %}
                 {# Tous les modules RH sont désormais réservés à Angular ; Twig ne reste
                    accessible qu'au superadmin, en secours — un seul garde englobant plutôt
-                   qu'un OR par item (l'ancien découpage RH_PERSONNEL/RH_CONGE/ADMIN_RH n'a
+                   qu'un OR par item (l'ancien découpage RH_PERSONNEL/RH_CONGE/RH_RESPONSABLE n'a
                    plus de sens ici, la hiérarchie de rôles accorde tout au superadmin). #}
                 <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
                 <a href="{{ path('admin_dashboard_personnel') }}" class="{{ app.request.attributes.get('_route') == 'admin_dashboard_personnel' ? 'active' }}">

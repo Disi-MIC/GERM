@@ -11,7 +11,7 @@ import { ParametresDecisionCongeApiService } from '../parametres-decision-conge-
  * générée par le RH Congé — voir ParametresDecisionConge et
  * DemandeDecisionController::genererEtTransmettre() côté serveur. Ce texte
  * n'est jamais saisi à la main par le RH Congé, qui n'a pas accès à cette
- * page (route gardée ROLE_ADMIN_RH, voir conge.routes.ts).
+ * page (route gardée ROLE_RH_RESPONSABLE, voir conge.routes.ts).
  *
  * Les deux visas variables (décision de congé antérieure de l'agent,
  * attestation de non jouissance) et la clause "Après avis favorable..." ne

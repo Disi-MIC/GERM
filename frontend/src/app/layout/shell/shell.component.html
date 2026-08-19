@@ -65,20 +65,20 @@
     }
 
     @if (estEnAdministration()) {
-      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE') || auth.hasRole('ROLE_ADMIN_RH') || auth.hasRole('ROLE_AUTORITE')) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_IT_STOCK') || auth.hasRole('ROLE_IT_TICKETS') || auth.hasRole('ROLE_IT_RESPONSABLE') || auth.hasRole('ROLE_RH_RESPONSABLE') || auth.hasRole('ROLE_AUTORITE')) {
         <div class="text-uppercase small text-white-50 px-3 pb-1">Tableaux de bord</div>
       }
-      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a routerLink="/dashboard" routerLinkActive="active">
           <i class="bi bi-speedometer2"></i> Personnel
         </a>
       }
-      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a routerLink="/dashboard-conges" routerLinkActive="active">
           <i class="bi bi-calendar-event"></i> Congés
         </a>
       }
-      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a routerLink="/dashboard-cartes-professionnelles" routerLinkActive="active">
           <i class="bi bi-person-vcard"></i> Cartes professionnelles
         </a>
@@ -94,7 +94,7 @@
         </a>
       }
 
-      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Ressources Humaines</div>
       }
 
@@ -106,7 +106,7 @@
            Chaque domaine à plusieurs rubriques devient un dropdown repliable
            façon Gentelella (chevron + collapse Bootstrap) ; un domaine à une
            seule destination (Délégations) reste un lien plat. -->
-      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_PERSONNEL') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a
           href="#submenuPersonnel"
           class="submenu-toggle"
@@ -126,7 +126,7 @@
         </div>
       }
 
-      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_CONGE') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a
           href="#submenuConges"
           class="submenu-toggle"
@@ -158,13 +158,13 @@
               }
             }
           </a>
-          @if (auth.hasRole('ROLE_ADMIN_RH')) {
+          @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
             <a routerLink="/conges/parametres-decision" routerLinkActive="active">Paramètres décision</a>
           }
         </div>
       }
 
-      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_CARTE_PRO') || auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a
           href="#submenuCartesPro"
           class="submenu-toggle"
@@ -187,13 +187,13 @@
               }
             }
           </a>
-          @if (auth.hasRole('ROLE_ADMIN_RH')) {
+          @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
             <a routerLink="/cartes-professionnelles/validation" routerLinkActive="active">Validation des cartes</a>
           }
         </div>
       }
 
-      @if (auth.hasRole('ROLE_ADMIN_RH')) {
+      @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
         <a routerLink="/delegations" routerLinkActive="active">
           <i class="bi bi-person-check"></i> Délégations
         </a>

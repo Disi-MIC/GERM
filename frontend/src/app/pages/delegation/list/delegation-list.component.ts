@@ -9,7 +9,7 @@ import { DataTableComponent } from '../../../shared/data-table/data-table.compon
 import { DelegationApiService } from '../delegation-api.service';
 
 const LABELS_ROLE: Record<string, string> = {
-  ROLE_ADMIN_RH: 'Administrateur RH (accès global)',
+  ROLE_RH_RESPONSABLE: 'Administrateur RH (accès global)',
   ROLE_RH_PERSONNEL: 'Gestion du personnel',
   ROLE_RH_CONGE: 'Gestion des congés',
   ROLE_RH_CARTE_PRO: 'Gestion des cartes professionnelles',

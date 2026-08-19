@@ -165,25 +165,25 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         canActivate: [roleGuard, adminAccessGuard],
-        // ROLE_ADMIN_RH inclus explicitement : la hiérarchie de rôles Symfony
-        // (ROLE_ADMIN_RH → RH_PERSONNEL/RH_CONGE/RH_CARTE_PRO) n'est appliquée
+        // ROLE_RH_RESPONSABLE inclus explicitement : la hiérarchie de rôles Symfony
+        // (ROLE_RH_RESPONSABLE → RH_PERSONNEL/RH_CONGE/RH_CARTE_PRO) n'est appliquée
         // que côté serveur, jamais côté Angular (AuthService.hasRole() ne lit
         // que les rôles littéraux de /api/me) — le RH Admin doit donc être
         // transversal, listé explicitement à côté de chaque rôle RH métier.
-        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_RH_RESPONSABLE'] },
         component: DashboardComponent,
       },
       {
         path: 'dashboard-conges',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_CONGE', 'ROLE_RH_RESPONSABLE'] },
         loadComponent: () =>
           import('./pages/dashboard-conges/dashboard-conges.component').then((m) => m.DashboardCongesComponent),
       },
       {
         path: 'dashboard-cartes-professionnelles',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_CARTE_PRO', 'ROLE_RH_RESPONSABLE'] },
         loadComponent: () =>
           import('./pages/dashboard-cartes-professionnelles/dashboard-cartes-professionnelles.component').then(
             (m) => m.DashboardCartesProfessionnellesComponent,
@@ -210,21 +210,21 @@ export const routes: Routes = [
       {
         path: 'personnel',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_RH_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/personnel/personnel.routes').then((m) => m.PERSONNEL_ROUTES),
       },
       {
         path: 'carrieres',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_RH_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/carriere/carriere.routes').then((m) => m.CARRIERE_ROUTES),
       },
       {
         path: 'documents-administratifs',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_PERSONNEL', 'ROLE_RH_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/documents-administratifs/documents-administratifs.routes').then(
             (m) => m.DOCUMENTS_ADMINISTRATIFS_ROUTES,
@@ -267,21 +267,21 @@ export const routes: Routes = [
       {
         path: 'conges',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_RH_CONGE', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_CONGE', 'ROLE_RH_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/conge/conge.routes').then((m) => m.CONGE_ROUTES),
       },
       {
         path: 'cartes-professionnelles',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_RH_CARTE_PRO', 'ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_CARTE_PRO', 'ROLE_RH_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/carte-pro/carte-pro.routes').then((m) => m.CARTE_PRO_ROUTES),
       },
       {
         path: 'delegations',
         canActivate: [roleGuard, adminAccessGuard],
-        data: { roles: ['ROLE_ADMIN_RH'] },
+        data: { roles: ['ROLE_RH_RESPONSABLE'] },
         loadChildren: () =>
           import('./pages/delegation/delegation.routes').then((m) => m.DELEGATION_ROUTES),
       },

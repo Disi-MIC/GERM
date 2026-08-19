@@ -15,7 +15,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Délégation temporaire d'un rôle RH d'un agent à un autre, en cas d'absence.
- * Réservé aux titulaires de ROLE_ADMIN_RH (et ROLE_SUPERADMIN, via la
+ * Réservé aux titulaires de ROLE_RH_RESPONSABLE (et ROLE_SUPERADMIN, via la
  * hiérarchie de rôles) : un titulaire d'un seul rôle rubrique ne peut pas
  * déléguer lui-même.
  */

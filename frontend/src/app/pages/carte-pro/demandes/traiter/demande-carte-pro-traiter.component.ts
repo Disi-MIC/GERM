@@ -117,7 +117,7 @@ export class DemandeCarteProTraiterComponent implements OnInit {
 
   /** Le RH Admin approuve depuis "transmise" ; le RH Carte Pro transmet/rejette depuis "en_attente". */
   peutApprouver(): boolean {
-    return !!this.demande?.transmise && this.auth.hasRole('ROLE_ADMIN_RH');
+    return !!this.demande?.transmise && this.auth.hasRole('ROLE_RH_RESPONSABLE');
   }
 
   /** Transmettre/rejeter depuis "en_attente" : réservé au profil RH Carte Pro, pas au RH Admin. */

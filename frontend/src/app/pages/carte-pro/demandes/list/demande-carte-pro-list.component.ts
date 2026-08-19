@@ -145,6 +145,6 @@ export class DemandeCarteProListComponent implements OnInit {
 
   /** Approuver/Rejeter (sur une demande transmise) : réservé au RH Admin, passe par la page dédiée (nécessite numéro/date). */
   peutTraiterTransmise(demande: DemandeCartePro): boolean {
-    return !!demande.transmise && this.auth.hasRole('ROLE_ADMIN_RH');
+    return !!demande.transmise && this.auth.hasRole('ROLE_RH_RESPONSABLE');
   }
 }

@@ -10,7 +10,7 @@
     <button type="button" class="btn btn-outline-secondary btn-sm" (click)="regenerer()">
       <i class="bi bi-arrow-repeat"></i> Régénérer le PDF
     </button>
-    @if (auth.hasRole('ROLE_ADMIN_RH') && !carte.valideeParAdminRh) {
+    @if (auth.hasRole('ROLE_RH_RESPONSABLE') && !carte.valideeParAdminRh) {
       <button type="button" class="btn btn-warning btn-sm" (click)="valider()">
         <i class="bi bi-patch-check"></i> Valider
       </button>

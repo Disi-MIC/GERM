@@ -112,7 +112,7 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/api/cartes-professionnelles/{id}/valider', name: 'api_carte_professionnelle_valider', methods: ['POST'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_ADMIN_RH')]
+    #[IsGranted('ROLE_RH_RESPONSABLE')]
     public function valider(CarteProfessionnelle $carte): JsonResponse
     {
         /** @var \App\Entity\User $validateur */

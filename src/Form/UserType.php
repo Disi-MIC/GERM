@@ -50,14 +50,13 @@ class UserType extends AbstractType
             ])
             ->add('roles', ChoiceType::class, [
                 'label' => 'Rôle',
-                // 'ROLE_AGENT' et 'ROLE_ADMIN' sont volontairement absents : le
-                // premier est déjà accordé automatiquement à tout compte (voir
-                // User::getRoles()) et le second n'est vérifié nulle part dans
-                // l'application — les cocher ou non n'avait aucun effet, ce qui
-                // induisait en erreur quiconque configurait un compte. Ne
-                // laisser que les rôles qui changent réellement les accès.
+                // 'ROLE_AGENT' est volontairement absent : déjà accordé
+                // automatiquement à tout compte (voir User::getRoles()) — le
+                // cocher ou non n'aurait aucun effet, ce qui induirait en
+                // erreur quiconque configure un compte. Ne laisser que les
+                // rôles qui changent réellement les accès.
                 'choices' => [
-                    'Administrateur RH' => User::ROLE_ADMIN_RH,
+                    'Responsable RH' => User::ROLE_RH_RESPONSABLE,
                     'Gestion du personnel' => User::ROLE_RH_PERSONNEL,
                     'Gestion des congés' => User::ROLE_RH_CONGE,
                     'Gestion des cartes professionnelles' => User::ROLE_RH_CARTE_PRO,

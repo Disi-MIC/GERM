@@ -23,7 +23,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * donc la suppression ne nécessite pas de garde-fou d'utilisation.
  *
  * Ce module est désormais géré côté Angular (voir src/Controller/Api/
- * CarteProfessionnelleController.php) pour ROLE_RH_CARTE_PRO/ROLE_ADMIN_RH ;
+ * CarteProfessionnelleController.php) pour ROLE_RH_CARTE_PRO/ROLE_RH_RESPONSABLE ;
  * cette interface Twig reste accessible uniquement au superadmin, en secours.
  */
 #[IsGranted('ROLE_SUPERADMIN')]
@@ -58,7 +58,7 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/admin/cartes-professionnelles/validation', name: 'admin_carte_professionnelle_validation', methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN_RH')]
+    #[IsGranted('ROLE_RH_RESPONSABLE')]
     public function validation(CarteProfessionnelleRepository $carteRepository): Response
     {
         return $this->render('admin/carte_professionnelle/validation.html.twig', [
@@ -67,7 +67,7 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/admin/carte-professionnelle/{id}/valider', name: 'admin_carte_professionnelle_valider', methods: ['POST'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_ADMIN_RH')]
+    #[IsGranted('ROLE_RH_RESPONSABLE')]
     public function valider(CarteProfessionnelle $carte, Request $request, EntityManagerInterface $em, CarteProfessionnellePdfStockageService $pdfStockage): Response
     {
         if ($this->isCsrfTokenValid('valider-carte-professionnelle-'.$carte->getId(), $request->request->get('_token'))) {

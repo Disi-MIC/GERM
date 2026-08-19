@@ -57,7 +57,7 @@ class DemandeCarteProController extends AbstractController
         $this->em->flush();
 
         $this->notificationService->notifierRole(
-            User::ROLE_ADMIN_RH,
+            User::ROLE_RH_RESPONSABLE,
             'Demande de carte professionnelle à valider',
             '/cartes-professionnelles/demandes',
             \sprintf('Le RH Carte Pro a transmis la demande de %s pour validation.', $demande->getPersonnel()?->getNomComplet()),
@@ -72,7 +72,7 @@ class DemandeCarteProController extends AbstractController
         if ($demande->isTransmise()) {
             // Une fois transmise, seul le RH Admin peut encore rejeter (filet
             // de sécurité) — le RH Carte Pro ne peut plus revenir dessus.
-            $this->denyAccessUnlessGranted('ROLE_ADMIN_RH');
+            $this->denyAccessUnlessGranted('ROLE_RH_RESPONSABLE');
         } elseif (!$demande->isEnAttente()) {
             return $this->json(['errors' => ['statut' => 'Cette demande a déjà été traitée.']], JsonResponse::HTTP_CONFLICT);
         }
@@ -95,7 +95,7 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/api/demandes-carte-pro/{id}/approuver', name: 'api_demande_carte_pro_approuver', methods: ['POST'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_ADMIN_RH')]
+    #[IsGranted('ROLE_RH_RESPONSABLE')]
     public function approuver(DemandeCartePro $demande, Request $request): JsonResponse
     {
         if (!$demande->isTransmise()) {

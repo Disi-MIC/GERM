@@ -22,7 +22,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * même garde-fou anti-élévation de privilège que DelegationController côté
  * Twig.
  */
-#[IsGranted('ROLE_ADMIN_RH')]
+#[IsGranted('ROLE_RH_RESPONSABLE')]
 class DelegationController extends AbstractController
 {
     public function __construct(

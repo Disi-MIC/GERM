@@ -15,7 +15,7 @@ export const CARTE_PRO_ROUTES: Routes = [
   {
     path: 'validation',
     canActivate: [roleGuard],
-    data: { roles: ['ROLE_ADMIN_RH'] },
+    data: { roles: ['ROLE_RH_RESPONSABLE'] },
     loadComponent: () =>
       import('./validation/carte-pro-validation.component').then(
         (m) => m.CarteProValidationComponent,

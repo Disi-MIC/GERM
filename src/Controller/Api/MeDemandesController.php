@@ -192,7 +192,7 @@ class MeDemandesController extends AbstractController
             \sprintf('%s a soumis une demande de décision de congé.', $personnel->getNomComplet()),
         );
         $this->notificationService->notifierRole(
-            User::ROLE_ADMIN_RH,
+            User::ROLE_RH_RESPONSABLE,
             'Nouvelle demande de décision de congé',
             '/conges/demandes-decision',
             \sprintf('%s a soumis une demande de décision de congé.', $personnel->getNomComplet()),
@@ -264,7 +264,7 @@ class MeDemandesController extends AbstractController
             \sprintf('%s a confirmé le dépôt physique de son dossier au service courrier.', $demande->getPersonnel()?->getNomComplet()),
         );
         $this->notificationService->notifierRole(
-            User::ROLE_ADMIN_RH,
+            User::ROLE_RH_RESPONSABLE,
             'Dossier déposé au service courrier',
             '/conges/demandes-decision',
             \sprintf('%s a confirmé le dépôt physique de son dossier au service courrier.', $demande->getPersonnel()?->getNomComplet()),

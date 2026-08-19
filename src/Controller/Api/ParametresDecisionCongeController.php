@@ -19,7 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * lui-même (ROLE_RH_CONGE), il ne change qu'à l'occasion d'un nouveau
  * décret ou d'une révision réglementaire.
  */
-#[IsGranted('ROLE_ADMIN_RH')]
+#[IsGranted('ROLE_RH_RESPONSABLE')]
 class ParametresDecisionCongeController extends AbstractController
 {
     public function __construct(
