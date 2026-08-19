@@ -11,6 +11,7 @@ use App\Repository\PersonnelRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -29,6 +30,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: PersonnelRepository::class)]
 #[ORM\Table(name: 'personnel')]
 #[ORM\UniqueConstraint(name: 'UNIQ_PERSONNEL_MATRICULE', columns: ['matricule'])]
+#[UniqueEntity(fields: ['matricule'], message: 'Ce matricule est déjà attribué à un autre agent.')]
 #[ApiResource(
     operations: [
         // Liste accessible aussi à ROLE_RH_CARTE_PRO (sélection de l'agent
