@@ -13,6 +13,7 @@ use App\Entity\User;
 use App\Repository\DecisionCongeRepository;
 use App\Repository\ListeValeurRepository;
 use App\Repository\ParametresDecisionCongeRepository;
+use App\Service\EligibiliteDecisionCongeService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -55,6 +56,7 @@ class DemandeDecisionController extends AbstractController
         private readonly ListeValeurRepository $listeValeurRepository,
         private readonly DecisionCongeRepository $decisionCongeRepository,
         private readonly ParametresDecisionCongeRepository $parametresDecisionCongeRepository,
+        private readonly EligibiliteDecisionCongeService $eligibiliteService,
     ) {
     }
 
@@ -309,14 +311,41 @@ class DemandeDecisionController extends AbstractController
     }
 
     /**
-     * Dernière étape, RH Congé : calcule (ou reçoit du client, déjà calculé
-     * et éventuellement ajusté — voir le composant Angular) le nombre de
-     * jours, crée la DecisionConge et clôt la demande. Un seul appel plutôt
-     * qu'un "générer" puis "transmettre" séparés — même simplification que
-     * les autres étapes de ce circuit (une vérification/action humaine =
-     * un clic). Date d'octroi/d'expiration ne sont plus saisies : la
-     * première est toujours la date de génération, la seconde toujours
-     * octroi + 3 ans — aucune marge d'appréciation RH sur ces deux dates.
+     * Éligibilité de l'agent à une nouvelle décision et nombre de jours à lui
+     * octroyer, calculés par EligibiliteDecisionCongeService — jamais par
+     * Angular, qui ne fait qu'afficher ce résultat (voir
+     * demande-decision-traiter.component.ts). Consultée dès que le RH Congé
+     * ouvre l'étape finale du traitement ; genererEtTransmettre() refait le
+     * même calcul de façon autoritaire au moment de la génération, cet
+     * endpoint ne sert qu'à l'affichage préalable.
+     */
+    #[Route('/api/demandes-decision/{id}/eligibilite', name: 'api_demande_decision_eligibilite', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function eligibilite(DemandeDecision $demande): JsonResponse
+    {
+        $personnel = $demande->getPersonnel();
+        if (!$personnel) {
+            return $this->json(['errors' => ['personnel' => 'Aucun agent rattaché à cette demande.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $resultat = $this->eligibiliteService->calculer($personnel, $demande, new \DateTimeImmutable('today'));
+        if (!$resultat) {
+            return $this->json(['errors' => ['eligibilite' => "Aucune date de référence disponible (ni décision antérieure, ni date de prise de service/dernière décision renseignée sur la demande, ni date d'embauche) pour calculer l'éligibilité."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return $this->json($resultat->toArray());
+    }
+
+    /**
+     * Dernière étape, RH Congé : recalcule l'éligibilité et le nombre de
+     * jours de façon autoritaire (EligibiliteDecisionCongeService — jamais
+     * une valeur reçue du client, voir eligibilite() ci-dessus pour la même
+     * consultation en amont, purement informative), crée la DecisionConge et
+     * clôt la demande. Un seul appel plutôt qu'un "générer" puis
+     * "transmettre" séparés — même simplification que les autres étapes de
+     * ce circuit (une vérification/action humaine = un clic). Date
+     * d'octroi/d'expiration ne sont plus saisies : la première est toujours
+     * la date de génération, la seconde toujours octroi + 3 ans — aucune
+     * marge d'appréciation RH sur ces deux dates.
      */
     #[Route('/api/demandes-decision/{id}/generer-et-transmettre', name: 'api_demande_decision_generer_et_transmettre', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function genererEtTransmettre(DemandeDecision $demande, Request $request): JsonResponse
@@ -331,7 +360,6 @@ class DemandeDecisionController extends AbstractController
         // manuelle, ces deux dates n'ont rien de discrétionnaire.
         $dateDecision = new \DateTimeImmutable('today');
         $dateExpiration = $dateDecision->modify('+3 years');
-        $nombreJours = isset($data['nombreJours']) ? (int) round((float) $data['nombreJours']) : null;
         $dateDerniereDecision = isset($data['dateDerniereDecision'])
             ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateDerniereDecision']) ?: null
             : null;
@@ -341,14 +369,6 @@ class DemandeDecisionController extends AbstractController
         $dateAttestationNonJouissance = isset($data['dateAttestationNonJouissance'])
             ? \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $data['dateAttestationNonJouissance']) ?: null
             : null;
-
-        if (null === $nombreJours || $nombreJours <= 0) {
-            return $this->json(['errors' => ['nombreJours' => 'Merci de renseigner un nombre de jours valide pour générer la décision.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        if ($nombreJours > 90) {
-            return $this->json(['errors' => ['nombreJours' => 'Le nombre de jours de congé ne peut pas dépasser 90 jours.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
-        }
 
         // L'attestation de non jouissance, comme la décision de congé
         // antérieure, n'a de sens que pour un agent qui en a déjà une : un
@@ -360,6 +380,19 @@ class DemandeDecisionController extends AbstractController
         if ($dateDerniereDecision) {
             $demande->setDateDerniereDecision($dateDerniereDecision);
         }
+
+        // Éligibilité et nombre de jours : jamais une valeur reçue du
+        // client (voir eligibilite() ci-dessus, purement informatif côté
+        // Angular) — recalculés ici de façon autoritaire, seule source qui
+        // compte pour créer réellement la DecisionConge.
+        $eligibilite = $this->eligibiliteService->calculer($demande->getPersonnel(), $demande, $dateDecision);
+        if (!$eligibilite) {
+            return $this->json(['errors' => ['eligibilite' => "Aucune date de référence disponible pour calculer l'éligibilité de l'agent."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        if (!$eligibilite->eligible) {
+            return $this->json(['errors' => ['eligibilite' => $eligibilite->message]], JsonResponse::HTTP_CONFLICT);
+        }
+        $nombreJours = $eligibilite->joursAccordables;
 
         /** @var User $operateur */
         $operateur = $this->getUser();

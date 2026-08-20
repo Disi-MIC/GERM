@@ -37,4 +37,23 @@ class DecisionCongeRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * Dernière décision réellement délivrée à cet agent (par date d'octroi
+     * décroissante), expirée ou non — sert de référence pour calculer
+     * l'éligibilité à une nouvelle décision (voir EligibiliteDecisionCongeService).
+     * Contrairement à findValides(), l'expiration n'entre pas en jeu ici : une
+     * vieille décision expirée reste la dernière décision de l'agent au sens
+     * de cette référence.
+     */
+    public function findDerniereDecision(Personnel $personnel): ?DecisionConge
+    {
+        return $this->createQueryBuilder('d')
+            ->andWhere('d.personnel = :personnel')
+            ->setParameter('personnel', $personnel)
+            ->orderBy('d.dateDecision', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

@@ -2,15 +2,17 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
-import { DecisionConge, DemandeDecision } from '../../core/models/conge.model';
+import { DecisionConge, DemandeDecision, EligibiliteDecisionConge } from '../../core/models/conge.model';
 
 /**
  * dateDecision/dateExpiration ne sont plus envoyées : calculées côté serveur
  * (aujourd'hui, puis +3 ans). numero non plus : "MIC/DAGE/RH/" + initiales
- * de l'opérateur RH Congé connecté — voir genererEtTransmettre().
+ * de l'opérateur RH Congé connecté — voir genererEtTransmettre(). nombreJours
+ * non plus : recalculé de façon autoritaire par
+ * EligibiliteDecisionCongeService, jamais reçu du client (voir eligibilite()
+ * ci-dessous pour la même valeur consultée en amont, purement informative).
  */
 export interface GenererEtTransmettrePayload {
-  nombreJours: number;
   dateDerniereDecision?: string | null;
   numeroAttestationNonJouissance?: string | null;
   dateAttestationNonJouissance?: string | null;
@@ -73,6 +75,11 @@ export class DemandeDecisionApiService {
   /** RH Congé, depuis "retournee" — calcule/valide le nombre de jours, crée la DecisionConge, transmet à l'agent. */
   genererEtTransmettre(id: number, payload: GenererEtTransmettrePayload): Observable<DemandeDecision> {
     return this.http.post<DemandeDecision>(`${API_BASE}/demandes-decision/${id}/generer-et-transmettre`, payload);
+  }
+
+  /** Éligibilité + nombre de jours calculés par Symfony (EligibiliteDecisionCongeService) — consultation informative avant génération. */
+  eligibilite(id: number): Observable<EligibiliteDecisionConge> {
+    return this.http.get<EligibiliteDecisionConge>(`${API_BASE}/demandes-decision/${id}/eligibilite`);
   }
 
   delete(id: number): Observable<void> {

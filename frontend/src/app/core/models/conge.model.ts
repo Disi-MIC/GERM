@@ -36,6 +36,17 @@ export interface DecisionConge {
   valide?: boolean;
 }
 
+/** Calculé côté Symfony uniquement (EligibiliteDecisionCongeService) — jamais recalculé par Angular, voir demande-decision-traiter.component.ts. */
+export interface EligibiliteDecisionConge {
+  eligible: boolean;
+  dateReference: string;
+  dateEligibilite: string;
+  dateDerniereDecision: string | null;
+  dateDecision: string;
+  joursAccordables: number;
+  message: string;
+}
+
 export interface PieceJustificative {
   id: number;
   nomOriginal: string;

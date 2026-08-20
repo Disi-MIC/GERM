@@ -140,47 +140,80 @@
       <a routerLink="/conges/demandes-decision" class="btn btn-outline-secondary mt-3">Retour</a>
     } @else if (demande.retournee) {
       <div class="alert alert-success small">
-        Documents de retour déposés par le RH Admin. Calculez le nombre de jours et générez la décision pour clôturer la demande.
+        Documents de retour déposés par le RH Admin. Vérifiez l'éligibilité de l'agent et générez la décision pour clôturer la demande.
       </div>
 
-      @if (peutGenererEtTransmettre()) {
-        <dl class="row mb-3">
-          <dt class="col-sm-4">Numéro de décision</dt>
-          <dd class="col-sm-8">{{ numeroPrevu }} <span class="text-muted small">(automatique, vos initiales)</span></dd>
-          <dt class="col-sm-4">Date d'octroi</dt>
-          <dd class="col-sm-8">{{ dateFr(dateOctroiPrevue) }} <span class="text-muted small">(date du jour, automatique)</span></dd>
-          <dt class="col-sm-4">Date d'expiration</dt>
-          <dd class="col-sm-8">{{ dateFr(dateExpirationPrevue) }} <span class="text-muted small">(octroi + 3 ans, automatique)</span></dd>
-        </dl>
-
-        <form [formGroup]="formGeneration">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Date de la dernière demande</label>
-              <input type="date" class="form-control" formControlName="dateDerniereDecision" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Nombre de jours</label>
-              <input type="number" min="1" max="90" step="0.5" class="form-control" formControlName="nombreJours" />
-              <div class="form-text">Suggéré automatiquement à partir de la période écoulée (plafonné à 90 jours) — modifiable.</div>
-            </div>
-            @if (!demande.nouvellementAffecte) {
-              <div class="col-md-6">
-                <label class="form-label">N° de l'attestation de non jouissance <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" formControlName="numeroAttestationNonJouissance" />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Date de l'attestation de non jouissance <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" formControlName="dateAttestationNonJouissance" />
-              </div>
+      @if (aLeRoleGenerer()) {
+        @if (loadingEligibilite) {
+          <p class="text-muted">Calcul de l'éligibilité en cours...</p>
+        } @else if (erreurEligibilite) {
+          <div class="alert alert-danger small">{{ erreurEligibilite }}</div>
+        } @else if (eligibilite) {
+          <dl class="row mb-3">
+            <dt class="col-sm-4">Statut</dt>
+            <dd class="col-sm-8">
+              {{ demande.nouvellementAffecte ? 'Nouvellement affecté' : 'Agent déjà pourvu d\'une décision antérieure' }}
+            </dd>
+            @if (eligibilite.dateDerniereDecision) {
+              <dt class="col-sm-4">Dernière décision (référence)</dt>
+              <dd class="col-sm-8">{{ eligibilite.dateDerniereDecision | slice: 0 : 10 }}</dd>
             }
-          </div>
-          <div class="mt-3">
-            <button type="button" class="btn btn-primary" [disabled]="saving" (click)="genererEtTransmettre()">
-              <i class="bi bi-send-check"></i> Générer et transmettre à l'agent
-            </button>
-          </div>
-        </form>
+            <dt class="col-sm-4">Date de référence</dt>
+            <dd class="col-sm-8">{{ eligibilite.dateReference | slice: 0 : 10 }}</dd>
+            <dt class="col-sm-4">Date d'éligibilité</dt>
+            <dd class="col-sm-8">{{ eligibilite.dateEligibilite | slice: 0 : 10 }}</dd>
+            <dt class="col-sm-4">Date de la décision</dt>
+            <dd class="col-sm-8">{{ eligibilite.dateDecision | slice: 0 : 10 }}</dd>
+            <dt class="col-sm-4">Éligibilité</dt>
+            <dd class="col-sm-8">
+              @if (eligibilite.eligible) {
+                <span class="text-success"><i class="bi bi-check-circle-fill"></i> Éligible</span>
+              } @else {
+                <span class="text-danger"><i class="bi bi-x-circle-fill"></i> Non éligible</span>
+                <div class="text-muted small">{{ eligibilite.message }}</div>
+              }
+            </dd>
+            @if (eligibilite.eligible) {
+              <dt class="col-sm-4">Nombre de jours à octroyer</dt>
+              <dd class="col-sm-8"><strong>{{ eligibilite.joursAccordables }} jours</strong> <span class="text-muted small">(calculé automatiquement, 2 jours/mois plein écoulé, plafonné à 90)</span></dd>
+            }
+          </dl>
+        }
+
+        @if (eligibilite?.eligible) {
+          <dl class="row mb-3">
+            <dt class="col-sm-4">Numéro de décision</dt>
+            <dd class="col-sm-8">{{ numeroPrevu }} <span class="text-muted small">(automatique, vos initiales)</span></dd>
+            <dt class="col-sm-4">Date d'octroi</dt>
+            <dd class="col-sm-8">{{ dateFr(dateOctroiPrevue) }} <span class="text-muted small">(date du jour, automatique)</span></dd>
+            <dt class="col-sm-4">Date d'expiration</dt>
+            <dd class="col-sm-8">{{ dateFr(dateExpirationPrevue) }} <span class="text-muted small">(octroi + 3 ans, automatique)</span></dd>
+          </dl>
+
+          <form [formGroup]="formGeneration">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Date de la dernière demande</label>
+                <input type="date" class="form-control" formControlName="dateDerniereDecision" />
+              </div>
+              @if (!demande.nouvellementAffecte) {
+                <div class="col-md-6">
+                  <label class="form-label">N° de l'attestation de non jouissance <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="numeroAttestationNonJouissance" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Date de l'attestation de non jouissance <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" formControlName="dateAttestationNonJouissance" />
+                </div>
+              }
+            </div>
+            <div class="mt-3">
+              <button type="button" class="btn btn-primary" [disabled]="saving" (click)="genererEtTransmettre()">
+                <i class="bi bi-send-check"></i> Générer et transmettre à l'agent
+              </button>
+            </div>
+          </form>
+        }
       } @else {
         <div class="alert alert-secondary small">Seul le RH Congé peut générer et transmettre la décision.</div>
       }

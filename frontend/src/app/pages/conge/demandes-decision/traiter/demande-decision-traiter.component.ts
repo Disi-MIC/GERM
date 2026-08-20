@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth.service';
-import { DecisionConge, DemandeDecision } from '../../../../core/models/conge.model';
+import { DecisionConge, DemandeDecision, EligibiliteDecisionConge } from '../../../../core/models/conge.model';
 import { ListeValeurRef, Personnel } from '../../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../../shared/panel/panel.component';
@@ -34,6 +34,11 @@ export class DemandeDecisionTraiterComponent implements OnInit {
   decisionEnApercu: DecisionConge | null = null;
   error: string | null = null;
 
+  /** Éligibilité + nombre de jours accordables — calculés par Symfony (EligibiliteDecisionCongeService), jamais par ce composant. */
+  eligibilite: EligibiliteDecisionConge | null = null;
+  loadingEligibilite = false;
+  erreurEligibilite: string | null = null;
+
   fichierRetour: File | null = null;
 
   formRejet = this.fb.nonNullable.group({
@@ -43,7 +48,6 @@ export class DemandeDecisionTraiterComponent implements OnInit {
 
   formGeneration = this.fb.nonNullable.group({
     dateDerniereDecision: [''],
-    nombreJours: [null as number | null, [Validators.required, Validators.min(1), Validators.max(90)]],
     numeroAttestationNonJouissance: [''],
     dateAttestationNonJouissance: [''],
   });
@@ -84,6 +88,9 @@ export class DemandeDecisionTraiterComponent implements OnInit {
         this.demande = demande;
         this.preremplirGeneration();
         this.loading = false;
+        if (demande.retournee) {
+          this.chargerEligibilite(id);
+        }
       },
       error: () => {
         this.error = 'Impossible de charger cette demande.';
@@ -141,9 +148,31 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     return !!this.demande?.deposeeCourrier && this.auth.hasRole('ROLE_RH_RESPONSABLE');
   }
 
-  /** Générer et transmettre depuis "retournee" : réservé au RH Congé. */
-  peutGenererEtTransmettre(): boolean {
+  /** Rôle + statut, indépendamment de l'éligibilité — distingue "vous n'avez pas le droit" de "l'agent n'est pas éligible" dans le template. */
+  aLeRoleGenerer(): boolean {
     return !!this.demande?.retournee && this.auth.hasRole('ROLE_RH_CONGE');
+  }
+
+  /** Générer et transmettre depuis "retournee" : réservé au RH Congé, et seulement si Symfony a confirmé l'agent éligible (EligibiliteDecisionCongeService — jamais une supposition côté client). */
+  peutGenererEtTransmettre(): boolean {
+    return this.aLeRoleGenerer() && !!this.eligibilite?.eligible;
+  }
+
+  private chargerEligibilite(demandeId: number): void {
+    this.loadingEligibilite = true;
+    this.erreurEligibilite = null;
+    this.api.eligibilite(demandeId).subscribe({
+      next: (eligibilite) => {
+        this.eligibilite = eligibilite;
+        this.loadingEligibilite = false;
+      },
+      error: (err) => {
+        this.erreurEligibilite = err?.error?.errors
+          ? Object.values(err.error.errors).join(' ')
+          : "Impossible de calculer l'éligibilité de l'agent.";
+        this.loadingEligibilite = false;
+      },
+    });
   }
 
   valider(): void {
@@ -196,7 +225,7 @@ export class DemandeDecisionTraiterComponent implements OnInit {
   }
 
   genererEtTransmettre(): void {
-    if (!this.demande?.id || this.formGeneration.invalid) {
+    if (!this.demande?.id || this.formGeneration.invalid || !this.eligibilite?.eligible) {
       this.formGeneration.markAllAsTouched();
       return;
     }
@@ -214,7 +243,6 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     this.error = null;
     this.api
       .genererEtTransmettre(this.demande.id, {
-        nombreJours: raw.nombreJours!,
         dateDerniereDecision: raw.dateDerniereDecision || null,
         numeroAttestationNonJouissance: raw.numeroAttestationNonJouissance.trim() || null,
         dateAttestationNonJouissance: raw.dateAttestationNonJouissance || null,
@@ -238,50 +266,5 @@ export class DemandeDecisionTraiterComponent implements OnInit {
     if (dateDebutSuggeree) {
       this.formGeneration.patchValue({ dateDerniereDecision: dateDebutSuggeree.substring(0, 10) });
     }
-
-    const nombreJours = this.calculerSuggestionNombreJours();
-    if (nombreJours !== null) {
-      this.formGeneration.patchValue({ nombreJours });
-    }
-  }
-
-  /**
-   * Suggestion calculée côté client (mois écoulés entre la dernière décision
-   * — ou la date de prise de service si l'agent n'en a jamais eu, ou la date
-   * d'embauche de sa fiche Personnel en dernier recours si aucune des deux
-   * n'est renseignée — et le dépôt de cette demande, × 30 jours / 11 mois
-   * pour un fonctionnaire ou / 12 mois sinon) : le RH Congé peut toujours
-   * l'ajuster avant de générer, la valeur soumise fait foi côté serveur (voir
-   * genererEtTransmettre()), qui rejette toute valeur supérieure à 90.
-   * Au-delà de 3 ans d'écart entre les deux demandes, le congé annuel est
-   * plafonné à 90 jours directement (le cumul théorique n'est jamais dû) ;
-   * en-deçà, la formule est également bornée à 90 par sécurité.
-   */
-  private calculerSuggestionNombreJours(): number | null {
-    const d = this.demande;
-    if (!d || typeof d.personnel === 'string') {
-      return null;
-    }
-    const personnel = d.personnel;
-    const typeContrat = typeof personnel.typeContrat === 'string' ? null : personnel.typeContrat;
-    const diviseur = typeContrat?.code === 'fonctionnaire' ? 11 : 12;
-
-    const dateDebutBrute = d.dateDerniereDecision ?? d.datePriseDeService ?? personnel.dateEmbauche;
-    const dateFinBrute = d.createdAt;
-    if (!dateDebutBrute || !dateFinBrute) {
-      return null;
-    }
-
-    const debut = new Date(dateDebutBrute);
-    const fin = new Date(dateFinBrute);
-    let mois = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth());
-    const joursDansMoisFin = new Date(fin.getFullYear(), fin.getMonth() + 1, 0).getDate();
-    mois += (fin.getDate() - debut.getDate()) / joursDansMoisFin;
-
-    if (mois > 36) {
-      return 90;
-    }
-
-    return Math.min(Math.round(((mois * 30) / diviseur) * 10) / 10, 90);
   }
 }
