@@ -17,11 +17,10 @@ use App\Repository\DemandeDecisionRepository;
 use App\Repository\DemandeJouissanceRepository;
 use App\Repository\HistoriqueAffectationRepository;
 use App\Repository\MaterielInformatiqueRepository;
-use App\Repository\DirectionRepository;
 use App\Repository\NotificationRepository;
-use App\Repository\ServiceRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Repository\VehiculeRepository;
+use App\Service\CurrentUserPayloadBuilder;
 use App\Service\FileStorage;
 use App\Service\PersonnelPhotoService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -31,7 +30,6 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
@@ -49,42 +47,18 @@ class MeController extends AbstractController
         private readonly FileStorage $fileStorage,
         private readonly EntityManagerInterface $em,
         private readonly PersonnelPhotoService $photoService,
-        private readonly ServiceRepository $serviceRepository,
-        private readonly DirectionRepository $directionRepository,
-        private readonly RoleHierarchyInterface $roleHierarchy,
+        private readonly CurrentUserPayloadBuilder $currentUserPayloadBuilder,
     ) {
     }
 
-    /**
-     * serviceResponsableId/directionDirigeeId : dérivés des champs
-     * Service::$responsable / Direction::$directeur (jamais d'un rôle
-     * Symfony dédié, voir ApercuOrganisationController) — permettent au
-     * frontend d'afficher/masquer les liens "Aperçu de mon service/ma
-     * direction" sans appel réseau supplémentaire, comme pour les rôles.
-     *
-     * roles : passés par RoleHierarchyInterface plutôt que renvoyés bruts —
-     * la hiérarchie de security.yaml (ex. ROLE_SUPERADMIN englobant
-     * ROLE_AUTORITE/ROLE_RH_RESPONSABLE/...) n'existe que côté Symfony, un
-     * compte n'ayant que le rôle littéral "ROLE_SUPERADMIN" en base ne
-     * verrait sinon aucun lien de navigation réservé aux rôles hérités (le
-     * frontend fait un simple test d'appartenance, voir AuthService.hasRole).
-     */
+    /** Doit renvoyer exactement le même payload qu'ApiSecurityController::login() — voir CurrentUserPayloadBuilder. */
     #[Route('/api/me', name: 'api_me', methods: ['GET'])]
     public function moi(): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
-        $personnel = $user->getPersonnel();
 
-        return $this->json([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'nom' => $user->getNom(),
-            'prenom' => $user->getPrenom(),
-            'roles' => $this->roleHierarchy->getReachableRoleNames($user->getRoles()),
-            'serviceResponsableId' => $personnel ? $this->serviceRepository->findOneBy(['responsable' => $personnel])?->getId() : null,
-            'directionDirigeeId' => $personnel ? $this->directionRepository->findOneBy(['directeur' => $personnel])?->getId() : null,
-        ]);
+        return $this->json($this->currentUserPayloadBuilder->build($user));
     }
 
     #[Route('/api/me/personnel', name: 'api_me_personnel', methods: ['GET'])]

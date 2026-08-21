@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\User;
+use App\Service\CurrentUserPayloadBuilder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -18,19 +19,24 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 class ApiSecurityController extends AbstractController
 {
+    public function __construct(
+        private readonly CurrentUserPayloadBuilder $currentUserPayloadBuilder,
+    ) {
+    }
+
+    /**
+     * Doit renvoyer exactement le même payload que MeController::moi() —
+     * voir CurrentUserPayloadBuilder : AuthService.login() (frontend) peuple
+     * son signal currentUser directement depuis cette réponse, sans jamais
+     * rappeler /api/me dans la même session app.
+     */
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
     public function login(): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        return $this->json([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'nom' => $user->getNom(),
-            'prenom' => $user->getPrenom(),
-            'roles' => $user->getRoles(),
-        ]);
+        return $this->json($this->currentUserPayloadBuilder->build($user));
     }
 
     #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
