@@ -367,6 +367,12 @@ $mobile-topbar-height: calc(env(safe-area-inset-top) + 3.65rem);
 
 .mobile-admin-sheet-body {
   flex: 1;
+  // Un enfant flex a un min-height implicite de "auto" (pas 0) : sans ce
+  // reset, il refuse de se contraindre à la hauteur restante du parent et
+  // grandit plutôt pour contenir tout son contenu — overflow-y ne se
+  // déclenche donc jamais, quel que soit le nombre de rubriques. Voir aussi
+  // .mobile-plus-sheet, hors flexbox donc pas concerné par ce piège.
+  min-height: 0;
   overflow-y: auto;
   // Sans quoi le défilement dans un conteneur position:fixed ne fonctionne
   // pas de façon fiable dans la WebView native iOS (Capacitor), même si ça
