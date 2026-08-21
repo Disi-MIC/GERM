@@ -19,6 +19,7 @@ use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\DecisionCongeRepository;
 use App\Repository\ListeValeurRepository;
 use App\Repository\MaterielInformatiqueRepository;
+use App\Service\EligibiliteDecisionCongeService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -67,6 +68,7 @@ class MeDemandesController extends AbstractController
         private readonly MaterielInformatiqueRepository $materielInformatiqueRepository,
         private readonly ListeValeurRepository $listeValeurRepository,
         private readonly NotificationService $notificationService,
+        private readonly EligibiliteDecisionCongeService $eligibiliteService,
     ) {
     }
 
@@ -180,6 +182,17 @@ class MeDemandesController extends AbstractController
         $violations = $this->validator->validate($demande);
         if (\count($violations) > 0) {
             return $this->violationsResponse($violations);
+        }
+
+        // Vérifié dès la création plutôt qu'à la validation RH Congé ou à la
+        // génération finale (voir aussi DemandeDecisionController::create()/
+        // genererEtTransmettre()) : inutile de faire déposer des pièces et
+        // parcourir tout le circuit ministériel (plusieurs semaines/mois) à
+        // un agent qui n'a de toute façon pas encore accompli une année
+        // complète de travail depuis sa dernière décision.
+        $eligibilite = $this->eligibiliteService->calculer($personnel, $demande, new \DateTimeImmutable('today'));
+        if ($eligibilite && !$eligibilite->eligible) {
+            return $this->json(['errors' => ['eligibilite' => $eligibilite->message]], JsonResponse::HTTP_CONFLICT);
         }
 
         $this->em->persist($demande);

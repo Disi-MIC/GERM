@@ -74,6 +74,16 @@ class DemandeDecisionController extends AbstractController
             return $erreur;
         }
 
+        // Vérifié dès la création — voir MeDemandesController::creerDemandeDecision()
+        // pour la même règle et sa justification (éviter tout le circuit
+        // papier pour un agent pas encore éligible).
+        if ($demande->getPersonnel()) {
+            $eligibilite = $this->eligibiliteService->calculer($demande->getPersonnel(), $demande, new \DateTimeImmutable('today'));
+            if ($eligibilite && !$eligibilite->eligible) {
+                return $this->json(['errors' => ['eligibilite' => $eligibilite->message]], JsonResponse::HTTP_CONFLICT);
+            }
+        }
+
         $this->em->persist($demande);
         $this->em->flush();
 
