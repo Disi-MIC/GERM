@@ -8,6 +8,20 @@
       </div>
     </div>
 
+    @if (auth.currentUser()?.serviceResponsableId || auth.currentUser()?.directionDirigeeId) {
+      <div class="text-uppercase small text-white-50 px-3 pb-1">Ma structure</div>
+      @if (auth.currentUser()?.serviceResponsableId) {
+        <a routerLink="/mon-espace/apercu-service" routerLinkActive="active">
+          <i class="bi bi-people"></i> Aperçu de mon service
+        </a>
+      }
+      @if (auth.currentUser()?.directionDirigeeId) {
+        <a routerLink="/mon-espace/apercu-direction" routerLinkActive="active">
+          <i class="bi bi-diagram-3"></i> Aperçu de ma direction
+        </a>
+      }
+    }
+
     @if (!estEnAdministration()) {
       <div class="text-uppercase small text-white-50 px-3 pb-1">Mon espace</div>
       <a routerLink="/mon-espace/tableau-de-bord" routerLinkActive="active">
@@ -52,16 +66,6 @@
       <a routerLink="/mon-espace/documents" routerLinkActive="active">
         <i class="bi bi-folder2-open"></i> Mes documents
       </a>
-      @if (auth.currentUser()?.serviceResponsableId) {
-        <a routerLink="/mon-espace/apercu-service" routerLinkActive="active">
-          <i class="bi bi-people"></i> Aperçu de mon service
-        </a>
-      }
-      @if (auth.currentUser()?.directionDirigeeId) {
-        <a routerLink="/mon-espace/apercu-direction" routerLinkActive="active">
-          <i class="bi bi-diagram-3"></i> Aperçu de ma direction
-        </a>
-      }
     }
 
     @if (estEnAdministration()) {
