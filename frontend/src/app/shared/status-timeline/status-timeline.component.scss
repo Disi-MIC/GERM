@@ -2,10 +2,65 @@
   display: block;
 }
 
-// Sans défilement, quel que soit le nombre d'étapes : horizontale (avec
-// repli sur 2 lignes si l'espace manque) au-delà de 700px — largeur des
-// panneaux qui l'utilisent (carte pro/congés) — verticale en dessous, où 5
-// étapes ne tiendraient jamais sur une seule ligne sans scroller.
+// Sans défilement, quel que soit le nombre d'étapes : horizontale sur une
+// seule ligne quand la largeur disponible le permet, verticale sinon.
+// `flex-wrap` seul ne suffit pas : selon le nombre d'étapes et la longueur
+// de leurs libellés, il ne reste parfois qu'une seule étape à ne pas tenir
+// sur la ligne, qui se retrouve alors seule et décentrée sur une 2e ligne
+// (ex. modal "Statut de ma demande" plus étroit qu'une page pleine largeur,
+// où le seuil de 700px ci-dessous ne se déclenche jamais puisqu'il porte sur
+// la largeur de la fenêtre, pas celle du modal). --verticale est donc
+// calculée en JS (voir status-timeline.component.ts, ResizeObserver) en
+// mesurant si un repli a effectivement eu lieu, plutôt que par un seuil de
+// largeur fixe qui ne peut pas anticiper tous les nombres d'étapes.
+@mixin timeline-verticale {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  row-gap: 0;
+  padding: 1.25rem 1.1rem;
+
+  &::before {
+    display: none;
+  }
+
+  .germ-timeline-step {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+    min-width: 0;
+    padding: 0 0 1.1rem;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+
+    &:not(:last-child) .germ-timeline-dot::after {
+      content: '';
+      position: absolute;
+      top: 22px;
+      left: 10px;
+      bottom: -1.1rem;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+  }
+
+  .germ-timeline-dot {
+    position: relative;
+    margin-right: 0.85rem;
+  }
+
+  .germ-timeline-texte {
+    padding-top: 0.05rem;
+  }
+
+  .germ-timeline-label,
+  .germ-timeline-sous-titre {
+    margin-top: 0;
+  }
+}
+
 .germ-timeline {
   position: relative;
   display: flex;
@@ -90,55 +145,15 @@
   color: rgba(255, 255, 255, 0.45);
 }
 
-// En dessous de 700px : bascule en frise verticale (ligne de connexion à
-// gauche des pastilles, texte à droite) — toujours entièrement visible,
-// jamais de défilement horizontal quel que soit le nombre d'étapes.
+.germ-timeline--verticale {
+  @include timeline-verticale;
+}
+
+// Secours pour le tout premier rendu, avant que le ResizeObserver n'ait
+// mesuré et posé --verticale (évite un flash horizontal cassé) — au-delà,
+// --verticale prend le relais quel que soit la largeur de la fenêtre.
 @media (max-width: 700px) {
   .germ-timeline {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    row-gap: 0;
-    padding: 1.25rem 1.1rem;
-
-    &::before {
-      display: none;
-    }
-  }
-
-  .germ-timeline-step {
-    flex-direction: row;
-    align-items: flex-start;
-    text-align: left;
-    width: 100%;
-    min-width: 0;
-    padding: 0 0 1.1rem;
-
-    &:last-child {
-      padding-bottom: 0;
-    }
-
-    &:not(:last-child) .germ-timeline-dot::after {
-      content: '';
-      position: absolute;
-      top: 22px;
-      left: 10px;
-      bottom: -1.1rem;
-      width: 1px;
-      background: rgba(255, 255, 255, 0.14);
-    }
-  }
-
-  .germ-timeline-dot {
-    position: relative;
-    margin-right: 0.85rem;
-  }
-
-  .germ-timeline-texte {
-    padding-top: 0.05rem;
-  }
-
-  .germ-timeline-label,
-  .germ-timeline-sous-titre {
-    margin-top: 0;
+    @include timeline-verticale;
   }
 }

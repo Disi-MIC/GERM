@@ -1,4 +1,4 @@
-<div class="germ-timeline">
+<div class="germ-timeline" #timeline>
   @for (etape of etapes; track $index) {
     <div class="germ-timeline-step">
       <span class="germ-timeline-dot" [class]="'germ-timeline-dot--' + etape.etat">
