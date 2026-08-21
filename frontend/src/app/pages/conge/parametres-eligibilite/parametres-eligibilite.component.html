@@ -1,0 +1,56 @@
+<app-page-header
+  title="Paramètres — Éligibilité décision de congé"
+  subtitle="Jours acquis par mois, plafond et délai d'éligibilité, réglables séparément pour les fonctionnaires et les non-fonctionnaires."
+></app-page-header>
+
+<div class="row g-3">
+  @for (carte of cartes; track carte.categorie) {
+    <div class="col-md-6">
+      <app-panel [title]="carte.titre" class="d-block h-100">
+        @if (carte.loading) {
+          <p class="text-muted mb-0">Chargement...</p>
+        } @else {
+          @if (carte.error) {
+            <div class="alert alert-danger">{{ carte.error }}</div>
+          }
+          @if (carte.succes) {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              Réglages enregistrés.
+              <button type="button" class="btn-close" (click)="carte.succes = false"></button>
+            </div>
+          }
+
+          <p class="text-muted small">Base légale : {{ carte.baseLegale }}.</p>
+
+          <form [formGroup]="carte.form" (ngSubmit)="enregistrer(carte)">
+            <div class="mb-3">
+              <label class="form-label">Jours acquis par mois plein</label>
+              <input type="number" min="1" step="1" class="form-control" formControlName="joursParMois" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Plafond de jours accordables</label>
+              <input type="number" min="1" step="1" class="form-control" formControlName="plafondJours" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Délai d'éligibilité (en mois)</label>
+              <input type="number" min="1" step="1" class="form-control" formControlName="delaiEligibiliteMois" />
+              <div class="form-text">Ancienneté minimale depuis la référence avant qu'une nouvelle décision soit possible.</div>
+            </div>
+
+            @if (carte.updatedAt) {
+              <p class="text-muted small">
+                Dernière mise à jour le {{ carte.updatedAt | slice: 0 : 10 }} par {{ carte.misAJourParNom ?? '—' }}.
+              </p>
+            }
+
+            <button type="submit" class="btn btn-primary" [disabled]="carte.saving || carte.form.invalid">
+              <i class="bi bi-check-lg"></i> Enregistrer
+            </button>
+          </form>
+        }
+      </app-panel>
+    </div>
+  }
+</div>

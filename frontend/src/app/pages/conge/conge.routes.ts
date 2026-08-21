@@ -14,6 +14,13 @@ export const CONGE_ROUTES: Routes = [
       import('./parametres-decision/parametres-decision.component').then((m) => m.ParametresDecisionComponent),
   },
   {
+    path: 'parametres-eligibilite',
+    canActivate: [roleGuard],
+    data: { roles: ['ROLE_RH_RESPONSABLE'] },
+    loadComponent: () =>
+      import('./parametres-eligibilite/parametres-eligibilite.component').then((m) => m.ParametresEligibiliteComponent),
+  },
+  {
     path: 'new',
     loadComponent: () => import('./conges/form/conge-form.component').then((m) => m.CongeFormComponent),
   },

@@ -4,8 +4,10 @@ namespace App\Service;
 
 use App\Dto\EligibiliteDecisionCongeResult;
 use App\Entity\DemandeDecision;
+use App\Entity\Enum\CategorieAgentConge;
 use App\Entity\Personnel;
 use App\Repository\DecisionCongeRepository;
+use App\Repository\ParametreEligibiliteCongeRepository;
 
 /**
  * Calcule l'éligibilité d'un agent à une nouvelle décision de congé et le
@@ -14,12 +16,16 @@ use App\Repository\DecisionCongeRepository;
  * genererEtTransmettre()) l'appelle systématiquement, Angular ne fait
  * qu'afficher le résultat.
  *
- * Règle (confirmée par le RH, pas de texte à deviner) : 2 jours acquis par
- * mois PLEIN écoulé depuis la date de référence, sans distinction
- * fonctionnaire/non-fonctionnaire sur le taux lui-même — seule la base
- * légale diffère (Loi 61-33 du 15/06/1961 pour les fonctionnaires, Décret
- * 74-347 du 12/04/1974 pour les non-fonctionnaires) — plafonné à 90 jours,
- * sans proratisation des jours restants sous un mois plein.
+ * Règle : jours acquis par mois PLEIN écoulé depuis la date de référence,
+ * plafonnés, sans proratisation des jours restants sous un mois plein —
+ * taux, plafond et délai d'éligibilité réglables séparément par catégorie
+ * (fonctionnaire/non-fonctionnaire), chacune correspondant à une base légale
+ * différente (Loi 61-33 du 15/06/1961 pour les fonctionnaires, Décret
+ * 74-347 du 12/04/1974 pour les non-fonctionnaires) — voir
+ * ParametreEligibiliteConge et Api/ParametreEligibiliteCongeController
+ * (réglages RH Admin). Valeurs par défaut identiques pour les deux
+ * catégories (2 jours/mois, plafond 90, délai 12 mois) tant que le RH Admin
+ * n'a pas différencié l'une des deux.
  *
  * Date de référence : la dernière DecisionConge réellement délivrée à
  * l'agent (DecisionCongeRepository::findDerniereDecision(), source
@@ -32,12 +38,24 @@ use App\Repository\DecisionCongeRepository;
  */
 class EligibiliteDecisionCongeService
 {
-    private const JOURS_PAR_MOIS = 2;
-    private const PLAFOND_JOURS = 90;
-
     public function __construct(
         private readonly DecisionCongeRepository $decisionCongeRepository,
+        private readonly ParametreEligibiliteCongeRepository $parametreRepository,
     ) {
+    }
+
+    /**
+     * "fonctionnaire" est le seul code de la liste de valeurs "type de
+     * contrat" (Personnel::$typeContrat) à valoir CategorieAgentConge::FONCTIONNAIRE —
+     * tout le reste (contractuel/stagiaire/consultant/non renseigné) vaut
+     * NON_FONCTIONNAIRE, ces codes restant par ailleurs librement éditables
+     * depuis le backoffice (Admin/ListeValeurController).
+     */
+    public function categorieDe(Personnel $personnel): CategorieAgentConge
+    {
+        return 'fonctionnaire' === $personnel->getTypeContrat()?->getCode()
+            ? CategorieAgentConge::FONCTIONNAIRE
+            : CategorieAgentConge::NON_FONCTIONNAIRE;
     }
 
     public function calculer(Personnel $personnel, ?DemandeDecision $demande, \DateTimeImmutable $dateDecision): ?EligibiliteDecisionCongeResult
@@ -54,11 +72,13 @@ class EligibiliteDecisionCongeService
             return null;
         }
 
-        $dateEligibilite = $dateReference->modify('+1 year');
+        $parametres = $this->parametreRepository->recupererOuCreer($this->categorieDe($personnel));
+
+        $dateEligibilite = $dateReference->modify(\sprintf('+%d months', $parametres->getDelaiEligibiliteMois()));
         $eligible = $dateDecision >= $dateEligibilite;
 
         $moisPleins = $this->moisPleinsEcoules($dateReference, $dateDecision);
-        $joursAccordables = min($moisPleins * self::JOURS_PAR_MOIS, self::PLAFOND_JOURS);
+        $joursAccordables = min($moisPleins * $parametres->getJoursParMois(), $parametres->getPlafondJours());
 
         $message = $eligible
             ? "L'agent est éligible à une nouvelle décision."
