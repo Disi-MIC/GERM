@@ -1,5 +1,24 @@
 <app-page-header title="Mon tableau de bord" subtitle="Aperçu de votre carrière, vos ressources et vos demandes en cours."></app-page-header>
 
+@if (estNatif && (auth.currentUser()?.serviceResponsableId || auth.currentUser()?.directionDirigeeId)) {
+  <div class="row g-3 mb-4">
+    @if (auth.currentUser()?.serviceResponsableId) {
+      <div class="col-6">
+        <a routerLink="/mon-espace/apercu-service" class="btn btn-outline-primary w-100 py-3">
+          <i class="bi bi-people d-block fs-4 mb-1"></i> Aperçu de mon service
+        </a>
+      </div>
+    }
+    @if (auth.currentUser()?.directionDirigeeId) {
+      <div class="col-6">
+        <a routerLink="/mon-espace/apercu-direction" class="btn btn-outline-primary w-100 py-3">
+          <i class="bi bi-diagram-3 d-block fs-4 mb-1"></i> Aperçu de ma direction
+        </a>
+      </div>
+    }
+  </div>
+}
+
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {

@@ -2,7 +2,9 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { ChartData } from 'chart.js';
+import { AuthService } from '../../../core/auth.service';
 import { DashboardMe, DemandeEnAttenteResume, DomaineDemande } from '../../../core/models/dashboard-me.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
@@ -55,7 +57,19 @@ export class MonTableauDeBordComponent implements OnInit {
   /** Champ simple recalculé une seule fois au chargement plutôt qu'un getter — voir dashboard.component.ts. */
   chartRepartition: ChartData<'doughnut'> = { labels: [], datasets: [] };
 
-  constructor(private readonly api: ProfilApiService) {}
+  /**
+   * "Aperçu de mon service/ma direction" reste accessible sur web via la
+   * sidebar (toujours visible, voir ShellComponent) — inutile de dupliquer
+   * ici. Sur mobile, ces liens ne vivent que dans les feuilles "Plus"/"Menu"
+   * (bas d'écran, à faire défiler) : un raccourci direct ici, sur la
+   * première page vue après connexion, évite de dépendre de ce défilement.
+   */
+  readonly estNatif = Capacitor.isNativePlatform();
+
+  constructor(
+    private readonly api: ProfilApiService,
+    readonly auth: AuthService,
+  ) {}
 
   ngOnInit(): void {
     this.api.getMonTableauDeBord().subscribe({
