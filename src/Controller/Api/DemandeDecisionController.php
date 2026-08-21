@@ -16,6 +16,7 @@ use App\Repository\ParametresDecisionCongeRepository;
 use App\Service\EligibiliteDecisionCongeService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
+use App\Service\TexteLegalDecisionCongeSubstitutionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,6 +58,7 @@ class DemandeDecisionController extends AbstractController
         private readonly DecisionCongeRepository $decisionCongeRepository,
         private readonly ParametresDecisionCongeRepository $parametresDecisionCongeRepository,
         private readonly EligibiliteDecisionCongeService $eligibiliteService,
+        private readonly TexteLegalDecisionCongeSubstitutionService $substitutionService,
     ) {
     }
 
@@ -433,6 +435,11 @@ class DemandeDecisionController extends AbstractController
             )]], JsonResponse::HTTP_CONFLICT);
         }
 
+        // Champs propres à la décision affectés en premier : le texte légal
+        // (ci-dessous) peut référencer certains d'entre eux via des
+        // emplacements ("{{decision.periodeDebut}}", etc. — voir
+        // TexteLegalDecisionCongeSubstitutionService), la substitution a donc
+        // besoin qu'ils soient déjà renseignés sur $nouvelleDecision.
         $nouvelleDecision = new DecisionConge();
         $nouvelleDecision->setPersonnel($demande->getPersonnel());
         $nouvelleDecision->setNumeroDecision($numero);
@@ -441,13 +448,17 @@ class DemandeDecisionController extends AbstractController
         $nouvelleDecision->setNombreJours($nombreJours);
         $nouvelleDecision->setPeriodeDebut($demande->getDateDerniereDecision() ?? $demande->getDatePriseDeService());
         $nouvelleDecision->setNumeroDerniereDecisionReferencee($demande->getNumeroDerniereDecision());
-        $nouvelleDecision->setVisasDecrets($parametres->getVisasDecrets());
-        $nouvelleDecision->setArticle2($parametres->getArticle2());
-        $nouvelleDecision->setArticle3($parametres->getArticle3());
-        $nouvelleDecision->setAmpliations($parametres->getAmpliations());
         $nouvelleDecision->setNumeroAttestationNonJouissance($numeroAttestationNonJouissance);
         $nouvelleDecision->setDateAttestationNonJouissance($dateAttestationNonJouissance);
         $nouvelleDecision->setGenereePar($operateur);
+
+        // Texte légal RH Admin substitué (emplacements "{{agent...}}" /
+        // "{{decision...}}" remplacés par les valeurs de cette décision) puis
+        // figé sur la DecisionConge — jamais recalculé ensuite.
+        $nouvelleDecision->setVisasDecrets($this->substitutionService->substituer($parametres->getVisasDecrets(), $demande, $nouvelleDecision));
+        $nouvelleDecision->setArticle2($this->substitutionService->substituer($parametres->getArticle2(), $demande, $nouvelleDecision));
+        $nouvelleDecision->setArticle3($this->substitutionService->substituer($parametres->getArticle3(), $demande, $nouvelleDecision));
+        $nouvelleDecision->setAmpliations($this->substitutionService->substituer($parametres->getAmpliations(), $demande, $nouvelleDecision));
         $this->em->persist($nouvelleDecision);
 
         $demande->setDecisionCreee($nouvelleDecision);

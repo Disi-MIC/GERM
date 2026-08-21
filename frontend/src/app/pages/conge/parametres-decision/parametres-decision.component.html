@@ -24,6 +24,20 @@
         génération, une modification ici ne change que les décisions générées ensuite pour cette catégorie.
       </div>
 
+      <div class="alert alert-secondary small">
+        Emplacements disponibles dans les quatre champs ci-dessous, remplacés automatiquement par les informations de
+        l'agent et de la décision au moment de la génération :
+        <code>{{ '{{demande.dateDemande}}' }}</code>, <code>{{ '{{demande.datePriseDeService}}' }}</code>,
+        <code>{{ '{{agent.civilite}}' }}</code>, <code>{{ '{{agent.nomComplet}}' }}</code>,
+        <code>{{ '{{agent.matricule}}' }}</code>, <code>{{ '{{agent.fonction}}' }}</code>,
+        <code>{{ '{{agent.service}}' }}</code>, <code>{{ '{{agent.direction}}' }}</code>,
+        <code>{{ '{{decision.numeroDecision}}' }}</code>, <code>{{ '{{decision.nombreJours}}' }}</code>,
+        <code>{{ '{{decision.dateDecision}}' }}</code>, <code>{{ '{{decision.dateExpiration}}' }}</code>,
+        <code>{{ '{{decision.periodeDebut}}' }}</code>, <code>{{ '{{decision.numeroAttestationNonJouissance}}' }}</code>,
+        <code>{{ '{{decision.dateAttestationNonJouissance}}' }}</code>,
+        <code>{{ '{{decision.numeroDerniereDecisionReferencee}}' }}</code>.
+      </div>
+
       <form [formGroup]="carte.form" (ngSubmit)="enregistrer(carte)">
         <div class="mb-3">
           <label class="form-label">Visas des décrets en vigueur</label>
