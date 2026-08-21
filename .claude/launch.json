@@ -10,7 +10,7 @@
     },
     {
       "name": "germ",
-      "url": "https://127.0.0.1:8010"
+      "url": "https://127.0.0.1:8000"
     },
     {
       "name": "germ-frontend",
