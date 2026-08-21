@@ -261,6 +261,15 @@ $mobile-topbar-height: calc(env(safe-area-inset-top) + 3.65rem);
   left: 0;
   right: 0;
   bottom: 0;
+  // Pas de hauteur fixe à l'origine : pensée comme une courte liste plate qui
+  // s'ajuste à son contenu. Devenue trop longue pour tenir sur un petit écran
+  // une fois les liens "Aperçu de mon service/ma direction" ajoutés — sans
+  // max-height + overflow, le surplus est simplement coupé en bas de l'écran,
+  // inatteignable (voir .mobile-admin-sheet-body pour le même besoin, déjà
+  // scrollable puisque toujours plus longue).
+  max-height: 80vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 30;
   background: #fff;
   border-radius: 1rem 1rem 0 0;
@@ -359,6 +368,11 @@ $mobile-topbar-height: calc(env(safe-area-inset-top) + 3.65rem);
 .mobile-admin-sheet-body {
   flex: 1;
   overflow-y: auto;
+  // Sans quoi le défilement dans un conteneur position:fixed ne fonctionne
+  // pas de façon fiable dans la WebView native iOS (Capacitor), même si ça
+  // défile normalement en simulateur/navigateur desktop — voir aussi
+  // panel.component.scss pour le même besoin.
+  -webkit-overflow-scrolling: touch;
   padding: 0.5rem 0 calc(env(safe-area-inset-bottom) + 0.75rem);
 
   a,
