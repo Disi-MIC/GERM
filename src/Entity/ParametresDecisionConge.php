@@ -2,17 +2,22 @@
 
 namespace App\Entity;
 
+use App\Entity\Enum\CategorieAgentConge;
 use App\Repository\ParametresDecisionCongeRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 /**
- * Réglages globaux (une seule ligne, id=1 — voir
- * ParametresDecisionCongeRepository::recupererOuCreer()) du texte légal par
- * défaut inséré automatiquement dans chaque DecisionConge générée par le RH
- * Congé (Api/DemandeDecisionController::genererEtTransmettre()) : visas des
- * décrets en vigueur, article 2, article 3. Modifiable uniquement par le RH
- * Admin (Api/ParametresDecisionCongeController) — texte qui peut changer
+ * Réglages du texte légal par défaut inséré automatiquement dans chaque
+ * DecisionConge générée par le RH Congé
+ * (Api/DemandeDecisionController::genererEtTransmettre()) : visas des
+ * décrets en vigueur, article 2, article 3 — un jeu par CategorieAgentConge
+ * (fonctionnaire/non-fonctionnaire, une ligne chacun, voir
+ * ParametresDecisionCongeRepository::recupererOuCreer()), puisque le texte
+ * légal diffère selon la base légale (Loi 61-33 du 15/06/1961 pour les
+ * fonctionnaires, Décret 74-347 du 12/04/1974 pour les non-fonctionnaires —
+ * voir aussi EligibiliteDecisionCongeService). Modifiable uniquement par le
+ * RH Admin (Api/ParametresDecisionCongeController) — texte qui peut changer
  * (nouveau décret, révision des articles) indépendamment du circuit
  * d'approbation. Chaque DecisionConge conserve sa propre copie de ce texte
  * telle qu'elle était au moment de sa génération (voir ses champs
@@ -22,12 +27,18 @@ use Symfony\Component\Serializer\Attribute\Groups;
  */
 #[ORM\Entity(repositoryClass: ParametresDecisionCongeRepository::class)]
 #[ORM\Table(name: 'parametres_decision_conge')]
+#[ORM\UniqueConstraint(name: 'uniq_parametres_decision_categorie', columns: ['categorie'])]
 class ParametresDecisionConge
 {
     #[ORM\Id]
+    #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['api:read'])]
-    private int $id = 1;
+    private ?int $id = null;
+
+    #[ORM\Column(length: 20, enumType: CategorieAgentConge::class)]
+    #[Groups(['api:read'])]
+    private CategorieAgentConge $categorie;
 
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read'])]
@@ -53,9 +64,19 @@ class ParametresDecisionConge
     #[ORM\ManyToOne(targetEntity: User::class)]
     private ?User $misAJourPar = null;
 
-    public function getId(): int
+    public function __construct(CategorieAgentConge $categorie)
+    {
+        $this->categorie = $categorie;
+    }
+
+    public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getCategorie(): CategorieAgentConge
+    {
+        return $this->categorie;
     }
 
     public function getVisasDecrets(): ?string

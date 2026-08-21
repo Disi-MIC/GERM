@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
+use App\Entity\Enum\CategorieAgentConge;
 use App\Entity\User;
 use App\Repository\ParametresDecisionCongeRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,11 +14,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Réglages du texte légal par défaut (visas des décrets, articles 2 et 3)
- * inséré automatiquement dans chaque DecisionConge générée — voir le
- * commentaire de classe de ParametresDecisionConge. Backoffice RH Admin
- * uniquement : ce texte n'a rien à voir avec le circuit d'approbation
- * lui-même (ROLE_RH_CONGE), il ne change qu'à l'occasion d'un nouveau
- * décret ou d'une révision réglementaire.
+ * inséré automatiquement dans chaque DecisionConge générée — un jeu par
+ * catégorie (fonctionnaire/non-fonctionnaire), voir le commentaire de classe
+ * de ParametresDecisionConge. Backoffice RH Admin uniquement : ce texte n'a
+ * rien à voir avec le circuit d'approbation lui-même (ROLE_RH_CONGE), il ne
+ * change qu'à l'occasion d'un nouveau décret ou d'une révision
+ * réglementaire.
  */
 #[IsGranted('ROLE_RH_RESPONSABLE')]
 class ParametresDecisionCongeController extends AbstractController
@@ -28,16 +30,21 @@ class ParametresDecisionCongeController extends AbstractController
     ) {
     }
 
-    #[Route('/api/parametres-decision-conge', name: 'api_parametres_decision_conge_get', methods: ['GET'])]
-    public function get(): JsonResponse
+    #[Route('/api/parametres-decision-conge', name: 'api_parametres_decision_conge_liste', methods: ['GET'])]
+    public function liste(): JsonResponse
     {
-        return $this->json($this->repository->recupererOuCreer(), JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+        return $this->json($this->repository->recupererTous(), JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }
 
-    #[Route('/api/parametres-decision-conge', name: 'api_parametres_decision_conge_update', methods: ['PUT'])]
-    public function update(Request $request): JsonResponse
+    #[Route('/api/parametres-decision-conge/{categorie}', name: 'api_parametres_decision_conge_update', methods: ['PUT'])]
+    public function update(string $categorie, Request $request): JsonResponse
     {
-        $parametres = $this->repository->recupererOuCreer();
+        $categorieEnum = CategorieAgentConge::tryFrom($categorie);
+        if (!$categorieEnum) {
+            return $this->json(['errors' => ['categorie' => 'Catégorie inconnue.']], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $parametres = $this->repository->recupererOuCreer($categorieEnum);
         $data = json_decode($request->getContent(), true) ?? [];
 
         $parametres->setVisasDecrets(isset($data['visasDecrets']) ? (string) $data['visasDecrets'] : null);

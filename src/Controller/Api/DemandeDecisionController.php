@@ -416,7 +416,11 @@ class DemandeDecisionController extends AbstractController
         // ici une fois pour toutes plutôt que référencés dynamiquement — une
         // modification ultérieure des réglages ne doit pas changer le
         // contenu d'une décision déjà délivrée (voir ParametresDecisionConge).
-        $parametres = $this->parametresDecisionCongeRepository->recupererOuCreer();
+        // Un jeu de réglages par catégorie (fonctionnaire/non-fonctionnaire),
+        // même critère que pour le calcul d'éligibilité.
+        $parametres = $this->parametresDecisionCongeRepository->recupererOuCreer(
+            $this->eligibiliteService->categorieDe($demande->getPersonnel()),
+        );
 
         $nouvelleDecision = new DecisionConge();
         $nouvelleDecision->setPersonnel($demande->getPersonnel());

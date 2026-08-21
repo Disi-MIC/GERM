@@ -1,67 +1,71 @@
 <app-page-header
   title="Paramètres — Décision de congé"
-  subtitle="Texte légal inséré automatiquement dans chaque décision de congé générée par le RH Congé."
+  subtitle="Texte légal inséré automatiquement dans chaque décision de congé générée par le RH Congé, réglable séparément pour les fonctionnaires et les non-fonctionnaires."
 ></app-page-header>
 
-@if (loading) {
-  <p class="text-muted">Chargement...</p>
-} @else {
-  @if (error) {
-    <div class="alert alert-danger">{{ error }}</div>
-  }
-  @if (succes) {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      Réglages enregistrés.
-      <button type="button" class="btn-close" (click)="succes = false"></button>
-    </div>
-  }
-
-  <app-panel style="max-width: 700px;" class="d-block">
-    <form [formGroup]="form" (ngSubmit)="enregistrer()">
-      <div class="alert alert-info small">
-        Ce texte peut évoluer (nouveau décret, révision réglementaire) sans lien avec le circuit d'approbation : chaque
-        décision déjà délivrée conserve le texte tel qu'il était au moment de sa génération, une modification ici ne change
-        que les décisions générées ensuite.
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Visas des décrets en vigueur</label>
-        <textarea
-          class="form-control"
-          rows="10"
-          formControlName="visasDecrets"
-          placeholder="VU la Constitution ;&#10;VU la loi n°... ;&#10;VU le décret n°... ;"
-        ></textarea>
-        <div class="form-text">
-          Une ligne par visa (chacune commençant par "VU"). Le visa de la décision de congé antérieure de l'agent, celui de
-          l'attestation de non jouissance et la clause "Après avis favorable du supérieur hiérarchique." sont ajoutés
-          automatiquement à la suite, propres à chaque demande.
+@for (carte of cartes; track carte.categorie) {
+  <app-panel [title]="carte.titre" style="max-width: 700px;" class="d-block mb-4">
+    @if (carte.loading) {
+      <p class="text-muted mb-0">Chargement...</p>
+    } @else {
+      @if (carte.error) {
+        <div class="alert alert-danger">{{ carte.error }}</div>
+      }
+      @if (carte.succes) {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          Réglages enregistrés.
+          <button type="button" class="btn-close" (click)="carte.succes = false"></button>
         </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Article 2</label>
-        <textarea class="form-control" rows="3" formControlName="article2"></textarea>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Article 3</label>
-        <textarea class="form-control" rows="3" formControlName="article3"></textarea>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Ampliations</label>
-        <textarea class="form-control" rows="7" formControlName="ampliations" placeholder="PR/SGG&#10;MEFP/DS&#10;..."></textarea>
-        <div class="form-text">Une destination par ligne.</div>
-      </div>
-
-      @if (updatedAt) {
-        <p class="text-muted small">Dernière mise à jour le {{ updatedAt | slice: 0 : 10 }} par {{ misAJourParNom ?? '—' }}.</p>
       }
 
-      <button type="submit" class="btn btn-primary" [disabled]="saving">
-        <i class="bi bi-check-lg"></i> Enregistrer
-      </button>
-    </form>
+      <div class="alert alert-info small">
+        Base légale : {{ carte.baseLegale }}. Ce texte peut évoluer (nouveau décret, révision réglementaire) sans lien avec
+        le circuit d'approbation : chaque décision déjà délivrée conserve le texte tel qu'il était au moment de sa
+        génération, une modification ici ne change que les décisions générées ensuite pour cette catégorie.
+      </div>
+
+      <form [formGroup]="carte.form" (ngSubmit)="enregistrer(carte)">
+        <div class="mb-3">
+          <label class="form-label">Visas des décrets en vigueur</label>
+          <textarea
+            class="form-control"
+            rows="10"
+            formControlName="visasDecrets"
+            placeholder="VU la Constitution ;&#10;VU la loi n°... ;&#10;VU le décret n°... ;"
+          ></textarea>
+          <div class="form-text">
+            Une ligne par visa (chacune commençant par "VU"). Le visa de la décision de congé antérieure de l'agent, celui
+            de l'attestation de non jouissance et la clause "Après avis favorable du supérieur hiérarchique." sont ajoutés
+            automatiquement à la suite, propres à chaque demande.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Article 2</label>
+          <textarea class="form-control" rows="3" formControlName="article2"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Article 3</label>
+          <textarea class="form-control" rows="3" formControlName="article3"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Ampliations</label>
+          <textarea class="form-control" rows="7" formControlName="ampliations" placeholder="PR/SGG&#10;MEFP/DS&#10;..."></textarea>
+          <div class="form-text">Une destination par ligne.</div>
+        </div>
+
+        @if (carte.updatedAt) {
+          <p class="text-muted small">
+            Dernière mise à jour le {{ carte.updatedAt | slice: 0 : 10 }} par {{ carte.misAJourParNom ?? '—' }}.
+          </p>
+        }
+
+        <button type="submit" class="btn btn-primary" [disabled]="carte.saving">
+          <i class="bi bi-check-lg"></i> Enregistrer
+        </button>
+      </form>
+    }
   </app-panel>
 }

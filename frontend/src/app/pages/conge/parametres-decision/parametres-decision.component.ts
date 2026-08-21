@@ -1,17 +1,43 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { CategorieAgentConge } from '../../../core/models/parametre-eligibilite-conge.model';
+import { ParametresDecisionConge } from '../../../core/models/parametres-decision-conge.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
 import { ParametresDecisionCongeApiService } from '../parametres-decision-conge-api.service';
 
+function creerForm(fb: FormBuilder) {
+  return fb.nonNullable.group({
+    visasDecrets: [''],
+    article2: [''],
+    article3: [''],
+    ampliations: [''],
+  });
+}
+
+interface CarteCategorie {
+  categorie: CategorieAgentConge;
+  titre: string;
+  baseLegale: string;
+  form: ReturnType<typeof creerForm>;
+  loading: boolean;
+  saving: boolean;
+  error: string | null;
+  succes: boolean;
+  misAJourParNom: string | null;
+  updatedAt: string | null;
+}
+
 /**
  * Réglages RH Admin du texte légal par défaut (visas des décrets, articles 2
  * et 3, ampliations) inséré automatiquement dans chaque décision de congé
- * générée par le RH Congé — voir ParametresDecisionConge et
- * DemandeDecisionController::genererEtTransmettre() côté serveur. Ce texte
- * n'est jamais saisi à la main par le RH Congé, qui n'a pas accès à cette
- * page (route gardée ROLE_RH_RESPONSABLE, voir conge.routes.ts).
+ * générée par le RH Congé — un jeu par catégorie (fonctionnaires/
+ * non-fonctionnaires, bases légales différentes), voir
+ * ParametresDecisionConge et DemandeDecisionController::genererEtTransmettre()
+ * côté serveur. Ce texte n'est jamais saisi à la main par le RH Congé, qui
+ * n'a pas accès à cette page (route gardée ROLE_RH_RESPONSABLE, voir
+ * conge.routes.ts).
  *
  * Les deux visas variables (décision de congé antérieure de l'agent,
  * attestation de non jouissance) et la clause "Après avis favorable..." ne
@@ -26,52 +52,65 @@ import { ParametresDecisionCongeApiService } from '../parametres-decision-conge-
   templateUrl: './parametres-decision.component.html',
 })
 export class ParametresDecisionComponent implements OnInit {
-  loading = true;
-  saving = false;
-  error: string | null = null;
-  succes = false;
-  misAJourParNom: string | null = null;
-  updatedAt: string | null = null;
-
-  form = this.fb.nonNullable.group({
-    visasDecrets: [''],
-    article2: [''],
-    article3: [''],
-    ampliations: [''],
-  });
+  cartes: CarteCategorie[];
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly api: ParametresDecisionCongeApiService,
-  ) {}
+  ) {
+    this.cartes = [
+      {
+        categorie: 'fonctionnaire',
+        titre: 'Fonctionnaires',
+        baseLegale: 'Loi n°61-33 du 15/06/1961',
+        form: creerForm(this.fb),
+        loading: true,
+        saving: false,
+        error: null,
+        succes: false,
+        misAJourParNom: null,
+        updatedAt: null,
+      },
+      {
+        categorie: 'non_fonctionnaire',
+        titre: 'Non-fonctionnaires',
+        baseLegale: 'Décret n°74-347 du 12/04/1974',
+        form: creerForm(this.fb),
+        loading: true,
+        saving: false,
+        error: null,
+        succes: false,
+        misAJourParNom: null,
+        updatedAt: null,
+      },
+    ];
+  }
 
   ngOnInit(): void {
-    this.api.get().subscribe({
+    this.api.liste().subscribe({
       next: (parametres) => {
-        this.form.patchValue({
-          visasDecrets: parametres.visasDecrets ?? '',
-          article2: parametres.article2 ?? '',
-          article3: parametres.article3 ?? '',
-          ampliations: parametres.ampliations ?? '',
-        });
-        this.misAJourParNom = parametres.misAJourParNom ?? null;
-        this.updatedAt = parametres.updatedAt ?? null;
-        this.loading = false;
+        for (const carte of this.cartes) {
+          const valeurs = parametres.find((p) => p.categorie === carte.categorie);
+          this.appliquer(carte, valeurs);
+          carte.loading = false;
+        }
       },
       error: () => {
-        this.error = 'Impossible de charger les réglages.';
-        this.loading = false;
+        for (const carte of this.cartes) {
+          carte.error = 'Impossible de charger les réglages.';
+          carte.loading = false;
+        }
       },
     });
   }
 
-  enregistrer(): void {
-    const raw = this.form.getRawValue();
-    this.saving = true;
-    this.error = null;
-    this.succes = false;
+  enregistrer(carte: CarteCategorie): void {
+    const raw = carte.form.getRawValue();
+    carte.saving = true;
+    carte.error = null;
+    carte.succes = false;
     this.api
-      .update({
+      .update(carte.categorie, {
         visasDecrets: raw.visasDecrets.trim() || null,
         article2: raw.article2.trim() || null,
         article3: raw.article3.trim() || null,
@@ -79,15 +118,27 @@ export class ParametresDecisionComponent implements OnInit {
       })
       .subscribe({
         next: (parametres) => {
-          this.saving = false;
-          this.succes = true;
-          this.misAJourParNom = parametres.misAJourParNom ?? null;
-          this.updatedAt = parametres.updatedAt ?? null;
+          carte.saving = false;
+          carte.succes = true;
+          this.appliquer(carte, parametres);
         },
         error: (err) => {
-          this.saving = false;
-          this.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'enregistrement.";
+          carte.saving = false;
+          carte.error = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'enregistrement.";
         },
       });
+  }
+
+  private appliquer(carte: CarteCategorie, parametres: ParametresDecisionConge | undefined): void {
+    if (parametres) {
+      carte.form.patchValue({
+        visasDecrets: parametres.visasDecrets ?? '',
+        article2: parametres.article2 ?? '',
+        article3: parametres.article3 ?? '',
+        ampliations: parametres.ampliations ?? '',
+      });
+      carte.misAJourParNom = parametres.misAJourParNom ?? null;
+      carte.updatedAt = parametres.updatedAt ?? null;
+    }
   }
 }
