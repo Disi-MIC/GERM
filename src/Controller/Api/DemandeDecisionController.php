@@ -418,9 +418,20 @@ class DemandeDecisionController extends AbstractController
         // contenu d'une décision déjà délivrée (voir ParametresDecisionConge).
         // Un jeu de réglages par catégorie (fonctionnaire/non-fonctionnaire),
         // même critère que pour le calcul d'éligibilité.
-        $parametres = $this->parametresDecisionCongeRepository->recupererOuCreer(
-            $this->eligibiliteService->categorieDe($demande->getPersonnel()),
-        );
+        $categorie = $this->eligibiliteService->categorieDe($demande->getPersonnel());
+        $parametres = $this->parametresDecisionCongeRepository->recupererOuCreer($categorie);
+
+        // Tant que le RH Admin n'a pas renseigné le texte légal de cette
+        // catégorie (Api/ParametresDecisionCongeController), la ligne existe
+        // mais ses champs valent null (voir recupererOuCreer()) — mieux vaut
+        // bloquer ici que délivrer une décision avec des visas/articles
+        // manquants.
+        if (null === $parametres->getVisasDecrets() || null === $parametres->getArticle2() || null === $parametres->getArticle3()) {
+            return $this->json(['errors' => ['parametres' => \sprintf(
+                "Le texte légal de la décision (visas, articles 2 et 3) n'a pas encore été configuré pour la catégorie %s. Merci de le renseigner dans les réglages RH Admin avant de générer une décision.",
+                $categorie->value,
+            )]], JsonResponse::HTTP_CONFLICT);
+        }
 
         $nouvelleDecision = new DecisionConge();
         $nouvelleDecision->setPersonnel($demande->getPersonnel());

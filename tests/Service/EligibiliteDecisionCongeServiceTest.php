@@ -4,28 +4,39 @@ namespace App\Tests\Service;
 
 use App\Entity\DecisionConge;
 use App\Entity\DemandeDecision;
+use App\Entity\Enum\CategorieAgentConge;
 use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\ListeValeur;
+use App\Entity\ParametreEligibiliteConge;
 use App\Entity\Personnel;
 use App\Repository\DecisionCongeRepository;
+use App\Repository\ParametreEligibiliteCongeRepository;
 use App\Service\EligibiliteDecisionCongeService;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Règle vérifiée ici (confirmée par le RH Congé, aucune valeur devinée) : 2
  * jours acquis par mois PLEIN écoulé depuis la date de référence, sans
- * distinction fonctionnaire/non-fonctionnaire sur le taux, plafonné à 90
- * jours, sans proratisation. Voir EligibiliteDecisionCongeService pour le
- * détail de la source de la date de référence.
+ * distinction fonctionnaire/non-fonctionnaire sur le taux par défaut,
+ * plafonné à 90 jours, sans proratisation — sauf réglages RH Admin
+ * différenciés par catégorie (ParametreEligibiliteConge), voir
+ * testReglagesRHAdminDifferenciesParCategorieSontAppliques(). Voir
+ * EligibiliteDecisionCongeService pour le détail de la source de la date de
+ * référence.
  */
 class EligibiliteDecisionCongeServiceTest extends TestCase
 {
-    private function service(?DecisionConge $derniereDecision): EligibiliteDecisionCongeService
+    private function service(?DecisionConge $derniereDecision, ?array $parametresParCategorie = null): EligibiliteDecisionCongeService
     {
-        $repository = $this->createMock(DecisionCongeRepository::class);
+        $repository = $this->createStub(DecisionCongeRepository::class);
         $repository->method('findDerniereDecision')->willReturn($derniereDecision);
 
-        return new EligibiliteDecisionCongeService($repository);
+        $parametreRepository = $this->createStub(ParametreEligibiliteCongeRepository::class);
+        $parametreRepository->method('recupererOuCreer')->willReturnCallback(
+            fn (CategorieAgentConge $categorie) => $parametresParCategorie[$categorie->value] ?? new ParametreEligibiliteConge($categorie),
+        );
+
+        return new EligibiliteDecisionCongeService($repository, $parametreRepository);
     }
 
     private function personnel(string $typeContratCode = 'fonctionnaire'): Personnel
@@ -209,5 +220,34 @@ class EligibiliteDecisionCongeServiceTest extends TestCase
         $resultat = $service->calculer($this->personnel(), $demande, new \DateTimeImmutable('2026-01-01'));
 
         $this->assertNull($resultat);
+    }
+
+    /**
+     * Une fois que le RH Admin a différencié les réglages d'une catégorie
+     * (ParametreEligibiliteConge), calculer() doit refléter ce jeu de
+     * paramètres précis pour cette catégorie — et laisser l'autre catégorie
+     * inchangée (valeurs par défaut).
+     */
+    public function testReglagesRHAdminDifferenciesParCategorieSontAppliques(): void
+    {
+        $parametresFonctionnaire = new ParametreEligibiliteConge(CategorieAgentConge::FONCTIONNAIRE);
+        $parametresFonctionnaire->setJoursParMois(3);
+        $parametresFonctionnaire->setPlafondJours(120);
+        $parametresFonctionnaire->setDelaiEligibiliteMois(6);
+
+        $derniereDecision = new DecisionConge();
+        $derniereDecision->setDateDecision(new \DateTimeImmutable('2025-01-01'));
+        $dateDecision = new \DateTimeImmutable('2026-01-01'); // 12 mois pleins écoulés
+
+        $resultatFonctionnaire = $this->service($derniereDecision, [
+            CategorieAgentConge::FONCTIONNAIRE->value => $parametresFonctionnaire,
+        ])->calculer($this->personnel('fonctionnaire'), new DemandeDecision(), $dateDecision);
+
+        $resultatNonFonctionnaire = $this->service($derniereDecision, [
+            CategorieAgentConge::FONCTIONNAIRE->value => $parametresFonctionnaire,
+        ])->calculer($this->personnel('contractuel'), new DemandeDecision(), $dateDecision);
+
+        $this->assertSame(36, $resultatFonctionnaire->joursAccordables); // 3 jours x 12 mois
+        $this->assertSame(24, $resultatNonFonctionnaire->joursAccordables); // valeurs par défaut inchangées
     }
 }
