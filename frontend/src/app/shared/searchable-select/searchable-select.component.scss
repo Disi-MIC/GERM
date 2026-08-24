@@ -26,12 +26,14 @@
   pointer-events: none;
 }
 
+// position: fixed (coordonnées calculées en JS, voir positionnerMenu() côté
+// composant) plutôt qu'absolute : un menu absolute se fait découper par le
+// premier ancêtre overflow: hidden (ex. .germ-panel, voir son commentaire de
+// classe) dès que ce dernier est plus bas que le menu déroulé — fixed échappe
+// à tout ancêtre overflow, quelle que soit la page qui héberge ce composant.
 .germ-searchable-select-menu {
-  position: absolute;
-  z-index: 1000;
-  top: calc(100% + 2px);
-  left: 0;
-  right: 0;
+  position: fixed;
+  z-index: 1050;
   max-height: 260px;
   overflow-y: auto;
   background: #fff;

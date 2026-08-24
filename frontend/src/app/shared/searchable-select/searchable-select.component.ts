@@ -1,4 +1,4 @@
-import { Component, ElementRef, forwardRef, Input, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, forwardRef, Input, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface SearchableSelectOption {
@@ -41,6 +41,8 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   ouvert = false;
   recherche = '';
   surligne = -1;
+  /** Coordonnées du menu (position: fixed, voir searchable-select.component.scss) — recalculées à l'ouverture et tant qu'elle reste ouverte. */
+  positionMenu = { top: 0, left: 0, width: 0 };
 
   /** Public (pas juste pour l'API interne) : lu par le template pour l'état "active" de l'option sélectionnée. */
   valeur: unknown = null;
@@ -90,6 +92,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     }
     this.ouvert = true;
     this.surligne = -1;
+    this.positionnerMenu();
     this.champRecherche?.nativeElement.select();
   }
 
@@ -97,6 +100,29 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     this.recherche = texte;
     this.ouvert = true;
     this.surligne = -1;
+    this.positionnerMenu();
+  }
+
+  /** Sous le champ de recherche, en coordonnées viewport (position: fixed) — recalculé au scroll/resize tant que le menu reste ouvert. */
+  private positionnerMenu(): void {
+    const champ = this.champRecherche?.nativeElement;
+    if (!champ) {
+      return;
+    }
+    const rect = champ.getBoundingClientRect();
+    this.positionMenu = { top: rect.bottom + 2, left: rect.left, width: rect.width };
+  }
+
+  // Repositionne le menu (position: fixed, coordonnées figées à l'ouverture)
+  // quand la page défile ou que la fenêtre est redimensionnée — sans ça, le
+  // menu resterait figé à ses coordonnées d'ouverture pendant que le champ,
+  // lui, se déplace sous le scroll.
+  @HostListener('window:scroll')
+  @HostListener('window:resize')
+  onFenetreBouge(): void {
+    if (this.ouvert) {
+      this.positionnerMenu();
+    }
   }
 
   choisir(option: SearchableSelectOption): void {
