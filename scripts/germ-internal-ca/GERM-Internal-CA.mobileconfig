@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadCertificateFileName</key>
+			<string>GERM-Internal-CA.cer</string>
+			<key>PayloadContent</key>
+			<data>
+MIIFzTCCA7WgAwIBAgIUT26dnBF5h3+W9S9TGfDxnONisEgwDQYJKoZIhvcNAQELBQAwbjELMAkGA1UEBhMCU04xMDAuBgNVBAoMJ01pbmlzdGVyZSBkZSBsJ0luZHVzdHJpZSBldCBkdSBDb21tZXJjZTENMAsGA1UECwwER0VSTTEeMBwGA1UEAwwVR0VSTSBJbnRlcm5hbCBSb290IENBMB4XDTI2MDgyNDEyMjQwNVoXDTM2MDgyMTEyMjQwNVowbjELMAkGA1UEBhMCU04xMDAuBgNVBAoMJ01pbmlzdGVyZSBkZSBsJ0luZHVzdHJpZSBldCBkdSBDb21tZXJjZTENMAsGA1UECwwER0VSTTEeMBwGA1UEAwwVR0VSTSBJbnRlcm5hbCBSb290IENBMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAt2jMbeVt7unA1yysdI0obAT0qCW7R16g5mu6EID3g70hP2R5ugtOwsbmIcRhPnEjOzx6r6aIcSRCyJjkdJXAux0Pr3UJrv7N/U8u2rejGHiZGksVqddhLJK682p0vvRM/C8bbs6Lrc2YXvo1OzCrnf1tcF41C6+yhtVdRWvBfpFN9qosS07sz3TDmWkY5wXq/VJfSyAJhj2T3ym4ptucrcyb9bCrkj/tEOCOR4BsQGs8IMFDSjHxZIQKEm7rKX3Msj9PVp2/Ppb9Dw5uN2LnOWuKn6Yjr118eY/tR6/SHhoRFS0q9YpNDsoiiA42MAo6DKu9zd0gERU5tFv0YjaGq9gphTC2Bak5DtWloAUYnkgecDe4yFOeV2cF/30tbhEcn/AwUcqC1xndWqrdoKWVJb0jm0TFBLUkwEAMHcJdmhX9CwHhnmQYOFztl8y21eSl4FYSll+vei8qr/Qet82eJEMjlSxgXHsnUWHv2MmkqiS5J6PaQ0jOH22njWIA5UVyVDq54HW8IMPQd23jKOVocXHBevapADmTqxpUw80xJtn8iJaSN2JSDdGTzms5UWUEG8Jq3e4vmsh2pxnYO7UUZBhB3XlCgPCMcG1BrDaZn+KVr8imZhu18n9bE5JqLoXOwDyv6rwz6VnEdko6xEodXWSRsIbBdUS6oy4lSDttPnECAwEAAaNjMGEwHQYDVR0OBBYEFHBlw0QdTERAWTYKFthq8ML5TODWMB8GA1UdIwQYMBaAFHBlw0QdTERAWTYKFthq8ML5TODWMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMA0GCSqGSIb3DQEBCwUAA4ICAQAA6wZvrcqLY+b7OsYUcmHH29V8thNamYIfzT83Gv4KuHn23bzaM7M+hGomRxo5XWJ55C+YRpxJ4O95mzvLidbao0GlQk4+ScJlfFshxkvPaUvJ/VH8/Le+w8AX7ZJ73P1BHEaIeBKNVteKmEr2rZRMmSoZiZMtGdLgMu9eMjC4eBq5ZS9fIuiLOqh9EUOtqnpCvP2tZEUkHm/p8r9QGtLx2pWJlrtV8914BH+2a+/Nl+aY2MpYu0Erdo90bBIRqrBqvqM7KXYVKRFot7JMvfU919v9HZ9TeGDYShO6p3ViGgryoGIT+chg8BYUMcVzuK/ONTJwFdIRM+OqcPTB2wKlAwj1dpuzQ4S3p27nqtm/67VCysYKXLY3/ktSvcZrRLn91r+q3ptAheMi5J4xWPwYg6yceIoZHUa6PRrHV+MM4PjwKwMhY7msk9hCKGiKFtDWWGf6gwEP2zhFgar31fVt5hQ9kNF0YFq3XksgxyqinkA9U1mKRoxUk8THJFv0lsM8w3eRseXMRvdX5bHcR6p6aUALUooWsEUEolbiH0aOJBm8QPwNUrd1rIpTWPgZdYThQ5G2wmBZxqd0255dluJTAjBkqOeUgl0UEZlLXLtXo2RqH1kToUftxA5a+KupODP7DtdyY2iMfgkrNWBGvoXQN7sCcMfqXMEibjW9EnR+1w==
+			</data>
+			<key>PayloadDescription</key>
+			<string>Installe l'autorité de certification interne GERM (Ministère de l'Industrie et du Commerce) pour se connecter au serveur GERM en HTTPS.</string>
+			<key>PayloadDisplayName</key>
+			<string>GERM Internal Root CA</string>
+			<key>PayloadIdentifier</key>
+			<string>sn.gouv.mincom.germ.ca.C961A272-DA91-4637-921A-EFC92B77E102</string>
+			<key>PayloadType</key>
+			<string>com.apple.security.root</string>
+			<key>PayloadUUID</key>
+			<string>C961A272-DA91-4637-921A-EFC92B77E102</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Profil de confiance pour l'application GERM (Ministère de l'Industrie et du Commerce). Nécessaire pour se connecter au serveur interne en HTTPS.</string>
+	<key>PayloadDisplayName</key>
+	<string>GERM Internal Root CA</string>
+	<key>PayloadIdentifier</key>
+	<string>sn.gouv.mincom.germ.ca.profile.814F81DC-F44F-4EA2-BBD4-10C9C1376F8E</string>
+	<key>PayloadOrganization</key>
+	<string>Ministere de l'Industrie et du Commerce</string>
+	<key>PayloadRemovalDisallowed</key>
+	<false/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>814F81DC-F44F-4EA2-BBD4-10C9C1376F8E</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
