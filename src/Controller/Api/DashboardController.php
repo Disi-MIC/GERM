@@ -3,11 +3,14 @@
 namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
+use App\Entity\ChangementCartouche;
+use App\Entity\Enum\CouleurCartouche;
 use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\Enum\StatutDemandeCartePro;
 use App\Entity\Enum\StatutTicket;
 use App\Repository\CarteProfessionnelleRepository;
+use App\Repository\ChangementCartoucheRepository;
 use App\Repository\DecisionCongeRepository;
 use App\Repository\DemandeCarteProRepository;
 use App\Repository\DemandeDecisionRepository;
@@ -162,10 +165,12 @@ class DashboardController extends AbstractController
 
     #[Route('/api/dashboard/informatique', name: 'api_dashboard_informatique', methods: ['GET'])]
     public function informatique(
+        Request $request,
         TicketIncidentRepository $ticketIncidentRepository,
         MaintenanceRepository $maintenanceRepository,
         MaterielInformatiqueRepository $materielInformatiqueRepository,
         LicenceLogicielRepository $licenceLogicielRepository,
+        ChangementCartoucheRepository $changementCartoucheRepository,
     ): JsonResponse {
         // Combine stats Stock (matériel/maintenance) et Tickets : #[IsGranted]
         // ne fait pas d'OR entre deux rôles indépendants, d'où ce contrôle
@@ -211,7 +216,156 @@ class DashboardController extends AbstractController
             'echeancesMaintenance' => $this->calculerEcheancesMaintenance($materielInformatiqueRepository, $maintenanceRepository),
             'licencesExpirantBientot' => $this->calculerEcheancesLicences($licenceLogicielRepository, $materielInformatiqueRepository),
             'slaTickets' => $this->calculerSlaTickets($ticketIncidentRepository),
+            'cartouches' => $this->calculerCartouches($changementCartoucheRepository, $request->query->get('service') ? (int) $request->query->get('service') : null),
         ]);
+    }
+
+    /**
+     * Vue "approvisionnement" du journal des cartouches (ChangementCartouche,
+     * voir Api/ChangementCartoucheController) : volume mensuel glissant sur 12
+     * mois (le mensuel/trimestriel/semestriel/annuel se dérivent tous par
+     * simple somme côté Angular, un seul agrégat à maintenir ici), répartition
+     * par couleur avec durée moyenne d'écoulement, services/agents/références/
+     * imprimantes les plus consommateurs — de quoi décider du rythme de
+     * réapprovisionnement, pas seulement consulter le journal brut.
+     *
+     * $serviceId, quand fourni (filtre agent/service côté Angular, voir
+     * AgentOuServiceFiltreComponent — un agent s'y résout toujours en le
+     * service de son affectation), réduit tout l'agrégat à ce périmètre :
+     * MaterielInformatique::$service est déjà le service effectif (dérivé de
+     * l'agent affecté quand il y en a un, sinon propre au matériel), donc un
+     * seul filtre sert les deux modes du sélecteur.
+     *
+     * @return array{
+     *     total: int,
+     *     parMois: array<string, int>,
+     *     parCouleur: array<string, array{count: int, dureeMoyenneJours: ?int}>,
+     *     topReferences: list<array{reference: string, count: int}>,
+     *     topImprimantes: list<array{materielId: int, label: string, count: int}>,
+     *     topServices: list<array{serviceId: int, nom: string, count: int}>,
+     *     topAgents: list<array{personnelId: int, nom: string, count: int}>,
+     * }
+     */
+    private function calculerCartouches(ChangementCartoucheRepository $changementCartoucheRepository, ?int $serviceId = null): array
+    {
+        $changements = $changementCartoucheRepository->findBy([], ['dateChangement' => 'ASC']);
+        if (null !== $serviceId) {
+            $changements = array_values(array_filter(
+                $changements,
+                fn (ChangementCartouche $c) => $serviceId === $c->getMateriel()?->getService()?->getId(),
+            ));
+        }
+
+        $parMois = [];
+        $curseur = (new \DateTimeImmutable('first day of this month'))->modify('-11 months');
+        for ($i = 0; $i < 12; ++$i) {
+            $parMois[$curseur->format('Y-m')] = 0;
+            $curseur = $curseur->modify('+1 month');
+        }
+
+        $parCouleur = [];
+        foreach (CouleurCartouche::cases() as $couleur) {
+            $parCouleur[$couleur->value] = ['count' => 0, 'total' => []];
+        }
+
+        $comptesReferences = [];
+        $comptesImprimantes = [];
+        $labelsImprimantes = [];
+        $comptesServices = [];
+        $labelsServices = [];
+        $comptesAgents = [];
+        $labelsAgents = [];
+
+        /** @var array<string, ChangementCartouche> $dernierParGroupe */
+        $dernierParGroupe = [];
+
+        foreach ($changements as $changement) {
+            $date = $changement->getDateChangement();
+            if ($date && isset($parMois[$date->format('Y-m')])) {
+                ++$parMois[$date->format('Y-m')];
+            }
+
+            $couleur = $changement->getCouleur()->value;
+            ++$parCouleur[$couleur]['count'];
+
+            $materiel = $changement->getMateriel();
+            $groupe = \sprintf('%d::%s', $materiel?->getId() ?? 0, $couleur);
+            if (isset($dernierParGroupe[$groupe]) && $date) {
+                $precedent = $dernierParGroupe[$groupe]->getDateChangement();
+                if ($precedent) {
+                    $parCouleur[$couleur]['total'][] = $date->diff($precedent)->days;
+                }
+            }
+            $dernierParGroupe[$groupe] = $changement;
+
+            if ($reference = $changement->getReference()) {
+                $comptesReferences[$reference] = ($comptesReferences[$reference] ?? 0) + 1;
+            }
+
+            if ($materiel) {
+                $id = $materiel->getId();
+                $comptesImprimantes[$id] = ($comptesImprimantes[$id] ?? 0) + 1;
+                $labelsImprimantes[$id] ??= \sprintf('%s %s (%s)', $materiel->getMarque(), $materiel->getModele(), $materiel->getNumeroInventaire());
+
+                if ($service = $materiel->getService()) {
+                    $comptesServices[$service->getId()] = ($comptesServices[$service->getId()] ?? 0) + 1;
+                    $labelsServices[$service->getId()] ??= $service->getNom();
+                }
+
+                // Contrairement à $service ci-dessus (toujours renseigné dès
+                // qu'un matériel appartient à un parc), $affecteA ne l'est que
+                // pour une imprimante personnelle plutôt que partagée dans un
+                // service — la plupart des imprimantes n'auront donc pas
+                // d'entrée ici, volontairement (rien à imputer à un agent
+                // précis sur du matériel partagé).
+                if ($agent = $materiel->getAffecteA()) {
+                    $comptesAgents[$agent->getId()] = ($comptesAgents[$agent->getId()] ?? 0) + 1;
+                    $labelsAgents[$agent->getId()] ??= $agent->getNomComplet();
+                }
+            }
+        }
+
+        foreach ($parCouleur as $couleur => $donnees) {
+            $ecarts = $donnees['total'];
+            $parCouleur[$couleur] = [
+                'count' => $donnees['count'],
+                'dureeMoyenneJours' => \count($ecarts) > 0 ? (int) round(array_sum($ecarts) / \count($ecarts)) : null,
+            ];
+        }
+
+        arsort($comptesReferences);
+        $topReferences = [];
+        foreach (\array_slice($comptesReferences, 0, 5, true) as $reference => $count) {
+            $topReferences[] = ['reference' => $reference, 'count' => $count];
+        }
+
+        arsort($comptesImprimantes);
+        $topImprimantes = [];
+        foreach (\array_slice($comptesImprimantes, 0, 5, true) as $materielId => $count) {
+            $topImprimantes[] = ['materielId' => $materielId, 'label' => $labelsImprimantes[$materielId], 'count' => $count];
+        }
+
+        arsort($comptesServices);
+        $topServices = [];
+        foreach (\array_slice($comptesServices, 0, 5, true) as $serviceId => $count) {
+            $topServices[] = ['serviceId' => $serviceId, 'nom' => $labelsServices[$serviceId], 'count' => $count];
+        }
+
+        arsort($comptesAgents);
+        $topAgents = [];
+        foreach (\array_slice($comptesAgents, 0, 5, true) as $personnelId => $count) {
+            $topAgents[] = ['personnelId' => $personnelId, 'nom' => $labelsAgents[$personnelId], 'count' => $count];
+        }
+
+        return [
+            'total' => \count($changements),
+            'parMois' => $parMois,
+            'parCouleur' => $parCouleur,
+            'topReferences' => $topReferences,
+            'topImprimantes' => $topImprimantes,
+            'topServices' => $topServices,
+            'topAgents' => $topAgents,
+        ];
     }
 
     /**

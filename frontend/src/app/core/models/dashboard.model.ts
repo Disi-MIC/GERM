@@ -57,6 +57,19 @@ export interface DashboardInformatique {
   echeancesMaintenance: { enRetard: EcheanceMaintenance[]; aVenir: EcheanceMaintenance[] };
   licencesExpirantBientot: { enRetard: EcheanceLicence[]; aVenir: EcheanceLicence[] };
   slaTickets: { enRetard: SlaTicket[]; aRisque: SlaTicket[] };
+  cartouches: DashboardCartouches;
+}
+
+/** Vue "approvisionnement" du journal des cartouches (voir ChangementCartouche côté serveur) — pas l'historique complet, juste de quoi décider du rythme de réapprovisionnement. */
+export interface DashboardCartouches {
+  total: number;
+  /** 12 entrées chronologiques clé "YYYY-MM" — le mensuel/trimestriel/semestriel/annuel s'en dérivent tous par simple somme côté Angular. */
+  parMois: Record<string, number>;
+  parCouleur: Record<string, { count: number; dureeMoyenneJours: number | null }>;
+  topReferences: { reference: string; count: number }[];
+  topImprimantes: { materielId: number; label: string; count: number }[];
+  topServices: { serviceId: number; nom: string; count: number }[];
+  topAgents: { personnelId: number; nom: string; count: number }[];
 }
 
 export interface SlaTicket {

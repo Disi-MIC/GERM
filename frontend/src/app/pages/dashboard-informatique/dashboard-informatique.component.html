@@ -3,6 +3,19 @@
   <p class="text-muted small mb-0">Vue d'ensemble du parc, des tickets et des échéances.</p>
 </div>
 
+<!--
+  En dehors du bloc @if (loading)/@else if (data) ci-dessous, volontairement :
+  ce filtre pilote le rechargement complet du tableau de bord
+  (onFiltreServiceChange() -> charger(), qui repasse loading à true) — s'il
+  était à l'intérieur, chaque changement de filtre détruirait et recréerait
+  AgentOuServiceFiltreComponent, remettant son état interne (mode, agent/
+  service sélectionné) à zéro à chaque fois, avant même que le nouveau
+  résultat n'ait eu le temps de s'afficher.
+-->
+<app-panel class="d-block mb-3">
+  <app-agent-ou-service-filtre (serviceIdChange)="onFiltreServiceChange($event)" />
+</app-panel>
+
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
@@ -33,6 +46,9 @@
         [value]="data.slaTickets.enRetard.length"
         label="Tickets hors délai (SLA)"
       />
+    </div>
+    <div class="col-lg col-md-4 col-6">
+      <app-stat-tile icon="bi-printer" color="secondary" [value]="data.cartouches.total" label="Changements de cartouche" routerLink="/cartouches-informatique" />
     </div>
   </div>
 
@@ -82,6 +98,115 @@
           <app-chart type="pie" [data]="chartMaterielParEtat" [height]="260" />
         } @else {
           <p class="text-muted small mb-0">Aucun matériel enregistré.</p>
+        }
+      </app-panel>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-7">
+      <app-panel title="Consommation de cartouches" icon="bi-inkwell">
+        <div panelActions>
+          <div class="btn-group btn-group-sm">
+            @for (p of periodesCartouches; track p) {
+              <button
+                type="button"
+                class="btn"
+                [class.btn-primary]="periodeCartouches === p"
+                [class.btn-outline-primary]="periodeCartouches !== p"
+                (click)="selectionnerPeriodeCartouches(p)"
+              >
+                {{ labelsPeriodeCartouches[p] }}
+              </button>
+            }
+          </div>
+        </div>
+        @if (data.cartouches.total > 0) {
+          <app-chart type="bar" [data]="chartCartouchesParMois" [height]="220" [options]="{ scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }, plugins: { legend: { display: false } } }" />
+        } @else {
+          <p class="text-muted small mb-0">Aucun changement de cartouche enregistré.</p>
+        }
+      </app-panel>
+    </div>
+
+    <div class="col-md-5">
+      <app-panel title="Répartition par couleur" icon="bi-palette">
+        @if (data.cartouches.total > 0) {
+          <app-chart type="doughnut" [data]="chartCartouchesParCouleur" [height]="160" />
+          <div class="mt-3">
+            @for (couleur of couleursCartouche; track couleur) {
+              <div class="d-flex justify-content-between small border-bottom py-1">
+                <span>{{ labelsCouleurCartouche[couleur] ?? couleur }}</span>
+                <span class="text-muted">
+                  @if (data.cartouches.parCouleur[couleur].dureeMoyenneJours; as duree) {
+                    ~{{ duree }} jours entre deux changements
+                  } @else {
+                    —
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-muted small mb-0">Aucun changement de cartouche enregistré.</p>
+        }
+      </app-panel>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <app-panel title="Imprimantes les plus consommatrices" icon="bi-printer-fill">
+        @for (imprimante of data.cartouches.topImprimantes; track imprimante.materielId) {
+          <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+            <div class="small">{{ imprimante.label }}</div>
+            <span class="badge bg-secondary">{{ imprimante.count }} changement{{ imprimante.count > 1 ? 's' : '' }}</span>
+          </div>
+        } @empty {
+          <p class="text-muted small mb-0">Aucun changement de cartouche enregistré.</p>
+        }
+        <a routerLink="/cartouches-informatique" class="small d-inline-block mt-2">Voir le journal complet</a>
+      </app-panel>
+    </div>
+
+    <div class="col-md-6">
+      <app-panel title="Références les plus changées" icon="bi-upc-scan">
+        @for (reference of data.cartouches.topReferences; track reference.reference) {
+          <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+            <div class="small">{{ reference.reference }}</div>
+            <span class="badge bg-secondary">{{ reference.count }} changement{{ reference.count > 1 ? 's' : '' }}</span>
+          </div>
+        } @empty {
+          <p class="text-muted small mb-0">Aucune référence renseignée.</p>
+        }
+        <a routerLink="/cartouches-informatique" class="small d-inline-block mt-2">Voir le journal complet</a>
+      </app-panel>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <app-panel title="Services les plus consommateurs" icon="bi-building">
+        @for (service of data.cartouches.topServices; track service.serviceId) {
+          <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+            <div class="small">{{ service.nom }}</div>
+            <span class="badge bg-secondary">{{ service.count }} changement{{ service.count > 1 ? 's' : '' }}</span>
+          </div>
+        } @empty {
+          <p class="text-muted small mb-0">Aucun changement de cartouche enregistré.</p>
+        }
+      </app-panel>
+    </div>
+
+    <div class="col-md-6">
+      <app-panel title="Agents les plus consommateurs" icon="bi-person-fill">
+        @for (agent of data.cartouches.topAgents; track agent.personnelId) {
+          <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+            <div class="small">{{ agent.nom }}</div>
+            <span class="badge bg-secondary">{{ agent.count }} changement{{ agent.count > 1 ? 's' : '' }}</span>
+          </div>
+        } @empty {
+          <p class="text-muted small mb-0">Aucune imprimante affectée nominativement à un agent.</p>
         }
       </app-panel>
     </div>

@@ -44,3 +44,12 @@ export function dateFr(valeur: string | Date | null | undefined): string {
 
   return `${jour} ${MOIS_FR[mois - 1]} ${annee}`;
 }
+
+/** "2026-08" -> "août 2026" — clé "YYYY-MM" telle que renvoyée par DashboardController::calculerCartouches() (buckets mensuels, pas de jour). */
+export function moisAnneeFr(cle: string): string {
+  const [annee, mois] = cle.split('-').map(Number);
+  if (!annee || !mois) {
+    return cle;
+  }
+  return `${MOIS_FR[mois - 1]} ${annee}`;
+}

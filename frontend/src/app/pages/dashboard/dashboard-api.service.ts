@@ -32,7 +32,12 @@ export class DashboardApiService {
     return this.http.get<DashboardCartesProfessionnelles>(`${API_BASE}/dashboard/cartes-professionnelles`);
   }
 
-  getInformatique(): Observable<DashboardInformatique> {
-    return this.http.get<DashboardInformatique>(`${API_BASE}/dashboard/informatique`);
+  /** `service`, quand fourni, réduit la section `cartouches` de la réponse à ce périmètre (voir DashboardController::calculerCartouches()) — le reste (tickets/maintenance/matériel) reste toujours fleet entière. */
+  getInformatique(service?: number | null): Observable<DashboardInformatique> {
+    const params: Record<string, string> = {};
+    if (service) {
+      params['service'] = String(service);
+    }
+    return this.http.get<DashboardInformatique>(`${API_BASE}/dashboard/informatique`, { params });
   }
 }
