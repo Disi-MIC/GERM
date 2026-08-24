@@ -7,6 +7,12 @@
 // synchronisé si la palette change — sauf le gris d'en-tête (#7e8896), plus
 // clair que --bs-secondary et sans équivalent Bootstrap existant.
 
+// Voir la même règle dans panel.component.scss : sans elle, l'hôte
+// <app-data-table> reste display: inline par défaut.
+:host {
+  display: block;
+}
+
 .app-data-table-toolbar {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--bs-border-color);

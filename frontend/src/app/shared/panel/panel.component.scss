@@ -1,3 +1,11 @@
+// Sans ceci, l'hôte <app-panel> reste display: inline (défaut des éléments
+// personnalisés) : inoffensif seul, mais casse la mise en page dès que deux
+// <app-panel> (ou plus largement deux éléments custom sans display: block
+// explicite) se retrouvent côte à côte dans le template d'une page.
+:host {
+  display: block;
+}
+
 .germ-panel {
   background: #fff;
   border: 1px solid #e6e7eb;
