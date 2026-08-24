@@ -1,0 +1,5 @@
+// Voir la même règle dans panel.component.scss : sans elle, l'hôte
+// <app-agent-ou-service-filtre> reste display: inline par défaut.
+:host {
+  display: block;
+}

@@ -2,6 +2,7 @@ export interface ServiceRef {
   id: number;
   code: string;
   nom: string;
+  responsableNom?: string | null;
 }
 
 export interface ListeValeurRef {

@@ -1,0 +1,34 @@
+<div class="row g-2 align-items-end">
+  <div class="col-md-4">
+    <label class="form-label">Filtrer par</label>
+    <select class="form-select" [ngModel]="mode" (ngModelChange)="changerMode($event)">
+      <option value="aucun">Aucun filtre</option>
+      <option value="agent">Agent</option>
+      <option value="service">Service</option>
+    </select>
+  </div>
+  @if (mode === 'agent') {
+    <div class="col-md-8">
+      <label class="form-label">Agent</label>
+      <app-searchable-select
+        [ngModel]="agentSelectionne"
+        (ngModelChange)="agentChange($event)"
+        nullLabel="Sélectionner..."
+        placeholder="Rechercher un agent..."
+        [options]="agentOptions"
+      />
+    </div>
+  }
+  @if (mode === 'service') {
+    <div class="col-md-8">
+      <label class="form-label">Service</label>
+      <app-searchable-select
+        [ngModel]="serviceSelectionne"
+        (ngModelChange)="serviceChange($event)"
+        nullLabel="Sélectionner..."
+        placeholder="Rechercher un service..."
+        [options]="serviceOptions"
+      />
+    </div>
+  }
+</div>

@@ -256,6 +256,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'cartouches-informatique',
+        canActivate: [roleGuard, adminAccessGuard],
+        data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },
+        loadChildren: () =>
+          import('./pages/cartouches-informatique/cartouches-informatique.routes').then(
+            (m) => m.CARTOUCHES_INFORMATIQUE_ROUTES,
+          ),
+      },
+      {
         path: 'licences-logicielles',
         canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'] },

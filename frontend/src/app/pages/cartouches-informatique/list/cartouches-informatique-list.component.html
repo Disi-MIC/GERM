@@ -1,0 +1,42 @@
+<app-page-header title="Cartouches" subtitle="Journal des changements de cartouche/toner par imprimante.">
+  <a routerLink="/cartouches-informatique/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouveau changement
+  </a>
+</app-page-header>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  <app-agent-ou-service-filtre (serviceIdChange)="onFiltreServiceChange($event)" class="mb-3" />
+
+  @if (filtreServiceId !== null) {
+    <div class="alert alert-info small mb-3">
+      {{ nombreChangements }} changement{{ nombreChangements > 1 ? 's' : '' }} pour ce périmètre
+      @if (ecoulementMoyenJours !== null) {
+        — durée moyenne entre deux changements : <strong>{{ ecoulementMoyenJours }} jours</strong>
+      }
+    </div>
+  }
+
+  <app-data-table [rows]="changements" [columns]="columns" emptyMessage="Aucun changement de cartouche enregistré." searchPlaceholder="Rechercher un changement...">
+    <ng-template appDataTableCell="materiel" let-changement>{{ materielLabel(changement) }}</ng-template>
+    <ng-template appDataTableCell="couleur" let-changement>{{ couleurLabel(changement) }}</ng-template>
+    <ng-template appDataTableCell="reference" let-changement>{{ changement.reference ?? '—' }}</ng-template>
+    <ng-template appDataTableCell="enregistrePar" let-changement>{{ changement.enregistreParNom ?? '—' }}</ng-template>
+    <ng-template appDataTableCell="date" let-changement>{{ changement.dateChangement | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="ecoulement" let-changement>
+      @if (changement.joursEcoulement === null) {
+        <span class="text-muted">Premier changement enregistré</span>
+      } @else {
+        {{ changement.joursEcoulement }} jour{{ changement.joursEcoulement > 1 ? 's' : '' }}
+      }
+    </ng-template>
+    <ng-template appDataTableCell="actions" let-changement>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(changement)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </ng-template>
+  </app-data-table>
+}
