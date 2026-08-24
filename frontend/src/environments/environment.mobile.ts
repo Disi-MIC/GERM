@@ -39,5 +39,5 @@
  */
 export const environment = {
   production: true,
-  apiBase: 'https://macbook-pro-de-alassane.local:8010/api',
+  apiBase: 'https://macbook-pro-de-alassane.local:8000/api',
 };
