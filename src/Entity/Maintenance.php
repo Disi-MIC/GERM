@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -78,8 +79,19 @@ class Maintenance
     #[Groups(['api:read', 'api:write'])]
     private ?string $prestataireExterne = null;
 
+    /**
+     * readableLink: false — jamais lu embarqué côté Angular (uniquement
+     * écrit en IRI à la création, voir maintenance-informatique-form), mais
+     * TicketIncident embarque lui-même l'intégralité de son propre graphe
+     * (personnel, materiel — donc un second MaterielInformatique complet en
+     * plus de celui de cette Maintenance, assigneA...). Sans ce réglage,
+     * cette seule relation faisait à elle seule dépasser la limite MySQL de
+     * 61 tables par jointure sur /api/maintenances (~62 tables jointes,
+     * dont un doublon complet du sous-graphe matériel via ce chemin).
+     */
     #[ORM\ManyToOne(targetEntity: TicketIncident::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[ApiProperty(readableLink: false)]
     #[Groups(['api:read', 'api:write'])]
     private ?TicketIncident $ticketOrigine = null;
 
