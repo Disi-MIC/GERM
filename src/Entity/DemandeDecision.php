@@ -74,11 +74,21 @@ class DemandeDecision
      * (voir DemandeDecisionTraiterComponent::calculerSuggestionNombreJours()
      * côté Angular) plutôt que Personnel::$dateEmbauche, qui peut différer
      * (date de signature du contrat/de l'acte d'engagement, pas forcément
-     * celle de la prise de service effective).
+     * celle de la prise de service effective). Accompagnée du numéro de
+     * l'attestation de prise de service (voir $numeroPriseDeService
+     * ci-dessous) — même logique que $numeroDerniereDecision/$dateDerniereDecision
+     * pour un agent qui a déjà une décision, référencées toutes deux dans le
+     * texte légal de la décision générée (voir
+     * TexteLegalDecisionCongeSubstitutionService).
      */
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?\DateTimeImmutable $datePriseDeService = null;
+
+    /** Numéro de l'attestation de prise de service — voir $datePriseDeService ci-dessus. */
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['api:read', 'api:write'])]
+    private ?string $numeroPriseDeService = null;
 
     /**
      * Détermine les pièces attendues, toujours au nombre de deux (piece1 +
@@ -209,6 +219,18 @@ class DemandeDecision
         return $this;
     }
 
+    public function getNumeroPriseDeService(): ?string
+    {
+        return $this->numeroPriseDeService;
+    }
+
+    public function setNumeroPriseDeService(?string $numeroPriseDeService): static
+    {
+        $this->numeroPriseDeService = $numeroPriseDeService;
+
+        return $this;
+    }
+
     /**
      * Selon que l'agent est nouvellement affecté ou non, des informations
      * différentes sont exigées en plus des pièces jointes elles-mêmes :
@@ -225,6 +247,12 @@ class DemandeDecision
             if (!$this->datePriseDeService) {
                 $context->buildViolation('Merci d\'indiquer la date de prise de service.')
                     ->atPath('datePriseDeService')
+                    ->addViolation();
+            }
+
+            if (!$this->numeroPriseDeService) {
+                $context->buildViolation("Merci d'indiquer le numéro de la prise de service.")
+                    ->atPath('numeroPriseDeService')
                     ->addViolation();
             }
 

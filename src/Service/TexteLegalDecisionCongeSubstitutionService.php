@@ -50,6 +50,7 @@ class TexteLegalDecisionCongeSubstitutionService
         return [
             '{{demande.dateDemande}}' => $this->dateFr($demande->getCreatedAt()),
             '{{demande.datePriseDeService}}' => $this->dateFr($demande->getDatePriseDeService()),
+            '{{demande.numeroPriseDeService}}' => $demande->getNumeroPriseDeService() ?? '',
             '{{agent.civilite}}' => Sexe::FEMME === $personnel->getSexe() ? 'Madame' : 'Monsieur',
             '{{agent.nomComplet}}' => $personnel->getNomComplet(),
             '{{agent.matricule}}' => $personnel->getMatricule() ?? '',

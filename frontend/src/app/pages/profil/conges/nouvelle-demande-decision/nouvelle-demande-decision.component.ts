@@ -42,6 +42,7 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
   form = this.fb.nonNullable.group({
     nouvellementAffecte: [null as boolean | null, Validators.required],
     datePriseDeService: [''],
+    numeroPriseDeService: [''],
     numeroDerniereDecision: [''],
     anneeDerniereDecision: [null as number | null, [Validators.min(1960), Validators.max(this.anneeMax)]],
     motif: [''],
@@ -91,8 +92,8 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
       return;
     }
     if (nouvellementAffecte) {
-      if (!raw.datePriseDeService) {
-        this.error = 'Merci d\'indiquer la date de votre prise de service.';
+      if (!raw.datePriseDeService || !raw.numeroPriseDeService.trim()) {
+        this.error = 'Merci d\'indiquer le numéro et la date de votre prise de service.';
         return;
       }
     } else if (!raw.numeroDerniereDecision.trim() || !raw.anneeDerniereDecision) {
@@ -105,6 +106,7 @@ export class NouvelleDemandeDecisionComponent implements OnInit {
     const payload = {
       nouvellementAffecte,
       datePriseDeService: nouvellementAffecte ? raw.datePriseDeService : null,
+      numeroPriseDeService: nouvellementAffecte ? raw.numeroPriseDeService.trim() : null,
       numeroDerniereDecision: nouvellementAffecte ? null : raw.numeroDerniereDecision.trim(),
       dateDerniereDecision: nouvellementAffecte ? null : `${raw.anneeDerniereDecision}-01-01`,
       motif: raw.motif || null,

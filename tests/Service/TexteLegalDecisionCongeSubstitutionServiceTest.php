@@ -34,11 +34,16 @@ class TexteLegalDecisionCongeSubstitutionServiceTest extends TestCase
     }
 
     /** createdAt n'a pas de setter public (toujours "maintenant" au constructeur) — fixé par réflexion pour une assertion déterministe. */
-    private function demande(Personnel $personnel, \DateTimeImmutable $dateDemande, ?\DateTimeImmutable $datePriseDeService = null): DemandeDecision
-    {
+    private function demande(
+        Personnel $personnel,
+        \DateTimeImmutable $dateDemande,
+        ?\DateTimeImmutable $datePriseDeService = null,
+        ?string $numeroPriseDeService = null,
+    ): DemandeDecision {
         $demande = new DemandeDecision();
         $demande->setPersonnel($personnel);
         $demande->setDatePriseDeService($datePriseDeService);
+        $demande->setNumeroPriseDeService($numeroPriseDeService);
 
         $propriete = new \ReflectionProperty(DemandeDecision::class, 'createdAt');
         $propriete->setValue($demande, $dateDemande);
@@ -64,9 +69,9 @@ class TexteLegalDecisionCongeSubstitutionServiceTest extends TestCase
     public function testSubstitueTousLesEmplacementsConnus(): void
     {
         $service = new TexteLegalDecisionCongeSubstitutionService();
-        $demande = $this->demande($this->personnel(), new \DateTimeImmutable('2026-08-10'), new \DateTimeImmutable('2023-01-05'));
+        $demande = $this->demande($this->personnel(), new \DateTimeImmutable('2026-08-10'), new \DateTimeImmutable('2023-01-05'), '456/2023');
 
-        $texte = 'Demande du {{demande.dateDemande}}, prise de service le {{demande.datePriseDeService}} — '
+        $texte = 'Demande du {{demande.dateDemande}}, prise de service n°{{demande.numeroPriseDeService}} du {{demande.datePriseDeService}} — '
             .'{{agent.civilite}} {{agent.nomComplet}}, matricule {{agent.matricule}}, '
             .'{{agent.fonction}}, {{agent.service}}, {{agent.direction}} — décision {{decision.numeroDecision}}, '
             .'{{decision.nombreJours}} jours, du {{decision.periodeDebut}} au {{decision.dateDecision}}, '
@@ -76,7 +81,7 @@ class TexteLegalDecisionCongeSubstitutionServiceTest extends TestCase
         $resultat = $service->substituer($texte, $demande, $this->decision());
 
         $this->assertSame(
-            'Demande du 10 août 2026, prise de service le 5 janvier 2023 — '
+            'Demande du 10 août 2026, prise de service n°456/2023 du 5 janvier 2023 — '
             .'Monsieur Alassane Tambédou, matricule 709192V, '
             .'Ingénieur Informaticien, Service de la Solde, Direction des Ressources Humaines — décision MIC/DAGE/RH/at, '
             .'24 jours, du 21 août 2025 au 21 août 2026, '
