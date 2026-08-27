@@ -17,13 +17,10 @@ const config: CapacitorConfig = {
       enabled: true,
     },
     SplashScreen: {
-      // Masqué manuellement depuis AppComponent une fois Angular prêt, avec
-      // un fondu plutôt qu'une coupure brute — voir app.component.ts.
-      launchAutoHide: false,
-      backgroundColor: '#122032',
-      showSpinner: false,
-      splashFullScreen: true,
-      splashImmersive: true,
+      // Pas d'écran de lancement personnalisé : masqué immédiatement, sans
+      // délai ni fondu (voir LaunchScreen.storyboard, qui n'a plus d'image).
+      launchAutoHide: true,
+      launchShowDuration: 0,
     },
   },
 };
