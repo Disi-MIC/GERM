@@ -130,6 +130,7 @@ class MeController extends AbstractController
         DemandeCarteProRepository $demandeCarteRepository,
         DemandeDecisionRepository $demandeDecisionRepository,
         DemandeJouissanceRepository $demandeJouissanceRepository,
+        TicketIncidentRepository $ticketRepository,
     ): JsonResponse {
         $personnel = $this->personnelConnecte();
 
@@ -210,6 +211,30 @@ class MeController extends AbstractController
                     'libelle' => 'Demande de jouissance de congé',
                     'statut' => $statut,
                     'createdAt' => $demande->getCreatedAt()?->format(\DATE_ATOM),
+                ];
+            }
+        }
+
+        foreach ($ticketRepository->findBy(['personnel' => $personnel]) as $ticket) {
+            $statut = $ticket->getStatut()->value;
+            // TicketIncident suit son propre vocabulaire (voir StatutTicket) —
+            // même repli sur les 4 catégories partagées que DemandeDecision
+            // ci-dessus : ouvert = pas encore pris en charge, en_cours = en
+            // cours de traitement, résolu/clôturé = terminé favorablement.
+            $statutRepartition = match ($statut) {
+                'ouvert' => 'en_attente',
+                'en_cours' => 'transmise',
+                'resolu', 'cloture' => 'approuvee',
+                default => $statut,
+            };
+            ++$repartition[$statutRepartition];
+            if (\in_array($statut, ['ouvert', 'en_cours'], true)) {
+                $enAttente[] = [
+                    'domaine' => 'ticket',
+                    'id' => $ticket->getId(),
+                    'libelle' => \sprintf('Ticket : %s', $ticket->getTitre()),
+                    'statut' => $statut,
+                    'createdAt' => $ticket->getCreatedAt()?->format(\DATE_ATOM),
                 ];
             }
         }

@@ -16,12 +16,22 @@ const LABELS_STATUT: Record<string, string> = {
   transmise: 'Transmise au RH Admin',
   approuvee: 'Approuvée',
   refusee: 'Refusée',
+  ouvert: 'Ouvert',
+  en_cours: 'En cours',
 };
 
 const ROUTES_DOMAINE: Record<DomaineDemande, string> = {
   carte_pro: '/mon-espace/carte-professionnelle',
   decision: '/mon-espace/conges',
   jouissance: '/mon-espace/conges',
+  ticket: '/mon-espace/tickets',
+};
+
+const ICONES_DOMAINE: Record<DomaineDemande, string> = {
+  carte_pro: 'bi-person-vcard',
+  decision: 'bi-calendar-event',
+  jouissance: 'bi-calendar-check',
+  ticket: 'bi-life-preserver',
 };
 
 const COULEURS_REPARTITION: Record<string, string> = {
@@ -29,6 +39,8 @@ const COULEURS_REPARTITION: Record<string, string> = {
   transmise: 'info',
   approuvee: 'success',
   refusee: 'danger',
+  ouvert: 'secondary',
+  en_cours: 'info',
 };
 
 const CHART_COULEURS_REPARTITION: Record<string, string> = {
@@ -43,6 +55,7 @@ const CHART_COULEURS_REPARTITION: Record<string, string> = {
   standalone: true,
   imports: [SlicePipe, RouterLink, FormsModule, PageHeaderComponent, StatTileComponent, PanelComponent, ChartComponent],
   templateUrl: './mon-tableau-de-bord.component.html',
+  styleUrl: './mon-tableau-de-bord.component.scss',
 })
 export class MonTableauDeBordComponent implements OnInit {
   data: DashboardMe | null = null;
@@ -88,6 +101,10 @@ export class MonTableauDeBordComponent implements OnInit {
 
   routeDemande(demande: DemandeEnAttenteResume): string {
     return ROUTES_DOMAINE[demande.domaine];
+  }
+
+  iconeDemande(demande: DemandeEnAttenteResume): string {
+    return ICONES_DOMAINE[demande.domaine];
   }
 
   totalDemandes(): number {

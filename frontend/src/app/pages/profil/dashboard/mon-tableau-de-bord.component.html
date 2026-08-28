@@ -5,6 +5,40 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else if (data) {
+  <app-panel title="Mes demandes en cours" icon="bi-list-check" class="d-block mb-4">
+    <div panelActions>
+      <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="filtreDomaine">
+        <option value="toutes">Tous les domaines</option>
+        <option value="carte_pro">Carte professionnelle</option>
+        <option value="decision">Décision de congé</option>
+        <option value="jouissance">Jouissance de congé</option>
+        <option value="ticket">Ticket informatique</option>
+      </select>
+    </div>
+
+    @if (demandesFiltrees.length > 0) {
+      <div class="germ-demandes-attention">
+        @for (demande of demandesFiltrees; track demande.id + demande.domaine) {
+          <a [routerLink]="routeDemande(demande)" class="germ-demande-attention-item">
+            <div class="germ-demande-attention-icon germ-demande-attention-icon-{{ couleursRepartition[demande.statut] }}">
+              <i class="bi {{ iconeDemande(demande) }}"></i>
+            </div>
+            <div class="germ-demande-attention-body">
+              <div class="germ-demande-attention-titre">{{ demande.libelle }}</div>
+              <div class="germ-demande-attention-meta">Créée le {{ demande.createdAt | slice: 0 : 10 }}</div>
+            </div>
+            <span class="germ-demande-attention-statut status-dot status-dot-{{ couleursRepartition[demande.statut] }}">
+              {{ labelsStatut[demande.statut] }}
+            </span>
+            <i class="bi bi-chevron-right germ-demande-attention-chevron"></i>
+          </a>
+        }
+      </div>
+    } @else {
+      <p class="text-muted small mb-0 py-3 text-center">Aucune demande en cours pour le moment. 🎉</p>
+    }
+  </app-panel>
+
   <div class="row g-3 mb-4">
     <div class="col-md-3 col-6">
       <app-stat-tile
@@ -70,43 +104,4 @@
       </app-panel>
     </div>
   </div>
-
-  <app-panel title="Mes demandes en attente" icon="bi-list-check">
-    <div panelActions>
-      <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="filtreDomaine">
-        <option value="toutes">Tous les domaines</option>
-        <option value="carte_pro">Carte professionnelle</option>
-        <option value="decision">Décision de congé</option>
-        <option value="jouissance">Jouissance de congé</option>
-      </select>
-    </div>
-    <div class="table-responsive">
-      <table class="table table-hover germ-table-head mb-0 align-middle">
-        <thead>
-          <tr>
-            <th>Demande</th>
-            <th>Statut</th>
-            <th>Créée le</th>
-            <th class="text-end">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (demande of demandesFiltrees; track demande.id + demande.domaine) {
-            <tr>
-              <td>{{ demande.libelle }}</td>
-              <td><span class="status-dot status-dot-{{ couleursRepartition[demande.statut] }}">{{ labelsStatut[demande.statut] }}</span></td>
-              <td>{{ demande.createdAt | slice: 0 : 10 }}</td>
-              <td class="text-end">
-                <a [routerLink]="routeDemande(demande)" class="btn btn-sm btn-outline-primary">Voir</a>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="4" class="text-center text-muted py-4">Aucune demande en attente. 🎉</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </app-panel>
 }

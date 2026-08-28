@@ -1,7 +1,7 @@
 import { CarteProfessionnelle } from './carte-professionnelle.model';
 import { HistoriqueAffectation } from './historique-affectation.model';
 
-export type DomaineDemande = 'carte_pro' | 'decision' | 'jouissance';
+export type DomaineDemande = 'carte_pro' | 'decision' | 'jouissance' | 'ticket';
 
 export interface DemandeEnAttenteResume {
   domaine: DomaineDemande;
