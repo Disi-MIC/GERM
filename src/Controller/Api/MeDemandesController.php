@@ -3,12 +3,15 @@
 namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
+use App\Entity\CarteProfessionnelle;
 use App\Entity\DemandeCartePro;
 use App\Entity\DemandeDecision;
 use App\Entity\DemandeJouissance;
 use App\Entity\DocumentAdministratif;
 use App\Entity\Enum\CategorieListeValeur;
+use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Enum\StatutDemande;
+use App\Entity\Enum\StatutDemandeCartePro;
 use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\Personnel;
 use App\Entity\PieceJustificativeDecision;
@@ -119,6 +122,30 @@ class MeDemandesController extends AbstractController
             return $this->violationsResponse($violations);
         }
 
+        // Un renouvellement n'a de sens que si la carte actuelle est expirée
+        // (ou en passe de l'être) : tant qu'une carte valide et toujours en
+        // cours existe, la demande est automatiquement rejetée plutôt que
+        // laissée en attente pour le RH Carte Pro — pas de raison de la
+        // traiter, et l'agent voit tout de suite dans son suivi pourquoi.
+        if (TypeDemandeCartePro::RENOUVELLEMENT === $demande->getTypeDemande()) {
+            $carteEnCours = $this->carteEnCoursDeValidite($personnel);
+            if ($carteEnCours) {
+                $demande->setStatut(StatutDemandeCartePro::REFUSEE);
+                $demande->setDateTraitement(new \DateTimeImmutable());
+                $demande->setCommentaireTraitement(\sprintf(
+                    'Rejet automatique : votre carte n°%s est toujours valide (expiration %s). '
+                    .'Une demande de renouvellement ne peut être déposée qu\'à l\'approche ou après l\'expiration de la carte en cours.',
+                    $carteEnCours->getNumero(),
+                    $carteEnCours->getDateExpiration()?->format('d/m/Y') ?? 'non définie',
+                ));
+
+                $this->em->persist($demande);
+                $this->em->flush();
+
+                return $this->json($demande, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+            }
+        }
+
         $this->em->persist($demande);
         $this->em->flush();
 
@@ -130,6 +157,18 @@ class MeDemandesController extends AbstractController
         );
 
         return $this->json($demande, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+    }
+
+    /** Carte encore trop tôt à renouveler (voir CarteProfessionnelle::estTropTotPourRenouvellement()) — celle qui bloque la demande. */
+    private function carteEnCoursDeValidite(Personnel $personnel): ?CarteProfessionnelle
+    {
+        foreach ($this->carteProfessionnelleRepository->findBy(['personnel' => $personnel, 'statut' => StatutCarteProfessionnelle::VALIDE]) as $carte) {
+            if ($carte->estTropTotPourRenouvellement()) {
+                return $carte;
+            }
+        }
+
+        return null;
     }
 
     #[Route('/api/me/demandes-carte-pro/{id}/piece', name: 'api_me_demande_carte_pro_piece', methods: ['POST'], requirements: ['id' => '\d+'])]

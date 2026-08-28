@@ -151,6 +151,22 @@ class CarteProfessionnelle
         return $this->dateExpiration;
     }
 
+    /**
+     * Encore trop tôt pour demander un renouvellement : carte valide, avec
+     * une expiration connue à plus de 60 jours — même seuil que
+     * getStatutAffiche() ("Expire bientôt"), pour rester cohérent entre
+     * l'affichage et la règle qui bloque la demande côté
+     * MeDemandesController::creerDemandeCartePro().
+     */
+    public function estTropTotPourRenouvellement(): bool
+    {
+        if (StatutCarteProfessionnelle::VALIDE !== $this->statut || null === $this->dateExpiration) {
+            return false;
+        }
+
+        return $this->dateExpiration > (new \DateTimeImmutable('today'))->modify('+60 days');
+    }
+
     public function getStatut(): StatutCarteProfessionnelle
     {
         return $this->statut;

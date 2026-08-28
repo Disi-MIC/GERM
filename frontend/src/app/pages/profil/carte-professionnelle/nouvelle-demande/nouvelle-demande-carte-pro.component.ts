@@ -22,6 +22,7 @@ export class NouvelleDemandeCarteProComponent implements OnInit {
   loading = true;
   saving = false;
   error: string | null = null;
+  rejetAutomatique: string | null = null;
   fichier: File | null = null;
 
   form = this.fb.nonNullable.group({
@@ -95,6 +96,17 @@ export class NouvelleDemandeCarteProComponent implements OnInit {
     this.saving = true;
     this.api.creerDemandeCartePro(payload).subscribe({
       next: (demande) => {
+        // Rejet automatique (voir MeDemandesController::creerDemandeCartePro) :
+        // la carte actuelle est encore trop tôt à renouveler. Pas la peine
+        // d'envoyer la pièce jointe à une demande déjà refusée — on informe
+        // l'agent directement ici plutôt que de le laisser le découvrir dans
+        // son historique.
+        if (demande.statut === 'refusee') {
+          this.saving = false;
+          this.rejetAutomatique = demande.commentaireTraitement ?? 'Cette demande de renouvellement a été rejetée automatiquement.';
+          return;
+        }
+
         if (this.fichier && demande.id) {
           this.api.uploadPieceDemandeCartePro(demande.id, this.fichier).subscribe({
             next: () => this.router.navigateByUrl('/mon-espace/carte-professionnelle'),
