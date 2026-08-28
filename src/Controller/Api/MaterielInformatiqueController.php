@@ -3,19 +3,32 @@
 namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
+use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\HistoriqueAffectationMateriel;
+use App\Entity\HistoriqueChangementMateriel;
+use App\Entity\LicenceLogiciel;
+use App\Entity\ListeValeur;
 use App\Entity\MaterielInformatique;
 use App\Entity\Personnel;
+use App\Entity\TicketIncident;
+use App\Entity\User;
 use App\Repository\HistoriqueAffectationMaterielRepository;
+use App\Repository\HistoriqueChangementMaterielRepository;
+use App\Repository\ListeValeurRepository;
 use App\Repository\MaintenanceRepository;
 use App\Repository\MaterielInformatiqueRepository;
+use App\Repository\PersonnelRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Service\FileStorage;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
+use Endroid\QrCode\Builder\Builder;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -50,9 +63,14 @@ class MaterielInformatiqueController extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
         private readonly HistoriqueAffectationMaterielRepository $historiqueRepository,
+        private readonly HistoriqueChangementMaterielRepository $historiqueChangementRepository,
         private readonly MaintenanceRepository $maintenanceRepository,
         private readonly TicketIncidentRepository $ticketIncidentRepository,
+        private readonly ListeValeurRepository $listeValeurRepository,
+        private readonly PersonnelRepository $personnelRepository,
+        private readonly NotificationService $notificationService,
         private readonly FileStorage $fileStorage,
+        #[Autowire('%env(FRONTEND_URL)%')] private readonly string $frontendUrl,
     ) {
     }
 
@@ -81,6 +99,7 @@ class MaterielInformatiqueController extends AbstractController
     public function update(MaterielInformatique $materiel, Request $request): JsonResponse
     {
         $ancienAffecteA = $materiel->getAffecteA();
+        $avant = $this->snapshotChamps($materiel);
 
         $this->serializer->deserialize($request->getContent(), MaterielInformatique::class, 'json', [
             'groups' => self::GROUPES_ECRITURE,
@@ -101,6 +120,8 @@ class MaterielInformatiqueController extends AbstractController
                 $this->ouvrirAffectation($materiel, $nouvelAffecteA);
             }
         }
+
+        $this->enregistrerChangements($materiel, $avant);
 
         $this->em->flush();
 
@@ -124,6 +145,9 @@ class MaterielInformatiqueController extends AbstractController
         }
         if (($n = $this->historiqueRepository->countPourMateriel($materiel)) > 0) {
             $blocages[] = \sprintf('%d entrée(s) d\'historique d\'affectation', $n);
+        }
+        if (($n = $this->historiqueChangementRepository->countPourMateriel($materiel)) > 0) {
+            $blocages[] = \sprintf('%d entrée(s) d\'historique de changement', $n);
         }
 
         if ([] !== $blocages) {
@@ -242,6 +266,153 @@ class MaterielInformatiqueController extends AbstractController
     }
 
     /**
+     * Changement d'état groupé — déménagement de service ou réforme groupée,
+     * jusqu'ici obligés de passer matériel par matériel. `ids` ignore les
+     * identifiants inconnus plutôt que d'échouer intégralement : un import
+     * partiellement obsolète (matériel supprimé entre-temps côté client) ne
+     * doit pas bloquer les autres.
+     */
+    #[Route('/api/materiels-informatiques/bulk-etat', name: 'api_materiel_informatique_bulk_etat', methods: ['PATCH'])]
+    public function bulkEtat(Request $request, MaterielInformatiqueRepository $materielRepository): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? [];
+        $ids = array_map('intval', $data['ids'] ?? []);
+        $etatId = $data['etat'] ?? null;
+
+        if ([] === $ids || !$etatId) {
+            return $this->json(['errors' => ['ids' => 'Sélectionnez au moins un matériel et un état.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $etat = $this->em->getRepository(ListeValeur::class)->find($etatId);
+        if (!$etat) {
+            return $this->json(['errors' => ['etat' => 'État introuvable.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $materiels = $materielRepository->findBy(['id' => $ids]);
+        foreach ($materiels as $materiel) {
+            $ancien = $materiel->getEtat();
+            if ($ancien === $etat) {
+                continue;
+            }
+            $materiel->setEtat($etat);
+            $this->enregistrerChangement($materiel, 'État', $ancien?->getLibelle(), $etat->getLibelle());
+        }
+        $this->em->flush();
+
+        return $this->json(['modifies' => \count($materiels)]);
+    }
+
+    /**
+     * Réaffectation groupée — même déménagement de service que bulkEtat().
+     * `affecteA` seul suffit (comme affecter()) : le service se dérive
+     * automatiquement de l'agent affecté, voir MaterielInformatique::getService().
+     */
+    #[Route('/api/materiels-informatiques/bulk-affectation', name: 'api_materiel_informatique_bulk_affectation', methods: ['PATCH'])]
+    public function bulkAffectation(Request $request, MaterielInformatiqueRepository $materielRepository): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? [];
+        $ids = array_map('intval', $data['ids'] ?? []);
+        $personnelId = $data['affecteA'] ?? null;
+
+        if ([] === $ids) {
+            return $this->json(['errors' => ['ids' => 'Sélectionnez au moins un matériel.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $personnel = $personnelId ? $this->personnelRepository->find($personnelId) : null;
+        if ($personnelId && !$personnel) {
+            return $this->json(['errors' => ['affecteA' => 'Agent introuvable.']], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $materiels = $materielRepository->findBy(['id' => $ids]);
+        foreach ($materiels as $materiel) {
+            $ancien = $materiel->getAffecteA();
+            if ($ancien === $personnel) {
+                continue;
+            }
+
+            $enCours = $this->historiqueRepository->findEnCoursPourMateriel($materiel);
+            $enCours?->setDateFinAffectation(new \DateTimeImmutable());
+
+            $materiel->setAffecteA($personnel);
+            if ($personnel) {
+                $this->ouvrirAffectation($materiel, $personnel);
+            }
+        }
+        $this->em->flush();
+
+        return $this->json(['modifies' => \count($materiels)]);
+    }
+
+    /**
+     * QR code encodant l'URL de la fiche du matériel (page Angular
+     * `/materiel-informatique/{id}`, protégée par les mêmes guards de rôle
+     * qu'un accès classique) — imprimé sur une étiquette collée sur le poste
+     * (voir la vue Étiquette côté Angular) pour qu'un technicien y accède
+     * sans chercher/taper le n° d'inventaire.
+     */
+    #[Route('/api/materiels-informatiques/{id}/qrcode', name: 'api_materiel_informatique_qrcode', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function qrcode(MaterielInformatique $materiel): Response
+    {
+        $url = rtrim($this->frontendUrl, '/').'/materiel-informatique/'.$materiel->getId();
+
+        $resultat = (new Builder())->build(data: $url, size: 300, margin: 10);
+
+        $response = new Response($resultat->getString());
+        $response->headers->set('Content-Type', $resultat->getMimeType());
+        $response->headers->set('Cache-Control', 'private, max-age=86400');
+
+        return $response;
+    }
+
+    /**
+     * Création d'un ticket d'incident sur ce matériel par l'IT (constaté en
+     * intervention, ou via l'action "Créer un ticket" de l'étiquette scannée)
+     * — pendant de MeDemandesController::creerTicket() côté self-service, mais
+     * sans la restriction "matériel affecté à l'agent connecté" puisque c'est
+     * ici l'IT qui déclare, pas l'agent lui-même. `personnelId` par défaut
+     * l'agent actuellement affecté ; à préciser explicitement pour un
+     * matériel en stock (non affecté).
+     */
+    #[Route('/api/materiels-informatiques/{id}/tickets-incident', name: 'api_materiel_informatique_creer_ticket', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function creerTicket(MaterielInformatique $materiel, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? [];
+
+        $personnelId = $data['personnelId'] ?? null;
+        $personnel = $personnelId ? $this->personnelRepository->find($personnelId) : $materiel->getAffecteA();
+        if (!$personnel) {
+            return $this->json(['errors' => ['personnelId' => "Ce matériel n'est affecté à personne : précisez l'agent concerné par l'incident."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $ticket = new TicketIncident();
+        $ticket->setPersonnel($personnel);
+        $ticket->setMateriel($materiel);
+        $ticket->setTitre(isset($data['titre']) ? (string) $data['titre'] : null);
+        $ticket->setDescription(isset($data['description']) ? (string) $data['description'] : null);
+        $codePriorite = (string) ($data['priorite'] ?? '') ?: 'normale';
+        $priorite = $this->listeValeurRepository->findOneByCategorieAndCode(CategorieListeValeur::PRIORITE_TICKET, $codePriorite)
+            ?? $this->listeValeurRepository->findOneByCategorieAndCode(CategorieListeValeur::PRIORITE_TICKET, 'normale');
+        $ticket->setPriorite($priorite);
+
+        $violations = $this->validator->validate($ticket);
+        if (\count($violations) > 0) {
+            return $this->violationsResponse($violations);
+        }
+
+        $this->em->persist($ticket);
+        $this->em->flush();
+
+        $this->notificationService->notifierRole(
+            User::ROLE_IT_RESPONSABLE,
+            'Nouveau ticket d\'incident',
+            '/tickets-informatique',
+            \sprintf('%s a signalé un incident sur "%s %s" (%s).', $personnel->getNomComplet(), $materiel->getMarque(), $materiel->getModele(), $materiel->getNumeroInventaire()),
+        );
+
+        return $this->json($ticket, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+    }
+
+    /**
      * Convertie en PNG quel que soit le format d'origine — même logique que
      * PersonnelController::convertirPhotoEnPng(), dupliquée ici plutôt que
      * partagée : ce n'est pas un service métier, juste une conversion de
@@ -272,5 +443,61 @@ class MaterielInformatiqueController extends AbstractController
         $affectation->setMateriel($materiel);
         $affectation->setPersonnel($personnel);
         $this->em->persist($affectation);
+    }
+
+    /**
+     * Libellés "avant" des champs suivis par HistoriqueChangementMateriel,
+     * capturés avant que le serializer ne désérialise par-dessus l'entité
+     * existante (object_to_populate) — sans cet instantané préalable, il n'y
+     * aurait plus moyen de savoir ce qui a changé une fois update() arrivé au
+     * flush(). `service` est délibérément absent : dérivé de `affecteA` (voir
+     * MaterielInformatique::getService()), déjà couvert par le journal
+     * d'affectation existant plutôt que dupliqué ici.
+     *
+     * @return array<string, ?string>
+     */
+    private function snapshotChamps(MaterielInformatique $materiel): array
+    {
+        return [
+            'État' => $materiel->getEtat()?->getLibelle(),
+            'Système d\'exploitation' => $this->libelleLicence($materiel->getSystemeExploitation()),
+            'Suite bureautique' => $this->libelleLicence($materiel->getSuiteBureautique()),
+            'Antivirus' => $this->libelleLicence($materiel->getAntivirus()),
+        ];
+    }
+
+    /** @param array<string, ?string> $avant */
+    private function enregistrerChangements(MaterielInformatique $materiel, array $avant): void
+    {
+        $apres = $this->snapshotChamps($materiel);
+        foreach ($avant as $champ => $valeurAvant) {
+            if ($valeurAvant !== $apres[$champ]) {
+                $this->enregistrerChangement($materiel, $champ, $valeurAvant, $apres[$champ]);
+            }
+        }
+    }
+
+    private function enregistrerChangement(MaterielInformatique $materiel, string $champ, ?string $valeurAvant, ?string $valeurApres): void
+    {
+        $changement = new HistoriqueChangementMateriel();
+        $changement->setMateriel($materiel);
+        $changement->setChamp($champ);
+        $changement->setValeurAvant($valeurAvant);
+        $changement->setValeurApres($valeurApres);
+        /** @var User $auteur */
+        $auteur = $this->getUser();
+        $changement->setEnregistrePar($auteur);
+        $this->em->persist($changement);
+    }
+
+    private function libelleLicence(?LicenceLogiciel $licence): ?string
+    {
+        if (!$licence) {
+            return null;
+        }
+
+        $nomLogiciel = $licence->getLogiciel()?->getLibelle() ?? '';
+
+        return \sprintf('%s — %s', $nomLogiciel, $licence->getNumeroLicence() ?: 'sans n°');
     }
 }

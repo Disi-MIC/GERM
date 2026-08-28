@@ -9,7 +9,7 @@
 
   @if (materielId) {
     <app-panel class="d-block mb-3" style="max-width: 800px;">
-      <div class="d-flex flex-row align-items-center gap-3">
+      <div class="d-flex flex-row align-items-center gap-3 flex-wrap">
         @if (hasPhoto) {
           <img [src]="photoUrl()" alt="Photo" class="rounded" style="width: 72px; height: 72px; object-fit: cover;" />
         } @else {
@@ -20,6 +20,14 @@
         <div>
           <label class="form-label small mb-1 d-block">Photo</label>
           <input type="file" class="form-control form-control-sm" accept="image/*" [disabled]="uploadingPhoto" (change)="onPhotoChange($event)" />
+        </div>
+        <div class="ms-auto d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="ouvrirEtiquette()">
+            <i class="bi bi-qr-code"></i> Étiquette
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="ouvrirCreerTicket()">
+            <i class="bi bi-life-preserver"></i> Créer un ticket
+          </button>
         </div>
       </div>
     </app-panel>
@@ -216,6 +224,116 @@
           </tbody>
         </table>
       </app-panel>
+    </div>
+
+    <div class="mt-3" style="max-width: 800px;">
+      <app-panel title="Historique des changements" icon="bi-clock-history" [noPadding]="true">
+        <table class="table table-hover germ-table-head mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Avant</th>
+              <th>Après</th>
+              <th>Par</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entree of historiqueChangements; track entree.id) {
+              <tr>
+                <td>{{ entree.champ }}</td>
+                <td>{{ entree.valeurAvant ?? '—' }}</td>
+                <td>{{ entree.valeurApres ?? '—' }}</td>
+                <td>{{ entree.enregistreParNom ?? '—' }}</td>
+                <td>{{ entree.createdAt | slice: 0 : 10 }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="text-center text-muted py-3">Aucun changement enregistré.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </app-panel>
+    </div>
+  }
+
+  @if (showEtiquette) {
+    <div class="modal-backdrop fade show" (click)="fermerEtiquette()"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Étiquette</h5>
+            <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerEtiquette()"></button>
+          </div>
+          <div class="modal-body text-center">
+            <img [src]="qrcodeUrl()" alt="QR code" style="width: 200px; height: 200px;" />
+            <h5 class="mt-2 mb-0">{{ form.controls.numeroInventaire.value }}</h5>
+            <p class="text-muted mb-0">{{ form.controls.marque.value }} {{ form.controls.modele.value }}</p>
+            <p class="text-muted small">Scannez ce code pour accéder directement à la fiche de ce matériel.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="fermerEtiquette()">Fermer</button>
+            <button type="button" class="btn btn-primary" (click)="imprimerEtiquette()">
+              <i class="bi bi-printer"></i> Imprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showCreerTicket) {
+    <div class="modal-backdrop fade show" (click)="fermerCreerTicket()"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form [formGroup]="ticketForm" (ngSubmit)="soumettreTicket()">
+            <div class="modal-header">
+              <h5 class="modal-title">Créer un ticket d'incident</h5>
+              <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerCreerTicket()"></button>
+            </div>
+            <div class="modal-body">
+              @if (ticketError) {
+                <div class="alert alert-danger">{{ ticketError }}</div>
+              }
+              @if (ticketSuccess) {
+                <div class="alert alert-success">{{ ticketSuccess }}</div>
+              }
+              <div class="mb-3">
+                <label class="form-label">Agent concerné</label>
+                <app-searchable-select formControlName="personnel" nullLabel="Sélectionner un agent" placeholder="Rechercher un agent..." [options]="personnelOptions" />
+                @if (!form.controls.affecteA.value) {
+                  <div class="form-text">Matériel non affecté : précisez l'agent concerné par l'incident.</div>
+                }
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Objet</label>
+                <input type="text" class="form-control" formControlName="titre" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="3" formControlName="description"></textarea>
+              </div>
+              <div class="mb-0">
+                <label class="form-label">Priorité</label>
+                <select class="form-select" formControlName="priorite">
+                  @for (priorite of prioritesTicket; track priorite.id) {
+                    <option [value]="priorite.code">{{ priorite.libelle }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" (click)="fermerCreerTicket()">Fermer</button>
+              <button type="submit" class="btn btn-primary" [disabled]="ticketSaving">
+                <i class="bi bi-check-lg"></i> Créer le ticket
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   }
 }

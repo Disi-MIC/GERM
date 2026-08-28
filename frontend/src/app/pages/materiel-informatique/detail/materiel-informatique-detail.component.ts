@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HistoriqueAffectationMateriel } from '../../../core/models/historique-affectation-materiel.model';
+import { HistoriqueChangementMateriel } from '../../../core/models/historique-changement-materiel.model';
 import { LicenceLogiciel } from '../../../core/models/licence-logiciel.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
@@ -25,17 +26,32 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
   typesMateriel: ListeValeurRef[] = [];
   etatsMateriel: ListeValeurRef[] = [];
   niveauxVulnerabilite: ListeValeurRef[] = [];
+  prioritesTicket: ListeValeurRef[] = [];
   /** Licences disponibles par catégorie de logiciel — voir LicenceLogiciel.logiciel.categorie. */
   licencesOs: LicenceLogiciel[] = [];
   licencesBureautique: LicenceLogiciel[] = [];
   licencesAntivirus: LicenceLogiciel[] = [];
   personnels: Personnel[] = [];
   historique: HistoriqueAffectationMateriel[] = [];
+  historiqueChangements: HistoriqueChangementMateriel[] = [];
   loading = true;
   saving = false;
   uploadingPhoto = false;
   hasPhoto = false;
   error: string | null = null;
+
+  showEtiquette = false;
+
+  showCreerTicket = false;
+  ticketSaving = false;
+  ticketError: string | null = null;
+  ticketSuccess: string | null = null;
+  ticketForm = this.fb.nonNullable.group({
+    personnel: [null as number | null],
+    titre: ['', Validators.required],
+    description: ['', Validators.required],
+    priorite: ['normale', Validators.required],
+  });
 
   form = this.fb.nonNullable.group({
     numeroInventaire: ['', Validators.required],
@@ -83,6 +99,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
       this.typesMateriel = valeurs.filter((v) => v.categorie === 'type-materiel');
       this.etatsMateriel = valeurs.filter((v) => v.categorie === 'etat-materiel');
       this.niveauxVulnerabilite = valeurs.filter((v) => v.categorie === 'niveau-vulnerabilite');
+      this.prioritesTicket = valeurs.filter((v) => v.categorie === 'priorite-ticket');
     });
     // Une licence n'est proposée que si elle existe déjà dans le registre
     // (voir LicenceLogicielController) : impossible de rattacher un logiciel
@@ -136,6 +153,9 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
         },
       });
       this.api.getHistoriqueAffectations(this.materielId).subscribe((historique) => (this.historique = historique));
+      this.api
+        .getHistoriqueChangements(this.materielId)
+        .subscribe((historique) => (this.historiqueChangements = historique));
     } else {
       this.loading = false;
     }
@@ -164,6 +184,99 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
 
   photoUrl(): string {
     return this.materielId ? this.api.photoUrl(this.materielId) : '';
+  }
+
+  qrcodeUrl(): string {
+    return this.materielId ? this.api.qrcodeUrl(this.materielId) : '';
+  }
+
+  ouvrirEtiquette(): void {
+    this.showEtiquette = true;
+  }
+
+  fermerEtiquette(): void {
+    this.showEtiquette = false;
+  }
+
+  /**
+   * Fenêtre dédiée plutôt que window.print() de la page courante — même
+   * raison que CartePreviewComponent.imprimer() (voir ce composant) :
+   * imprimer seulement l'étiquette, pas tout le formulaire du matériel
+   * derrière. L'image du QR code (même origine, cookie de session déjà
+   * présent) se charge directement, pas besoin de la récupérer en blob au
+   * préalable comme pour un PDF cross-origin.
+   */
+  imprimerEtiquette(): void {
+    const raw = this.form.getRawValue();
+    const fenetre = window.open('', '_blank');
+    if (!fenetre) {
+      return;
+    }
+    fenetre.document.write(`
+      <html>
+        <head>
+          <title>Étiquette ${raw.numeroInventaire}</title>
+          <style>
+            body { font-family: sans-serif; text-align: center; padding: 24px; }
+            img { width: 200px; height: 200px; }
+            h2 { margin: 8px 0 0; }
+            p { margin: 4px 0; color: #444; }
+          </style>
+        </head>
+        <body>
+          <img src="${this.qrcodeUrl()}" alt="QR code" />
+          <h2>${raw.numeroInventaire}</h2>
+          <p>${raw.marque} ${raw.modele}</p>
+        </body>
+      </html>
+    `);
+    fenetre.document.close();
+    fenetre.onload = () => fenetre.print();
+  }
+
+  ouvrirCreerTicket(): void {
+    this.ticketError = null;
+    this.ticketSuccess = null;
+    this.ticketForm.reset({
+      personnel: this.form.controls.affecteA.value,
+      titre: '',
+      description: '',
+      priorite: 'normale',
+    });
+    this.showCreerTicket = true;
+  }
+
+  fermerCreerTicket(): void {
+    this.showCreerTicket = false;
+  }
+
+  soumettreTicket(): void {
+    if (this.ticketForm.invalid || !this.materielId) {
+      this.ticketForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.ticketForm.getRawValue();
+    this.ticketSaving = true;
+    this.ticketError = null;
+    this.api
+      .creerTicket(this.materielId, {
+        personnelId: raw.personnel,
+        titre: raw.titre,
+        description: raw.description,
+        priorite: raw.priorite,
+      })
+      .subscribe({
+        next: () => {
+          this.ticketSaving = false;
+          this.ticketSuccess = 'Ticket créé avec succès.';
+          this.ticketForm.reset({ personnel: raw.personnel, titre: '', description: '', priorite: 'normale' });
+        },
+        error: (err) => {
+          this.ticketSaving = false;
+          this.ticketError = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la création du ticket.';
+        },
+      });
   }
 
   onPhotoChange(event: Event): void {

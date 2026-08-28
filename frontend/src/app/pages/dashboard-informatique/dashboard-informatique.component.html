@@ -250,6 +250,21 @@
     </div>
   </div>
 
+  @if (data.materielsSansNiveauVulnerabilite.length > 0) {
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <app-panel title="Vulnérabilité jamais évaluée" icon="bi-shield-exclamation" titleColor="warning">
+          @for (materiel of data.materielsSansNiveauVulnerabilite; track materiel.materielId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div class="small fw-semibold">{{ materiel.numeroInventaire }} — {{ materiel.marque }} {{ materiel.modele }}</div>
+              <a [routerLink]="['/materiel-informatique', materiel.materielId]" class="btn btn-sm btn-outline-warning">Évaluer</a>
+            </div>
+          }
+        </app-panel>
+      </div>
+    </div>
+  }
+
   <div class="row g-3 mb-4">
     <div class="col-md-6">
       <app-panel title="Licences logicielles expirées" icon="bi-exclamation-triangle" titleColor="danger">

@@ -55,6 +55,7 @@ export interface DashboardInformatique {
   maintenance: PeriodeTraitement<number>;
   materiel: { total: number; parEtat: Record<string, number> };
   echeancesMaintenance: { enRetard: EcheanceMaintenance[]; aVenir: EcheanceMaintenance[] };
+  materielsSansNiveauVulnerabilite: MaterielSansVulnerabilite[];
   licencesExpirantBientot: { enRetard: EcheanceLicence[]; aVenir: EcheanceLicence[] };
   slaTickets: { enRetard: SlaTicket[]; aRisque: SlaTicket[] };
   cartouches: DashboardCartouches;
@@ -88,6 +89,13 @@ export interface EcheanceMaintenance {
   modele: string;
   echeance: string;
   jours: number;
+}
+
+export interface MaterielSansVulnerabilite {
+  materielId: number;
+  numeroInventaire: string;
+  marque: string;
+  modele: string;
 }
 
 export interface EcheanceLicence {

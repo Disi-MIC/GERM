@@ -216,6 +216,15 @@ class DashboardController extends AbstractController
                 'parEtat' => $parEtat,
             ],
             'echeancesMaintenance' => $echeanceMaintenanceService->calculer(),
+            'materielsSansNiveauVulnerabilite' => array_map(
+                fn ($m) => [
+                    'materielId' => $m->getId(),
+                    'numeroInventaire' => $m->getNumeroInventaire(),
+                    'marque' => $m->getMarque(),
+                    'modele' => $m->getModele(),
+                ],
+                $materielInformatiqueRepository->findSansNiveauVulnerabilite(),
+            ),
             'licencesExpirantBientot' => $this->calculerEcheancesLicences($licenceLogicielRepository, $materielInformatiqueRepository),
             'slaTickets' => $this->calculerSlaTickets($ticketIncidentRepository),
             'cartouches' => $this->calculerCartouches($changementCartoucheRepository, $request->query->get('service') ? (int) $request->query->get('service') : null),

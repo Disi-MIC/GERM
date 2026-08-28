@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
@@ -7,6 +8,8 @@ import { DataTableCellDirective } from '../../../shared/data-table/data-table-ce
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
 import { badgesAntivirus, COULEURS_ETAT_MATERIEL, ICONES_ETAT_MATERIEL, IconIndicateur } from '../../../shared/materiel/materiel-indicateurs.util';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
+import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { MaterielInformatiqueApiService } from '../materiel-informatique-api.service';
 
 const BADGES_ETAT = COULEURS_ETAT_MATERIEL;
@@ -22,7 +25,7 @@ const LABELS_ETAT: Record<string, string> = {
 @Component({
   selector: 'app-materiel-informatique-list',
   standalone: true,
-  imports: [RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective],
+  imports: [RouterLink, FormsModule, PageHeaderComponent, DataTableComponent, DataTableCellDirective, SearchableSelectComponent],
   templateUrl: './materiel-informatique-list.component.html',
 })
 export class MaterielInformatiqueListComponent implements OnInit {
@@ -36,7 +39,17 @@ export class MaterielInformatiqueListComponent implements OnInit {
   readonly etats = Object.keys(BADGES_ETAT);
   readonly labelsEtat = LABELS_ETAT;
 
+  /** Sélection pour les actions groupées (voir bloc "sélectionnés" du template) — ids, pas objets, pour survivre à un rechargement de `materiels`. */
+  selectedIds = new Set<number>();
+  etatsMateriel: ListeValeurRef[] = [];
+  personnels: Personnel[] = [];
+  bulkEtatId: number | null = null;
+  bulkAffecteA: number | null = null;
+  bulkSaving = false;
+  bulkError: string | null = null;
+
   readonly columns: DataTableColumn<MaterielInformatique>[] = [
+    { key: 'select', label: '', alwaysVisible: true },
     { key: 'numeroInventaire', label: "N° inventaire", sortable: true, value: (m) => m.numeroInventaire },
     { key: 'numeroSerie', label: 'N° série', sortable: true, value: (m) => m.numeroSerie ?? '' },
     { key: 'type', label: 'Type', sortable: true, value: (m) => this.libelle(m.type) },
@@ -48,9 +61,20 @@ export class MaterielInformatiqueListComponent implements OnInit {
     { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
   ];
 
-  constructor(private readonly api: MaterielInformatiqueApiService) {}
+  constructor(
+    private readonly api: MaterielInformatiqueApiService,
+    private readonly personnelApi: PersonnelApiService,
+  ) {}
 
   ngOnInit(): void {
+    this.chargerMateriels();
+    this.personnelApi.getAll().subscribe((personnels) => (this.personnels = personnels));
+    this.personnelApi.getTypesContrat().subscribe((valeurs) => {
+      this.etatsMateriel = valeurs.filter((v) => v.categorie === 'etat-materiel');
+    });
+  }
+
+  private chargerMateriels(): void {
     this.api.getAll().subscribe({
       next: (materiels) => {
         this.materiels = materiels;
@@ -61,6 +85,78 @@ export class MaterielInformatiqueListComponent implements OnInit {
       error: () => {
         this.error = 'Impossible de charger le parc informatique.';
         this.loading = false;
+      },
+    });
+  }
+
+  get personnelOptions(): SearchableSelectOption[] {
+    return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
+  }
+
+  isSelected(materiel: MaterielInformatique): boolean {
+    return !!materiel.id && this.selectedIds.has(materiel.id);
+  }
+
+  toggleSelection(materiel: MaterielInformatique): void {
+    if (!materiel.id) {
+      return;
+    }
+    if (this.selectedIds.has(materiel.id)) {
+      this.selectedIds.delete(materiel.id);
+    } else {
+      this.selectedIds.add(materiel.id);
+    }
+  }
+
+  selectionnerTousLesAffiches(): void {
+    for (const materiel of this.materielsAffiches) {
+      if (materiel.id) {
+        this.selectedIds.add(materiel.id);
+      }
+    }
+  }
+
+  deselectionnerTout(): void {
+    this.selectedIds.clear();
+    this.bulkEtatId = null;
+    this.bulkAffecteA = null;
+    this.bulkError = null;
+  }
+
+  appliquerBulkEtat(): void {
+    if (!this.bulkEtatId || this.selectedIds.size === 0) {
+      return;
+    }
+    this.bulkSaving = true;
+    this.bulkError = null;
+    this.api.bulkEtat([...this.selectedIds], this.bulkEtatId).subscribe({
+      next: () => {
+        this.bulkSaving = false;
+        this.deselectionnerTout();
+        this.chargerMateriels();
+      },
+      error: (err) => {
+        this.bulkSaving = false;
+        this.bulkError = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors du changement d'état groupé.";
+      },
+    });
+  }
+
+  appliquerBulkAffectation(): void {
+    if (this.selectedIds.size === 0) {
+      return;
+    }
+    this.bulkSaving = true;
+    this.bulkError = null;
+    this.api.bulkAffectation([...this.selectedIds], this.bulkAffecteA).subscribe({
+      next: () => {
+        this.bulkSaving = false;
+        this.deselectionnerTout();
+        this.chargerMateriels();
+      },
+      error: (err) => {
+        this.bulkSaving = false;
+        this.bulkError = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la réaffectation groupée.';
       },
     });
   }

@@ -33,7 +33,44 @@
     }
   </div>
 
+  @if (selectedIds.size > 0) {
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3 p-2 border rounded bg-light">
+      <strong>{{ selectedIds.size }} sélectionné{{ selectedIds.size > 1 ? 's' : '' }}</strong>
+
+      <select class="form-select form-select-sm" style="max-width: 220px;" [(ngModel)]="bulkEtatId" [disabled]="bulkSaving">
+        <option [ngValue]="null">Changer l'état...</option>
+        @for (etat of etatsMateriel; track etat.id) {
+          <option [ngValue]="etat.id">{{ etat.libelle }}</option>
+        }
+      </select>
+      <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="!bulkEtatId || bulkSaving" (click)="appliquerBulkEtat()">
+        Appliquer l'état
+      </button>
+
+      <div style="min-width: 220px;">
+        <app-searchable-select [(ngModel)]="bulkAffecteA" nullLabel="Non affecté" placeholder="Réaffecter à..." [options]="personnelOptions" />
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="bulkSaving" (click)="appliquerBulkAffectation()">
+        Réaffecter
+      </button>
+
+      <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" [disabled]="bulkSaving" (click)="deselectionnerTout()">
+        Tout désélectionner
+      </button>
+    </div>
+    @if (bulkError) {
+      <div class="alert alert-danger">{{ bulkError }}</div>
+    }
+  }
+
+  <div class="d-flex justify-content-end mb-2">
+    <button type="button" class="btn btn-sm btn-link p-0" (click)="selectionnerTousLesAffiches()">Sélectionner tout ({{ materielsAffiches.length }})</button>
+  </div>
+
   <app-data-table [rows]="materielsAffiches" [columns]="columns" emptyMessage="Aucun matériel enregistré." searchPlaceholder="Rechercher un matériel...">
+    <ng-template appDataTableCell="select" let-materiel>
+      <input type="checkbox" class="form-check-input" [checked]="isSelected(materiel)" (change)="toggleSelection(materiel)" />
+    </ng-template>
     <ng-template appDataTableCell="numeroInventaire" let-materiel>{{ materiel.numeroInventaire }}</ng-template>
     <ng-template appDataTableCell="numeroSerie" let-materiel>{{ materiel.numeroSerie || '—' }}</ng-template>
     <ng-template appDataTableCell="type" let-materiel>{{ typeLabel(materiel) }}</ng-template>

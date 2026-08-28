@@ -54,6 +54,27 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
     }
 
     /**
+     * Matériel jamais évalué en niveau de vulnérabilité, hors matériel
+     * réformé (retiré du service, son exposition n'a plus d'intérêt) —
+     * champ ajouté après coup au registre (voir
+     * MaterielInformatique::$niveauVulnerabilite), tout le parc existant
+     * n'a pas encore été passé en revue.
+     *
+     * @return MaterielInformatique[]
+     */
+    public function findSansNiveauVulnerabilite(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->leftJoin('m.etat', 'e')->addSelect('e')
+            ->andWhere('m.niveauVulnerabilite IS NULL')
+            ->andWhere('e.code IS NULL OR e.code != :reforme')
+            ->setParameter('reforme', 'reforme')
+            ->orderBy('m.numeroInventaire', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Nombre de matériels rattachés à une licence donnée (système
      * d'exploitation, suite bureautique ou antivirus — on ne sait pas à
      * l'avance dans lequel des trois champs elle apparaît, d'où le OR) —

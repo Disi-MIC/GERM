@@ -3,7 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
 import { HistoriqueAffectationMateriel } from '../../core/models/historique-affectation-materiel.model';
+import { HistoriqueChangementMateriel } from '../../core/models/historique-changement-materiel.model';
 import { MaterielInformatique } from '../../core/models/materiel-informatique.model';
+import { TicketIncident } from '../../core/models/ticket-incident.model';
 
 /**
  * Pas de suffixe `.json` : l'entité déclare un `uriTemplate` explicite pour
@@ -65,5 +67,33 @@ export class MaterielInformatiqueApiService {
 
   exportCsvUrl(): string {
     return `${API_BASE}/materiels-informatiques/export.csv`;
+  }
+
+  getHistoriqueChangements(materielId: number): Observable<HistoriqueChangementMateriel[]> {
+    return this.http.get<HistoriqueChangementMateriel[]>(`${API_BASE}/historiques-changement-materiel`, {
+      params: { materiel: materielId },
+    });
+  }
+
+  qrcodeUrl(id: number): string {
+    return `${API_BASE}/materiels-informatiques/${id}/qrcode`;
+  }
+
+  creerTicket(
+    id: number,
+    payload: { personnelId?: number | null; titre: string; description: string; priorite: string },
+  ): Observable<TicketIncident> {
+    return this.http.post<TicketIncident>(`${API_BASE}/materiels-informatiques/${id}/tickets-incident`, payload);
+  }
+
+  bulkEtat(ids: number[], etatId: number): Observable<{ modifies: number }> {
+    return this.http.patch<{ modifies: number }>(`${API_BASE}/materiels-informatiques/bulk-etat`, { ids, etat: etatId });
+  }
+
+  bulkAffectation(ids: number[], personnelId: number | null): Observable<{ modifies: number }> {
+    return this.http.patch<{ modifies: number }>(`${API_BASE}/materiels-informatiques/bulk-affectation`, {
+      ids,
+      affecteA: personnelId,
+    });
   }
 }
