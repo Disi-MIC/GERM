@@ -3,42 +3,58 @@
 } @else if (error) {
   <div class="alert alert-danger">{{ error }}</div>
 } @else if (carte) {
-  <app-page-header title="Carte {{ carte.numero }} — {{ agentLabel() }}">
-    <a [routerLink]="['/cartes-professionnelles', carte.id, 'edit']" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-pencil"></i> Modifier
-    </a>
-    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="regenerer()">
-      <i class="bi bi-arrow-repeat"></i> Régénérer le PDF
-    </button>
-    @if (auth.hasRole('ROLE_RH_RESPONSABLE') && !carte.valideeParAdminRh) {
-      <button type="button" class="btn btn-warning btn-sm" (click)="valider()">
-        <i class="bi bi-patch-check"></i> Valider
-      </button>
-    }
-    @if (carte.valideeParAdminRh) {
-      <a [href]="telechargerUrl" target="_blank" class="btn btn-success btn-sm">
-        <i class="bi bi-download"></i> Télécharger
+  <div class="carte-preview-backdrop" [routerLink]="['/cartes-professionnelles']"></div>
+  <div class="carte-preview-modal">
+    <div class="carte-preview-header">
+      <div>
+        <h2 class="carte-preview-titre">Carte {{ carte.numero }} — {{ agentLabel() }}</h2>
+        @if (!carte.valideeParAdminRh) {
+          <span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-hourglass-split"></i> En attente de validation</span>
+        } @else {
+          <span class="badge bg-success-subtle text-success-emphasis">
+            <i class="bi bi-patch-check-fill"></i> Validée par {{ carte.valideeParNom }} le {{ carte.valideeLe | slice: 0 : 10 }}
+          </span>
+        }
+      </div>
+      <a [routerLink]="['/cartes-professionnelles']" class="carte-preview-fermer" aria-label="Fermer">
+        <i class="bi bi-x-lg"></i>
       </a>
+    </div>
+
+    @if (!carte.valideeParAdminRh) {
+      <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-hourglass-split"></i>
+        Le cachet et la signature de l'autorité ne figurent pas encore sur le PDF, et le téléchargement n'est pas disponible.
+      </div>
     }
-    <a routerLink="/cartes-professionnelles" class="btn btn-outline-secondary btn-sm">Retour</a>
-  </app-page-header>
 
-  @if (!carte.valideeParAdminRh) {
-    <div class="alert alert-warning d-flex align-items-center gap-2">
-      <i class="bi bi-hourglass-split"></i>
-      En attente de validation par le RH Admin : le cachet et la signature de l'autorité ne
-      figurent pas encore sur le PDF, et le téléchargement n'est pas disponible.
-    </div>
-  } @else {
-    <div class="alert alert-success d-flex align-items-center gap-2">
-      <i class="bi bi-patch-check-fill"></i>
-      Validée par {{ carte.valideeParNom }} le {{ carte.valideeLe | slice: 0 : 10 }}.
-    </div>
-  }
+    @if (pdfUrl) {
+      <div class="carte-preview-pdf-wrap">
+        <iframe [src]="pdfUrl" class="carte-preview-pdf" title="Aperçu de la carte professionnelle"></iframe>
+      </div>
+    }
 
-  @if (pdfUrl) {
-    <app-panel [noPadding]="true">
-      <iframe [src]="pdfUrl" style="width: 100%; height: 75vh; border: none;" title="Aperçu de la carte professionnelle"></iframe>
-    </app-panel>
-  }
+    <div class="carte-preview-actions">
+      <a [routerLink]="['/cartes-professionnelles', carte.id, 'edit']" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-pencil"></i> Modifier
+      </a>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="regenerer()">
+        <i class="bi bi-arrow-repeat"></i> Régénérer le PDF
+      </button>
+      @if (auth.hasRole('ROLE_RH_RESPONSABLE') && !carte.valideeParAdminRh) {
+        <button type="button" class="btn btn-warning btn-sm" (click)="valider()">
+          <i class="bi bi-patch-check"></i> Valider
+        </button>
+      }
+      @if (carte.valideeParAdminRh) {
+        <a [href]="telechargerUrl" target="_blank" class="btn btn-success btn-sm">
+          <i class="bi bi-download"></i> Télécharger
+        </a>
+      }
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="!pdfUrl" (click)="imprimer()">
+        <i class="bi bi-printer"></i> Imprimer
+      </button>
+      <a [routerLink]="['/cartes-professionnelles']" class="btn btn-outline-secondary btn-sm">Fermer</a>
+    </div>
+  </div>
 }

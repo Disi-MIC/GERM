@@ -85,6 +85,11 @@ export class ProfilApiService {
     return `${API_BASE}/me/cartes-professionnelles/${id}/pdf`;
   }
 
+  /** En blob, même raison que CarteProApiService.getPdfBlob() : contourne le SecurityError d'un contentWindow.print() cross-origin. */
+  getCartePdfBlob(id: number): Observable<Blob> {
+    return this.http.get(this.cartePdfUrl(id), { responseType: 'blob' });
+  }
+
   /** Téléchargement forcé (Content-Disposition: attachment). */
   cartePdfTelechargerUrl(id: number): string {
     return `${API_BASE}/me/cartes-professionnelles/${id}/pdf/telecharger`;

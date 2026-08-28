@@ -58,6 +58,18 @@ export class CarteProApiService {
     return `${API_BASE}/cartes-professionnelles/${id}/pdf`;
   }
 
+  /**
+   * En blob plutôt qu'une simple URL d'iframe : l'API tourne sur une autre
+   * origine que le frontend (surtout notable en dev, ports distincts), et un
+   * <iframe> cross-origin empêche contentWindow.print() (SecurityError) —
+   * voir CarteProPreviewComponent.imprimer(). Un blob: est toujours
+   * same-origin avec la page qui l'a créé, quelle que soit l'origine
+   * d'où il vient.
+   */
+  getPdfBlob(id: number): Observable<Blob> {
+    return this.http.get(this.pdfUrl(id), { responseType: 'blob' });
+  }
+
   telechargerUrl(id: number): string {
     return `${API_BASE}/cartes-professionnelles/${id}/pdf/telecharger`;
   }

@@ -1,12 +1,11 @@
 import { SlicePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { CarteProfessionnelle } from '../../../../core/models/carte-professionnelle.model';
 import { NativePdfService } from '../../../../core/native-pdf.service';
 import { PageHeaderComponent } from '../../../../shared/page-header/page-header.component';
-import { PanelComponent } from '../../../../shared/panel/panel.component';
 import { ProfilApiService } from '../../profil-api.service';
 
 const LABELS_STATUT: Record<string, string> = {
@@ -35,10 +34,11 @@ const LABELS_STATUT: Record<string, string> = {
 @Component({
   selector: 'app-ma-carte-preview',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, PanelComponent],
+  imports: [RouterLink, SlicePipe, PageHeaderComponent],
   templateUrl: './ma-carte-preview.component.html',
+  styleUrl: './ma-carte-preview.component.scss',
 })
-export class MaCartePreviewComponent implements OnInit {
+export class MaCartePreviewComponent implements OnInit, OnDestroy {
   carte: CarteProfessionnelle | null = null;
   loading = true;
   error: string | null = null;
@@ -48,6 +48,9 @@ export class MaCartePreviewComponent implements OnInit {
   readonly labelsStatut = LABELS_STATUT;
   ouvertureEnCours = false;
   erreurOuverture: string | null = null;
+
+  /** URL blob: courante (voir ngOnInit()) — à révoquer explicitement, sinon fuite mémoire tant que l'onglet reste ouvert. */
+  private objectUrl: string | null = null;
 
   constructor(
     private readonly api: ProfilApiService,
@@ -73,15 +76,58 @@ export class MaCartePreviewComponent implements OnInit {
           return;
         }
         this.carte = carte;
-        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.api.cartePdfUrl(id));
         this.telechargerUrl = this.api.cartePdfTelechargerUrl(id);
         this.loading = false;
+        if (!this.estNatif) {
+          this.chargerPdf(id);
+        }
       },
       error: () => {
         this.error = 'Impossible de charger cette carte.';
         this.loading = false;
       },
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.objectUrl) {
+      URL.revokeObjectURL(this.objectUrl);
+      this.objectUrl = null;
+    }
+  }
+
+  /**
+   * Récupère le PDF en blob plutôt que de pointer l'iframe directement sur
+   * l'URL de l'API (web uniquement) — voir imprimer() : ouvrir ce blob dans
+   * son propre onglet est ce qui permet d'imprimer, pas l'inverse, mais le
+   * charger une seule fois en amont évite de le retélécharger à chaque clic.
+   */
+  private chargerPdf(id: number): void {
+    this.api.getCartePdfBlob(id).subscribe({
+      next: (blob) => {
+        this.objectUrl = URL.createObjectURL(blob);
+        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl);
+      },
+      error: () => {
+        this.error = "Impossible de charger l'aperçu PDF.";
+      },
+    });
+  }
+
+  /**
+   * iframe.contentWindow.print() échoue systématiquement en SecurityError
+   * dans Chromium sur un PDF (le lecteur PDF natif s'exécute dans un
+   * contexte isolé, blob: ou pas) — même famille de problème que
+   * decision-conge-apercu.imprimer(), où masquer/repositionner un sous-arbre
+   * de la page via CSS s'est montré peu fiable. Ici plus simple : le blob
+   * est déjà un PDF, l'ouvrir dans son propre onglet suffit à donner accès
+   * au bouton d'impression natif du lecteur PDF de Chrome (web uniquement —
+   * sur natif, voir voir()/telecharger() via NativePdfService).
+   */
+  imprimer(): void {
+    if (this.objectUrl) {
+      window.open(this.objectUrl, '_blank');
+    }
   }
 
   async voir(): Promise<void> {
