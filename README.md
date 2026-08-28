@@ -68,3 +68,4 @@ Puis ouvrez `http://127.0.0.1:8000/login` et connectez-vous avec le compte super
 - Projet non testé en exécution réelle (voir ci-dessus) : à valider après `composer install` et configuration de la base.
 - Pas de gestion de photo/upload de fichiers pour l'instant (le champ `photo` de `Personnel` attend un chemin/URL).
 - Pas de tests automatisés fournis dans cette première itération.
+# GERM
