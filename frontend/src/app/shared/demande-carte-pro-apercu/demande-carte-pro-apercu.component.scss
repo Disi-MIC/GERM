@@ -1,0 +1,56 @@
+// Rendu par-dessus les listes RH et l'espace agent : doit primer sur tout le
+// reste, comme admin-access-modal et demande-decision-apercu.
+.demande-apercu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.55);
+  z-index: 100;
+}
+
+.demande-apercu-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  width: min(560px, calc(100vw - 2.5rem));
+  max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 3rem);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem 1.75rem 1.5rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.demande-apercu-fermer {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 20, 30, 0.06);
+  color: var(--bs-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.demande-apercu-titre {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.demande-apercu-soustitre {
+  font-size: 0.85rem;
+  color: var(--bs-secondary);
+  margin: 0.35rem 0 0;
+}
+
+.demande-apercu-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}

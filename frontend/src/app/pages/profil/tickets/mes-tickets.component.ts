@@ -9,6 +9,7 @@ import { DataTableCellDirective } from '../../../shared/data-table/data-table-ce
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
 import { DataTableMobileItemDirective } from '../../../shared/data-table/data-table-mobile-item.directive';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { TicketApercuComponent } from '../../../shared/ticket-apercu/ticket-apercu.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_STATUT: Record<StatutTicket, string> = {
@@ -30,7 +31,15 @@ const BADGES_STATUT: Record<StatutTicket, string> = {
 @Component({
   selector: 'app-mes-tickets',
   standalone: true,
-  imports: [RouterLink, SlicePipe, PageHeaderComponent, DataTableComponent, DataTableCellDirective, DataTableMobileItemDirective],
+  imports: [
+    RouterLink,
+    SlicePipe,
+    PageHeaderComponent,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileItemDirective,
+    TicketApercuComponent,
+  ],
   templateUrl: './mes-tickets.component.html',
 })
 export class MesTicketsComponent implements OnInit {
@@ -38,6 +47,7 @@ export class MesTicketsComponent implements OnInit {
   loading = true;
   error: string | null = null;
   readonly labelsStatut = LABELS_STATUT;
+  ticketEnApercu: TicketIncident | null = null;
 
   readonly columns: DataTableColumn<TicketIncident>[] = [
     { key: 'objet', label: 'Objet', sortable: true, value: (t) => t.titre },
@@ -45,6 +55,7 @@ export class MesTicketsComponent implements OnInit {
     { key: 'priorite', label: 'Priorité', sortable: true, value: (t) => this.prioriteLabel(t) },
     { key: 'statut', label: 'Statut', sortable: true, value: (t) => this.statutLabel(t.statut) },
     { key: 'creeLe', label: 'Créé le', sortable: true, value: (t) => t.createdAt },
+    { key: 'action', label: 'Suivi', align: 'end', alwaysVisible: true },
   ];
 
   constructor(private readonly api: ProfilApiService) {}
@@ -60,6 +71,10 @@ export class MesTicketsComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  voirApercu(ticket: TicketIncident): void {
+    this.ticketEnApercu = ticket;
   }
 
   materielLabel(ticket: TicketIncident): string {

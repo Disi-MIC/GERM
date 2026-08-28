@@ -1,0 +1,34 @@
+@if (ticket) {
+  <div class="demande-apercu-backdrop" (click)="fermer.emit()"></div>
+  <div class="demande-apercu-modal">
+    <button type="button" class="demande-apercu-fermer" (click)="fermer.emit()" aria-label="Fermer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+
+    <h2 class="demande-apercu-titre">{{ ticket.titre }}</h2>
+    <p class="demande-apercu-soustitre">
+      Priorité {{ prioriteLabel() }} — ouvert le {{ ticket.createdAt | slice: 0 : 10 }} —
+      <span class="fw-semibold">{{ labelsStatut[ticket.statut ?? 'ouvert'] || '—' }}</span>
+    </p>
+
+    <app-status-timeline [etapes]="etapesTimeline" class="d-block my-3" />
+
+    <p class="mb-1"><span class="fw-semibold">Description :</span> {{ ticket.description }}</p>
+
+    @if (ticket.statut === 'refuse' && ticket.commentaireResolution) {
+      <div class="alert alert-danger small mt-2">
+        <span class="fw-semibold">Motif du rejet :</span> {{ ticket.commentaireResolution }}
+      </div>
+    }
+
+    @if ((ticket.statut === 'resolu' || ticket.statut === 'cloture') && ticket.commentaireResolution) {
+      <div class="alert alert-success small mt-2">
+        <span class="fw-semibold">Résolution :</span> {{ ticket.commentaireResolution }}
+      </div>
+    }
+
+    <div class="demande-apercu-actions">
+      <button type="button" class="btn btn-outline-secondary" (click)="fermer.emit()">Fermer</button>
+    </div>
+  </div>
+}

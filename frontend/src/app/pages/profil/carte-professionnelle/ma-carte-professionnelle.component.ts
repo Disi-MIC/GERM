@@ -11,6 +11,7 @@ import { DataTableCellDirective } from '../../../shared/data-table/data-table-ce
 import { DataTableColumn } from '../../../shared/data-table/data-table-column.model';
 import { DataTableMobileItemDirective } from '../../../shared/data-table/data-table-mobile-item.directive';
 import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { DemandeCarteProApercuComponent } from '../../../shared/demande-carte-pro-apercu/demande-carte-pro-apercu.component';
 import { ProfilApiService } from '../profil-api.service';
 
 const LABELS_STATUT_CARTE: Record<string, string> = {
@@ -36,7 +37,15 @@ const LABELS_TYPE_DEMANDE: Record<string, string> = {
 @Component({
   selector: 'app-ma-carte-professionnelle',
   standalone: true,
-  imports: [SlicePipe, RouterLink, PageHeaderComponent, DataTableComponent, DataTableCellDirective, DataTableMobileItemDirective],
+  imports: [
+    SlicePipe,
+    RouterLink,
+    PageHeaderComponent,
+    DataTableComponent,
+    DataTableCellDirective,
+    DataTableMobileItemDirective,
+    DemandeCarteProApercuComponent,
+  ],
   templateUrl: './ma-carte-professionnelle.component.html',
 })
 export class MaCarteProfessionnelleComponent implements OnInit {
@@ -63,10 +72,12 @@ export class MaCarteProfessionnelleComponent implements OnInit {
     { key: 'creeeLe', label: 'Créée le', sortable: true, value: (d) => d.createdAt },
     { key: 'traiteeLe', label: 'Traitée le', sortable: true, value: (d) => d.dateTraitement ?? '' },
     { key: 'commentaire', label: 'Commentaire', sortable: false, value: (d) => d.commentaireTraitement ?? '' },
+    { key: 'action', label: 'Suivi', align: 'end', alwaysVisible: true },
   ];
 
   telechargementEnCoursId: number | null = null;
   erreurTelechargement: string | null = null;
+  demandeEnApercu: DemandeCartePro | null = null;
 
   constructor(
     private readonly api: ProfilApiService,
@@ -119,6 +130,10 @@ export class MaCarteProfessionnelleComponent implements OnInit {
     } finally {
       this.telechargementEnCoursId = null;
     }
+  }
+
+  voirApercu(demande: DemandeCartePro): void {
+    this.demandeEnApercu = demande;
   }
 
   badgeClasseDemande(statut: string | undefined): string {

@@ -98,6 +98,11 @@
     <ng-template appDataTableCell="creeeLe" let-demande>{{ demande.createdAt | slice: 0 : 10 }}</ng-template>
     <ng-template appDataTableCell="traiteeLe" let-demande>{{ demande.dateTraitement ? (demande.dateTraitement | slice: 0 : 10) : '—' }}</ng-template>
     <ng-template appDataTableCell="commentaire" let-demande>{{ demande.commentaireTraitement ?? '—' }}</ng-template>
+    <ng-template appDataTableCell="action" let-demande>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="voirApercu(demande)">
+        <i class="bi bi-signpost-split"></i> Suivi
+      </button>
+    </ng-template>
 
     <ng-template appDataTableMobileItem let-demande>
       <div class="mob-card">
@@ -116,12 +121,16 @@
                 <span class="mob-card-meta-item"><i class="bi bi-check2"></i>Traitée le {{ demande.dateTraitement | slice: 0 : 10 }}</span>
               }
             </div>
-            @if (demande.commentaireTraitement) {
-              <div class="mob-card-subtitle">{{ demande.commentaireTraitement }}</div>
-            }
+            <div class="mob-card-actions">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="voirApercu(demande)">
+                <i class="bi bi-signpost-split"></i> Suivi
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </ng-template>
   </app-data-table>
+
+  <app-demande-carte-pro-apercu [demande]="demandeEnApercu" (fermer)="demandeEnApercu = null" />
 }

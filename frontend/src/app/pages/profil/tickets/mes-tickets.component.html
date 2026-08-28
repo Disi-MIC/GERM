@@ -17,6 +17,11 @@
       <span class="status-dot status-dot-{{ badgeClasseStatut(ticket.statut) }}">{{ statutLabel(ticket.statut) }}</span>
     </ng-template>
     <ng-template appDataTableCell="creeLe" let-ticket>{{ ticket.createdAt | slice: 0 : 10 }}</ng-template>
+    <ng-template appDataTableCell="action" let-ticket>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="voirApercu(ticket)">
+        <i class="bi bi-signpost-split"></i> Suivi
+      </button>
+    </ng-template>
 
     <ng-template appDataTableMobileItem let-ticket>
       <div class="mob-card">
@@ -34,9 +39,16 @@
               <span class="mob-card-meta-item"><i class="bi bi-flag"></i>{{ prioriteLabel(ticket) }}</span>
               <span class="mob-card-meta-item"><i class="bi bi-calendar3"></i>{{ ticket.createdAt | slice: 0 : 10 }}</span>
             </div>
+            <div class="mob-card-actions">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="voirApercu(ticket)">
+                <i class="bi bi-signpost-split"></i> Suivi
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </ng-template>
   </app-data-table>
+
+  <app-ticket-apercu [ticket]="ticketEnApercu" (fermer)="ticketEnApercu = null" />
 }

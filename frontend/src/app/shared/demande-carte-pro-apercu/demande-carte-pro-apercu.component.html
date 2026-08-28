@@ -1,0 +1,34 @@
+@if (demande) {
+  <div class="demande-apercu-backdrop" (click)="fermer.emit()"></div>
+  <div class="demande-apercu-modal">
+    <button type="button" class="demande-apercu-fermer" (click)="fermer.emit()" aria-label="Fermer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+
+    <h2 class="demande-apercu-titre">Statut de ma demande de carte professionnelle</h2>
+    <p class="demande-apercu-soustitre">
+      {{ labelsType[demande.typeDemande] }} — déposée le {{ demande.createdAt | slice: 0 : 10 }} —
+      <span class="fw-semibold">{{ labelsStatut[demande.statut ?? ''] || '—' }}</span>
+    </p>
+
+    <app-status-timeline [etapes]="etapesTimeline" class="d-block my-3" />
+
+    @if (demande.motif) {
+      <p class="mb-1"><span class="fw-semibold">Motif :</span> {{ demande.motif }}</p>
+    }
+
+    @if (demande.statut === 'refusee' && demande.commentaireTraitement) {
+      <div class="alert alert-danger small mt-2">
+        <span class="fw-semibold">Motif du rejet :</span> {{ demande.commentaireTraitement }}
+      </div>
+    }
+
+    @if (demande.statut === 'approuvee' && demande.carteCreee) {
+      <div class="alert alert-success small mt-2">Votre nouvelle carte est disponible dans « Carte(s) délivrée(s) ».</div>
+    }
+
+    <div class="demande-apercu-actions">
+      <button type="button" class="btn btn-outline-secondary" (click)="fermer.emit()">Fermer</button>
+    </div>
+  </div>
+}

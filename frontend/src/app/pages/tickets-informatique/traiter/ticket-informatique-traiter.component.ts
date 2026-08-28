@@ -9,6 +9,7 @@ import { NiveauTicket, TicketEscalade, TicketIncident } from '../../../core/mode
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
 import { EtapeTimeline, StatusTimelineComponent } from '../../../shared/status-timeline/status-timeline.component';
+import { etapesTimelineTicket } from '../../../shared/ticket-etapes';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
 import { TicketsInformatiqueApiService } from '../tickets-informatique-api.service';
 
@@ -77,50 +78,8 @@ export class TicketInformatiqueTraiterComponent implements OnInit {
     this.api.getEscalades(id).subscribe((escalades) => (this.escalades = escalades));
   }
 
-  /**
-   * Reflète toujours le statut courant (pas un historique figé) : un ticket
-   * rouvert après résolution repasse par exemple "Résolu" en 'actuel' — même
-   * logique que le reste de la page (rechargée à chaque action via charger()).
-   * L'escalade de niveau (N1/N2/N3) reste hors de cette frise, déjà tracée
-   * par le tableau "Historique d'escalade" plus bas.
-   */
   get etapesTimeline(): EtapeTimeline[] {
-    const t = this.ticket;
-    if (!t) {
-      return [];
-    }
-    const ouvert: EtapeTimeline = { label: 'Ouvert', sousTitre: this.formatDate(t.createdAt), etat: 'termine' };
-
-    if (t.statut === 'refuse') {
-      return [ouvert, { label: 'Refusé', sousTitre: this.formatDate(t.dateResolution ?? t.dateCloture), etat: 'rejete' }];
-    }
-
-    const priseEnCharge = !!t.datePriseEnCharge;
-    const resolu = t.statut === 'resolu' || t.statut === 'cloture';
-    const cloture = t.statut === 'cloture';
-
-    return [
-      ouvert,
-      {
-        label: 'En cours',
-        sousTitre: this.formatDate(t.datePriseEnCharge),
-        etat: priseEnCharge ? 'termine' : 'actuel',
-      },
-      {
-        label: 'Résolu',
-        sousTitre: this.formatDate(t.dateResolution),
-        etat: resolu ? 'termine' : priseEnCharge ? 'actuel' : 'a-venir',
-      },
-      {
-        label: 'Clôturé',
-        sousTitre: this.formatDate(t.dateCloture),
-        etat: cloture ? 'termine' : resolu ? 'actuel' : 'a-venir',
-      },
-    ];
-  }
-
-  private formatDate(iso?: string | null): string | null {
-    return iso ? `${iso.slice(0, 10)} · ${iso.slice(11, 16)}` : null;
+    return this.ticket ? etapesTimelineTicket(this.ticket) : [];
   }
 
   agentLabel(): string {
