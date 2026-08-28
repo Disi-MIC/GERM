@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
+use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Personnel;
+use App\Repository\CarteProfessionnelleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -17,6 +19,8 @@ class PersonnelPhotoService
     public function __construct(
         private readonly FileStorage $fileStorage,
         private readonly EntityManagerInterface $em,
+        private readonly CarteProfessionnelleRepository $carteProfessionnelleRepository,
+        private readonly CarteProfessionnellePdfStockageService $pdfStockage,
     ) {
     }
 
@@ -35,6 +39,31 @@ class PersonnelPhotoService
         $png = $this->convertirEnPng($file);
         $stocke = $this->fileStorage->storeContent($png, 'photo.png', 'png', 'personnel-photos');
         $personnel->setPhoto($stocke['path']);
+        $this->em->flush();
+
+        $this->regenererCartesProfessionnellesValides($personnel);
+    }
+
+    /**
+     * La photo est intégrée en dur dans le PDF de la carte professionnelle
+     * au moment de sa génération (voir CarteProfessionnellePdfGenerator) —
+     * sans ça, changer sa photo de profil laisserait l'ancienne photo sur
+     * une carte déjà délivrée. Seules les cartes encore valides sont
+     * régénérées : une carte perdue/volée/annulée reste un document figé.
+     */
+    private function regenererCartesProfessionnellesValides(Personnel $personnel): void
+    {
+        $cartes = $this->carteProfessionnelleRepository->findBy([
+            'personnel' => $personnel,
+            'statut' => StatutCarteProfessionnelle::VALIDE,
+        ]);
+
+        foreach ($cartes as $carte) {
+            if ($carte->getCheminFichier()) {
+                $this->pdfStockage->genererEtStocker($carte);
+            }
+        }
+
         $this->em->flush();
     }
 
