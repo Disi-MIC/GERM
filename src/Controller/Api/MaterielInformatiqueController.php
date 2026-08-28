@@ -8,10 +8,12 @@ use App\Entity\MaterielInformatique;
 use App\Entity\Personnel;
 use App\Repository\HistoriqueAffectationMaterielRepository;
 use App\Repository\MaintenanceRepository;
+use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -178,6 +180,63 @@ class MaterielInformatiqueController extends AbstractController
         });
         $response->headers->set('Content-Type', $this->fileStorage->mimeType($materiel->getPhoto()));
         $response->headers->set('Content-Disposition', 'inline');
+
+        return $response;
+    }
+
+    /**
+     * Export CSV du parc informatique complet — pour les rapports/audits
+     * demandés à la hiérarchie, aucun autre moyen d'extraire ces données de
+     * l'interface. Point-virgule (Excel FR l'attend par défaut) et BOM UTF-8
+     * en tête (sans lui, Excel interprète les caractères accentués en
+     * Latin-1 et les affiche mal). `fournisseur` est RH uniquement côté API
+     * (groupe api:read:rh) mais reste inclus ici : cette action est déjà
+     * réservée à ROLE_IT_STOCK, même périmètre que GROUPES_LECTURE.
+     */
+    // priority > 0 : sans ça, la route item générée par API Platform (GET /materiels-informatiques/{id})
+    // matche en premier avec id="export.csv" et répond 404 avant d'atteindre cette action.
+    #[Route('/api/materiels-informatiques/export.csv', name: 'api_materiel_informatique_export_csv', methods: ['GET'], priority: 10)]
+    public function exportCsv(MaterielInformatiqueRepository $materielRepository): StreamedResponse
+    {
+        $response = new StreamedResponse(function () use ($materielRepository) {
+            $sortie = fopen('php://output', 'w');
+            fwrite($sortie, "\xEF\xBB\xBF");
+
+            fputcsv($sortie, [
+                'N° inventaire', 'Type', 'Marque', 'Modèle', 'N° série', 'N° de poste',
+                'État', 'Service', 'Affecté à', 'Date de mise en service', 'Fournisseur',
+                'Niveau de vulnérabilité', 'Observations',
+            ], ';');
+
+            foreach ($materielRepository->findAll() as $materiel) {
+                $service = $materiel->getService();
+                $affecteA = $materiel->getAffecteA();
+
+                fputcsv($sortie, [
+                    $materiel->getNumeroInventaire(),
+                    $materiel->getType()?->getLibelle() ?? '',
+                    $materiel->getMarque(),
+                    $materiel->getModele(),
+                    $materiel->getNumeroSerie() ?? '',
+                    $materiel->getNumeroTelephone() ?? '',
+                    $materiel->getEtat()?->getLibelle() ?? '',
+                    $service?->getNom() ?? '',
+                    $affecteA?->getNomComplet() ?? '',
+                    $materiel->getDateMiseEnService()?->format('d/m/Y') ?? '',
+                    $materiel->getFournisseur() ?? '',
+                    $materiel->getNiveauVulnerabilite()?->getLibelle() ?? '',
+                    $materiel->getObservations() ?? '',
+                ], ';');
+            }
+
+            fclose($sortie);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'parc-informatique.csv'),
+        );
 
         return $response;
     }

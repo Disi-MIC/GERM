@@ -22,6 +22,7 @@ use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\PersonnelRepository;
 use App\Repository\ServiceRepository;
 use App\Repository\TicketIncidentRepository;
+use App\Service\EcheanceMaintenanceService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -171,6 +172,7 @@ class DashboardController extends AbstractController
         MaterielInformatiqueRepository $materielInformatiqueRepository,
         LicenceLogicielRepository $licenceLogicielRepository,
         ChangementCartoucheRepository $changementCartoucheRepository,
+        EcheanceMaintenanceService $echeanceMaintenanceService,
     ): JsonResponse {
         // Combine stats Stock (matériel/maintenance) et Tickets : #[IsGranted]
         // ne fait pas d'OR entre deux rôles indépendants, d'où ce contrôle
@@ -213,7 +215,7 @@ class DashboardController extends AbstractController
                 'total' => $materielInformatiqueRepository->count([]),
                 'parEtat' => $parEtat,
             ],
-            'echeancesMaintenance' => $this->calculerEcheancesMaintenance($materielInformatiqueRepository, $maintenanceRepository),
+            'echeancesMaintenance' => $echeanceMaintenanceService->calculer(),
             'licencesExpirantBientot' => $this->calculerEcheancesLicences($licenceLogicielRepository, $materielInformatiqueRepository),
             'slaTickets' => $this->calculerSlaTickets($ticketIncidentRepository),
             'cartouches' => $this->calculerCartouches($changementCartoucheRepository, $request->query->get('service') ? (int) $request->query->get('service') : null),
@@ -461,56 +463,6 @@ class DashboardController extends AbstractController
                 'logicielId' => $licence->getLogiciel()?->getId(),
                 'logiciel' => $licence->getLogiciel()?->getLibelle() ?? '',
                 'nombrePostes' => $nombrePostes,
-                'echeance' => $echeance->format('Y-m-d'),
-            ];
-
-            if ($echeance < $aujourdhui) {
-                $entree['jours'] = $aujourdhui->diff($echeance)->days;
-                $enRetard[] = $entree;
-            } elseif ($echeance <= $limite) {
-                $entree['jours'] = $echeance->diff($aujourdhui)->days;
-                $aVenir[] = $entree;
-            }
-        }
-
-        usort($enRetard, fn ($a, $b) => $b['jours'] <=> $a['jours']);
-        usort($aVenir, fn ($a, $b) => $a['jours'] <=> $b['jours']);
-
-        return ['enRetard' => $enRetard, 'aVenir' => $aVenir];
-    }
-
-    /**
-     * Échéances de maintenance préventive, calculées à la volée plutôt que
-     * stockées : dernière maintenance réalisée pour le matériel (ou, à
-     * défaut, sa date d'acquisition puis sa date d'enregistrement) + sa
-     * périodicité (MaterielInformatique::periodiciteMois). Seuls les
-     * matériels avec une périodicité définie sont concernés. Fenêtre "à
-     * venir" de 30 jours — même seuil que cartesExpirantBientot.
-     *
-     * @return array{enRetard: list<array<string, mixed>>, aVenir: list<array<string, mixed>>}
-     */
-    private function calculerEcheancesMaintenance(
-        MaterielInformatiqueRepository $materielRepository,
-        MaintenanceRepository $maintenanceRepository,
-    ): array {
-        $dernieresDates = $maintenanceRepository->findDernieresDatesParMateriel();
-        $aujourdhui = new \DateTimeImmutable('today');
-        $limite = $aujourdhui->modify('+30 days');
-
-        $enRetard = [];
-        $aVenir = [];
-
-        foreach ($materielRepository->findAvecPeriodiciteMaintenance() as $materiel) {
-            $reference = $dernieresDates[$materiel->getId()]
-                ?? $materiel->getDateAcquisition()
-                ?? $materiel->getCreatedAt();
-            $echeance = $reference->modify(sprintf('+%d months', $materiel->getPeriodiciteMois()));
-
-            $entree = [
-                'materielId' => $materiel->getId(),
-                'numeroInventaire' => $materiel->getNumeroInventaire(),
-                'marque' => $materiel->getMarque(),
-                'modele' => $materiel->getModele(),
                 'echeance' => $echeance->format('Y-m-d'),
             ];
 

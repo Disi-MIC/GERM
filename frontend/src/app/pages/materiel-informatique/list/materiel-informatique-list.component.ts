@@ -92,6 +92,10 @@ export class MaterielInformatiqueListComponent implements OnInit {
     this.appliquerFiltre();
   }
 
+  exportCsvUrl(): string {
+    return this.api.exportCsvUrl();
+  }
+
   libelle(ref: ListeValeurRef | string | undefined): string {
     return ref && typeof ref !== 'string' ? ref.libelle : '';
   }

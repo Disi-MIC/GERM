@@ -42,8 +42,21 @@ class NotificationService
      */
     public function notifierRole(string $role, string $titre, ?string $lien = null, ?string $message = null): void
     {
+        $this->notifierRoles([$role], $titre, $lien, $message);
+    }
+
+    /**
+     * Comme notifierRole(), mais pour plusieurs rôles à la fois (OR, pas
+     * littéral) — un compte possédant plusieurs des rôles donnés n'est notifié
+     * qu'une seule fois. Utile pour un rôle qui hérite d'un autre dans la
+     * hiérarchie (voir role_hierarchy) sans le posséder littéralement : la
+     * hiérarchie n'est résolue qu'à l'autorisation, pas dans User::getRoles(),
+     * donc notifierRole() seul manquerait ces comptes.
+     */
+    public function notifierRoles(array $roles, string $titre, ?string $lien = null, ?string $message = null): void
+    {
         foreach ($this->userRepository->findBy(['actif' => true]) as $user) {
-            if (\in_array($role, $user->getRoles(), true)) {
+            if ([] !== array_intersect($roles, $user->getRoles())) {
                 $notification = new Notification();
                 $notification->setDestinataire($user);
                 $notification->setTitre($titre);

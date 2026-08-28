@@ -62,4 +62,8 @@ export class MaterielInformatiqueApiService {
   photoUrl(id: number): string {
     return `${API_BASE}/materiels-informatiques/${id}/photo`;
   }
+
+  exportCsvUrl(): string {
+    return `${API_BASE}/materiels-informatiques/export.csv`;
+  }
 }
