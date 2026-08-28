@@ -58,7 +58,7 @@ export class MonParcInformatiqueComponent implements OnInit {
       return {
         row: materiel,
         name: `${materiel.marque} ${materiel.modele}`,
-        meta: materiel.numeroInventaire,
+        meta: materiel.numeroTelephone ? `Poste ${materiel.numeroTelephone}` : materiel.numeroInventaire,
         icon,
         color,
         statusLabel: this.libelle(materiel.etat),

@@ -33,7 +33,7 @@
   <app-data-table [rows]="materielsAffiches" [columns]="columns" emptyMessage="Aucun matériel enregistré." searchPlaceholder="Rechercher un matériel...">
     <ng-template appDataTableCell="numeroInventaire" let-materiel>{{ materiel.numeroInventaire }}</ng-template>
     <ng-template appDataTableCell="numeroSerie" let-materiel>{{ materiel.numeroSerie || '—' }}</ng-template>
-    <ng-template appDataTableCell="type" let-materiel>{{ libelle(materiel.type) }}</ng-template>
+    <ng-template appDataTableCell="type" let-materiel>{{ typeLabel(materiel) }}</ng-template>
     <ng-template appDataTableCell="marqueModele" let-materiel>{{ materiel.marque }} {{ materiel.modele }}</ng-template>
     <ng-template appDataTableCell="service" let-materiel>{{ serviceLabel(materiel) }}</ng-template>
     <ng-template appDataTableCell="affecteA" let-materiel>{{ affecteLabel(materiel) }}</ng-template>

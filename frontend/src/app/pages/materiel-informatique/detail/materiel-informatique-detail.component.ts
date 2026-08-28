@@ -43,6 +43,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     marque: ['', Validators.required],
     modele: ['', Validators.required],
     numeroSerie: [''],
+    numeroTelephone: ['', [Validators.pattern(/^\d{4}$/)]],
     specifications: [''],
     dateAcquisition: [''],
     fournisseur: [''],
@@ -101,6 +102,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
             marque: materiel.marque,
             modele: materiel.modele,
             numeroSerie: materiel.numeroSerie ?? '',
+            numeroTelephone: materiel.numeroTelephone ?? '',
             specifications: materiel.specifications ?? '',
             dateAcquisition: materiel.dateAcquisition?.substring(0, 10) ?? '',
             fournisseur: materiel.fournisseur ?? '',
@@ -137,6 +139,12 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  /** Le numéro de poste (voir formulaire) n'a de sens que pour un matériel de type "Téléphone". */
+  get estTelephone(): boolean {
+    const typeId = this.form.controls.type.value;
+    return typeId !== null && this.typesMateriel.some((t) => t.id === typeId && t.code === 'telephone');
   }
 
   get personnelOptions(): SearchableSelectOption[] {
@@ -199,6 +207,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
       marque: raw.marque,
       modele: raw.modele,
       numeroSerie: raw.numeroSerie || null,
+      numeroTelephone: raw.numeroTelephone || null,
       specifications: raw.specifications || null,
       dateAcquisition: raw.dateAcquisition || null,
       fournisseur: raw.fournisseur || null,

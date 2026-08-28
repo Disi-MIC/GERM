@@ -96,6 +96,14 @@ export class MaterielInformatiqueListComponent implements OnInit {
     return ref && typeof ref !== 'string' ? ref.libelle : '';
   }
 
+  /** Type + numéro de poste entre parenthèses pour un téléphone (voir MaterielInformatique::$numeroTelephone côté serveur). */
+  typeLabel(materiel: MaterielInformatique): string {
+    const libelle = this.libelle(materiel.type);
+    const type = materiel.type as ListeValeurRef | string | undefined;
+    const estTelephone = type && typeof type !== 'string' && type.code === 'telephone';
+    return estTelephone && materiel.numeroTelephone ? `${libelle} (poste ${materiel.numeroTelephone})` : libelle;
+  }
+
   badgeClasseEtat(materiel: MaterielInformatique): string {
     return BADGES_ETAT[this.codeEtat(materiel)] ?? 'secondary';
   }

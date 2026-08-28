@@ -93,6 +93,12 @@ class MaterielInformatique
     #[Groups(['api:read', 'api:write'])]
     private ?string $numeroSerie = null;
 
+    /** Numéro de poste interne (4 chiffres) — pertinent seulement pour un matériel de type "Téléphone", mais non contraint côté serveur (voir ListeValeur::TYPE_MATERIEL, une simple donnée, pas un enum figé). */
+    #[ORM\Column(length: 4, nullable: true)]
+    #[Assert\Regex(pattern: '/^\d{4}$/', message: 'Le numéro de poste doit comporter exactement 4 chiffres.')]
+    #[Groups(['api:read', 'api:write'])]
+    private ?string $numeroTelephone = null;
+
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['api:read', 'api:write'])]
     private ?string $specifications = null;
@@ -274,6 +280,18 @@ class MaterielInformatique
     public function setNumeroSerie(?string $numeroSerie): static
     {
         $this->numeroSerie = $numeroSerie;
+
+        return $this;
+    }
+
+    public function getNumeroTelephone(): ?string
+    {
+        return $this->numeroTelephone;
+    }
+
+    public function setNumeroTelephone(?string $numeroTelephone): static
+    {
+        $this->numeroTelephone = $numeroTelephone;
 
         return $this;
     }

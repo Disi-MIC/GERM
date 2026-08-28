@@ -33,6 +33,11 @@
             <dt class="col-sm-5">N° série</dt>
             <dd class="col-sm-7">{{ materiel.numeroSerie ?? '—' }}</dd>
 
+            @if (materiel.numeroTelephone) {
+              <dt class="col-sm-5">N° de poste</dt>
+              <dd class="col-sm-7">{{ materiel.numeroTelephone }}</dd>
+            }
+
             <dt class="col-sm-5">État</dt>
             <dd class="col-sm-7">
               <span class="status-dot status-dot-{{ badgeClasseEtat(materiel) }}">{{ libelle(materiel.etat) }}</span>

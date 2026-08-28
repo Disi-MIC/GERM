@@ -8,6 +8,8 @@ export interface MaterielInformatique {
   marque: string;
   modele: string;
   numeroSerie?: string | null;
+  /** Numéro de poste interne (4 chiffres) — pertinent seulement pour un matériel de type "Téléphone" (voir type.code). */
+  numeroTelephone?: string | null;
   specifications?: string | null;
   dateAcquisition?: string | null;
   /** RH uniquement (groupe api:read:rh côté serveur) — jamais renvoyé par la vue self-service "Mon parc informatique". */

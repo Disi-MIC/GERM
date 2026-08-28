@@ -55,6 +55,22 @@
         <label class="form-label">N° série</label>
         <input type="text" class="form-control" formControlName="numeroSerie" />
       </div>
+      @if (estTelephone) {
+        <div class="col-md-6">
+          <label class="form-label">N° de poste (4 chiffres)</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="numeroTelephone"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="Ex. 1234"
+          />
+          @if (form.controls.numeroTelephone.invalid && form.controls.numeroTelephone.touched) {
+            <div class="form-text text-danger">Le numéro de poste doit comporter exactement 4 chiffres.</div>
+          }
+        </div>
+      }
       <div class="col-md-6">
         <label class="form-label">État</label>
         <select class="form-select" formControlName="etat">
