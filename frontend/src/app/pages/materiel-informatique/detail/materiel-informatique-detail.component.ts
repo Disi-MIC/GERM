@@ -1,5 +1,5 @@
 import { SlicePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HistoriqueAffectationMateriel } from '../../../core/models/historique-affectation-materiel.model';
@@ -20,7 +20,7 @@ import { MaterielInformatiqueApiService } from '../materiel-informatique-api.ser
   imports: [ReactiveFormsModule, RouterLink, SlicePipe, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
   templateUrl: './materiel-informatique-detail.component.html',
 })
-export class MaterielInformatiqueDetailComponent implements OnInit {
+export class MaterielInformatiqueDetailComponent implements OnInit, OnDestroy {
   materielId: number | null = null;
   services: ServiceRef[] = [];
   typesMateriel: ListeValeurRef[] = [];
@@ -41,6 +41,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
   error: string | null = null;
 
   showEtiquette = false;
+  qrcodeObjectUrl: string | null = null;
 
   showCreerTicket = false;
   ticketSaving = false;
@@ -186,12 +187,42 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
     return this.materielId ? this.api.photoUrl(this.materielId) : '';
   }
 
-  qrcodeUrl(): string {
-    return this.materielId ? this.api.qrcodeUrl(this.materielId) : '';
+  /**
+   * En blob plutôt qu'une URL directe sur <img> : sur l'app mobile
+   * (Capacitor), une requête d'image émise directement par la WebView (pas
+   * via HttpClient/CapacitorHttp) ne transporte pas fiablement le cookie de
+   * session vers l'origine cross-site du backend — même raison que
+   * CarteProPreviewComponent.chargerPdf(). Le même blob: sert aussi à
+   * imprimerEtiquette() ci-dessous, pas besoin de le recharger.
+   */
+  private chargerQrcode(): void {
+    if (!this.materielId) {
+      return;
+    }
+    this.api.getQrcodeBlob(this.materielId).subscribe({
+      next: (blob) => {
+        this.revoquerQrcodeObjectUrl();
+        this.qrcodeObjectUrl = URL.createObjectURL(blob);
+      },
+    });
+  }
+
+  private revoquerQrcodeObjectUrl(): void {
+    if (this.qrcodeObjectUrl) {
+      URL.revokeObjectURL(this.qrcodeObjectUrl);
+      this.qrcodeObjectUrl = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.revoquerQrcodeObjectUrl();
   }
 
   ouvrirEtiquette(): void {
     this.showEtiquette = true;
+    if (!this.qrcodeObjectUrl) {
+      this.chargerQrcode();
+    }
   }
 
   fermerEtiquette(): void {
@@ -202,11 +233,12 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
    * Fenêtre dédiée plutôt que window.print() de la page courante — même
    * raison que CartePreviewComponent.imprimer() (voir ce composant) :
    * imprimer seulement l'étiquette, pas tout le formulaire du matériel
-   * derrière. L'image du QR code (même origine, cookie de session déjà
-   * présent) se charge directement, pas besoin de la récupérer en blob au
-   * préalable comme pour un PDF cross-origin.
+   * derrière.
    */
   imprimerEtiquette(): void {
+    if (!this.qrcodeObjectUrl) {
+      return;
+    }
     const raw = this.form.getRawValue();
     const fenetre = window.open('', '_blank');
     if (!fenetre) {
@@ -224,7 +256,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit {
           </style>
         </head>
         <body>
-          <img src="${this.qrcodeUrl()}" alt="QR code" />
+          <img src="${this.qrcodeObjectUrl}" alt="QR code" />
           <h2>${raw.numeroInventaire}</h2>
           <p>${raw.marque} ${raw.modele}</p>
         </body>

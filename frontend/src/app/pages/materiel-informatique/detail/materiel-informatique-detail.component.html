@@ -268,14 +268,20 @@
             <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerEtiquette()"></button>
           </div>
           <div class="modal-body text-center">
-            <img [src]="qrcodeUrl()" alt="QR code" style="width: 200px; height: 200px;" />
+            @if (qrcodeObjectUrl) {
+              <img [src]="qrcodeObjectUrl" alt="QR code" style="width: 200px; height: 200px;" />
+            } @else {
+              <div class="d-flex align-items-center justify-content-center" style="width: 200px; height: 200px; margin: 0 auto;">
+                <span class="spinner-border spinner-border-sm text-muted"></span>
+              </div>
+            }
             <h5 class="mt-2 mb-0">{{ form.controls.numeroInventaire.value }}</h5>
             <p class="text-muted mb-0">{{ form.controls.marque.value }} {{ form.controls.modele.value }}</p>
             <p class="text-muted small">Scannez ce code pour accéder directement à la fiche de ce matériel.</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" (click)="fermerEtiquette()">Fermer</button>
-            <button type="button" class="btn btn-primary" (click)="imprimerEtiquette()">
+            <button type="button" class="btn btn-primary" [disabled]="!qrcodeObjectUrl" (click)="imprimerEtiquette()">
               <i class="bi bi-printer"></i> Imprimer
             </button>
           </div>

@@ -75,8 +75,16 @@ export class MaterielInformatiqueApiService {
     });
   }
 
-  qrcodeUrl(id: number): string {
-    return `${API_BASE}/materiels-informatiques/${id}/qrcode`;
+  /**
+   * En blob plutôt qu'une URL directe sur <img> : même raison que
+   * CarteProApiService.getPdfBlob() — dans l'app mobile (Capacitor), une
+   * requête d'image émise directement par la WebView (pas via
+   * fetch/XHR/CapacitorHttp) ne transporte pas fiablement le cookie de
+   * session vers l'origine cross-site du backend, contrairement à un appel
+   * HttpClient classique.
+   */
+  getQrcodeBlob(id: number): Observable<Blob> {
+    return this.http.get(`${API_BASE}/materiels-informatiques/${id}/qrcode`, { responseType: 'blob' });
   }
 
   creerTicket(
