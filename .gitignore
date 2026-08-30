@@ -16,3 +16,9 @@
 
 .idea/
 .DS_Store
+
+###> sso (JWT MIC-GAR) ###
+# Clé privée RS256 signant les jetons SSO — seule la clé publique
+# (sso_public.pem) est destinée à être partagée avec MIC-GAR, jamais celle-ci.
+/config/jwt/sso_private.pem
+###< sso (JWT MIC-GAR) ###

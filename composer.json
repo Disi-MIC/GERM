@@ -16,6 +16,7 @@
         "doctrine/orm": "^3.6",
         "dompdf/dompdf": "^3.1",
         "endroid/qr-code": "^6.1",
+        "firebase/php-jwt": "^7.1",
         "league/flysystem": "^3.35",
         "league/flysystem-local": "^3.31",
         "league/flysystem-sftp-v3": "^3.33",
