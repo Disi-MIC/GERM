@@ -1,4 +1,10 @@
-<app-page-header [title]="(personnelId ? 'Modifier' : 'Nouvel') + ' agent'" />
+<app-page-header [title]="(personnelId ? 'Modifier' : 'Nouvel') + ' agent'">
+  @if (personnelId) {
+    <a [routerLink]="['/personnel', personnelId, 'dossier']" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-folder2-open"></i> Voir le dossier
+    </a>
+  }
+</app-page-header>
 
 @if (loading) {
   <p class="text-muted">Chargement...</p>

@@ -4,9 +4,11 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
+use App\Repository\CarteProfessionnelleRepository;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -52,6 +54,45 @@ class CarteProfessionnelleController extends AbstractController
         $this->em->flush();
 
         return $this->json($carte, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+    }
+
+    /** Export CSV du registre des cartes professionnelles — même logique que PersonnelController::exportCsv(). */
+    // priority > 0 : même raison que PersonnelController::exportCsv().
+    #[Route('/api/cartes-professionnelles/export.csv', name: 'api_carte_professionnelle_export_csv', methods: ['GET'], priority: 10)]
+    public function exportCsv(CarteProfessionnelleRepository $carteRepository): StreamedResponse
+    {
+        $response = new StreamedResponse(function () use ($carteRepository) {
+            $sortie = fopen('php://output', 'w');
+            fwrite($sortie, "\xEF\xBB\xBF");
+
+            fputcsv($sortie, [
+                'Numéro', 'Agent', 'Date de délivrance', 'Date d\'expiration', 'Statut',
+                'Validée par RH Admin', 'Validée le', 'Validée par',
+            ], ';');
+
+            foreach ($carteRepository->findAll() as $carte) {
+                fputcsv($sortie, [
+                    $carte->getNumero(),
+                    $carte->getPersonnel()?->getNomComplet() ?? '',
+                    $carte->getDateDelivrance()?->format('d/m/Y') ?? '',
+                    $carte->getDateExpiration()?->format('d/m/Y') ?? '',
+                    $carte->getStatutAffiche()['label'],
+                    $carte->isValideeParAdminRh() ? 'Oui' : 'Non',
+                    $carte->getValideeLe()?->format('d/m/Y') ?? '',
+                    $carte->getValideeParNom() ?? '',
+                ], ';');
+            }
+
+            fclose($sortie);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'cartes-professionnelles.csv'),
+        );
+
+        return $response;
     }
 
     #[Route('/api/cartes-professionnelles/{id}', name: 'api_carte_professionnelle_update', methods: ['PUT'], requirements: ['id' => '\d+'])]

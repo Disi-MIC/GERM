@@ -5,10 +5,15 @@ namespace App\Controller\Api;
 use App\Controller\AbstractController;
 use App\Entity\Enum\TypeMouvementCarriere;
 use App\Entity\HistoriqueAffectation;
+use App\Entity\HistoriqueChangementPersonnel;
 use App\Entity\Personnel;
+use App\Entity\User;
+use App\Repository\HistoriqueChangementPersonnelRepository;
+use App\Repository\PersonnelRepository;
 use App\Service\FileStorage;
 use App\Service\PersonnelPhotoService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -33,6 +38,7 @@ class PersonnelController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly FileStorage $fileStorage,
         private readonly PersonnelPhotoService $photoService,
+        private readonly HistoriqueChangementPersonnelRepository $historiqueChangementRepository,
     ) {
     }
 
@@ -62,9 +68,63 @@ class PersonnelController extends AbstractController
         return $this->json($personnel, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
     }
 
+    /**
+     * Export CSV des effectifs — pour les rapports demandés à la hiérarchie,
+     * même logique que MaterielInformatiqueController::exportCsv().
+     */
+    // priority > 0 : sans ça, la route item générée par API Platform (GET /personnels/{id})
+    // matche en premier avec id="export.csv" et répond 404 avant d'atteindre cette action.
+    #[Route('/api/personnels/export.csv', name: 'api_personnel_export_csv', methods: ['GET'], priority: 10)]
+    public function exportCsv(PersonnelRepository $personnelRepository): StreamedResponse
+    {
+        $response = new StreamedResponse(function () use ($personnelRepository) {
+            $sortie = fopen('php://output', 'w');
+            fwrite($sortie, "\xEF\xBB\xBF");
+
+            fputcsv($sortie, [
+                'Matricule', 'Nom', 'Prénom', 'Sexe', 'Date de naissance', 'Fonction', 'Grade',
+                'Type de contrat', 'Date d\'embauche', 'Statut', 'Direction', 'Service',
+                'Téléphone', 'Email',
+            ], ';');
+
+            foreach ($personnelRepository->findAll() as $personnel) {
+                $service = $personnel->getService();
+
+                fputcsv($sortie, [
+                    $personnel->getMatricule() ?? '',
+                    $personnel->getNom(),
+                    $personnel->getPrenom(),
+                    $personnel->getSexe()?->value ?? '',
+                    $personnel->getDateNaissance()?->format('d/m/Y') ?? '',
+                    $personnel->getFonction(),
+                    $personnel->getGrade() ?? '',
+                    $personnel->getTypeContrat()?->getLibelle() ?? '',
+                    $personnel->getDateEmbauche()?->format('d/m/Y') ?? '',
+                    $personnel->getStatut()?->label() ?? '',
+                    $service?->getDirection()?->getNom() ?? '',
+                    $service?->getNom() ?? '',
+                    $personnel->getTelephone() ?? '',
+                    $personnel->getEmail() ?? '',
+                ], ';');
+            }
+
+            fclose($sortie);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'effectifs.csv'),
+        );
+
+        return $response;
+    }
+
     #[Route('/api/personnels/{id}', name: 'api_personnel_update', methods: ['PUT'], requirements: ['id' => '\d+'])]
     public function update(Personnel $personnel, Request $request): JsonResponse
     {
+        $avant = $this->snapshotChamps($personnel);
+
         $this->serializer->deserialize($request->getContent(), Personnel::class, 'json', [
             'groups' => ['api:write'],
             'object_to_populate' => $personnel,
@@ -74,6 +134,8 @@ class PersonnelController extends AbstractController
         if (\count($violations) > 0) {
             return $this->violationsResponse($violations);
         }
+
+        $this->enregistrerChangements($personnel, $avant);
 
         $this->em->flush();
 
@@ -91,8 +153,9 @@ class PersonnelController extends AbstractController
             || !$personnel->getDemandesDecision()->isEmpty()
             || !$personnel->getCartesProfessionnelles()->isEmpty()
             || !$personnel->getDemandesCartePro()->isEmpty()
+            || $this->historiqueChangementRepository->countPourPersonnel($personnel) > 0
         ) {
-            return $this->json(['errors' => ['personnel' => 'Impossible de supprimer cette fiche : elle a un historique de carrière, des congés, des décisions, des demandes de congé, des cartes professionnelles ou des demandes de carte professionnelle enregistrées.']], JsonResponse::HTTP_CONFLICT);
+            return $this->json(['errors' => ['personnel' => 'Impossible de supprimer cette fiche : elle a un historique de carrière, des congés, des décisions, des demandes de congé, des cartes professionnelles, des demandes de carte professionnelle ou un historique de changements enregistrés.']], JsonResponse::HTTP_CONFLICT);
         }
 
         if ($personnel->getUser()) {
@@ -139,5 +202,47 @@ class PersonnelController extends AbstractController
         $response->headers->set('Content-Disposition', 'inline');
 
         return $response;
+    }
+
+    /**
+     * Libellés "avant" des champs suivis par HistoriqueChangementPersonnel,
+     * capturés avant que le serializer ne désérialise par-dessus l'entité
+     * existante (object_to_populate) — même principe que
+     * MaterielInformatiqueController::snapshotChamps(). `service` est
+     * volontairement absent : les mouvements de service passent par
+     * HistoriqueAffectation (mouvement de carrière formel), déjà tracés là.
+     *
+     * @return array<string, ?string>
+     */
+    private function snapshotChamps(Personnel $personnel): array
+    {
+        return [
+            'Nom' => $personnel->getNom(),
+            'Prénom' => $personnel->getPrenom(),
+            'Matricule' => $personnel->getMatricule(),
+            'Statut' => $personnel->getStatut()?->label(),
+            'Fonction' => $personnel->getFonction(),
+            'Grade' => $personnel->getGrade(),
+            'Type de contrat' => $personnel->getTypeContrat()?->getLibelle(),
+        ];
+    }
+
+    /** @param array<string, ?string> $avant */
+    private function enregistrerChangements(Personnel $personnel, array $avant): void
+    {
+        $apres = $this->snapshotChamps($personnel);
+        foreach ($avant as $champ => $valeurAvant) {
+            if ($valeurAvant !== $apres[$champ]) {
+                $changement = new HistoriqueChangementPersonnel();
+                $changement->setPersonnel($personnel);
+                $changement->setChamp($champ);
+                $changement->setValeurAvant($valeurAvant);
+                $changement->setValeurApres($apres[$champ]);
+                /** @var User $auteur */
+                $auteur = $this->getUser();
+                $changement->setEnregistrePar($auteur);
+                $this->em->persist($changement);
+            }
+        }
     }
 }

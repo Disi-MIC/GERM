@@ -18,6 +18,12 @@ export class CarteProApiService {
     return this.http.get<CarteProfessionnelle[]>(`${API_BASE}/cartes-professionnelles`);
   }
 
+  getByPersonnel(personnelId: number): Observable<CarteProfessionnelle[]> {
+    return this.http.get<CarteProfessionnelle[]>(`${API_BASE}/cartes-professionnelles`, {
+      params: { personnel: personnelId },
+    });
+  }
+
   getEnAttenteValidation(): Observable<CarteProfessionnelle[]> {
     return this.http.get<CarteProfessionnelle[]>(
       `${API_BASE}/cartes-professionnelles?valideeParAdminRh=false`,
@@ -72,5 +78,9 @@ export class CarteProApiService {
 
   telechargerUrl(id: number): string {
     return `${API_BASE}/cartes-professionnelles/${id}/pdf/telecharger`;
+  }
+
+  exportCsvUrl(): string {
+    return `${API_BASE}/cartes-professionnelles/export.csv`;
   }
 }

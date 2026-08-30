@@ -1,4 +1,7 @@
 <app-page-header title="Personnel" subtitle="Fiches agents et affectations.">
+  <a [href]="exportCsvUrl()" target="_blank" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-file-earmark-spreadsheet"></i> Exporter CSV
+  </a>
   <a routerLink="/personnel/new" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg"></i> Nouvel agent
   </a>
@@ -18,7 +21,10 @@
       <span class="status-dot status-dot-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span>
     </ng-template>
     <ng-template appDataTableCell="actions" let-personnel>
-      <a [routerLink]="['/personnel', personnel.id]" class="btn btn-sm btn-outline-primary">
+      <a [routerLink]="['/personnel', personnel.id, 'dossier']" class="btn btn-sm btn-outline-secondary" title="Dossier">
+        <i class="bi bi-folder2-open"></i>
+      </a>
+      <a [routerLink]="['/personnel', personnel.id]" class="btn btn-sm btn-outline-primary" title="Modifier">
         <i class="bi bi-pencil"></i>
       </a>
     </ng-template>

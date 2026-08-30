@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HistoriqueAffectation, TypeMouvementCarriere } from '../../../core/models/historique-affectation.model';
 import { Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
@@ -37,12 +37,19 @@ export class MouvementFormComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly api: CarriereApiService,
     private readonly personnelApi: PersonnelApiService,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
     this.personnelApi.getAll().subscribe((personnels) => (this.personnels = personnels));
     this.personnelApi.getServices().subscribe((services) => (this.services = services));
+
+    // Préremplissage depuis le dossier agent : /carrieres/new?personnel=id.
+    const personnelParam = this.route.snapshot.queryParamMap.get('personnel');
+    if (personnelParam) {
+      this.form.patchValue({ personnel: Number(personnelParam) });
+    }
   }
 
   get personnelOptions(): SearchableSelectOption[] {

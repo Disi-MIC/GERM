@@ -30,7 +30,7 @@
     </div>
   </div>
 
-  <app-panel title="Demandes traitées" icon="bi-bar-chart">
+  <app-panel title="Demandes traitées" icon="bi-bar-chart" class="d-block mb-4">
     <div panelActions>
       <div class="btn-group btn-group-sm">
         @for (p of periodes; track p) {
@@ -68,4 +68,40 @@
       </div>
     </div>
   </app-panel>
+
+  @if (data.decisionsExpirantes.enRetard.length > 0 || data.decisionsExpirantes.aVenir.length > 0) {
+    <div class="row g-3">
+      <div class="col-md-6">
+        <app-panel title="Décisions expirées" icon="bi-exclamation-triangle" titleColor="danger">
+          @for (echeance of data.decisionsExpirantes.enRetard; track echeance.decisionId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div class="small fw-semibold">{{ echeance.numeroDecision }} — {{ echeance.personnel }}</div>
+                <div class="small text-danger">Expirée depuis {{ echeance.jours }} jour{{ echeance.jours > 1 ? 's' : '' }} ({{ echeance.echeance }})</div>
+              </div>
+              <a [routerLink]="['/conges/decisions', echeance.decisionId, 'edit']" class="btn btn-sm btn-outline-danger">Voir</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Aucune décision expirée.</p>
+          }
+        </app-panel>
+      </div>
+
+      <div class="col-md-6">
+        <app-panel title="Décisions expirant bientôt" icon="bi-clock-history" titleColor="warning">
+          @for (echeance of data.decisionsExpirantes.aVenir; track echeance.decisionId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div class="small fw-semibold">{{ echeance.numeroDecision }} — {{ echeance.personnel }}</div>
+                <div class="small text-muted">Expire dans {{ echeance.jours }} jour{{ echeance.jours > 1 ? 's' : '' }} ({{ echeance.echeance }})</div>
+              </div>
+              <a [routerLink]="['/conges/decisions', echeance.decisionId, 'edit']" class="btn btn-sm btn-outline-warning">Voir</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Aucune échéance sous 30 jours.</p>
+          }
+        </app-panel>
+      </div>
+    </div>
+  }
 }

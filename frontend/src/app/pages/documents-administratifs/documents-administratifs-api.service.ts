@@ -22,6 +22,12 @@ export class DocumentsAdministratifsApiService {
     return this.http.get<DocumentAdministratif[]>(`${API_BASE}/documents-administratifs`);
   }
 
+  getByPersonnel(personnelId: number): Observable<DocumentAdministratif[]> {
+    return this.http.get<DocumentAdministratif[]>(`${API_BASE}/documents-administratifs`, {
+      params: { personnel: personnelId },
+    });
+  }
+
   /** Un document a toujours un fichier dès sa création : un seul envoi multipart (métadonnées + fichier), pas de JSON. */
   create(payload: DocumentAdministratifPayload): Observable<DocumentAdministratif> {
     const formData = new FormData();
@@ -48,5 +54,9 @@ export class DocumentsAdministratifsApiService {
 
   fichierUrl(id: number): string {
     return `${API_BASE}/documents-administratifs/${id}/fichier`;
+  }
+
+  exportCsvUrl(): string {
+    return `${API_BASE}/documents-administratifs/export.csv`;
   }
 }

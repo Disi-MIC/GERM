@@ -16,4 +16,9 @@ export const PERSONNEL_ROUTES: Routes = [
     loadComponent: () =>
       import('./detail/personnel-detail.component').then((m) => m.PersonnelDetailComponent),
   },
+  {
+    path: ':id/dossier',
+    loadComponent: () =>
+      import('./dossier/personnel-dossier.component').then((m) => m.PersonnelDossierComponent),
+  },
 ];

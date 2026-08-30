@@ -23,6 +23,7 @@ use App\Repository\PersonnelRepository;
 use App\Repository\ServiceRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Service\EcheanceMaintenanceService;
+use App\Service\EcheanceRhService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -51,6 +52,7 @@ class DashboardController extends AbstractController
         PersonnelRepository $personnelRepository,
         ServiceRepository $serviceRepository,
         DirectionRepository $directionRepository,
+        EcheanceRhService $echeanceRhService,
     ): JsonResponse {
         $filtreDirection = $request->query->get('direction')
             ? $directionRepository->find($request->query->get('direction'))
@@ -97,6 +99,22 @@ class DashboardController extends AbstractController
             ),
             'filtreDirection' => $filtreDirection?->getId(),
             'filtreService' => $filtreService?->getId(),
+            'documentsExpirants' => $echeanceRhService->calculerDocuments(),
+            'structureIncomplete' => [
+                'servicesSansResponsable' => array_map(
+                    fn ($s) => ['serviceId' => $s->getId(), 'nom' => $s->getNom(), 'direction' => $s->getDirection()?->getNom() ?? ''],
+                    $serviceRepository->findSansResponsable(),
+                ),
+                'directionsSansDirecteur' => array_map(
+                    fn ($d) => ['directionId' => $d->getId(), 'nom' => $d->getNom()],
+                    $directionRepository->findSansDirecteur(),
+                ),
+            ],
+            // Délégations : réservé au RH Responsable, comme Delegation::$security — un
+            // simple ROLE_RH_PERSONNEL (qui a accès à ce dashboard) n'y a pas droit.
+            'delegationsExpirantes' => $this->isGranted('ROLE_RH_RESPONSABLE')
+                ? $echeanceRhService->calculerDelegations()
+                : null,
         ]);
     }
 
@@ -106,6 +124,7 @@ class DashboardController extends AbstractController
         DemandeDecisionRepository $demandeDecisionRepository,
         DemandeJouissanceRepository $demandeJouissanceRepository,
         DecisionCongeRepository $decisionCongeRepository,
+        EcheanceRhService $echeanceRhService,
     ): JsonResponse {
         $bornes = $this->bornesPeriode();
         $traites = $this->bucketsVides(['approuvees', 'refusees']);
@@ -130,6 +149,7 @@ class DashboardController extends AbstractController
             ],
             'traites' => $traites,
             'decisionsValides' => $decisionCongeRepository->count([]),
+            'decisionsExpirantes' => $echeanceRhService->calculerDecisions(),
         ]);
     }
 
@@ -138,6 +158,7 @@ class DashboardController extends AbstractController
     public function cartesProfessionnelles(
         DemandeCarteProRepository $demandeCarteProRepository,
         CarteProfessionnelleRepository $carteProfessionnelleRepository,
+        EcheanceRhService $echeanceRhService,
     ): JsonResponse {
         $bornes = $this->bornesPeriode();
         $traites = $this->bucketsVides(['approuvees', 'refusees']);
@@ -149,18 +170,12 @@ class DashboardController extends AbstractController
             $this->accumulerTraitement($traites, $demande->getDateTraitement(), 'refusees', $bornes);
         }
 
-        $dansUnMois = (new \DateTimeImmutable('today'))->modify('+1 month');
-        $cartesValides = $carteProfessionnelleRepository->findBy(['statut' => StatutCarteProfessionnelle::VALIDE]);
-
         return $this->json([
             'enAttente' => $demandeCarteProRepository->count(['statut' => StatutDemandeCartePro::EN_ATTENTE]),
             'transmises' => $demandeCarteProRepository->count(['statut' => StatutDemandeCartePro::TRANSMISE]),
             'traites' => $traites,
-            'cartesValides' => \count($cartesValides),
-            'cartesExpirantBientot' => \count(array_filter(
-                $cartesValides,
-                fn ($carte) => $carte->getDateExpiration() && $carte->getDateExpiration() <= $dansUnMois,
-            )),
+            'cartesValides' => $carteProfessionnelleRepository->count(['statut' => StatutCarteProfessionnelle::VALIDE]),
+            'cartesExpirantBientot' => $echeanceRhService->calculerCartes(),
         ]);
     }
 

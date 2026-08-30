@@ -1,5 +1,8 @@
 <app-page-header title="Décisions de congé" subtitle="Décisions de congé délivrées au personnel.">
   <a routerLink="/conges" class="btn btn-outline-secondary btn-sm">Congés</a>
+  <a [href]="exportCsvUrl()" target="_blank" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-file-earmark-spreadsheet"></i> Exporter CSV
+  </a>
   <a routerLink="/conges/decisions/new" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg"></i> Nouvelle décision
   </a>

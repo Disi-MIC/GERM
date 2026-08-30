@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
@@ -37,6 +38,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     normalizationContext: ['groups' => ['api:read']],
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['valideeParAdminRh'])]
+#[ApiFilter(SearchFilter::class, properties: ['personnel' => 'exact'])]
 class CarteProfessionnelle
 {
     #[ORM\Id]

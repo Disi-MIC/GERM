@@ -12,6 +12,10 @@ export class CongeApiService {
     return this.http.get<Conge[]>(`${API_BASE}/conges`);
   }
 
+  getByPersonnel(personnelId: number): Observable<Conge[]> {
+    return this.http.get<Conge[]>(`${API_BASE}/conges`, { params: { personnel: personnelId } });
+  }
+
   getOne(id: number): Observable<Conge> {
     return this.http.get<Conge>(`${API_BASE}/conges/${id}`);
   }

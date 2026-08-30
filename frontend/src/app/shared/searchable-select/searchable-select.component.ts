@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, forwardRef, Input, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, forwardRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface SearchableSelectOption {
@@ -29,7 +29,7 @@ export interface SearchableSelectOption {
     },
   ],
 })
-export class SearchableSelectComponent implements ControlValueAccessor {
+export class SearchableSelectComponent implements ControlValueAccessor, OnChanges {
   @Input({ required: true }) options: SearchableSelectOption[] = [];
   @Input() placeholder = 'Rechercher...';
   /** Libellé de l'option "vide" (ex. "Aucune", "Sélectionner...") — omis si non fourni (champ obligatoire sans option vide). */
@@ -52,6 +52,20 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   writeValue(value: unknown): void {
     this.valeur = value;
     this.recherche = this.labelPour(value);
+  }
+
+  /**
+   * Si `options` arrive après writeValue() (cas courant : valeur poussée par
+   * patchValue() dès ngOnInit — ex. préremplissage par query param — pendant
+   * que la liste se charge encore de façon asynchrone), le libellé résolu à
+   * ce moment-là était vide. Une fois les options disponibles, on
+   * resynchronise l'affichage — jamais pendant que le menu est ouvert, pour
+   * ne pas écraser une recherche en cours de saisie.
+   */
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['options'] && !this.ouvert) {
+      this.recherche = this.labelPour(this.valeur);
+    }
   }
 
   registerOnChange(fn: (value: unknown) => void): void {

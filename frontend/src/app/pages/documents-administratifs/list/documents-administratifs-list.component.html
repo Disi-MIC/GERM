@@ -1,4 +1,7 @@
 <app-page-header title="Documents administratifs" subtitle="Documents administratifs du personnel.">
+  <a [href]="exportCsvUrl()" target="_blank" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-file-earmark-spreadsheet"></i> Exporter CSV
+  </a>
   <a routerLink="/documents-administratifs/new" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg"></i> Nouveau document
   </a>

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
@@ -34,6 +34,7 @@ export class DocumentAdministratifFormComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly api: DocumentsAdministratifsApiService,
     private readonly personnelApi: PersonnelApiService,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
 
@@ -42,6 +43,12 @@ export class DocumentAdministratifFormComponent implements OnInit {
     this.personnelApi.getTypesContrat().subscribe((valeurs) => {
       this.typesDocument = valeurs.filter((v) => v.categorie === 'type-document');
     });
+
+    // Préremplissage depuis le dossier agent : /documents-administratifs/new?personnel=id.
+    const personnelParam = this.route.snapshot.queryParamMap.get('personnel');
+    if (personnelParam) {
+      this.form.patchValue({ personnel: Number(personnelParam) });
+    }
   }
 
   get personnelOptions(): SearchableSelectOption[] {

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ChartData } from 'chart.js';
 import { PanelComponent } from '../../shared/panel/panel.component';
 import { StatTileComponent } from '../../shared/stat-tile/stat-tile.component';
@@ -19,7 +20,7 @@ const LABELS_PERIODE: Record<PeriodeKey, string> = {
 @Component({
   selector: 'app-dashboard-cartes-professionnelles',
   standalone: true,
-  imports: [StatTileComponent, PanelComponent, ChartComponent],
+  imports: [RouterLink, StatTileComponent, PanelComponent, ChartComponent],
   templateUrl: './dashboard-cartes-professionnelles.component.html',
 })
 export class DashboardCartesProfessionnellesComponent implements OnInit {

@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -27,6 +29,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     security: "is_granted('ROLE_RH_CONGE')",
     normalizationContext: ['groups' => ['api:read']],
 )]
+#[ApiFilter(SearchFilter::class, properties: ['personnel' => 'exact'])]
 class Conge
 {
     #[ORM\Id]

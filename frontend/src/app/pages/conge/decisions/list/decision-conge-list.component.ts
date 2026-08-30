@@ -50,6 +50,10 @@ export class DecisionCongeListComponent implements OnInit {
     this.decisionEnApercu = decision;
   }
 
+  exportCsvUrl(): string {
+    return this.api.exportCsvUrl();
+  }
+
   agentLabel(decision: DecisionConge): string {
     if (typeof decision.personnel === 'string') {
       return decision.personnel;

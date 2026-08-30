@@ -12,6 +12,10 @@ export class DecisionCongeApiService {
     return this.http.get<DecisionConge[]>(`${API_BASE}/decisions-conge`);
   }
 
+  getByPersonnel(personnelId: number): Observable<DecisionConge[]> {
+    return this.http.get<DecisionConge[]>(`${API_BASE}/decisions-conge`, { params: { personnel: personnelId } });
+  }
+
   getOne(id: number): Observable<DecisionConge> {
     return this.http.get<DecisionConge>(`${API_BASE}/decisions-conge/${id}`);
   }
@@ -26,5 +30,9 @@ export class DecisionCongeApiService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${API_BASE}/decisions-conge/${id}`);
+  }
+
+  exportCsvUrl(): string {
+    return `${API_BASE}/decisions-conge/export.csv`;
   }
 }

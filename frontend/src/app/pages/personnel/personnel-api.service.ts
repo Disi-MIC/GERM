@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
+import { HistoriqueChangementPersonnel } from '../../core/models/historique-changement-personnel.model';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../core/models/personnel.model';
 
 @Injectable({ providedIn: 'root' })
@@ -44,5 +45,15 @@ export class PersonnelApiService {
 
   getTypesContrat(): Observable<ListeValeurRef[]> {
     return this.http.get<ListeValeurRef[]>(`${API_BASE}/liste_valeurs.json`);
+  }
+
+  exportCsvUrl(): string {
+    return `${API_BASE}/personnels/export.csv`;
+  }
+
+  getHistoriqueChangements(personnelId: number): Observable<HistoriqueChangementPersonnel[]> {
+    return this.http.get<HistoriqueChangementPersonnel[]>(`${API_BASE}/historiques-changement-personnel`, {
+      params: { personnel: personnelId },
+    });
   }
 }

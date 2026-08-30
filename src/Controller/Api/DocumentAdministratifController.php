@@ -4,10 +4,12 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\DocumentAdministratif;
+use App\Repository\DocumentAdministratifRepository;
 use App\Repository\ListeValeurRepository;
 use App\Repository\PersonnelRepository;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -75,6 +77,42 @@ class DocumentAdministratifController extends AbstractController
         $this->em->flush();
 
         return $this->json($document, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+    }
+
+    /** Export CSV du registre des documents administratifs — même logique que PersonnelController::exportCsv(). */
+    // priority > 0 : même raison que PersonnelController::exportCsv().
+    #[Route('/api/documents-administratifs/export.csv', name: 'api_document_administratif_export_csv', methods: ['GET'], priority: 10)]
+    public function exportCsv(DocumentAdministratifRepository $documentRepository): StreamedResponse
+    {
+        $response = new StreamedResponse(function () use ($documentRepository) {
+            $sortie = fopen('php://output', 'w');
+            fwrite($sortie, "\xEF\xBB\xBF");
+
+            fputcsv($sortie, [
+                'Agent', 'Type', 'Libellé', 'Date du document', 'Date d\'expiration', 'Observations',
+            ], ';');
+
+            foreach ($documentRepository->findAll() as $document) {
+                fputcsv($sortie, [
+                    $document->getPersonnel()?->getNomComplet() ?? '',
+                    $document->getType()?->getLibelle() ?? '',
+                    $document->getLibelle(),
+                    $document->getDateDocument()?->format('d/m/Y') ?? '',
+                    $document->getDateExpiration()?->format('d/m/Y') ?? '',
+                    $document->getObservations() ?? '',
+                ], ';');
+            }
+
+            fclose($sortie);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'documents-administratifs.csv'),
+        );
+
+        return $response;
     }
 
     #[Route('/api/documents-administratifs/{id}', name: 'api_document_administratif_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]

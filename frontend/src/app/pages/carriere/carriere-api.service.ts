@@ -12,6 +12,12 @@ export class CarriereApiService {
     return this.http.get<HistoriqueAffectation[]>(`${API_BASE}/historique-affectations`);
   }
 
+  getByPersonnel(personnelId: number): Observable<HistoriqueAffectation[]> {
+    return this.http.get<HistoriqueAffectation[]>(`${API_BASE}/historique-affectations`, {
+      params: { personnel: personnelId },
+    });
+  }
+
   create(mouvement: HistoriqueAffectation): Observable<HistoriqueAffectation> {
     return this.http.post<HistoriqueAffectation>(`${API_BASE}/historique-affectations`, mouvement);
   }

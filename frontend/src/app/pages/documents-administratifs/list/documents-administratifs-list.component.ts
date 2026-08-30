@@ -70,6 +70,10 @@ export class DocumentsAdministratifsListComponent implements OnInit {
     return this.api.fichierUrl(id);
   }
 
+  exportCsvUrl(): string {
+    return this.api.exportCsvUrl();
+  }
+
   /** Repère les documents à durée de validité (CNI, passeport...) proches de l'expiration ou déjà expirés. */
   badgeExpiration(document: DocumentAdministratif): { texte: string; classe: string } | null {
     if (!document.dateExpiration) {

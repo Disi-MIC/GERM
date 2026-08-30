@@ -97,6 +97,10 @@ export class CarteProListComponent implements OnInit {
     return typeof carte.personnel === 'string' ? carte.personnel : this.nomComplet(carte.personnel);
   }
 
+  exportCsvUrl(): string {
+    return this.api.exportCsvUrl();
+  }
+
   private nomComplet(personnel: Personnel): string {
     return personnel.nomComplet ?? `${personnel.prenom} ${personnel.nom}`;
   }

@@ -12,6 +12,13 @@ export interface DashboardPersonnel {
   services: RepartitionRef[];
   filtreDirection: number | null;
   filtreService: number | null;
+  documentsExpirants: { enRetard: EcheanceDocument[]; aVenir: EcheanceDocument[] };
+  structureIncomplete: {
+    servicesSansResponsable: { serviceId: number; nom: string; direction: string }[];
+    directionsSansDirecteur: { directionId: number; nom: string }[];
+  };
+  // null si l'utilisateur n'a pas ROLE_RH_RESPONSABLE (accès réservé, comme Delegation).
+  delegationsExpirantes: { enRetard: EcheanceDelegation[]; aVenir: EcheanceDelegation[] } | null;
 }
 
 // Compteurs par période cumulative : aujourd'hui ⊆ semaine ⊆ mois ⊆ total.
@@ -31,6 +38,7 @@ export interface DashboardConges {
   enAttente: { decisions: number; jouissances: number };
   traites: PeriodeTraitement<CompteurApprouveesRefusees>;
   decisionsValides: number;
+  decisionsExpirantes: { enRetard: EcheanceDecision[]; aVenir: EcheanceDecision[] };
 }
 
 export interface DashboardCartesProfessionnelles {
@@ -38,7 +46,44 @@ export interface DashboardCartesProfessionnelles {
   transmises: number;
   traites: PeriodeTraitement<CompteurApprouveesRefusees>;
   cartesValides: number;
-  cartesExpirantBientot: number;
+  cartesExpirantBientot: { enRetard: EcheanceCarte[]; aVenir: EcheanceCarte[] };
+}
+
+export interface EcheanceDocument {
+  documentId: number;
+  personnelId: number | null;
+  personnel: string;
+  libelle: string;
+  type: string;
+  echeance: string;
+  jours: number;
+}
+
+export interface EcheanceCarte {
+  carteId: number;
+  personnelId: number | null;
+  personnel: string;
+  numero: string;
+  echeance: string;
+  jours: number;
+}
+
+export interface EcheanceDelegation {
+  delegationId: number;
+  delegant: string;
+  delegataire: string;
+  role: string;
+  echeance: string;
+  jours: number;
+}
+
+export interface EcheanceDecision {
+  decisionId: number;
+  personnelId: number | null;
+  personnel: string;
+  numeroDecision: string;
+  echeance: string;
+  jours: number;
 }
 
 export interface CompteurResolusRefuses {

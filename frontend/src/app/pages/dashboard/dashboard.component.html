@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <div class="row g-3">
+  <div class="row g-3 mb-4">
     <div class="col-md-6">
       <app-panel title="Répartition par direction" icon="bi-building">
         @if (chartParDirection.labels && chartParDirection.labels.length > 0) {
@@ -56,4 +56,88 @@
       </app-panel>
     </div>
   </div>
+
+  @if (data.structureIncomplete.servicesSansResponsable.length > 0 || data.structureIncomplete.directionsSansDirecteur.length > 0) {
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <app-panel title="Services sans responsable" icon="bi-person-x" titleColor="warning">
+          @for (s of data.structureIncomplete.servicesSansResponsable; track s.serviceId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div class="small fw-semibold">{{ s.nom }} <span class="text-muted fw-normal">({{ s.direction }})</span></div>
+              <a [routerLink]="['/services', s.serviceId]" class="btn btn-sm btn-outline-warning">Désigner</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Tous les services ont un responsable.</p>
+          }
+        </app-panel>
+      </div>
+
+      <div class="col-md-6">
+        <app-panel title="Directions sans directeur" icon="bi-person-x" titleColor="warning">
+          @for (d of data.structureIncomplete.directionsSansDirecteur; track d.directionId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div class="small fw-semibold">{{ d.nom }}</div>
+              <a [routerLink]="['/directions', d.directionId]" class="btn btn-sm btn-outline-warning">Désigner</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Toutes les directions ont un directeur.</p>
+          }
+        </app-panel>
+      </div>
+    </div>
+  }
+
+  @if (data.documentsExpirants.enRetard.length > 0 || data.documentsExpirants.aVenir.length > 0) {
+    <div class="row g-3">
+      <div class="col-md-6">
+        <app-panel title="Documents expirés" icon="bi-exclamation-triangle" titleColor="danger">
+          @for (echeance of data.documentsExpirants.enRetard; track echeance.documentId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div class="small fw-semibold">{{ echeance.libelle }} — {{ echeance.personnel }}</div>
+                <div class="small text-danger">Expiré depuis {{ echeance.jours }} jour{{ echeance.jours > 1 ? 's' : '' }} ({{ echeance.echeance }})</div>
+              </div>
+              <a routerLink="/documents-administratifs" class="btn btn-sm btn-outline-danger">Voir</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Aucun document expiré.</p>
+          }
+        </app-panel>
+      </div>
+
+      <div class="col-md-6">
+        <app-panel title="Documents expirant bientôt" icon="bi-clock-history" titleColor="warning">
+          @for (echeance of data.documentsExpirants.aVenir; track echeance.documentId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div class="small fw-semibold">{{ echeance.libelle }} — {{ echeance.personnel }}</div>
+                <div class="small text-muted">Expire dans {{ echeance.jours }} jour{{ echeance.jours > 1 ? 's' : '' }} ({{ echeance.echeance }})</div>
+              </div>
+              <a routerLink="/documents-administratifs" class="btn btn-sm btn-outline-warning">Voir</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Aucune échéance sous 30 jours.</p>
+          }
+        </app-panel>
+      </div>
+    </div>
+  }
+
+  @if (data.delegationsExpirantes && (data.delegationsExpirantes.enRetard.length > 0 || data.delegationsExpirantes.aVenir.length > 0)) {
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <app-panel title="Délégations expirant bientôt" icon="bi-person-lines-fill" titleColor="warning">
+          @for (echeance of data.delegationsExpirantes.aVenir; track echeance.delegationId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div class="small fw-semibold">{{ echeance.role }} — {{ echeance.delegant }} → {{ echeance.delegataire }}</div>
+                <div class="small text-muted">Expire dans {{ echeance.jours }} jour{{ echeance.jours > 1 ? 's' : '' }} ({{ echeance.echeance }})</div>
+              </div>
+              <a routerLink="/delegations" class="btn btn-sm btn-outline-warning">Voir</a>
+            </div>
+          }
+        </app-panel>
+      </div>
+    </div>
+  }
 }

@@ -15,4 +15,23 @@ class ServiceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Service::class);
     }
+
+    /**
+     * Services actifs sans responsable désigné — signalé au tableau de bord
+     * Personnel comme un défaut de complétude de l'organigramme (voir
+     * Service::$responsable). Un service inactif (archivé) n'a plus vocation
+     * à être piloté, volontairement exclu.
+     *
+     * @return Service[]
+     */
+    public function findSansResponsable(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->leftJoin('s.direction', 'd')->addSelect('d')
+            ->andWhere('s.responsable IS NULL')
+            ->andWhere('s.actif != false')
+            ->orderBy('s.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

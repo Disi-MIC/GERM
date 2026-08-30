@@ -4,9 +4,12 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\DecisionConge;
+use App\Repository\DecisionCongeRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -44,6 +47,43 @@ class DecisionCongeController extends AbstractController
         $this->em->flush();
 
         return $this->json($decision, JsonResponse::HTTP_CREATED, [], ['groups' => ['api:read']]);
+    }
+
+    /** Export CSV du registre des décisions de congé — même logique que PersonnelController::exportCsv(). */
+    // priority > 0 : même raison que PersonnelController::exportCsv().
+    #[Route('/api/decisions-conge/export.csv', name: 'api_decision_conge_export_csv', methods: ['GET'], priority: 10)]
+    public function exportCsv(DecisionCongeRepository $decisionRepository): StreamedResponse
+    {
+        $response = new StreamedResponse(function () use ($decisionRepository) {
+            $sortie = fopen('php://output', 'w');
+            fwrite($sortie, "\xEF\xBB\xBF");
+
+            fputcsv($sortie, [
+                'Numéro de décision', 'Agent', 'Date d\'octroi', 'Date d\'expiration',
+                'Nombre de jours', 'Générée par',
+            ], ';');
+
+            foreach ($decisionRepository->findAll() as $decision) {
+                fputcsv($sortie, [
+                    $decision->getNumeroDecision(),
+                    $decision->getPersonnel()?->getNomComplet() ?? '',
+                    $decision->getDateDecision()?->format('d/m/Y') ?? '',
+                    $decision->getDateExpiration()?->format('d/m/Y') ?? '',
+                    $decision->getNombreJours() ?? '',
+                    $decision->getGenereeParNom() ?? '',
+                ], ';');
+            }
+
+            fclose($sortie);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'decisions-conge.csv'),
+        );
+
+        return $response;
     }
 
     #[Route('/api/decisions-conge/{id}', name: 'api_decision_conge_update', methods: ['PUT'], requirements: ['id' => '\d+'])]

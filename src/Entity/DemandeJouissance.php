@@ -20,9 +20,10 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * Pour un congé annuel, s'appuie obligatoirement sur une DecisionConge encore valide
  * (une même décision peut être consommée par plusieurs jouissances successives) ;
  * pour les autres types (maladie, maternité/paternité, sans solde, autre), aucune
- * décision n'est nécessaire. En attendant un espace agent en libre-service, ces
- * demandes sont saisies et traitées par le superadmin. Approuver crée le Conge
- * effectif correspondant ; refuser la laisse comme trace, sans congé.
+ * décision n'est nécessaire. Déposée en libre-service par l'agent lui-même (voir
+ * Api/MeDemandesController::creerDemandeJouissance()) ou saisie directement par le
+ * RH Congé. Approuver crée le Conge effectif correspondant ; refuser la laisse
+ * comme trace, sans congé.
  *
  * Exposée en lecture seule côté API : les écritures (dont le traitement
  * approuver/refuser, qui crée le Conge) passent par

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ChartData } from 'chart.js';
 import { PanelComponent } from '../../shared/panel/panel.component';
 import { StatTileComponent } from '../../shared/stat-tile/stat-tile.component';
@@ -11,7 +12,7 @@ import { DashboardApiService } from './dashboard-api.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, StatTileComponent, PanelComponent, ChartComponent],
+  imports: [FormsModule, RouterLink, StatTileComponent, PanelComponent, ChartComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {

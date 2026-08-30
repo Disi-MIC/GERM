@@ -63,6 +63,10 @@ export class PersonnelListComponent implements OnInit {
     return typeof personnel.service === 'string' ? personnel.service : personnel.service.nom;
   }
 
+  exportCsvUrl(): string {
+    return this.api.exportCsvUrl();
+  }
+
   badgeClasseStatut(statut: string): string {
     return COULEURS_STATUT[statut] ?? 'secondary';
   }

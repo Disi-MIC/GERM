@@ -21,14 +21,14 @@
     <div class="col-md-3 col-6">
       <app-stat-tile
         icon="bi-exclamation-triangle"
-        [color]="data.cartesExpirantBientot > 0 ? 'warning' : 'success'"
-        [value]="data.cartesExpirantBientot"
-        label="Expirant sous 1 mois"
+        [color]="data.cartesExpirantBientot.enRetard.length + data.cartesExpirantBientot.aVenir.length > 0 ? 'warning' : 'success'"
+        [value]="data.cartesExpirantBientot.enRetard.length + data.cartesExpirantBientot.aVenir.length"
+        label="Expirant sous 60 jours"
       />
     </div>
   </div>
 
-  <app-panel title="Demandes traitées" icon="bi-bar-chart">
+  <app-panel title="Demandes traitées" icon="bi-bar-chart" class="d-block mb-4">
     <div panelActions>
       <div class="btn-group btn-group-sm">
         @for (p of periodes; track p) {
@@ -66,4 +66,40 @@
       </div>
     </div>
   </app-panel>
+
+  @if (data.cartesExpirantBientot.enRetard.length > 0 || data.cartesExpirantBientot.aVenir.length > 0) {
+    <div class="row g-3">
+      <div class="col-md-6">
+        <app-panel title="Cartes expirées" icon="bi-exclamation-triangle" titleColor="danger">
+          @for (echeance of data.cartesExpirantBientot.enRetard; track echeance.carteId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div class="small fw-semibold">{{ echeance.numero }} — {{ echeance.personnel }}</div>
+                <div class="small text-danger">Expirée depuis {{ echeance.jours }} jour{{ echeance.jours > 1 ? 's' : '' }} ({{ echeance.echeance }})</div>
+              </div>
+              <a [routerLink]="['/cartes-professionnelles', echeance.carteId]" class="btn btn-sm btn-outline-danger">Voir</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Aucune carte expirée.</p>
+          }
+        </app-panel>
+      </div>
+
+      <div class="col-md-6">
+        <app-panel title="Cartes expirant bientôt" icon="bi-clock-history" titleColor="warning">
+          @for (echeance of data.cartesExpirantBientot.aVenir; track echeance.carteId) {
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+              <div>
+                <div class="small fw-semibold">{{ echeance.numero }} — {{ echeance.personnel }}</div>
+                <div class="small text-muted">Expire dans {{ echeance.jours }} jour{{ echeance.jours > 1 ? 's' : '' }} ({{ echeance.echeance }})</div>
+              </div>
+              <a [routerLink]="['/cartes-professionnelles', echeance.carteId]" class="btn btn-sm btn-outline-warning">Voir</a>
+            </div>
+          } @empty {
+            <p class="text-muted small mb-0">Aucune échéance sous 60 jours.</p>
+          }
+        </app-panel>
+      </div>
+    </div>
+  }
 }

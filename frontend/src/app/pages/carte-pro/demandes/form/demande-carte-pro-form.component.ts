@@ -1,7 +1,7 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DemandeCartePro, TypeDemandeCartePro } from '../../../../core/models/demande-carte-pro.model';
 import { Personnel } from '../../../../core/models/personnel.model';
 import { PersonnelApiService } from '../../../personnel/personnel-api.service';
@@ -37,6 +37,7 @@ export class DemandeCarteProFormComponent implements OnInit {
     private readonly api: DemandeCarteProApiService,
     private readonly carteApi: CarteProApiService,
     private readonly personnelApi: PersonnelApiService,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
 
@@ -50,6 +51,12 @@ export class DemandeCarteProFormComponent implements OnInit {
       );
       this.form.controls.carteReference.setValue(null);
     });
+
+    // Préremplissage depuis le dossier agent : /cartes-professionnelles/demandes/new?personnel=id.
+    const personnelParam = this.route.snapshot.queryParamMap.get('personnel');
+    if (personnelParam) {
+      this.form.patchValue({ personnel: Number(personnelParam) });
+    }
   }
 
   onFichierChange(event: Event): void {
