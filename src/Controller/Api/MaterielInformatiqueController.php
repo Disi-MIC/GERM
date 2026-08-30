@@ -21,9 +21,9 @@ use App\Repository\PersonnelRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
+use App\Service\QrTokenService;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\Builder\Builder;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -70,7 +70,6 @@ class MaterielInformatiqueController extends AbstractController
         private readonly PersonnelRepository $personnelRepository,
         private readonly NotificationService $notificationService,
         private readonly FileStorage $fileStorage,
-        #[Autowire('%env(FRONTEND_URL)%')] private readonly string $frontendUrl,
     ) {
     }
 
@@ -344,24 +343,50 @@ class MaterielInformatiqueController extends AbstractController
     }
 
     /**
-     * QR code encodant l'URL de la fiche du matériel (page Angular
-     * `/materiel-informatique/{id}`, protégée par les mêmes guards de rôle
-     * qu'un accès classique) — imprimé sur une étiquette collée sur le poste
-     * (voir la vue Étiquette côté Angular) pour qu'un technicien y accède
-     * sans chercher/taper le n° d'inventaire.
+     * QR code encodant un jeton chiffré (voir QrTokenService), pas l'id en
+     * clair ni une URL directement exploitable — un scan hors de l'app GERM
+     * (appareil photo classique, autre lecteur QR) ne révèle donc qu'un
+     * jeton illisible dans un schéma d'URL personnalisé (germ://), pas de
+     * lien http(s) cliquable ni d'information sur le matériel. Seul le
+     * scanner intégré à l'app (Angular, via @capacitor-mlkit/barcode-scanning)
+     * sait résoudre ce jeton, via resoudreQrcode() ci-dessous — qui reste de
+     * toute façon soumis aux mêmes contrôles de rôle que le reste de ce
+     * contrôleur. Imprimé sur une étiquette collée sur le poste (voir la vue
+     * Étiquette côté Angular).
      */
     #[Route('/api/materiels-informatiques/{id}/qrcode', name: 'api_materiel_informatique_qrcode', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function qrcode(MaterielInformatique $materiel): Response
+    public function qrcode(MaterielInformatique $materiel, QrTokenService $qrTokenService): Response
     {
-        $url = rtrim($this->frontendUrl, '/').'/materiel-informatique/'.$materiel->getId();
+        $data = 'germ://materiel/'.$qrTokenService->encoder($materiel->getId());
 
-        $resultat = (new Builder())->build(data: $url, size: 300, margin: 10);
+        $resultat = (new Builder())->build(data: $data, size: 300, margin: 10);
 
         $response = new Response($resultat->getString());
         $response->headers->set('Content-Type', $resultat->getMimeType());
         $response->headers->set('Cache-Control', 'private, max-age=86400');
 
         return $response;
+    }
+
+    /**
+     * Résolution d'un jeton d'étiquette QR scanné par l'app (voir qrcode()
+     * ci-dessus) — appelée par le scanner Angular après capture, jamais par
+     * une navigation directe. Jeton invalide/altéré/forgé → 404, comme un
+     * matériel introuvable : pas de distinction donnée à l'appelant entre
+     * "jeton invalide" et "matériel supprimé depuis", pour ne rien révéler
+     * sur la validité du format.
+     */
+    #[Route('/api/materiels-informatiques/resoudre-qrcode/{token}', name: 'api_materiel_informatique_resoudre_qrcode', methods: ['GET'])]
+    public function resoudreQrcode(string $token, QrTokenService $qrTokenService, MaterielInformatiqueRepository $materielRepository): JsonResponse
+    {
+        $materielId = $qrTokenService->decoder($token);
+        $materiel = $materielId ? $materielRepository->find($materielId) : null;
+
+        if (!$materiel) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->json(['materielId' => $materiel->getId()]);
     }
 
     /**

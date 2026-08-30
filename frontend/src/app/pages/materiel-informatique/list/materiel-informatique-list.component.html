@@ -1,4 +1,9 @@
 <app-page-header title="Parc informatique" subtitle="Registre du matériel informatique du ministère.">
+  @if (estNatif) {
+    <a routerLink="/materiel-informatique/scanner" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-qr-code-scan"></i> Scanner une étiquette
+    </a>
+  }
   <a [href]="exportCsvUrl()" target="_blank" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-file-earmark-spreadsheet"></i> Exporter CSV
   </a>

@@ -19,6 +19,12 @@ export const MATERIEL_INFORMATIQUE_ROUTES: Routes = [
       import('./affectation/affectation-materiel.component').then((m) => m.AffectationMaterielComponent),
   },
   {
+    // Même raison que 'affectation' ci-dessus.
+    path: 'scanner',
+    loadComponent: () =>
+      import('./scanner/materiel-informatique-scanner.component').then((m) => m.MaterielInformatiqueScannerComponent),
+  },
+  {
     path: ':id',
     loadComponent: () =>
       import('./detail/materiel-informatique-detail.component').then((m) => m.MaterielInformatiqueDetailComponent),

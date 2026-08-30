@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel, ServiceRef } from '../../../core/models/personnel.model';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
@@ -38,6 +39,7 @@ export class MaterielInformatiqueListComponent implements OnInit {
   compteurs: Record<string, number> = {};
   readonly etats = Object.keys(BADGES_ETAT);
   readonly labelsEtat = LABELS_ETAT;
+  readonly estNatif = Capacitor.isNativePlatform();
 
   /** Sélection pour les actions groupées (voir bloc "sélectionnés" du template) — ids, pas objets, pour survivre à un rechargement de `materiels`. */
   selectedIds = new Set<number>();

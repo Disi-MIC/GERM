@@ -1,0 +1,19 @@
+<app-page-header title="Scanner une étiquette"></app-page-header>
+
+@if (!estNatif) {
+  <div class="alert alert-warning">Le scanner de QR code n'est disponible que dans l'application mobile.</div>
+  <a routerLink="/materiel-informatique" class="btn btn-outline-secondary">Retour</a>
+} @else {
+  @if (scanning) {
+    <p class="text-muted">Ouverture de l'appareil photo...</p>
+  }
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-primary" (click)="scanner()">
+        <i class="bi bi-qr-code-scan"></i> Réessayer
+      </button>
+      <a routerLink="/materiel-informatique" class="btn btn-outline-secondary">Retour</a>
+    </div>
+  }
+}

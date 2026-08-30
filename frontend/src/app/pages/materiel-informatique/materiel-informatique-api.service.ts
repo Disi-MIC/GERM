@@ -104,4 +104,9 @@ export class MaterielInformatiqueApiService {
       affecteA: personnelId,
     });
   }
+
+  /** Résout le jeton chiffré d'une étiquette QR scannée (voir QrTokenService côté serveur) en identifiant de matériel. */
+  resoudreQrcode(token: string): Observable<{ materielId: number }> {
+    return this.http.get<{ materielId: number }>(`${API_BASE}/materiels-informatiques/resoudre-qrcode/${encodeURIComponent(token)}`);
+  }
 }
