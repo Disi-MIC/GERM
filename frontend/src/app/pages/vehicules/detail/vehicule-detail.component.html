@@ -1,0 +1,330 @@
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else {
+  <app-page-header [title]="vehiculeId ? 'Fiche véhicule' : 'Nouveau véhicule'">
+    @if (vehiculeId) {
+      <a [routerLink]="['/vehicules', vehiculeId, 'carte']" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-credit-card-2-front"></i> Carte du véhicule
+      </a>
+    }
+  </app-page-header>
+
+  @if (error) {
+    <div class="alert alert-danger">{{ error }}</div>
+  }
+
+  @if (vehiculeId && (statutAssurance || statutVisiteTechnique || statutVidange)) {
+    <app-panel class="d-block mb-3" style="max-width: 800px;">
+      <div class="d-flex flex-wrap gap-4">
+        @if (statutAssurance) {
+          <div>
+            <div class="small text-muted">Assurance</div>
+            <span class="status-dot status-dot-{{ statutAssurance.badgeClass }}">{{ statutAssurance.label }}</span>
+          </div>
+        }
+        @if (statutVisiteTechnique) {
+          <div>
+            <div class="small text-muted">Visite technique</div>
+            <span class="status-dot status-dot-{{ statutVisiteTechnique.badgeClass }}">{{ statutVisiteTechnique.label }}</span>
+          </div>
+        }
+        @if (statutVidange) {
+          <div>
+            <div class="small text-muted">Vidange</div>
+            <span class="status-dot status-dot-{{ statutVidange.badgeClass }}">{{ statutVidange.label }}</span>
+          </div>
+        }
+      </div>
+    </app-panel>
+  }
+
+  <app-panel>
+    <form [formGroup]="form" (ngSubmit)="submit()" style="max-width: 800px;">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Immatriculation</label>
+          <input type="text" class="form-control" formControlName="immatriculation" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Type</label>
+          <select class="form-select" formControlName="type">
+            <option [ngValue]="null">Sélectionner...</option>
+            @for (type of typesVehicule; track type.id) {
+              <option [ngValue]="type.id">{{ type.libelle }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Marque</label>
+          <input type="text" class="form-control" formControlName="marque" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Modèle</label>
+          <input type="text" class="form-control" formControlName="modele" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">N° de châssis</label>
+          <input type="text" class="form-control" formControlName="numeroChassis" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Carburant</label>
+          <select class="form-select" formControlName="carburant">
+            <option [ngValue]="null">Non renseigné</option>
+            @for (carburant of carburants; track carburant.value) {
+              <option [ngValue]="carburant.value">{{ carburant.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">État</label>
+          <select class="form-select" formControlName="etat">
+            <option [ngValue]="null">Sélectionner...</option>
+            @for (etat of etatsVehicule; track etat.id) {
+              <option [ngValue]="etat.id">{{ etat.libelle }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Kilométrage</label>
+          <input type="number" class="form-control" formControlName="kilometrage" min="0" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Service / Direction</label>
+          <select class="form-select" formControlName="service">
+            <option [ngValue]="null">Sélectionner...</option>
+            @for (service of services; track service.id) {
+              <option [ngValue]="service.id">{{ service.nom }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Chauffeur affecté</label>
+          <app-searchable-select formControlName="chauffeurAffecte" nullLabel="Non affecté" placeholder="Rechercher un agent..." [options]="personnelOptions" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Date d'acquisition</label>
+          <input type="date" class="form-control" formControlName="dateAcquisition" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Valeur d'acquisition (FCFA)</label>
+          <input type="number" class="form-control" formControlName="valeurAcquisition" min="0" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Assurance jusqu'au</label>
+          <input type="date" class="form-control" formControlName="assuranceJusquau" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Visite technique jusqu'au</label>
+          <input type="date" class="form-control" formControlName="visiteTechniqueJusquau" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Périodicité de vidange (km)</label>
+          <input type="number" class="form-control" formControlName="periodiciteVidangeKm" min="0" placeholder="Ex. 10000" />
+          <div class="form-text">Utilisée pour calculer l'échéance de la prochaine vidange à partir du journal ci-dessous.</div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Observations</label>
+          <textarea class="form-control" rows="2" formControlName="observations"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <i class="bi bi-check-lg"></i> Enregistrer
+        </button>
+        @if (vehiculeId) {
+          <button type="button" class="btn btn-outline-danger" (click)="supprimer()">
+            <i class="bi bi-trash"></i> Supprimer
+          </button>
+        }
+        <a routerLink="/vehicules" class="btn btn-outline-secondary">Annuler</a>
+      </div>
+    </form>
+  </app-panel>
+
+  @if (vehiculeId) {
+    <div class="row g-3 mt-1">
+      <div class="col-md-6">
+        <app-panel title="Vidanges" icon="bi-droplet-half" [noPadding]="true">
+          <a panelActions class="btn btn-sm btn-outline-primary" (click)="ouvrirAjoutVidange()">
+            <i class="bi bi-plus-lg"></i> Ajouter
+          </a>
+          <div class="table-responsive">
+          <table class="table table-hover germ-table-head mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Kilométrage</th>
+                <th>Coût</th>
+                <th>Prestataire</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (vidange of vidanges; track vidange.id) {
+                <tr>
+                  <td>{{ vidange.date | slice: 0 : 10 }}</td>
+                  <td>{{ vidange.kilometrage }} km</td>
+                  <td>{{ vidange.cout ?? '—' }}</td>
+                  <td>{{ vidange.prestataire ?? '—' }}</td>
+                  <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerVidange(vidange)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-3">Aucune vidange journalisée.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          </div>
+        </app-panel>
+      </div>
+
+      <div class="col-md-6">
+        <app-panel title="Bons d'essence" icon="bi-fuel-pump" [noPadding]="true">
+          <a panelActions class="btn btn-sm btn-outline-primary" (click)="ouvrirAjoutBonEssence()">
+            <i class="bi bi-plus-lg"></i> Ajouter
+          </a>
+          <div class="table-responsive">
+          <table class="table table-hover germ-table-head mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Quantité</th>
+                <th>Montant</th>
+                <th>Chauffeur</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (bon of bonsEssence; track bon.id) {
+                <tr>
+                  <td>{{ bon.date | slice: 0 : 10 }}</td>
+                  <td>{{ bon.quantiteLitres ? bon.quantiteLitres + ' L' : '—' }}</td>
+                  <td>{{ bon.montant ?? '—' }}</td>
+                  <td>{{ chauffeurLabel(bon) }}</td>
+                  <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerBonEssence(bon)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-3">Aucun bon d'essence journalisé.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          </div>
+        </app-panel>
+      </div>
+    </div>
+  }
+
+  @if (showAjoutVidange) {
+    <div class="modal-backdrop fade show" (click)="fermerAjoutVidange()"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form [formGroup]="vidangeForm" (ngSubmit)="soumettreVidange()">
+            <div class="modal-header">
+              <h5 class="modal-title">Ajouter une vidange</h5>
+              <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerAjoutVidange()"></button>
+            </div>
+            <div class="modal-body">
+              @if (vidangeError) {
+                <div class="alert alert-danger">{{ vidangeError }}</div>
+              }
+              <div class="mb-3">
+                <label class="form-label">Date</label>
+                <input type="date" class="form-control" formControlName="date" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Kilométrage relevé</label>
+                <input type="number" class="form-control" formControlName="kilometrage" min="0" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Coût (FCFA)</label>
+                <input type="number" class="form-control" formControlName="cout" min="0" />
+              </div>
+              <div class="mb-0">
+                <label class="form-label">Prestataire</label>
+                <input type="text" class="form-control" formControlName="prestataire" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" (click)="fermerAjoutVidange()">Annuler</button>
+              <button type="submit" class="btn btn-primary" [disabled]="vidangeSaving">
+                <i class="bi bi-check-lg"></i> Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showAjoutBonEssence) {
+    <div class="modal-backdrop fade show" (click)="fermerAjoutBonEssence()"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form [formGroup]="bonEssenceForm" (ngSubmit)="soumettreBonEssence()">
+            <div class="modal-header">
+              <h5 class="modal-title">Ajouter un bon d'essence</h5>
+              <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerAjoutBonEssence()"></button>
+            </div>
+            <div class="modal-body">
+              @if (bonEssenceError) {
+                <div class="alert alert-danger">{{ bonEssenceError }}</div>
+              }
+              <div class="mb-3">
+                <label class="form-label">N° du bon</label>
+                <input type="text" class="form-control" formControlName="numero" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Date</label>
+                <input type="date" class="form-control" formControlName="date" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Quantité (litres)</label>
+                <input type="number" class="form-control" formControlName="quantiteLitres" min="0" step="0.1" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Montant (FCFA)</label>
+                <input type="number" class="form-control" formControlName="montant" min="0" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Kilométrage relevé</label>
+                <input type="number" class="form-control" formControlName="kilometrageReleve" min="0" />
+              </div>
+              <div class="mb-0">
+                <label class="form-label">Chauffeur</label>
+                <app-searchable-select formControlName="chauffeur" nullLabel="Non renseigné" placeholder="Rechercher un agent..." [options]="personnelOptions" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" (click)="fermerAjoutBonEssence()">Annuler</button>
+              <button type="submit" class="btn btn-primary" [disabled]="bonEssenceSaving">
+                <i class="bi bi-check-lg"></i> Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+}

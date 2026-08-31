@@ -1,0 +1,53 @@
+<app-page-header title="Parc automobile" subtitle="Registre des véhicules du ministère.">
+  <a routerLink="/vehicules/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> Nouveau véhicule
+  </a>
+</app-page-header>
+
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+  @if (deleteError) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ deleteError }}
+      <button type="button" class="btn-close" (click)="deleteError = null"></button>
+    </div>
+  }
+
+  <app-data-table [rows]="vehicules" [columns]="columns" emptyMessage="Aucun véhicule enregistré." searchPlaceholder="Rechercher un véhicule...">
+    <ng-template appDataTableCell="immatriculation" let-vehicule>{{ vehicule.immatriculation }}</ng-template>
+    <ng-template appDataTableCell="type" let-vehicule>{{ libelle(vehicule.type) }}</ng-template>
+    <ng-template appDataTableCell="marqueModele" let-vehicule>{{ vehicule.marque }} {{ vehicule.modele }}</ng-template>
+    <ng-template appDataTableCell="service" let-vehicule>{{ serviceLabel(vehicule) }}</ng-template>
+    <ng-template appDataTableCell="chauffeur" let-vehicule>{{ chauffeurLabel(vehicule) }}</ng-template>
+    <ng-template appDataTableCell="etat" let-vehicule>
+      <span class="status-dot status-dot-{{ badgeClasseEtat(vehicule) }}">{{ libelle(vehicule.etat) }}</span>
+    </ng-template>
+    <ng-template appDataTableCell="echeances" let-vehicule>
+      <div class="d-flex flex-column gap-1">
+        @if (vehicule.statutAssurance) {
+          <span class="status-dot status-dot-{{ vehicule.statutAssurance.badgeClass }}">Assurance : {{ vehicule.statutAssurance.label }}</span>
+        }
+        @if (vehicule.statutVisiteTechnique) {
+          <span class="status-dot status-dot-{{ vehicule.statutVisiteTechnique.badgeClass }}">Visite technique : {{ vehicule.statutVisiteTechnique.label }}</span>
+        }
+        @if (vehicule.statutVidange) {
+          <span class="status-dot status-dot-{{ vehicule.statutVidange.badgeClass }}">Vidange : {{ vehicule.statutVidange.label }}</span>
+        }
+      </div>
+    </ng-template>
+    <ng-template appDataTableCell="actions" let-vehicule>
+      <a [routerLink]="['/vehicules', vehicule.id, 'carte']" class="btn btn-sm btn-outline-secondary" title="Carte">
+        <i class="bi bi-credit-card-2-front"></i>
+      </a>
+      <a [routerLink]="['/vehicules', vehicule.id]" class="btn btn-sm btn-outline-primary" title="Modifier">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer" (click)="supprimer(vehicule)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </ng-template>
+  </app-data-table>
+}

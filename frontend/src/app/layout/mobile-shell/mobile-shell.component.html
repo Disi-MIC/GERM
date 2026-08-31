@@ -254,6 +254,13 @@
         }
       }
 
+      @if (auth.hasRole('ROLE_SUPERADMIN')) {
+        <div class="mobile-admin-sheet-group">Parc automobile</div>
+        <a routerLink="/vehicules" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenuAdmin()">
+          <i class="bi bi-truck"></i> Véhicules
+        </a>
+      }
+
       <hr />
       <button type="button" class="mobile-plus-logout" (click)="logout()">
         <i class="bi bi-box-arrow-right"></i> Déconnexion

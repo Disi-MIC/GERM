@@ -1,0 +1,37 @@
+@if (loading) {
+  <p class="text-muted">Chargement...</p>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else if (vehicule) {
+  <div class="carte-preview-backdrop" [routerLink]="['/vehicules']"></div>
+  <div class="carte-preview-modal">
+    <div class="carte-preview-header">
+      <div>
+        <h2 class="carte-preview-titre">Carte du véhicule {{ vehicule.immatriculation }}</h2>
+        <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ vehicule.marque }} {{ vehicule.modele }}</span>
+      </div>
+      <a [routerLink]="['/vehicules']" class="carte-preview-fermer" aria-label="Fermer">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    </div>
+
+    @if (pdfUrl) {
+      <div class="carte-preview-pdf-wrap">
+        <iframe [src]="pdfUrl" class="carte-preview-pdf" title="Aperçu de la carte du véhicule"></iframe>
+      </div>
+    }
+
+    <div class="carte-preview-actions">
+      <a [routerLink]="['/vehicules', vehicule.id]" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-pencil"></i> Modifier la fiche
+      </a>
+      <button type="button" class="btn btn-success btn-sm" [disabled]="!pdfUrl" (click)="telecharger()">
+        <i class="bi bi-download"></i> Télécharger
+      </button>
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="!pdfUrl" (click)="imprimer()">
+        <i class="bi bi-printer"></i> Imprimer
+      </button>
+      <a [routerLink]="['/vehicules']" class="btn btn-outline-secondary btn-sm">Fermer</a>
+    </div>
+  </div>
+}

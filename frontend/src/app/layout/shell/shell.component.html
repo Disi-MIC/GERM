@@ -246,6 +246,13 @@
           }
         </div>
       }
+
+      @if (auth.hasRole('ROLE_SUPERADMIN')) {
+        <div class="text-uppercase small text-white-50 px-3 pt-3 pb-1">Parc automobile</div>
+        <a routerLink="/vehicules" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bi bi-truck"></i> Véhicules
+        </a>
+      }
     }
   </nav>
 

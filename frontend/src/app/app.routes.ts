@@ -240,6 +240,15 @@ export const routes: Routes = [
           ),
       },
       {
+        // Réservé au superadmin : aucun rôle dédié au parc automobile
+        // n'existe encore, contrairement au parc informatique/RH (voir
+        // Api/VehiculeController.php côté serveur).
+        path: 'vehicules',
+        canActivate: [roleGuard, adminAccessGuard],
+        data: { roles: ['ROLE_SUPERADMIN'] },
+        loadChildren: () => import('./pages/vehicules/vehicules.routes').then((m) => m.VEHICULES_ROUTES),
+      },
+      {
         path: 'tickets-informatique',
         canActivate: [roleGuard, adminAccessGuard],
         data: { roles: ['ROLE_IT_TICKETS', 'ROLE_IT_RESPONSABLE'] },

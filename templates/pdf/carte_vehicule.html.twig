@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    @page { margin: 24mm 18mm; size: A4 portrait; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #1a2332; }
+
+    .entete { width: 100%; border-collapse: collapse; margin-bottom: 4mm; padding-bottom: 4mm; border-bottom: 2pt solid #1abb9c; }
+    .entete td { vertical-align: middle; }
+    .entete .logo-cell { width: 18mm; }
+    .entete .logo-cell img { width: 16mm; height: auto; }
+    .entete .titre-cell { padding-left: 4mm; }
+    .entete .eyebrow { font-size: 8pt; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+    .entete h1 { font-size: 16pt; margin: 1mm 0 0; color: #1a2332; }
+    .entete .immatriculation { text-align: right; font-size: 14pt; font-weight: bold; border: 1.5pt solid #1a2332; border-radius: 2mm; padding: 2mm 4mm; }
+
+    h2.section-titre {
+        font-size: 9.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #17967f;
+        border-bottom: 0.75pt solid #d1d5db;
+        padding-bottom: 1.5mm;
+        margin: 6mm 0 3mm;
+    }
+
+    table.infos { width: 100%; border-collapse: collapse; }
+    table.infos td { padding: 1.5mm 2mm; vertical-align: top; width: 25%; }
+    table.infos .label { font-size: 7.5pt; color: #6b7280; text-transform: uppercase; }
+    table.infos .valeur { font-size: 10pt; font-weight: bold; }
+
+    table.echeances { width: 100%; border-collapse: collapse; }
+    table.echeances td { padding: 2mm; border: 0.5pt solid #e5e7eb; vertical-align: top; width: 33.33%; }
+    table.echeances .label { font-size: 7.5pt; color: #6b7280; text-transform: uppercase; margin-bottom: 1mm; }
+    table.echeances .valeur { font-size: 9.5pt; }
+    .badge { display: inline-block; padding: 0.8mm 2.5mm; border-radius: 3mm; font-size: 8pt; font-weight: bold; color: #fff; margin-top: 1mm; }
+    .badge-success { background: #1abb9c; }
+    .badge-warning { background: #f8ac59; }
+    .badge-danger { background: #e04c4c; }
+    .badge-secondary { background: #9aa2ab; }
+
+    table.journal { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    table.journal th { text-align: left; background: #f3f4f6; padding: 1.5mm 2mm; font-size: 7.5pt; text-transform: uppercase; color: #6b7280; }
+    table.journal td { padding: 1.5mm 2mm; border-bottom: 0.5pt solid #e5e7eb; }
+    .vide { color: #9aa2ab; font-style: italic; padding: 2mm; }
+
+    .pied { margin-top: 8mm; padding-top: 2mm; border-top: 0.5pt solid #e5e7eb; font-size: 7.5pt; color: #9aa2ab; }
+</style>
+</head>
+<body>
+    <table class="entete">
+        <tr>
+            {% if logoDataUri %}
+                <td class="logo-cell"><img src="{{ logoDataUri }}" alt="MinCom"></td>
+            {% endif %}
+            <td class="titre-cell">
+                <div class="eyebrow">République du Sénégal — Ministère de l'Industrie et du Commerce</div>
+                <h1>Carte du véhicule</h1>
+            </td>
+            <td class="immatriculation">{{ vehicule.immatriculation }}</td>
+        </tr>
+    </table>
+
+    <h2 class="section-titre">Identification</h2>
+    <table class="infos">
+        <tr>
+            <td><div class="label">Type</div><div class="valeur">{{ vehicule.type ? vehicule.type.libelle : '—' }}</div></td>
+            <td><div class="label">Marque / Modèle</div><div class="valeur">{{ vehicule.marque }} {{ vehicule.modele }}</div></td>
+            <td><div class="label">Carburant</div><div class="valeur">{{ vehicule.carburant ? vehicule.carburant.label : '—' }}</div></td>
+            <td><div class="label">État</div><div class="valeur">{{ vehicule.etat ? vehicule.etat.libelle : '—' }}</div></td>
+        </tr>
+        <tr>
+            <td><div class="label">N° de châssis</div><div class="valeur">{{ vehicule.numeroChassis ?: '—' }}</div></td>
+            <td><div class="label">Service / Direction</div><div class="valeur">{{ vehicule.service ? vehicule.service.nom : '—' }}</div></td>
+            <td><div class="label">Chauffeur affecté</div><div class="valeur">{{ vehicule.chauffeurAffecte ? vehicule.chauffeurAffecte.nomComplet : 'Non affecté' }}</div></td>
+            <td><div class="label">Kilométrage actuel</div><div class="valeur">{{ vehicule.kilometrage ? vehicule.kilometrage|number_format(0, ',', ' ') ~ ' km' : '—' }}</div></td>
+        </tr>
+    </table>
+
+    <h2 class="section-titre">Échéances</h2>
+    <table class="echeances">
+        <tr>
+            <td>
+                <div class="label">Assurance</div>
+                <div class="valeur">{{ vehicule.assuranceJusquau ? vehicule.assuranceJusquau|date('d/m/Y') : 'Non renseignée' }}</div>
+                {% if vehicule.statutAssurance %}
+                    <span class="badge badge-{{ vehicule.statutAssurance.badgeClass }}">{{ vehicule.statutAssurance.label }}</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="label">Visite technique</div>
+                <div class="valeur">{{ vehicule.visiteTechniqueJusquau ? vehicule.visiteTechniqueJusquau|date('d/m/Y') : 'Non renseignée' }}</div>
+                {% if vehicule.statutVisiteTechnique %}
+                    <span class="badge badge-{{ vehicule.statutVisiteTechnique.badgeClass }}">{{ vehicule.statutVisiteTechnique.label }}</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="label">Vidange</div>
+                <div class="valeur">
+                    {% if vehicule.derniereVidangeKm %}
+                        Dernière à {{ vehicule.derniereVidangeKm|number_format(0, ',', ' ') }} km
+                    {% else %}
+                        Aucune journalisée
+                    {% endif %}
+                </div>
+                {% if vehicule.statutVidange %}
+                    <span class="badge badge-{{ vehicule.statutVidange.badgeClass }}">{{ vehicule.statutVidange.label }}</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <h2 class="section-titre">Dernières vidanges</h2>
+    {% if vidanges|length > 0 %}
+        <table class="journal">
+            <thead>
+                <tr><th>Date</th><th>Kilométrage</th><th>Coût</th><th>Prestataire</th></tr>
+            </thead>
+            <tbody>
+                {% for vidange in vidanges %}
+                    <tr>
+                        <td>{{ vidange.date|date('d/m/Y') }}</td>
+                        <td>{{ vidange.kilometrage|number_format(0, ',', ' ') }} km</td>
+                        <td>{{ vidange.cout ? vidange.cout|number_format(0, ',', ' ') ~ ' FCFA' : '—' }}</td>
+                        <td>{{ vidange.prestataire ?: '—' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="vide">Aucune vidange journalisée.</p>
+    {% endif %}
+
+    <h2 class="section-titre">Derniers bons d'essence</h2>
+    {% if bonsEssence|length > 0 %}
+        <table class="journal">
+            <thead>
+                <tr><th>Date</th><th>N°</th><th>Quantité</th><th>Montant</th><th>Chauffeur</th></tr>
+            </thead>
+            <tbody>
+                {% for bon in bonsEssence %}
+                    <tr>
+                        <td>{{ bon.date|date('d/m/Y') }}</td>
+                        <td>{{ bon.numero ?: '—' }}</td>
+                        <td>{{ bon.quantiteLitres ? bon.quantiteLitres|number_format(1, ',', ' ') ~ ' L' : '—' }}</td>
+                        <td>{{ bon.montant ? bon.montant|number_format(0, ',', ' ') ~ ' FCFA' : '—' }}</td>
+                        <td>{{ bon.chauffeur ? bon.chauffeur.nomComplet : '—' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="vide">Aucun bon d'essence journalisé.</p>
+    {% endif %}
+
+    <div class="pied">Document généré le {{ genereLe|date('d/m/Y à H:i') }} — GERM, Ministère de l'Industrie et du Commerce.</div>
+</body>
+</html>
