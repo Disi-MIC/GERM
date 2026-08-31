@@ -1,0 +1,24 @@
+<div class="germ-splash">
+  <div class="germ-splash-shape germ-splash-shape--a"></div>
+  <div class="germ-splash-shape germ-splash-shape--b"></div>
+  <div class="germ-splash-shape germ-splash-shape--c"></div>
+
+  <div class="germ-splash-badge-wrap">
+    <div class="germ-splash-ring"></div>
+    <div class="germ-splash-ring germ-splash-ring--decalee"></div>
+    <div class="germ-splash-badge">
+      <img src="assets/images/logo-mini.png" alt="MinCom" />
+    </div>
+  </div>
+
+  <h1 class="germ-splash-title">
+    @for (lettre of lettres; track $index) {
+      <span [style.animation-delay.ms]="600 + $index * 70">{{ lettre }}</span>
+    }
+  </h1>
+  <p class="germ-splash-subtitle">Ministère de l'Industrie et du Commerce</p>
+
+  <div class="germ-splash-progress">
+    <div class="germ-splash-progress-bar"></div>
+  </div>
+</div>

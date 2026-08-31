@@ -5,16 +5,26 @@ import { Capacitor } from '@capacitor/core';
 import { AdminAccessModalComponent } from './shared/admin-access-modal/admin-access-modal.component';
 import { extraireTokenMateriel } from './shared/materiel/qr-token.util';
 import { MaterielInformatiqueApiService } from './pages/materiel-informatique/materiel-informatique-api.service';
+import { SplashComponent } from './shared/splash/splash.component';
+import { OnboardingComponent, ONBOARDING_VU_KEY } from './shared/onboarding/onboarding.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, AdminAccessModalComponent],
+  imports: [RouterOutlet, AdminAccessModalComponent, SplashComponent, OnboardingComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
   title = 'frontend';
+
+  // Splash puis, au premier lancement seulement, onboarding — voir
+  // SplashComponent/OnboardingComponent. Affichés en superposition
+  // au-dessus du router-outlet plutôt qu'en routes dédiées : la navigation
+  // (authGuard, deep link germ://...) se déroule normalement dessous
+  // pendant ce temps, sans logique de redirection à dupliquer ici.
+  showSplash = Capacitor.isNativePlatform();
+  showOnboarding = false;
 
   constructor(
     private readonly router: Router,
@@ -34,6 +44,15 @@ export class AppComponent implements OnInit {
 
       this.ecouterLiensGerm();
     }
+  }
+
+  onSplashTermine(): void {
+    this.showSplash = false;
+    this.showOnboarding = !localStorage.getItem(ONBOARDING_VU_KEY);
+  }
+
+  onOnboardingTermine(): void {
+    this.showOnboarding = false;
   }
 
   /**

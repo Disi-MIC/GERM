@@ -1,0 +1,33 @@
+<div class="germ-onboarding" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
+  @if (!derniere) {
+    <button type="button" class="germ-onboarding-skip" (click)="fermer()">Passer</button>
+  }
+
+  <div class="germ-onboarding-track" [style.transform]="'translateX(-' + index * 100 + '%)'">
+    @for (diapo of diapositives; track diapo.titre; let i = $index) {
+      <div class="germ-onboarding-slide" [class.germ-onboarding-slide--active]="i === index">
+        <div class="germ-onboarding-icon-wrap">
+          <div class="germ-onboarding-ring"></div>
+          <div class="germ-onboarding-ring germ-onboarding-ring--decalee"></div>
+          <div class="germ-onboarding-icon">
+            <i class="bi {{ diapo.icone }}"></i>
+          </div>
+        </div>
+        <h2>{{ diapo.titre }}</h2>
+        <p>{{ diapo.texte }}</p>
+      </div>
+    }
+  </div>
+
+  <div class="germ-onboarding-footer">
+    <div class="germ-onboarding-dots">
+      @for (diapo of diapositives; track diapo.titre; let i = $index) {
+        <button type="button" class="germ-onboarding-dot" [class.active]="i === index" (click)="aller(i)" [style.animation-delay.ms]="i * 60" [attr.aria-label]="'Diapositive ' + (i + 1)"></button>
+      }
+    </div>
+
+    <button type="button" class="btn btn-primary germ-onboarding-cta" (click)="suivant()">
+      {{ derniere ? 'Commencer' : 'Suivant' }}
+    </button>
+  </div>
+</div>

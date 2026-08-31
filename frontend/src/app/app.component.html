@@ -1,2 +1,8 @@
 <router-outlet></router-outlet>
 <app-admin-access-modal></app-admin-access-modal>
+
+@if (showSplash) {
+  <app-splash (termine)="onSplashTermine()"></app-splash>
+} @else if (showOnboarding) {
+  <app-onboarding (termine)="onOnboardingTermine()"></app-onboarding>
+}
