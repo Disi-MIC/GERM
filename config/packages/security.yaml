@@ -27,12 +27,24 @@ security:
                 password_path: password
             logout:
                 path: api_logout
+            # Anti brute-force : limite par login (email essayé) ET par IP —
+            # sans ça, rien n'empêchait de tester des mots de passe en boucle
+            # sur /api/login. 5 tentatives/15 min par identifiant tenté et
+            # 20/min par IP (plus large : couvre plusieurs comptes testés
+            # depuis la même adresse, ex. énumération d'emails).
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
 
         main:
             lazy: true
             provider: app_user_provider
             user_checker: App\Security\UserChecker
             custom_authenticator: App\Security\LoginFormAuthenticator
+            # Même anti brute-force que le firewall "api", pour /admin/login.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
             logout:
                 path: app_logout
                 target: app_login

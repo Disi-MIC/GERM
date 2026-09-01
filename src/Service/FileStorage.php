@@ -34,6 +34,21 @@ class FileStorage
      */
     public const TAILLE_MAX_OCTETS = 10 * 1024 * 1024;
 
+    /**
+     * Types réellement utilisés dans l'application, tous appels confondus :
+     * photos (agent, matériel) et pièces jointes/documents (PDF, éventuellement
+     * scannés en image). `getMimeType()` sniffe le contenu binaire réel du
+     * fichier (fileinfo), pas l'en-tête Content-Type envoyé par le client
+     * (falsifiable) ni l'extension du nom d'origine — voir erreurValidation().
+     */
+    private const TYPES_MIME_AUTORISES = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'application/pdf',
+    ];
+
     private readonly FilesystemOperator $filesystem;
 
     public function __construct(
@@ -93,6 +108,10 @@ class FileStorage
 
         if ($file->getSize() > self::TAILLE_MAX_OCTETS) {
             return \sprintf('Le fichier dépasse la taille maximale autorisée (%d Mo).', (int) (self::TAILLE_MAX_OCTETS / 1024 / 1024));
+        }
+
+        if (!\in_array($file->getMimeType(), self::TYPES_MIME_AUTORISES, true)) {
+            return 'Type de fichier non autorisé (formats acceptés : PDF, JPEG, PNG, WebP).';
         }
 
         return null;
