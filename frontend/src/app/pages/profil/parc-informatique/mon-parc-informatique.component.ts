@@ -1,5 +1,5 @@
 import { SlicePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { LicenceLogiciel } from '../../../core/models/licence-logiciel.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef } from '../../../core/models/personnel.model';
@@ -30,11 +30,12 @@ const ICONE_DEFAUT = { icon: 'box-seam', color: 'secondary' as FileGridColor };
   imports: [SlicePipe, PageHeaderComponent, FileGridComponent],
   templateUrl: './mon-parc-informatique.component.html',
 })
-export class MonParcInformatiqueComponent implements OnInit {
+export class MonParcInformatiqueComponent implements OnInit, OnDestroy {
   materiels: MaterielInformatique[] = [];
   loading = true;
   error: string | null = null;
   materielSelectionne: MaterielInformatique | null = null;
+  qrcodeObjectUrl: string | null = null;
 
   constructor(private readonly api: ProfilApiService) {}
 
@@ -93,9 +94,33 @@ export class MonParcInformatiqueComponent implements OnInit {
 
   selectionner(materiel: MaterielInformatique): void {
     this.materielSelectionne = materiel;
+    this.chargerQrcode(materiel);
   }
 
   fermer(): void {
     this.materielSelectionne = null;
+    this.revoquerQrcodeObjectUrl();
+  }
+
+  /** Chargé dès l'ouverture des détails, pas derrière un bouton séparé — voir demande. */
+  private chargerQrcode(materiel: MaterielInformatique): void {
+    this.revoquerQrcodeObjectUrl();
+    if (!materiel.id) {
+      return;
+    }
+    this.api.getMaterielQrcodeBlob(materiel.id).subscribe({
+      next: (blob) => (this.qrcodeObjectUrl = URL.createObjectURL(blob)),
+    });
+  }
+
+  private revoquerQrcodeObjectUrl(): void {
+    if (this.qrcodeObjectUrl) {
+      URL.revokeObjectURL(this.qrcodeObjectUrl);
+      this.qrcodeObjectUrl = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.revoquerQrcodeObjectUrl();
   }
 }

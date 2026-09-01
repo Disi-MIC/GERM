@@ -203,6 +203,14 @@
             }
           }
         </a>
+        @if (auth.hasRole('ROLE_RH_RESPONSABLE')) {
+          <a routerLink="/conges/parametres-decision" routerLinkActive="active" (click)="fermerMenuAdmin()">
+            <i class="bi bi-sliders"></i> Paramètres décision
+          </a>
+          <a routerLink="/conges/parametres-eligibilite" routerLinkActive="active" (click)="fermerMenuAdmin()">
+            <i class="bi bi-sliders"></i> Paramètres éligibilité
+          </a>
+        }
       }
       @if (auth.hasAnyRole(['ROLE_RH_CARTE_PRO', 'ROLE_RH_RESPONSABLE'])) {
         <a routerLink="/cartes-professionnelles" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenuAdmin()">
@@ -250,6 +258,7 @@
         }
         @if (auth.hasAnyRole(['ROLE_IT_STOCK', 'ROLE_IT_RESPONSABLE'])) {
           <a routerLink="/maintenance-informatique" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-tools"></i> Maintenance</a>
+          <a routerLink="/cartouches-informatique" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-droplet"></i> Cartouches</a>
           <a routerLink="/licences-logicielles" routerLinkActive="active" (click)="fermerMenuAdmin()"><i class="bi bi-key"></i> Licences logicielles</a>
         }
       }

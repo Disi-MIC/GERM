@@ -1,6 +1,7 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { AuthService } from '../../core/auth.service';
 import { DashboardMe } from '../../core/models/dashboard-me.model';
 import { HistoriqueAffectation, TypeMouvementCarriere } from '../../core/models/historique-affectation.model';
@@ -56,6 +57,8 @@ const NB_MOUVEMENTS_RECENTS = 5;
   styleUrl: './profil.component.scss',
 })
 export class ProfilComponent implements OnInit {
+  /** Sections en accordéon sur l'app mobile (écran étroit, une rubrique à la fois) ; panneaux dépliés côte à côte sur le web. */
+  readonly estNatif = Capacitor.isNativePlatform();
   personnel: Personnel | null = null;
   tableauDeBord: DashboardMe | null = null;
   carriere: HistoriqueAffectation[] = [];

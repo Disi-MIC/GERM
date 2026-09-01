@@ -23,9 +23,12 @@ use App\Repository\VehiculeRepository;
 use App\Service\CurrentUserPayloadBuilder;
 use App\Service\FileStorage;
 use App\Service\PersonnelPhotoService;
+use App\Service\QrTokenService;
 use Doctrine\ORM\EntityManagerInterface;
+use Endroid\QrCode\Builder\Builder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -472,6 +475,34 @@ class MeController extends AbstractController
         $materiels = $personnel ? $repository->findBy(['affecteA' => $personnel]) : [];
 
         return $this->json($materiels, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+    }
+
+    /**
+     * Même étiquette QR que MaterielInformatiqueController::qrcode(), mais
+     * ouverte à ROLE_AGENT plutôt qu'à ROLE_IT_STOCK : l'agent ne peut
+     * demander que le QR code d'un matériel qui lui est actuellement
+     * affecté (vérifié ci-dessous), jamais celui d'un autre poste en
+     * devinant son id — 404, pas 403, pour ne pas confirmer l'existence
+     * d'un matériel qui ne lui appartient pas.
+     */
+    #[Route('/api/me/materiels/{id}/qrcode', name: 'api_me_materiel_qrcode', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function materielQrcode(int $id, MaterielInformatiqueRepository $repository, QrTokenService $qrTokenService): Response
+    {
+        $personnel = $this->personnelConnecte();
+        $materiel = $personnel ? $repository->findOneBy(['id' => $id, 'affecteA' => $personnel]) : null;
+
+        if (!$materiel) {
+            throw $this->createNotFoundException();
+        }
+
+        $data = 'germ://materiel/'.$qrTokenService->encoder($materiel->getId());
+        $resultat = (new Builder())->build(data: $data, size: 300, margin: 10);
+
+        $response = new Response($resultat->getString());
+        $response->headers->set('Content-Type', $resultat->getMimeType());
+        $response->headers->set('Cache-Control', 'private, max-age=86400');
+
+        return $response;
     }
 
     #[Route('/api/me/vehicules', name: 'api_me_vehicules', methods: ['GET'])]

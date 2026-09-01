@@ -23,6 +23,16 @@
           <button type="button" class="btn-close" aria-label="Fermer" (click)="fermer()"></button>
         </div>
         <div class="modal-body">
+          <div class="text-center mb-3">
+            @if (qrcodeObjectUrl) {
+              <img [src]="qrcodeObjectUrl" alt="QR code" style="width: 140px; height: 140px;" />
+            } @else {
+              <div class="d-flex align-items-center justify-content-center mx-auto" style="width: 140px; height: 140px;">
+                <span class="spinner-border spinner-border-sm text-muted"></span>
+              </div>
+            }
+            <p class="text-muted small mb-0">Scannez ce code pour retrouver ce matériel dans l'app.</p>
+          </div>
           <dl class="row mb-0">
             <dt class="col-sm-5">N° inventaire</dt>
             <dd class="col-sm-7">{{ materiel.numeroInventaire }}</dd>

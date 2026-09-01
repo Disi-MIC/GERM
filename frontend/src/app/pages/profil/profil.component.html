@@ -76,70 +76,172 @@
     </div>
   }
 
-  <div class="row g-3">
-    <div class="col-lg-7">
-      <app-panel title="Identité" icon="bi-person-badge" class="d-block mb-3">
-        <dl class="row mb-0">
-          <dt class="col-sm-5">Sexe</dt>
-          <dd class="col-sm-7">{{ labelsSexe[personnel.sexe] }}</dd>
+  @if (estNatif) {
+    <!-- Version mobile : chaque rubrique en accordéon, une seule ouverte à la fois. -->
+    <div class="accordion" id="accordionMonProfil">
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accProfilIdentite">
+            <i class="bi bi-person-badge me-2"></i> Identité
+          </button>
+        </h2>
+        <div id="accProfilIdentite" class="accordion-collapse collapse show" data-bs-parent="#accordionMonProfil">
+          <div class="accordion-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Sexe</dt>
+              <dd class="col-sm-7">{{ labelsSexe[personnel.sexe] }}</dd>
 
-          <dt class="col-sm-5">Date de naissance</dt>
-          <dd class="col-sm-7">{{ personnel.dateNaissance ? (personnel.dateNaissance | slice: 0 : 10) : 'Non renseignée' }}</dd>
+              <dt class="col-sm-5">Date de naissance</dt>
+              <dd class="col-sm-7">{{ personnel.dateNaissance ? (personnel.dateNaissance | slice: 0 : 10) : 'Non renseignée' }}</dd>
 
-          <dt class="col-sm-5">Adresse</dt>
-          <dd class="col-sm-7">{{ personnel.adresse ?? 'Non renseignée' }}</dd>
-        </dl>
-      </app-panel>
-
-      <app-panel title="Poste" icon="bi-briefcase" class="d-block mb-3">
-        <dl class="row mb-0">
-          <dt class="col-sm-5">Service / Direction</dt>
-          <dd class="col-sm-7">{{ serviceLabel() }}</dd>
-
-          <dt class="col-sm-5">Grade</dt>
-          <dd class="col-sm-7">{{ personnel.grade ?? 'Non renseigné' }}</dd>
-
-          <dt class="col-sm-5">Type de contrat</dt>
-          <dd class="col-sm-7">{{ typeContratLabel() }}</dd>
-
-          <dt class="col-sm-5">Date d'embauche</dt>
-          <dd class="col-sm-7">{{ personnel.dateEmbauche ? (personnel.dateEmbauche | slice: 0 : 10) : 'Non renseignée' }}</dd>
-        </dl>
-      </app-panel>
-
-      <app-panel title="Contact" icon="bi-telephone" class="d-block">
-        <dl class="row mb-0">
-          <dt class="col-sm-5">Téléphone</dt>
-          <dd class="col-sm-7">{{ personnel.telephone ?? 'Non renseigné' }}</dd>
-
-          <dt class="col-sm-5">Email</dt>
-          <dd class="col-sm-7">{{ personnel.email ?? 'Non renseigné' }}</dd>
-        </dl>
-      </app-panel>
-    </div>
-
-    <div class="col-lg-5">
-      <app-panel title="Historique de carrière" icon="bi-clock-history">
-        <div panelActions>
-          <a routerLink="/mon-espace/carriere" class="small text-decoration-none">Voir tout <i class="bi bi-arrow-right"></i></a>
+              <dt class="col-sm-5">Adresse</dt>
+              <dd class="col-sm-7">{{ personnel.adresse ?? 'Non renseignée' }}</dd>
+            </dl>
+          </div>
         </div>
-        @if (mouvementsRecents.length > 0) {
-          <div class="germ-timeline">
-            @for (entree of mouvementsRecents; track entree.id) {
-              <div class="germ-timeline-item">
-                <div class="germ-timeline-dot"><i class="bi {{ iconeMouvement(entree.typeMouvement) }}"></i></div>
-                <div class="germ-timeline-content">
-                  <div class="small text-muted">{{ entree.dateEffet ? (entree.dateEffet | slice: 0 : 10) : '—' }}</div>
-                  <div class="fw-semibold small">{{ labelsMouvement[entree.typeMouvement] }}</div>
-                  <div class="small text-muted">{{ mouvementLabel(entree) }}</div>
-                </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accProfilPoste">
+            <i class="bi bi-briefcase me-2"></i> Poste
+          </button>
+        </h2>
+        <div id="accProfilPoste" class="accordion-collapse collapse" data-bs-parent="#accordionMonProfil">
+          <div class="accordion-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Service / Direction</dt>
+              <dd class="col-sm-7">{{ serviceLabel() }}</dd>
+
+              <dt class="col-sm-5">Grade</dt>
+              <dd class="col-sm-7">{{ personnel.grade ?? 'Non renseigné' }}</dd>
+
+              <dt class="col-sm-5">Type de contrat</dt>
+              <dd class="col-sm-7">{{ typeContratLabel() }}</dd>
+
+              <dt class="col-sm-5">Date d'embauche</dt>
+              <dd class="col-sm-7">{{ personnel.dateEmbauche ? (personnel.dateEmbauche | slice: 0 : 10) : 'Non renseignée' }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accProfilContact">
+            <i class="bi bi-telephone me-2"></i> Contact
+          </button>
+        </h2>
+        <div id="accProfilContact" class="accordion-collapse collapse" data-bs-parent="#accordionMonProfil">
+          <div class="accordion-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Téléphone</dt>
+              <dd class="col-sm-7">{{ personnel.telephone ?? 'Non renseigné' }}</dd>
+
+              <dt class="col-sm-5">Email</dt>
+              <dd class="col-sm-7">{{ personnel.email ?? 'Non renseigné' }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accProfilHistorique">
+            <i class="bi bi-clock-history me-2"></i> Historique de carrière
+          </button>
+        </h2>
+        <div id="accProfilHistorique" class="accordion-collapse collapse" data-bs-parent="#accordionMonProfil">
+          <div class="accordion-body">
+            <div class="mb-2 text-end">
+              <a routerLink="/mon-espace/carriere" class="small text-decoration-none">Voir tout <i class="bi bi-arrow-right"></i></a>
+            </div>
+            @if (mouvementsRecents.length > 0) {
+              <div class="germ-timeline">
+                @for (entree of mouvementsRecents; track entree.id) {
+                  <div class="germ-timeline-item">
+                    <div class="germ-timeline-dot"><i class="bi {{ iconeMouvement(entree.typeMouvement) }}"></i></div>
+                    <div class="germ-timeline-content">
+                      <div class="small text-muted">{{ entree.dateEffet ? (entree.dateEffet | slice: 0 : 10) : '—' }}</div>
+                      <div class="fw-semibold small">{{ labelsMouvement[entree.typeMouvement] }}</div>
+                      <div class="small text-muted">{{ mouvementLabel(entree) }}</div>
+                    </div>
+                  </div>
+                }
               </div>
+            } @else {
+              <p class="text-muted small mb-0">Aucun mouvement de carrière enregistré.</p>
             }
           </div>
-        } @else {
-          <p class="text-muted small mb-0">Aucun mouvement de carrière enregistré.</p>
-        }
-      </app-panel>
+        </div>
+      </div>
     </div>
-  </div>
+  } @else {
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <app-panel title="Identité" icon="bi-person-badge" class="d-block mb-3">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Sexe</dt>
+            <dd class="col-sm-7">{{ labelsSexe[personnel.sexe] }}</dd>
+
+            <dt class="col-sm-5">Date de naissance</dt>
+            <dd class="col-sm-7">{{ personnel.dateNaissance ? (personnel.dateNaissance | slice: 0 : 10) : 'Non renseignée' }}</dd>
+
+            <dt class="col-sm-5">Adresse</dt>
+            <dd class="col-sm-7">{{ personnel.adresse ?? 'Non renseignée' }}</dd>
+          </dl>
+        </app-panel>
+
+        <app-panel title="Poste" icon="bi-briefcase" class="d-block mb-3">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Service / Direction</dt>
+            <dd class="col-sm-7">{{ serviceLabel() }}</dd>
+
+            <dt class="col-sm-5">Grade</dt>
+            <dd class="col-sm-7">{{ personnel.grade ?? 'Non renseigné' }}</dd>
+
+            <dt class="col-sm-5">Type de contrat</dt>
+            <dd class="col-sm-7">{{ typeContratLabel() }}</dd>
+
+            <dt class="col-sm-5">Date d'embauche</dt>
+            <dd class="col-sm-7">{{ personnel.dateEmbauche ? (personnel.dateEmbauche | slice: 0 : 10) : 'Non renseignée' }}</dd>
+          </dl>
+        </app-panel>
+
+        <app-panel title="Contact" icon="bi-telephone" class="d-block">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Téléphone</dt>
+            <dd class="col-sm-7">{{ personnel.telephone ?? 'Non renseigné' }}</dd>
+
+            <dt class="col-sm-5">Email</dt>
+            <dd class="col-sm-7">{{ personnel.email ?? 'Non renseigné' }}</dd>
+          </dl>
+        </app-panel>
+      </div>
+
+      <div class="col-lg-5">
+        <app-panel title="Historique de carrière" icon="bi-clock-history">
+          <div panelActions>
+            <a routerLink="/mon-espace/carriere" class="small text-decoration-none">Voir tout <i class="bi bi-arrow-right"></i></a>
+          </div>
+          @if (mouvementsRecents.length > 0) {
+            <div class="germ-timeline">
+              @for (entree of mouvementsRecents; track entree.id) {
+                <div class="germ-timeline-item">
+                  <div class="germ-timeline-dot"><i class="bi {{ iconeMouvement(entree.typeMouvement) }}"></i></div>
+                  <div class="germ-timeline-content">
+                    <div class="small text-muted">{{ entree.dateEffet ? (entree.dateEffet | slice: 0 : 10) : '—' }}</div>
+                    <div class="fw-semibold small">{{ labelsMouvement[entree.typeMouvement] }}</div>
+                    <div class="small text-muted">{{ mouvementLabel(entree) }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-muted small mb-0">Aucun mouvement de carrière enregistré.</p>
+          }
+        </app-panel>
+      </div>
+    </div>
+  }
 }

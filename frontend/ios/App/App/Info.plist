@@ -35,11 +35,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>GERM utilise l'appareil photo pour numériser vos documents administratifs et scanner les étiquettes QR du parc informatique.</string>
 	<key>UIApplicationSceneManifest</key>

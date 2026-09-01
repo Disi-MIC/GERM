@@ -103,6 +103,11 @@ export class ProfilApiService {
     return this.http.get<MaterielInformatique[]>(`${API_BASE}/me/materiels`);
   }
 
+  /** En blob, même raison que getCartePdfBlob() ci-dessus. */
+  getMaterielQrcodeBlob(id: number): Observable<Blob> {
+    return this.http.get(`${API_BASE}/me/materiels/${id}/qrcode`, { responseType: 'blob' });
+  }
+
   getMesVehicules(): Observable<Vehicule[]> {
     return this.http.get<Vehicule[]>(`${API_BASE}/me/vehicules`);
   }
