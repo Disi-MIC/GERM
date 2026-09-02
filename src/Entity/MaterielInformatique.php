@@ -4,10 +4,13 @@ namespace App\Entity;
 
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\MaterielInformatiqueRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -214,9 +217,35 @@ class MaterielInformatique
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    /**
+     * Composants matériels (RAM, disque dur HDD/SSD, carte graphique...) —
+     * lecture seule ici (pas de groupe api:write) : la collection est
+     * embarquée automatiquement dans les lectures de ce matériel (admin comme
+     * self-service, voir ComposantMateriel), mais toute écriture passe par
+     * App\Controller\Api\ComposantMaterielController, jamais par
+     * MaterielInformatiqueController::update().
+     *
+     * @var Collection<int, ComposantMateriel>
+     */
+    #[ORM\OneToMany(mappedBy: 'materiel', targetEntity: ComposantMateriel::class, orphanRemoval: true)]
+    // readableLink : sans lui, une collection to-many est sérialisée en IRI
+    // seules par API Platform (contrairement aux relations to-one ci-dessus) —
+    // la vue self-service comme le formulaire IT ont besoin du détail complet
+    // (type + specification) sans appel supplémentaire par composant.
+    // fetchEager(false) : ComposantMateriel::$materiel pointe en retour vers
+    // ce matériel (aussi eager-joint par défaut côté to-one) — sans désactiver
+    // le JOIN automatique ici, EagerLoadingExtension boucle indéfiniment
+    // matériel→composants→matériel→... jusqu'à dépasser api_platform.
+    // eager_loading.max_joins. Chargée en requête séparée à la place (lazy
+    // Doctrine), acceptable vu la taille du parc.
+    #[ApiProperty(readableLink: true, fetchEager: false)]
+    #[Groups(['api:read'])]
+    private Collection $composants;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->composants = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -500,6 +529,14 @@ class MaterielInformatique
         if (null !== $this->affecteA) {
             $this->service = null;
         }
+    }
+
+    /**
+     * @return Collection<int, ComposantMateriel>
+     */
+    public function getComposants(): Collection
+    {
+        return $this->composants;
     }
 
     public function __toString(): string

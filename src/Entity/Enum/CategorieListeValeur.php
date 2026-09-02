@@ -17,6 +17,7 @@ enum CategorieListeValeur: string
     case LOGICIEL_BUREAUTIQUE = 'logiciel-bureautique';
     case MOTIF_REJET_DECISION_CONGE = 'motif-rejet-decision-conge';
     case NIVEAU_VULNERABILITE = 'niveau-vulnerabilite';
+    case TYPE_COMPOSANT = 'type-composant';
 
     public function label(): string
     {
@@ -34,6 +35,7 @@ enum CategorieListeValeur: string
             self::LOGICIEL_BUREAUTIQUE => 'Suites bureautiques',
             self::MOTIF_REJET_DECISION_CONGE => 'Motifs de rejet — demande de décision de congé',
             self::NIVEAU_VULNERABILITE => 'Niveaux de vulnérabilité — matériel informatique',
+            self::TYPE_COMPOSANT => 'Types de composant — matériel informatique',
         };
     }
 }

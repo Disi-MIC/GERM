@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../../core/api-base';
+import { ComposantMateriel } from '../../core/models/composant-materiel.model';
 import { HistoriqueAffectationMateriel } from '../../core/models/historique-affectation-materiel.model';
 import { HistoriqueChangementMateriel } from '../../core/models/historique-changement-materiel.model';
 import { MaterielInformatique } from '../../core/models/materiel-informatique.model';
@@ -108,5 +109,26 @@ export class MaterielInformatiqueApiService {
   /** Résout le jeton chiffré d'une étiquette QR scannée (voir QrTokenService côté serveur) en identifiant de matériel. */
   resoudreQrcode(token: string): Observable<{ materielId: number }> {
     return this.http.get<{ materielId: number }>(`${API_BASE}/materiels-informatiques/resoudre-qrcode/${encodeURIComponent(token)}`);
+  }
+
+  /**
+   * Composants matériels (RAM, disque dur HDD/SSD, carte graphique...) —
+   * embarqués directement dans MaterielInformatique.composants en lecture
+   * (voir getOne()/getAll() ci-dessus), donc pas de getComposants() séparé ;
+   * seules l'écriture passe par ces trois méthodes.
+   */
+  creerComposant(materielId: number, composant: ComposantMateriel): Observable<ComposantMateriel> {
+    return this.http.post<ComposantMateriel>(`${API_BASE}/composants-materiel`, {
+      ...composant,
+      materiel: `/api/materiels-informatiques/${materielId}`,
+    });
+  }
+
+  modifierComposant(id: number, composant: ComposantMateriel): Observable<ComposantMateriel> {
+    return this.http.put<ComposantMateriel>(`${API_BASE}/composants-materiel/${id}`, composant);
+  }
+
+  supprimerComposant(id: number): Observable<void> {
+    return this.http.delete<void>(`${API_BASE}/composants-materiel/${id}`);
   }
 }

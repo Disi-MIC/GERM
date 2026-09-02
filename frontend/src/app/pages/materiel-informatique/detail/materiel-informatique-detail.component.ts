@@ -2,6 +2,7 @@ import { SlicePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ComposantMateriel } from '../../../core/models/composant-materiel.model';
 import { HistoriqueAffectationMateriel } from '../../../core/models/historique-affectation-materiel.model';
 import { HistoriqueChangementMateriel } from '../../../core/models/historique-changement-materiel.model';
 import { LicenceLogiciel } from '../../../core/models/licence-logiciel.model';
@@ -27,6 +28,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit, OnDestroy {
   etatsMateriel: ListeValeurRef[] = [];
   niveauxVulnerabilite: ListeValeurRef[] = [];
   prioritesTicket: ListeValeurRef[] = [];
+  typesComposant: ListeValeurRef[] = [];
   /** Licences disponibles par catégorie de logiciel — voir LicenceLogiciel.logiciel.categorie. */
   licencesOs: LicenceLogiciel[] = [];
   licencesBureautique: LicenceLogiciel[] = [];
@@ -42,6 +44,14 @@ export class MaterielInformatiqueDetailComponent implements OnInit, OnDestroy {
 
   showEtiquette = false;
   qrcodeObjectUrl: string | null = null;
+
+  composants: ComposantMateriel[] = [];
+  composantSaving = false;
+  composantError: string | null = null;
+  composantForm = this.fb.nonNullable.group({
+    type: [null as number | null, Validators.required],
+    specification: ['', Validators.required],
+  });
 
   showCreerTicket = false;
   ticketSaving = false;
@@ -101,6 +111,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit, OnDestroy {
       this.etatsMateriel = valeurs.filter((v) => v.categorie === 'etat-materiel');
       this.niveauxVulnerabilite = valeurs.filter((v) => v.categorie === 'niveau-vulnerabilite');
       this.prioritesTicket = valeurs.filter((v) => v.categorie === 'priorite-ticket');
+      this.typesComposant = valeurs.filter((v) => v.categorie === 'type-composant');
     });
     // Une licence n'est proposée que si elle existe déjà dans le registre
     // (voir LicenceLogicielController) : impossible de rattacher un logiciel
@@ -146,6 +157,7 @@ export class MaterielInformatiqueDetailComponent implements OnInit, OnDestroy {
             observations: materiel.observations ?? '',
           });
           this.hasPhoto = materiel.hasPhoto ?? false;
+          this.composants = materiel.composants ?? [];
           this.loading = false;
         },
         error: () => {
@@ -309,6 +321,49 @@ export class MaterielInformatiqueDetailComponent implements OnInit, OnDestroy {
           this.ticketError = err?.error?.errors ? Object.values(err.error.errors).join(' ') : 'Erreur lors de la création du ticket.';
         },
       });
+  }
+
+  ajouterComposant(): void {
+    if (this.composantForm.invalid || !this.materielId) {
+      this.composantForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.composantForm.getRawValue();
+    this.composantSaving = true;
+    this.composantError = null;
+    this.api
+      .creerComposant(this.materielId, {
+        type: `/api/liste_valeurs/${raw.type}`,
+        specification: raw.specification,
+      })
+      .subscribe({
+        next: (composant) => {
+          this.composantSaving = false;
+          this.composants = [...this.composants, composant];
+          this.composantForm.reset({ type: null, specification: '' });
+        },
+        error: (err) => {
+          this.composantSaving = false;
+          this.composantError = err?.error?.errors ? Object.values(err.error.errors).join(' ') : "Erreur lors de l'ajout du composant.";
+        },
+      });
+  }
+
+  supprimerComposant(composant: ComposantMateriel): void {
+    if (!composant.id || !confirm('Supprimer ce composant ?')) {
+      return;
+    }
+
+    this.api.supprimerComposant(composant.id).subscribe({
+      next: () => (this.composants = this.composants.filter((c) => c.id !== composant.id)),
+      error: () => (this.composantError = 'Erreur lors de la suppression du composant.'),
+    });
+  }
+
+  composantTypeLabel(composant: ComposantMateriel): string {
+    const type = composant.type;
+    return typeof type === 'string' ? type : type.libelle;
   }
 
   onPhotoChange(event: Event): void {

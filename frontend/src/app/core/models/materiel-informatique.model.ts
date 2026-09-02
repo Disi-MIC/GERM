@@ -1,3 +1,4 @@
+import { ComposantMateriel } from './composant-materiel.model';
 import { LicenceLogiciel } from './licence-logiciel.model';
 import { ListeValeurRef, Personnel, ServiceRef } from './personnel.model';
 
@@ -30,4 +31,6 @@ export interface MaterielInformatique {
   observations?: string | null;
   createdAt?: string;
   hasPhoto?: boolean;
+  /** Composants matériels (RAM, disque dur HDD/SSD, carte graphique...) — embarqués en lecture, jamais écrits via ce modèle (voir ComposantMaterielApiService). */
+  composants?: ComposantMateriel[];
 }

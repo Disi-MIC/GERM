@@ -72,6 +72,17 @@
               <dt class="col-sm-5">Spécifications</dt>
               <dd class="col-sm-7">{{ materiel.specifications }}</dd>
             }
+
+            @if (materiel.composants && materiel.composants.length > 0) {
+              <dt class="col-sm-5">Composants</dt>
+              <dd class="col-sm-7">
+                <ul class="list-unstyled mb-0">
+                  @for (composant of materiel.composants; track composant.id) {
+                    <li>{{ libelle(composant.type) }} — {{ composant.specification }}</li>
+                  }
+                </ul>
+              </dd>
+            }
           </dl>
         </div>
       </div>
