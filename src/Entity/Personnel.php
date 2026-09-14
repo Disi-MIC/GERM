@@ -51,7 +51,18 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(security: "is_granted('ROLE_RH_PERSONNEL') or is_granted('ROLE_RH_CARTE_PRO') or is_granted('ROLE_IT_STOCK')"),
     ],
     security: "is_granted('ROLE_RH_PERSONNEL')",
-    normalizationContext: ['groups' => ['api:read']],
+    // api:read:personnel-sensible (GERM-009) : demandé par défaut ici, retiré
+    // par App\Serializer\PersonnelNormalizer pour tout appelant sans
+    // ROLE_RH_PERSONNEL — voir ce décorateur pour le détail et pourquoi un
+    // ApiPlatform\State\SerializerContextBuilderInterface (utilisé pour
+    // MaterielInformatique::$fournisseur) ne suffit pas ici : ce mécanisme
+    // ne s'applique qu'aux opérations natives d'API Platform (Get/GetCollection),
+    // jamais aux réponses JSON manuelles des contrôleurs d'écriture (ex.
+    // MaterielInformatiqueController::update() renvoyant $materiel avec son
+    // affecteA embarqué) — vérifié : ces réponses manuelles passent par le
+    // même normalizer que les lectures natives, donc seul un décorateur au
+    // niveau du normalizer ferme la fuite dans les deux cas.
+    normalizationContext: ['groups' => ['api:read', 'api:read:personnel-sensible']],
 )]
 class Personnel
 {
@@ -79,48 +90,54 @@ class Personnel
     #[Groups(['api:read', 'api:write'])]
     private ?string $prenom = null;
 
+    // GERM-009 : les champs de cette section (état civil, coordonnées,
+    // carrière) rejoignent tous le groupe api:read:personnel-sensible plutôt
+    // que api:read — voir le docblock de la classe. Seuls id/matricule/nom/
+    // prenom/nomComplet restent dans le groupe de base, seuls champs
+    // effectivement consommés par les sélecteurs agent des contextes
+    // non-RH (IT_STOCK, RH_CARTE_PRO — vérifié dans le frontend Angular).
     #[ORM\Column(length: 1, enumType: Sexe::class)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?Sexe $sexe = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?\DateTimeImmutable $dateNaissance = null;
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?string $fonction = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?string $grade = null;
 
     #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le type de contrat est obligatoire.')]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?ListeValeur $typeContrat = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?\DateTimeImmutable $dateEmbauche = null;
 
     #[ORM\Column(length: 20, enumType: StatutPersonnel::class)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?StatutPersonnel $statut = StatutPersonnel::ACTIF;
 
     #[ORM\Column(length: 30, nullable: true)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?string $telephone = null;
 
     #[ORM\Column(length: 180, nullable: true)]
     #[Assert\Email]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?string $email = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?string $adresse = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -129,7 +146,7 @@ class Personnel
     #[ORM\ManyToOne(targetEntity: Service::class, inversedBy: 'personnels')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le service/direction est obligatoire.')]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?Service $service = null;
 
     #[ORM\OneToOne(inversedBy: 'personnel', targetEntity: User::class)]
@@ -175,7 +192,7 @@ class Personnel
     private Collection $documentsAdministratifs;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    #[Groups(['api:read', 'api:write'])]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?string $observations = null;
 
     #[ORM\Column]
@@ -380,7 +397,7 @@ class Personnel
         return $this;
     }
 
-    #[Groups(['api:read'])]
+    #[Groups(['api:read:personnel-sensible'])]
     public function isHasPhoto(): bool
     {
         return null !== $this->photo;

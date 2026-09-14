@@ -40,7 +40,7 @@ export class PersonnelListComponent implements OnInit {
     { key: 'nomComplet', label: 'Nom complet', sortable: true, value: (p) => p.nomComplet },
     { key: 'fonction', label: 'Fonction', sortable: true, value: (p) => p.fonction },
     { key: 'service', label: 'Service', sortable: true, value: (p) => this.serviceLabel(p) },
-    { key: 'statut', label: 'Statut', sortable: true, value: (p) => this.labelsStatut[p.statut] ?? p.statut },
+    { key: 'statut', label: 'Statut', sortable: true, value: (p) => (p.statut ? (this.labelsStatut[p.statut] ?? p.statut) : '') },
     { key: 'actions', label: 'Actions', align: 'end', alwaysVisible: true },
   ];
 
@@ -60,6 +60,9 @@ export class PersonnelListComponent implements OnInit {
   }
 
   serviceLabel(personnel: Personnel): string {
+    if (!personnel.service) {
+      return '';
+    }
     return typeof personnel.service === 'string' ? personnel.service : personnel.service.nom;
   }
 

@@ -64,11 +64,11 @@ export class PersonnelDetailComponent implements OnInit {
             prenom: personnel.prenom,
             sexe: personnel.sexe,
             dateNaissance: personnel.dateNaissance?.substring(0, 10) ?? '',
-            service: typeof personnel.service === 'string' ? null : personnel.service.id,
+            service: personnel.service && typeof personnel.service !== 'string' ? personnel.service.id : null,
             fonction: personnel.fonction,
             grade: personnel.grade ?? '',
             typeContrat:
-              typeof personnel.typeContrat === 'string' ? null : personnel.typeContrat.id,
+              personnel.typeContrat && typeof personnel.typeContrat !== 'string' ? personnel.typeContrat.id : null,
             dateEmbauche: personnel.dateEmbauche?.substring(0, 10) ?? '',
             statut: personnel.statut,
             telephone: personnel.telephone ?? '',

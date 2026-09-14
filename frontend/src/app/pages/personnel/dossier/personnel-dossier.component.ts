@@ -113,7 +113,7 @@ export class PersonnelDossierComponent implements OnInit {
   }
 
   serviceLabelPersonnel(): string {
-    if (!this.personnel) {
+    if (!this.personnel?.service) {
       return '';
     }
     return typeof this.personnel.service === 'string' ? this.personnel.service : this.personnel.service.nom;

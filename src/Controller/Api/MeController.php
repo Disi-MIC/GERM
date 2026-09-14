@@ -73,7 +73,13 @@ class MeController extends AbstractController
             return $this->json(['errors' => ['personnel' => "Aucune fiche personnel n'est liée à votre compte. Merci de contacter le service RH."]], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        return $this->json($personnel, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+        // api:read:personnel-sensible (GERM-009) : restreint aux appelants
+        // ROLE_RH_PERSONNEL par défaut (voir App\Serializer\PersonnelNormalizer),
+        // mais explicitement redemandé ici — l'agent a toujours le droit de
+        // voir sa PROPRE fiche en entier, quel que soit son rôle. Le
+        // normalizer laisse passer ce groupe précisément quand le Personnel
+        // normalisé est celui de l'appelant, donc aucune fuite vers un tiers.
+        return $this->json($personnel, JsonResponse::HTTP_OK, [], ['groups' => ['api:read', 'api:read:personnel-sensible']]);
     }
 
     #[Route('/api/me/personnel/photo', name: 'api_me_personnel_photo', methods: ['GET'])]
@@ -111,7 +117,8 @@ class MeController extends AbstractController
 
         $this->photoService->remplacer($personnel, $file);
 
-        return $this->json($personnel, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
+        // Même raison que personnel() ci-dessus.
+        return $this->json($personnel, JsonResponse::HTTP_OK, [], ['groups' => ['api:read', 'api:read:personnel-sensible']]);
     }
 
     /**

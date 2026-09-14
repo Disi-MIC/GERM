@@ -35,7 +35,7 @@
             <i class="bi bi-upc-scan"></i> {{ personnel.matricule ?? 'Matricule non attribué' }}
           </span>
           <span class="badge bg-light text-dark border"><i class="bi bi-diagram-3"></i> {{ serviceLabel() }}</span>
-          <span class="status-dot status-dot-{{ badgeClasseStatut(personnel.statut) }}">{{ labelsStatut[personnel.statut] }}</span>
+          <span class="status-dot status-dot-{{ badgeClasseStatut(personnel.statut ?? '') }}">{{ labelsStatut[personnel.statut ?? ''] ?? personnel.statut }}</span>
         </div>
       </div>
     </div>
@@ -89,7 +89,7 @@
           <div class="accordion-body">
             <dl class="row mb-0">
               <dt class="col-sm-5">Sexe</dt>
-              <dd class="col-sm-7">{{ labelsSexe[personnel.sexe] }}</dd>
+              <dd class="col-sm-7">{{ labelsSexe[personnel.sexe ?? ''] ?? personnel.sexe }}</dd>
 
               <dt class="col-sm-5">Date de naissance</dt>
               <dd class="col-sm-7">{{ personnel.dateNaissance ? (personnel.dateNaissance | slice: 0 : 10) : 'Non renseignée' }}</dd>
@@ -182,7 +182,7 @@
         <app-panel title="Identité" icon="bi-person-badge" class="d-block mb-3">
           <dl class="row mb-0">
             <dt class="col-sm-5">Sexe</dt>
-            <dd class="col-sm-7">{{ labelsSexe[personnel.sexe] }}</dd>
+            <dd class="col-sm-7">{{ labelsSexe[personnel.sexe ?? ''] ?? personnel.sexe }}</dd>
 
             <dt class="col-sm-5">Date de naissance</dt>
             <dd class="col-sm-7">{{ personnel.dateNaissance ? (personnel.dateNaissance | slice: 0 : 10) : 'Non renseignée' }}</dd>

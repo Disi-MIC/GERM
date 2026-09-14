@@ -25,7 +25,7 @@
       </div>
       <div class="col-md-3 col-6">
         <div class="small text-muted">Statut</div>
-        <div class="fw-semibold">{{ labelsStatut[personnel.statut] ?? personnel.statut }}</div>
+        <div class="fw-semibold">{{ labelsStatut[personnel.statut ?? ''] ?? personnel.statut }}</div>
       </div>
     </div>
   </app-panel>
