@@ -61,18 +61,30 @@ class JsonContentTypeGuardListener
         // SameSite=None.
         //
         // L'en-tête Origin est posé par le navigateur lui-même sur toute
-        // requête d'écriture et ne peut pas être falsifié par la page
-        // attaquante. On réutilise l'allowlist CORS déjà en place plutôt que
-        // d'en maintenir une seconde : c'est la même question ("qui a le droit
-        // de nous appeler ?"), donc la même source de vérité — et l'app
-        // Capacitor (capacitor://localhost) y figure déjà.
+        // requête d'écriture — y compris en même origine, un navigateur
+        // l'envoie aussi pour POST/PUT/PATCH/DELETE, pas seulement en
+        // cross-origin — et ne peut pas être falsifié par la page attaquante.
         //
-        // Origin absent (client non navigateur, ou même origine sur certains
-        // navigateurs) : on retombe sur le contrôle du Content-Type. Un client
-        // qui n'envoie pas d'Origin n'est de toute façon pas un vecteur CSRF,
-        // puisque le CSRF suppose un navigateur porteur du cookie.
+        // Deux cas légitimes à distinguer, vérifiés sur la prod (10.112.26.30) :
+        // en web, le frontend Angular et l'API sont servis depuis la MÊME
+        // origine (Apache sert le SPA en statique sous /app, Symfony répond
+        // sous /api du même host) — Origin vaudra alors l'origine de la
+        // requête elle-même, absente de CORS_ALLOW_ORIGIN puisque cette
+        // liste n'a jamais eu besoin de la couvrir (le navigateur n'applique
+        // pas CORS à une requête même origine). En mobile, l'app Capacitor
+        // EST cross-origin (capacitor://localhost vs le domaine de l'API),
+        // d'où sa présence explicite dans cette même liste.
+        //
+        // Un site tiers ne peut reproduire ni l'un ni l'autre : il ne peut
+        // ni forger un Origin (en-tête interdit en JS), ni le faire
+        // coïncider avec l'origine de la requête qu'il déclenche lui-même.
+        //
+        // Origin absent (client non navigateur) : on retombe sur le contrôle
+        // du Content-Type. Un client qui n'envoie pas d'Origin n'est de
+        // toute façon pas un vecteur CSRF, puisque le CSRF suppose un
+        // navigateur porteur du cookie.
         $origine = $request->headers->get('Origin');
-        if (null !== $origine && !$this->origineAutorisee($origine)) {
+        if (null !== $origine && $origine !== $request->getSchemeAndHttpHost() && !$this->origineAutorisee($origine)) {
             $event->setResponse(new JsonResponse(
                 ['errors' => ['origin' => 'Origine non autorisée.']],
                 JsonResponse::HTTP_FORBIDDEN,
