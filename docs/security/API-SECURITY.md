@@ -103,15 +103,21 @@ désérialisent avec des groupes `api:write` explicites. Les champs sensibles
 (`roles`, `password`, `createdAt`) n'y figurent pas. Un client ne peut pas
 s'attribuer `ROLE_SUPERADMIN` par le corps d'une requête.
 
-**En lecture : non conforme.** `GET /api/personnels` renvoie l'intégralité du
-groupe `api:read` — date de naissance, adresse, téléphone, e-mail,
-observations — à `ROLE_IT_STOCK` et `ROLE_RH_CARTE_PRO`, alors que la mesure
-des usages réels montre qu'ils n'exploitent que `nomComplet`, `matricule`,
-`nom`, `prenom` (**GERM-009**).
+**En lecture : corrigé (GERM-009).** `GET /api/personnels` ne renvoyait à
+`ROLE_IT_STOCK` et `ROLE_RH_CARTE_PRO` que `nomComplet`, `matricule`, `nom`,
+`prenom`, `id` — les seuls champs mesurés comme réellement consommés. Un
+nouveau groupe `api:read:personnel-sensible`, retiré par
+`App\Serializer\PersonnelNormalizer` pour tout appelant sans
+`ROLE_RH_PERSONNEL`, sauf pour sa propre fiche (self-service).
 
-Le seul cloisonnement de champ existant est `fournisseur` sur
-`MaterielInformatique`, isolé dans `api:read:rh` — la démonstration que le
-mécanisme est maîtrisé, simplement pas généralisé.
+**GERM-024, découvert pendant cette correction** : le cloisonnement déjà en
+place pour `MaterielInformatique::$fournisseur` (isolé dans `api:read:rh`)
+repose sur un `SerializerContextBuilderInterface`, qui ne couvre que le
+pipeline natif d'API Platform — pas les réponses JSON manuelles des
+contrôleurs d'écriture. Vérifié : `PUT /api/materiels-informatiques/{id}`
+renvoie `fournisseur` même à un appelant sans `ROLE_IT_STOCK`. GERM-009 a
+évité ce piège en décorant le normalizer directement ; `fournisseur` reste
+sur l'ancien mécanisme et n'a pas été corrigé dans ce lot.
 
 ### API4 — Unrestricted Resource Consumption ⚠️ corrigé
 
@@ -207,5 +213,5 @@ et `nbf`, durée de 8 h, non révocable).
 | API10 Consommation d'API | ✅ Conforme en entrée ; à améliorer en sortie |
 
 **Deux chantiers pour l'API** : la minimisation des données en lecture
-(GERM-009) et la journalisation des 12 familles de routes marquées « Audit :
-Oui » (GERM-018).
+(GERM-009, corrigé — reste GERM-024 sur `fournisseur`) et la journalisation
+des 12 familles de routes marquées « Audit : Oui » (GERM-018).

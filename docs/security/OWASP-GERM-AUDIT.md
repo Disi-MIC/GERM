@@ -60,7 +60,7 @@ formelle.
 |---|---|
 | **`QR_SECRET_KEY` de production = clé versionnée** | Confirmé (GERM-006) — à faire tourner |
 | **Aucun en-tête de sécurité sur le SPA** | Confirmé (GERM-023) — nouveau constat |
-| Journalisation d'audit (A09) | Inexistante. Attendue par le SOC du Ministère |
+| Journalisation d'audit (A09) | Socle minimal déployé — couverture partielle (§26), voir GERM-018 |
 | Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
 | Chaîne CI/CD | Aucune. Déploiement par `git push` sans barrière qualité |
 | Minimisation des données (§61-62) | Données RH complètes exposées aux rôles non-RH |
@@ -116,9 +116,10 @@ ROLE_AGENT  (socle de tout compte)
 ```
 
 Les domaines RH et informatique sont **volontairement disjoints** : ni l'un ni
-l'autre n'hérite du second. C'est une séparation des tâches réelle, et elle est
-respectée au niveau des rôles — mais contournée au niveau des données (voir
-GERM-009).
+l'autre n'hérite du second. C'est une séparation des tâches réelle, respectée
+au niveau des rôles — et désormais au niveau des données pour Personnel
+(GERM-009, corrigé). GERM-024 documente le même angle mort sur un autre champ
+(`MaterielInformatique::$fournisseur`), non corrigé dans ce lot.
 
 ---
 
@@ -143,7 +144,7 @@ La transparence sur ce qui n'a *pas* été audité vaut autant que les constats.
 | A06 Dépendances | **Approfondie** | `composer audit` + `npm audit`, avec distinction prod / build |
 | A07 Authentification | **Approfondie** | Chaîne complète tracée jusque dans `vendor/` |
 | A08 Intégrité | **Faible** | Aucune CI/CD à auditer ; `deploy.sh` (25 lignes) non analysé en profondeur |
-| A09 Journalisation | **Constat d'absence** | Aucun dispositif d'audit applicatif à auditer |
+| A09 Journalisation | **Approfondie** | Socle minimal implémenté et vérifié en conditions réelles (production incluse) |
 | A10 SSRF | **Approfondie** | Toutes les sorties réseau recensées |
 | API1-API10 | **Approfondie** sauf API7 | Voir `API-SECURITY.md` |
 
@@ -158,7 +159,7 @@ leur contrôle d'accès.
 
 | | Catégorie | Verdict | Constats |
 |---|---|---|---|
-| **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009, GERM-013 |
+| **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009 (résolu), GERM-013, GERM-024 (nouveau) |
 | **A02** | Cryptographic Failures | ❌ **Non conforme** | GERM-006 (confirmé), GERM-012 |
 | **A03** | Injection | ⚠️ **Corrigé** | GERM-003 (CSV) — aucune injection SQL ni XSS |
 | **A04** | Insecure Design | ⚠️ **Corrigé partiellement** | GERM-008 |
@@ -166,7 +167,7 @@ leur contrôle d'accès.
 | **A06** | Vulnerable Components | ✅ **Conforme** | 0 vulnérabilité en production |
 | **A07** | Identification & Auth Failures | ⚠️ **Corrigé** | GERM-001, GERM-004, GERM-011 |
 | **A08** | Software & Data Integrity | ❌ **Non conforme** | GERM-017 (aucune CI/CD) |
-| **A09** | Logging & Monitoring Failures | ❌ **Non conforme** | GERM-018 (aucune journalisation d'audit) |
+| **A09** | Logging & Monitoring Failures | ⚠️ **Corrigé partiellement** | GERM-018 (socle minimal déployé — `47561dd`) |
 | **A10** | SSRF | ✅ **Conforme** | Liste blanche stricte sur la seule sortie réseau |
 
 ### A03 — Détail, car le verdict est contre-intuitif
@@ -192,7 +193,7 @@ Synthèse ; le détail figure dans `API-SECURITY.md`.
 |---|---|---|
 | **API1** | Broken Object Level Authorization | ✅ 14 routes `/api/me/*` sur 14 vérifient l'appartenance |
 | **API2** | Broken Authentication | ⚠️ Corrigé (GERM-001, GERM-002, GERM-004) |
-| **API3** | Broken Object Property Level Authorization | ⚠️ GERM-009 — sur-exposition en lecture |
+| **API3** | Broken Object Property Level Authorization | ✅ GERM-009 corrigé · ⚠️ GERM-024 ouvert (angle mort partagé par le mécanisme déjà en place pour MaterielInformatique::$fournisseur) |
 | **API4** | Unrestricted Resource Consumption | ⚠️ Corrigé (GERM-007, GERM-010) |
 | **API5** | Broken Function Level Authorization | ✅ Couverture `#[IsGranted]` intégrale |
 | **API6** | Unrestricted Access to Sensitive Business Flows | ⚠️ Corrigé partiellement (GERM-008) |
@@ -214,8 +215,8 @@ Niveau visé : **L2** (application manipulant des données personnelles).
 | V3 Gestion de session | PASS | Régénération à la connexion, invalidation à la déconnexion, au changement de mot de passe et à la désactivation (après correction) |
 | V4 Contrôle d'accès | PARTIAL | Contrôle par rôle complet ; contrôle au niveau objet correct mais réimplémenté à la main en 14 endroits, sans Voter ni test |
 | V5 Validation & encodage | PASS | Doctrine paramétré, Twig auto-échappé, Angular non contourné, CSV neutralisé (après correction) |
-| V7 Journalisation | **FAIL** | Aucune journalisation d'audit applicative |
-| V8 Protection des données | PARTIAL | Données RH sur-exposées aux rôles non-RH (GERM-009) |
+| V7 Journalisation | PARTIAL | Socle minimal déployé, couverture incomplète (§26) |
+| V8 Protection des données | PARTIAL | GERM-009 corrigé ; GERM-024 (angle mort du même mécanisme sur les réponses manuelles de contrôleur, hors Personnel) reste ouvert |
 | V9 Communications | PARTIAL | TLS 1.2/1.3 confirmé ; en-têtes du SPA vérifiés **absents** (GERM-023) |
 | V10 Code malveillant | N/A | Hors périmètre |
 | V11 Logique métier | PARTIAL | Règle « dossier figé après instruction » ajoutée ; les autres règles sensibles ne sont pas testées |
@@ -261,7 +262,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-006** | `QR_SECRET_KEY` **confirmée non surchargée en production** : la clé versionnée dans `.env` (et son historique Git) est la clé réellement utilisée pour chiffrer les jetons d'étiquette du parc informatique. Quiconque a accès en lecture au dépôt peut forger un jeton valide. *Impact contenu : la résolution d'un jeton exige quand même `ROLE_IT_STOCK` — l'attaquant doit cumuler l'accès au dépôt et un compte IT.* **Correction : générer une nouvelle clé, la déployer via `.env.local` (jamais versionné), réimprimer les étiquettes existantes.** | A02 | ❌ **Confirmé, ouvert** |
 | **GERM-007** | Annuaire nominatif énumérable : `/verif-carte/{numero}` est public par conception et révèle nom et fonction, sans limitation de débit. **Correction** : 20 requêtes/minute/IP. *Correction de fond (jeton opaque au lieu du numéro imprimé) non retenue : elle invaliderait les cartes en circulation.* | A01 · API4 | ✅ `a2bd956` |
 | **GERM-008** | Pièces justificatives modifiables après instruction : l'appartenance était vérifiée, jamais l'état de la demande. Un agent pouvait remplacer une pièce après validation par le RH, faisant diverger le dossier officiel de ce qui avait été instruit, sans trace. **Correction** : dépôt réservé à l'état « en attente » (409 sinon). | A04 · API6 · §13 | ✅ `a2bd956` |
-| **GERM-009** | Dossier RH complet (date de naissance, adresse, téléphone, e-mail, observations) exposé à `ROLE_IT_STOCK` et `ROLE_RH_CARTE_PRO` via `GET /api/personnels`, sans pagination. Mesure effectuée : ces rôles n'utilisent que `nomComplet`, `matricule`, `nom`, `prenom`. La séparation RH/IT voulue par la configuration est contournée au niveau des données. | A01 · API3 · §61-62 | ⏸️ **Arbitrage en attente** |
+| **GERM-009** | Dossier RH complet (date de naissance, adresse, téléphone, e-mail, observations, service, carrière) exposé à `ROLE_IT_STOCK` et `ROLE_RH_CARTE_PRO` — pas seulement via `GET /api/personnels` direct, mais aussi **embarqué dans toute réponse référençant un agent** (ex. `GET /api/materiels-informatiques/{id}.affecteA`), y compris les réponses manuelles d'écriture (`PUT`), un vecteur découvert pendant la correction. Mesuré : ces rôles n'utilisent que `nomComplet`, `matricule`, `nom`, `prenom`, `id`. **Correction** : nouveau groupe `api:read:personnel-sensible`, retiré par `App\Serializer\PersonnelNormalizer` (décorateur du normalizer, pas d'un `SerializerContextBuilderInterface` — seul le premier couvre aussi les réponses manuelles) pour tout appelant sans `ROLE_RH_PERSONNEL`, sauf lorsque l'agent consulte sa propre fiche (self-service "Mon Profil", vérifié non régressé). | A01 · API3 · §61-62 | ✅ **Corrigé** — `1e8bd47` |
 | **GERM-010** | Exports CSV sans quota ni pagination. **Correction** : 10 exports/heure/compte. *Optimisation mémoire (`toIterable()`, N+1) reportée au lot performance.* | API4 · §39 | ✅ `a2bd956` |
 | **GERM-011** | Aucune contrainte de mot de passe en modification : la liste de contraintes était littéralement vide hors création, un administrateur pouvait affecter un mot de passe d'un caractère. **Correction** : contrainte de longueur appliquée aussi en édition. | A07 · ASVS V2.1 | ✅ `c70cd6f` |
 | **GERM-012** | Jeton SSO sans `jti` ni `nbf`, durée 8 h, non révocable. Combiné à GERM-001 avant correction, un jeton émis pour un compte désactivé restait accepté par MIC-GAR 8 h durant. | A02 · API2 | ⏸️ **Nécessite MIC-GAR** |
@@ -275,7 +276,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-015** | `X-Frame-Options: DENY` contredisait `CSP frame-ancestors 'self'` ; les navigateurs modernes suivant la CSP, le framing same-origin restait autorisé malgré l'intention inverse. | ✅ `a2bd956` |
 | **GERM-016** | En-tête `Permissions-Policy` absent. | ✅ `a2bd956` |
 | **GERM-017** | Aucune chaîne CI/CD : le déploiement se fait par `git push` vers un hook `post-receive`, sans test, sans analyse de dépendances, sans barrière qualité. Une vulnérabilité critique n'empêche rien. | ❌ **Ouvert** |
-| **GERM-018** | Aucune journalisation d'audit applicative : ni connexion, ni changement de rôle, ni accès refusé, ni export, ni téléchargement de document. Une compromission serait indétectable et non reconstituable. | ❌ **Ouvert** |
+| **GERM-018** | Aucune journalisation d'audit applicative : ni connexion, ni changement de rôle, ni accès refusé, ni export, ni téléchargement de document. Une compromission serait indétectable et non reconstituable. **Correction (socle minimal, `47561dd`, déployé et vérifié en production)** : `AuditLog` (append-only) + `AuditLogService`, branché sur les connexions/échecs/déconnexions (tous pare-feu), les accès refusés, les 5 exports CSV, la validation/le rejet de décision, la validation de carte, et la création/modification de compte avec diff des rôles. Ne couvre pas encore la liste complète du §26 (téléchargement de document, création/suppression sur chaque entité RH) — extensible, pas exhaustif. | ⚠️ **Corrigé partiellement** — `47561dd` |
 | **GERM-019** | `ROLE_ALLOWED_TO_SWITCH` présent dans la hiérarchie alors qu'aucun pare-feu ne déclare `switch_user` : configuration morte laissant croire à une usurpation d'identité active et non journalisée. | ✅ `a2bd956` |
 | **GERM-020** | Absence de Voter : la logique « cet objet est-il à moi ? » est réécrite à la main en 14 endroits, sous 3 formes et avec 2 codes de retour différents (403 / 404). Correct aujourd'hui — vérifié une par une — mais chaque nouvelle route repose sur la vigilance du développeur. | ❌ **Dette ouverte** |
 | **GERM-021** | Import CSV/XLSX sans limite de taille ni contrôle de type réel, avec évaluation des formules du classeur (`getCalculatedValue()`). Réservé au superadmin et jamais stocké : risque de déni de service auto-infligé. | ❌ **Ouvert** |
@@ -379,7 +380,7 @@ Deux constats restent ouverts, détaillés en §7 (GERM-006, GERM-023).
 
 | Risque | Raison |
 |---|---|
-| Aucune journalisation d'audit (GERM-018) | Lot ultérieur. En l'état, une compromission serait indétectable |
+| Journalisation d'audit partielle (GERM-018) | Socle minimal déployé ; ne couvre pas encore tous les événements du §26 (ex. téléchargement de document) |
 | Aucune CI/CD (GERM-017) | Lot ultérieur. Rien n'empêche de déployer du code non testé |
 | Aucun MFA (§21) | Non demandé à ce stade ; recommandé pour `ROLE_SUPERADMIN` |
 | Aucun flux de réinitialisation de mot de passe | Tout renouvellement passe par un administrateur — moins de surface, plus de friction |
@@ -405,7 +406,7 @@ physique des serveurs, ni de la résistance à un test d'intrusion dynamique.
 | Authentification | DEVELOPING | **DEFINED** |
 | Autorisation | DEFINED | **DEFINED** |
 | Cryptographie | DEFINED | DEFINED (mécanismes) / **INITIAL** (gestion des secrets — clé de prod versionnée, GERM-006 confirmé) |
-| Journalisation | **INITIAL** | **INITIAL** |
+| Journalisation | INITIAL | **DEVELOPING** |
 | Infrastructure | *non évalué* | **INITIAL** (SPA sans en-tête de sécurité, GERM-023 ; reste non évalué au-delà) |
 | Dépendances | MANAGED | **MANAGED** |
 | Tests | INITIAL | **DEVELOPING** |
@@ -428,8 +429,8 @@ prochains chantiers structurants.
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
 | 2 | Faire tourner `QR_SECRET_KEY` (GERM-006) et ajouter les en-têtes de sécurité au vhost Apache servant le SPA (GERM-023) | §7 |
-| 3 | Trancher GERM-009 (minimisation) et GERM-012 (jeton SSO, avec MIC-GAR) | §7 |
-| 4 | Journalisation d'audit + préparation SIEM/Wazuh | §25-27, GERM-018 |
+| 3 | Trancher GERM-012 (jeton SSO, avec MIC-GAR) ; évaluer GERM-024 | §7 |
+| 4 | Étendre la journalisation d'audit (couverture complète du §26) + préparation SIEM/Wazuh | §25-27, GERM-018 |
 | 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
 | 6 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
 | 7 | Lot performance | §41-47 |

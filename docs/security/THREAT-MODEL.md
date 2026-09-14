@@ -117,7 +117,7 @@ contrôlons pas le comportement.
 |---|---|---|
 | Agent lisant le dossier d'un autre | `ROLE_AGENT` n'hérite d'aucun rôle RH ; `/api/me/*` filtre sur le personnel connecté | ✅ |
 | Chef de service A lisant le service B | Périmètre dérivé du serveur (`findOneBy(['responsable' => $personnel])`), aucun paramètre client | ✅ |
-| **Rôle IT lisant l'état civil complet** | — | ❌ **GERM-009** : `GET /api/personnels` renvoie tout à `ROLE_IT_STOCK` |
+| **Rôle IT lisant l'état civil complet** | `PersonnelNormalizer` retire les champs sensibles, sauf pour sa propre fiche | ✅ **GERM-009 corrigé** — reste GERM-024 (même angle mort sur `fournisseur`, hors Personnel) |
 | Exfiltration de masse | Quota d'exports 10/h/compte | ⚠️ Partiel — la collection `/api/personnels` reste non paginée |
 | Altération sans trace | — | ❌ **Aucune journalisation d'audit** (GERM-018) |
 
@@ -186,7 +186,7 @@ contrôlons pas le comportement.
 | Principe | Application dans GERM | Tenu ? |
 |---|---|---|
 | **Defense in Depth** | CSRF : Origin **puis** Content-Type. Compte désactivé : `user_checker` **puis** `getRoles()` vide. Admin : `access_control` **puis** `IsGranted` | ✅ |
-| **Least Privilege** | 11 rôles distincts, RH et IT réellement disjoints | ⚠️ Tenu sur les rôles, **pas sur les données** (GERM-009) |
+| **Least Privilege** | 11 rôles distincts, RH et IT réellement disjoints | ✅ Tenu sur les rôles et désormais sur les données pour Personnel (GERM-009) ; GERM-024 reste ouvert sur `fournisseur` |
 | **Fail Secure** | Jeton QR invalide → 404. Objet hors périmètre → 404 plutôt que 403 (ne révèle pas l'existence). Demande instruite → 409 | ✅ |
 | **Secure by Default** | Ressources API protégées par défaut, `access_control` restrictif, listes blanches plutôt que listes noires | ✅ |
 | **Separation of Duties** | Ni le RH ni l'informatique n'hérite de l'autre ; validation des cartes réservée au responsable RH | ✅ |
@@ -204,7 +204,7 @@ vérification de production du 14/09/2026.
 | 4 | **Exécution de code sur un poste RH** à l'ouverture d'un export CSV | ✅ Corrigé, **non déployé** |
 | 5 | **Forge d'une étiquette QR** par quiconque a accès au dépôt Git | ❌ **Confirmé** — `QR_SECRET_KEY` de production = valeur versionnée (GERM-006) |
 | 6 | **Clickjacking ou injection sur la page réellement chargée par les utilisateurs** : le SPA ne porte aucun en-tête de sécurité, contrairement aux routes Symfony | ❌ **Confirmé** (GERM-023) |
-| 7 | **Exfiltration de l'état civil par un compte informatique** légitime ou compromis | ❌ Ouvert (GERM-009) |
+| 7 | **Exfiltration de l'état civil par un compte informatique** légitime ou compromis | ✅ Corrigé (GERM-009), **déployé** — `1e8bd47` |
 | 8 | **Compromission indétectable** : sans journal d'audit, aucun des scénarios ci-dessus ne laisserait de trace exploitable | ❌ Ouvert (GERM-018) |
 
 > Le scénario 6 est transverse : il ne crée pas de vulnérabilité, il rend
