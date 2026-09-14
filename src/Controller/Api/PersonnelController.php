@@ -90,7 +90,7 @@ class PersonnelController extends AbstractController
             foreach ($personnelRepository->findAll() as $personnel) {
                 $service = $personnel->getService();
 
-                fputcsv($sortie, [
+                fputcsv($sortie, array_map($this->protegerCsv(...), [
                     $personnel->getMatricule() ?? '',
                     $personnel->getNom(),
                     $personnel->getPrenom(),
@@ -105,7 +105,7 @@ class PersonnelController extends AbstractController
                     $service?->getNom() ?? '',
                     $personnel->getTelephone() ?? '',
                     $personnel->getEmail() ?? '',
-                ], ';');
+                ]), ';');
             }
 
             fclose($sortie);

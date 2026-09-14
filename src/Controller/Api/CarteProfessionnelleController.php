@@ -71,7 +71,7 @@ class CarteProfessionnelleController extends AbstractController
             ], ';');
 
             foreach ($carteRepository->findAll() as $carte) {
-                fputcsv($sortie, [
+                fputcsv($sortie, array_map($this->protegerCsv(...), [
                     $carte->getNumero(),
                     $carte->getPersonnel()?->getNomComplet() ?? '',
                     $carte->getDateDelivrance()?->format('d/m/Y') ?? '',
@@ -80,7 +80,7 @@ class CarteProfessionnelleController extends AbstractController
                     $carte->isValideeParAdminRh() ? 'Oui' : 'Non',
                     $carte->getValideeLe()?->format('d/m/Y') ?? '',
                     $carte->getValideeParNom() ?? '',
-                ], ';');
+                ]), ';');
             }
 
             fclose($sortie);

@@ -21,6 +21,13 @@ security:
             pattern: ^/api
             lazy: true
             provider: app_user_provider
+            # Indispensable ici autant que sur "main" : sans déclaration
+            # explicite, Symfony retombe sur InMemoryUserChecker, qui ne
+            # contrôle que les InMemoryUser et ignore donc silencieusement
+            # une entité Doctrine — un compte désactivé pouvait ainsi
+            # continuer à se connecter par l'API (web et mobile) alors qu'il
+            # était bien bloqué sur /admin.
+            user_checker: App\Security\UserChecker
             json_login:
                 check_path: api_login
                 username_path: email
@@ -79,11 +86,23 @@ security:
         ROLE_AUTORITE: [ROLE_DIRECTION_MINISTERIELLE]
         ROLE_SUPERADMIN: [ROLE_RH_RESPONSABLE, ROLE_IT_RESPONSABLE, ROLE_AUTORITE, ROLE_ALLOWED_TO_SWITCH]
 
+    # L'ordre compte : la première règle qui matche gagne. Les exceptions
+    # doivent donc précéder la règle générale ^/admin.
     access_control:
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        # Page d'atterrissage volontairement accessible à tout agent connecté :
+        # elle n'affiche qu'un message, aucune donnée (voir
+        # Admin\DashboardController::noAccess()).
+        - { path: ^/admin/aucun-acces, roles: ROLE_AGENT }
         - { path: ^/api, roles: ROLE_AGENT }
-        - { path: ^/admin, roles: ROLE_AGENT }
+        # ROLE_SUPERADMIN plutôt que ROLE_AGENT : le back-office Twig lui est
+        # entièrement réservé (les 17 contrôleurs portent déjà
+        # #[IsGranted('ROLE_SUPERADMIN')]). Cette règle n'est donc pas un
+        # changement de périmètre, mais le filet manquant — sans elle, un
+        # futur contrôleur déposé dans src/Controller/Admin/ sans attribut
+        # serait immédiatement exposé à n'importe quel agent authentifié.
+        - { path: ^/admin, roles: ROLE_SUPERADMIN }
 
 when@test:
     security:

@@ -235,7 +235,7 @@ class MaterielInformatiqueController extends AbstractController
                 $service = $materiel->getService();
                 $affecteA = $materiel->getAffecteA();
 
-                fputcsv($sortie, [
+                fputcsv($sortie, array_map($this->protegerCsv(...), [
                     $materiel->getNumeroInventaire(),
                     $materiel->getType()?->getLibelle() ?? '',
                     $materiel->getMarque(),
@@ -249,7 +249,7 @@ class MaterielInformatiqueController extends AbstractController
                     $materiel->getFournisseur() ?? '',
                     $materiel->getNiveauVulnerabilite()?->getLibelle() ?? '',
                     $materiel->getObservations() ?? '',
-                ], ';');
+                ]), ';');
             }
 
             fclose($sortie);

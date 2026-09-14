@@ -12,6 +12,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -48,7 +49,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     normalizationContext: ['groups' => ['api:read']],
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['actif'])]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
 {
     public const ROLE_AGENT = 'ROLE_AGENT';
     public const ROLE_SUPERADMIN = 'ROLE_SUPERADMIN';
@@ -152,6 +153,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
+        // Défense en profondeur : un compte désactivé ne porte plus aucun
+        // rôle, donc plus aucun accès, même si un pare-feu venait à être
+        // déclaré sans user_checker (voir config/packages/security.yaml).
+        // Le UserChecker reste la barrière principale, celle qui produit un
+        // message d'erreur explicite à la connexion.
+        if (!$this->actif) {
+            return [];
+        }
+
         $roles = $this->roles;
 
         foreach ($this->delegationsRecues as $delegation) {
@@ -164,6 +174,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $roles[] = self::ROLE_AGENT;
 
         return array_unique($roles);
+    }
+
+    /**
+     * Invalide les sessions déjà ouvertes dès que le compte change d'état.
+     *
+     * Symfony compare à chaque requête l'utilisateur en session à celui
+     * rechargé en base (ContextListener::hasUserChanged) : il détecte
+     * nativement un changement de mot de passe ou de rôles, mais pas un
+     * changement de `actif`. Sans cette comparaison, désactiver un compte ne
+     * prenait effet qu'à l'expiration de sa session — l'agent révoqué gardait
+     * l'accès jusque-là.
+     *
+     * ATTENTION en cas de modification : dès qu'EquatableInterface est
+     * implémentée, Symfony s'appuie EXCLUSIVEMENT sur cette méthode et
+     * abandonne ses propres contrôles. Les comparaisons du mot de passe, de
+     * l'identifiant et des rôles doivent donc être reproduites ici, sous
+     * peine de rouvrir ce que le comportement natif fermait déjà.
+     */
+    public function isEqualTo(UserInterface $user): bool
+    {
+        if (!$user instanceof self) {
+            return false;
+        }
+
+        return $user->isActif() === $this->actif
+            && $user->getPassword() === $this->password
+            && $user->getUserIdentifier() === $this->getUserIdentifier()
+            && $user->getRoles() === $this->getRoles();
     }
 
     public function setRoles(array $roles): static

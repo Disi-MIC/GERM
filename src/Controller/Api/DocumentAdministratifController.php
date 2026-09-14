@@ -93,14 +93,14 @@ class DocumentAdministratifController extends AbstractController
             ], ';');
 
             foreach ($documentRepository->findAll() as $document) {
-                fputcsv($sortie, [
+                fputcsv($sortie, array_map($this->protegerCsv(...), [
                     $document->getPersonnel()?->getNomComplet() ?? '',
                     $document->getType()?->getLibelle() ?? '',
                     $document->getLibelle(),
                     $document->getDateDocument()?->format('d/m/Y') ?? '',
                     $document->getDateExpiration()?->format('d/m/Y') ?? '',
                     $document->getObservations() ?? '',
-                ], ';');
+                ]), ';');
             }
 
             fclose($sortie);

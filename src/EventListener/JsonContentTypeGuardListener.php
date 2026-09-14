@@ -2,11 +2,16 @@
 
 namespace App\EventListener;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 
 /**
+ * Protection CSRF de l'API, en deux barrières complémentaires : l'origine de
+ * la requête d'abord (voir origineAutorisee(), seule barrière efficace sur les
+ * écritures sans corps), le Content-Type ensuite.
+ *
  * Rejette toute requête d'écriture (POST/PUT/PATCH/DELETE) sur /api dont le
  * Content-Type n'est ni JSON ni un envoi de fichier (multipart/form-data) —
  * défense contre le CSRF côté API : le cookie de session doit être
@@ -25,6 +30,11 @@ class JsonContentTypeGuardListener
 {
     private const METHODES_SURVEILLEES = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+    public function __construct(
+        #[Autowire('%env(CORS_ALLOW_ORIGIN)%')] private readonly string $originesAutorisees,
+    ) {
+    }
+
     public function __invoke(RequestEvent $event): void
     {
         if (!$event->isMainRequest()) {
@@ -38,6 +48,36 @@ class JsonContentTypeGuardListener
         }
 
         if (!\in_array($request->getMethod(), self::METHODES_SURVEILLEES, true)) {
+            return;
+        }
+
+        // Barrière principale : l'origine déclarée par le navigateur.
+        //
+        // Le contrôle du Content-Type ci-dessous ne couvre pas les écritures
+        // sans corps (ex. POST /api/demandes-decision/{id}/valider, qui ne
+        // prend aucun payload) : un site tiers pouvait les déclencher par un
+        // <form> vide ou un fetch() sans corps, tous deux "simples" donc sans
+        // préflight CORS, avec le cookie de session joint puisqu'il est
+        // SameSite=None.
+        //
+        // L'en-tête Origin est posé par le navigateur lui-même sur toute
+        // requête d'écriture et ne peut pas être falsifié par la page
+        // attaquante. On réutilise l'allowlist CORS déjà en place plutôt que
+        // d'en maintenir une seconde : c'est la même question ("qui a le droit
+        // de nous appeler ?"), donc la même source de vérité — et l'app
+        // Capacitor (capacitor://localhost) y figure déjà.
+        //
+        // Origin absent (client non navigateur, ou même origine sur certains
+        // navigateurs) : on retombe sur le contrôle du Content-Type. Un client
+        // qui n'envoie pas d'Origin n'est de toute façon pas un vecteur CSRF,
+        // puisque le CSRF suppose un navigateur porteur du cookie.
+        $origine = $request->headers->get('Origin');
+        if (null !== $origine && !$this->origineAutorisee($origine)) {
+            $event->setResponse(new JsonResponse(
+                ['errors' => ['origin' => 'Origine non autorisée.']],
+                JsonResponse::HTTP_FORBIDDEN,
+            ));
+
             return;
         }
 
@@ -62,5 +102,16 @@ class JsonContentTypeGuardListener
                 JsonResponse::HTTP_UNSUPPORTED_MEDIA_TYPE,
             ));
         }
+    }
+
+    /**
+     * Même évaluation que NelmioCorsBundle avec `origin_regex: true` (voir
+     * config/packages/nelmio_cors.yaml) : CORS_ALLOW_ORIGIN est un motif sans
+     * délimiteurs, appliqué ici avec les mêmes délimiteurs que le bundle pour
+     * que les deux contrôles ne puissent pas diverger.
+     */
+    private function origineAutorisee(string $origine): bool
+    {
+        return 1 === preg_match('{'.$this->originesAutorisees.'}i', $origine);
     }
 }

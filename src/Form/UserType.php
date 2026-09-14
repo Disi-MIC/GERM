@@ -77,10 +77,16 @@ class UserType extends AbstractType
                 'label' => $options['is_new'] ? 'Mot de passe' : 'Nouveau mot de passe (laisser vide pour ne pas changer)',
                 'mapped' => false,
                 'required' => $options['is_new'],
-                'constraints' => $options['is_new'] ? [
-                    new NotBlank(message: 'Merci de saisir un mot de passe.'),
-                    new Length(min: 8, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.'),
-                ] : [],
+                // La contrainte de longueur s'applique aussi en modification :
+                // laissée vide, elle ne déclenche rien (LengthValidator ignore
+                // null et ''), mais un mot de passe effectivement saisi est
+                // validé comme à la création. Sans cela, la liste de
+                // contraintes était vide en édition et un administrateur
+                // pouvait affecter un mot de passe d'un seul caractère.
+                'constraints' => array_merge(
+                    $options['is_new'] ? [new NotBlank(message: 'Merci de saisir un mot de passe.')] : [],
+                    [new Length(min: 8, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.')],
+                ),
             ])
         ;
     }

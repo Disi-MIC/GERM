@@ -64,14 +64,14 @@ class DecisionCongeController extends AbstractController
             ], ';');
 
             foreach ($decisionRepository->findAll() as $decision) {
-                fputcsv($sortie, [
+                fputcsv($sortie, array_map($this->protegerCsv(...), [
                     $decision->getNumeroDecision(),
                     $decision->getPersonnel()?->getNomComplet() ?? '',
                     $decision->getDateDecision()?->format('d/m/Y') ?? '',
                     $decision->getDateExpiration()?->format('d/m/Y') ?? '',
                     $decision->getNombreJours() ?? '',
                     $decision->getGenereeParNom() ?? '',
-                ], ';');
+                ]), ';');
             }
 
             fclose($sortie);
