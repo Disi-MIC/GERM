@@ -79,10 +79,11 @@ L'API s'authentifie par cookie de session, ce qui l'expose structurellement au
 CSRF. Deux barrières complémentaires, dans `src/EventListener/JsonContentTypeGuardListener.php` :
 
 1. **Origine** (barrière principale) — toute écriture `POST/PUT/PATCH/DELETE`
-   sur `/api` dont l'en-tête `Origin` est présent doit correspondre à
-   `CORS_ALLOW_ORIGIN`. C'est la seule barrière efficace sur les écritures
-   **sans corps**, qu'un `<form>` vide ou un `fetch()` cross-origin peut
-   déclencher sans préflight.
+   sur `/api` dont l'en-tête `Origin` est présent doit soit correspondre
+   exactement à l'hôte de la requête elle-même (même origine), soit figurer
+   dans `CORS_ALLOW_ORIGIN`. C'est la seule barrière efficace sur les
+   écritures **sans corps**, qu'un `<form>` vide ou un `fetch()` cross-origin
+   peut déclencher sans préflight.
 2. **Content-Type** (défense secondaire) — un corps non vide doit être
    `application/json` ou `multipart/form-data`, deux types qu'un formulaire
    HTML tiers ne peut pas produire.
@@ -90,10 +91,28 @@ CSRF. Deux barrières complémentaires, dans `src/EventListener/JsonContentTypeG
 Origin absent → repli sur le Content-Type. Un client sans `Origin` n'est pas un
 navigateur porteur de cookie, donc pas un vecteur CSRF.
 
-> **Dépendance de configuration.** Ce contrôle réutilise `CORS_ALLOW_ORIGIN`
-> comme source de vérité unique. Modifier cette variable modifie **aussi** qui
-> peut écrire dans l'API. Une regex trop étroite casse l'application, une regex
-> trop large annule la protection.
+> **Piège découvert à la vérification de production, corrigé avant tout
+> déploiement (`d13d17e`).** En production, le frontend web et l'API sont
+> servis depuis la **même origine** (`https://10.112.26.30` pour les deux) :
+> Apache sert le SPA en statique sous `/app`, Symfony répond sous `/api` du
+> même host. Un navigateur envoie `Origin` même sur une requête même origine
+> pour les méthodes d'écriture — pas seulement en cross-origin. Une première
+> version de ce contrôle ne reconnaissait que `CORS_ALLOW_ORIGIN`, qui ne
+> couvre que `localhost`/`127.0.0.1` (dev) et `capacitor://localhost` (l'app
+> mobile, seul cas réellement cross-origin) : cette regex n'a jamais eu
+> besoin de couvrir le domaine de production, une requête même origine
+> échappant à l'application du CORS par le navigateur. Sans l'exception
+> même-origine, **chaque écriture du web en production serait tombée en 403
+> dès le déploiement.** Un site tiers ne peut ni forger l'en-tête `Origin`,
+> ni le faire coïncider avec l'hôte de la requête qu'il déclenche
+> lui-même — l'exception n'ouvre donc aucune brèche. Verrouillé par
+> `tests/EventListener/JsonContentTypeGuardListenerTest.php`, y compris deux
+> tentatives d'usurpation par suffixe de domaine.
+
+> **Dépendance de configuration restante.** La liste `CORS_ALLOW_ORIGIN` sert
+> toujours de source de vérité pour les origines **cross-origin** légitimes
+> (l'app mobile, ou un futur sous-domaine dédié au web). L'ajouter ou la
+> modifier change aussi qui peut écrire dans l'API par ce canal.
 
 **Côté Twig** : jetons CSRF stateless (`config/packages/csrf.yaml`), vérifiés
 par `isCsrfTokenValid()` sur chacune des ~20 opérations destructives. Aucune

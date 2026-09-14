@@ -156,10 +156,10 @@ régulière puis **URL reconstruite**. Dompdf tourne avec
 
 | Point | État |
 |---|---|
-| CORS | `origin_regex` avec `allow_credentials: true`, jamais `*`. **Valeur de production non vérifiée** |
+| CORS | `origin_regex` avec `allow_credentials: true`, jamais `*`. Vérifié : la valeur de production ne couvre que `localhost`/`127.0.0.1` et l'app mobile — le web y échappe car servi en même origine que l'API. A révélé un bug dans le contrôle d'`Origin` de GERM-002, corrigé avant déploiement (`d13d17e`) |
 | En-têtes | CSP, HSTS, `nosniff`, `frame-ancestors 'none'`, `Permissions-Policy`. **Ne couvrent pas le SPA servi par Apache** |
 | Réponses d'erreur | Format uniforme `{errors: {champ: message}}`, sans trace technique |
-| `APP_ENV` en production | ⏸️ **Non vérifié** — profiler potentiellement exposé (GERM-005) |
+| `APP_ENV` en production | ✅ Vérifié `prod` — profiler écarté (GERM-005) |
 | **Documentation interactive** | ⚠️ **GERM-022** — voir ci-dessous |
 
 #### GERM-022 — `/api/docs` accessible à tout agent authentifié · LOW
@@ -202,7 +202,7 @@ et `nbf`, durée de 8 h, non révocable).
 | API5 Fonctions | ✅ Conforme |
 | API6 Flux métier | ⚠️ Corrigé partiellement |
 | API7 SSRF | ✅ Conforme |
-| API8 Configuration | ⚠️ **Dépend de la production non vérifiée** + GERM-022 |
+| API8 Configuration | ⚠️ Corrigé partiellement — production vérifiée (GERM-005 écarté, GERM-006/GERM-023 confirmés) ; GERM-022 ouvert |
 | API9 Inventaire | ✅ Conforme |
 | API10 Consommation d'API | ✅ Conforme en entrée ; à améliorer en sortie |
 

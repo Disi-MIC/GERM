@@ -4,7 +4,7 @@
 **Commanditaire** : Ministère de l'Industrie et du Commerce
 **Référentiels** : OWASP Top 10 (2021), OWASP API Security Top 10 (2023), OWASP ASVS 4.0
 **Date de l'audit** : 14 septembre 2026
-**Commits de correction** : `c70cd6f` (lot 1), `a2bd956` (lot 2)
+**Commits de correction** : `c70cd6f` (lot 1), `a2bd956` (lot 2), `0707ceb` (livrables), `d13d17e` (correctif pré-déploiement GERM-002)
 
 ---
 
@@ -47,11 +47,21 @@ une architecture défaillante.
 
 ### Ce qui reste ouvert
 
+La vérification de la configuration de production (14/09/2026) a écarté un
+risque (le profiler Symfony n'est pas exposé) et **révélé un bug dans un
+correctif déjà écrit** : le contrôle d'`Origin` de GERM-002 aurait cassé
+toutes les écritures du web en production, celui-ci étant servi en même
+origine que l'API — un cas que la liste CORS n'a jamais eu besoin de couvrir.
+Corrigé et testé avant tout déploiement (`d13d17e`). C'est l'illustration
+concrète de pourquoi cette vérification était bloquante plutôt que
+formelle.
+
 | Sujet | Portée |
 |---|---|
-| Vérification de la configuration de production | **Bloquant** — voir §10 |
+| **`QR_SECRET_KEY` de production = clé versionnée** | Confirmé (GERM-006) — à faire tourner |
+| **Aucun en-tête de sécurité sur le SPA** | Confirmé (GERM-023) — nouveau constat |
 | Journalisation d'audit (A09) | Inexistante. Attendue par le SOC du Ministère |
-| Couverture de tests de sécurité | 13 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
+| Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
 | Chaîne CI/CD | Aucune. Déploiement par `git push` sans barrière qualité |
 | Minimisation des données (§61-62) | Données RH complètes exposées aux rôles non-RH |
 
@@ -126,10 +136,10 @@ La transparence sur ce qui n'a *pas* été audité vaut autant que les constats.
 | Domaine | Couverture | Base |
 |---|---|---|
 | A01 Contrôle d'accès | **Approfondie** | Lecture intégrale des 45 contrôleurs, des 24 expressions `security:`, des 39 routes du périmètre `ROLE_AGENT` |
-| A02 Cryptographie | **Partielle** | Code lu ; secrets de production **non vérifiés** |
+| A02 Cryptographie | **Approfondie** | Code lu ; `QR_SECRET_KEY` de production vérifiée — **non surchargée** (GERM-006 confirmé) |
 | A03 Injection | **Approfondie** | 0 SQL natif, 0 concaténation en QueryBuilder, 44 `setParameter`, 0 `\|raw` Twig, 2 `bypassSecurityTrust` justifiés |
 | A04 Conception | **Partielle** | Règles métier sensibles échantillonnées, pas exhaustives |
-| A05 Mauvaise configuration | **Partielle** | Configuration du dépôt auditée ; **serveur et Apache non vérifiés** |
+| A05 Mauvaise configuration | **Approfondie** | `APP_ENV`, CORS et en-têtes vérifiés en production. Reste non vérifié : configuration Apache/PHP au-delà des en-têtes (GERM-023) |
 | A06 Dépendances | **Approfondie** | `composer audit` + `npm audit`, avec distinction prod / build |
 | A07 Authentification | **Approfondie** | Chaîne complète tracée jusque dans `vendor/` |
 | A08 Intégrité | **Faible** | Aucune CI/CD à auditer ; `deploy.sh` (25 lignes) non analysé en profondeur |
@@ -149,10 +159,10 @@ leur contrôle d'accès.
 | | Catégorie | Verdict | Constats |
 |---|---|---|---|
 | **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009, GERM-013 |
-| **A02** | Cryptographic Failures | ⚠️ **À confirmer** | GERM-006, GERM-012 |
+| **A02** | Cryptographic Failures | ❌ **Non conforme** | GERM-006 (confirmé), GERM-012 |
 | **A03** | Injection | ⚠️ **Corrigé** | GERM-003 (CSV) — aucune injection SQL ni XSS |
 | **A04** | Insecure Design | ⚠️ **Corrigé partiellement** | GERM-008 |
-| **A05** | Security Misconfiguration | ⚠️ **À confirmer** | GERM-005, GERM-015, GERM-016, GERM-022 |
+| **A05** | Security Misconfiguration | ⚠️ **Corrigé partiellement** | GERM-005 (résolu), GERM-015, GERM-016, GERM-022, GERM-023 (ouvert) |
 | **A06** | Vulnerable Components | ✅ **Conforme** | 0 vulnérabilité en production |
 | **A07** | Identification & Auth Failures | ⚠️ **Corrigé** | GERM-001, GERM-004, GERM-011 |
 | **A08** | Software & Data Integrity | ❌ **Non conforme** | GERM-017 (aucune CI/CD) |
@@ -187,7 +197,7 @@ Synthèse ; le détail figure dans `API-SECURITY.md`.
 | **API5** | Broken Function Level Authorization | ✅ Couverture `#[IsGranted]` intégrale |
 | **API6** | Unrestricted Access to Sensitive Business Flows | ⚠️ Corrigé partiellement (GERM-008) |
 | **API7** | Server Side Request Forgery | ✅ Voir A10 |
-| **API8** | Security Misconfiguration | ⚠️ À confirmer (GERM-005) + GERM-022 |
+| **API8** | Security Misconfiguration | ⚠️ Corrigé partiellement — GERM-005 écarté, GERM-022 et GERM-023 ouverts |
 | **API9** | Improper Inventory Management | ✅ Inventaire produit ; 0 route morte ou de debug |
 | **API10** | Unsafe Consumption of APIs | ✅ Une seule API tierce, validée strictement |
 
@@ -206,12 +216,12 @@ Niveau visé : **L2** (application manipulant des données personnelles).
 | V5 Validation & encodage | PASS | Doctrine paramétré, Twig auto-échappé, Angular non contourné, CSV neutralisé (après correction) |
 | V7 Journalisation | **FAIL** | Aucune journalisation d'audit applicative |
 | V8 Protection des données | PARTIAL | Données RH sur-exposées aux rôles non-RH (GERM-009) |
-| V9 Communications | PARTIAL | TLS 1.2/1.3 confirmé en production ; en-têtes du SPA non vérifiés |
+| V9 Communications | PARTIAL | TLS 1.2/1.3 confirmé ; en-têtes du SPA vérifiés **absents** (GERM-023) |
 | V10 Code malveillant | N/A | Hors périmètre |
 | V11 Logique métier | PARTIAL | Règle « dossier figé après instruction » ajoutée ; les autres règles sensibles ne sont pas testées |
 | V12 Fichiers & ressources | PASS | Nom aléatoire, type MIME reniflé, hors racine web, ré-encodage des images |
 | V13 API & services web | PARTIAL | Voir API3 et API4 |
-| V14 Configuration | **À CONFIRMER** | Dépend de la configuration de production non vérifiée |
+| V14 Configuration | PARTIAL | `APP_ENV`, CORS vérifiés conformes ; secrets (GERM-006) et en-têtes du SPA (GERM-023) non conformes |
 
 ---
 
@@ -239,7 +249,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 
 | ID | Titre | OWASP | Fichier | Statut |
 |---|---|---|---|---|
-| **GERM-002** | Contournement CSRF sur les écritures sans corps. Le garde Content-Type sortait avant tout contrôle quand le corps était vide, laissant un site tiers déclencher les routes d'action (`valider`, `rejeter`, `prendre-en-charge`) via un `<form>` vide ou un `fetch()` sans corps — requêtes « simples », donc sans préflight CORS, avec le cookie joint puisqu'il est `SameSite=None` pour l'app Capacitor. **Correction** : l'origine est vérifiée contre la liste blanche CORS existante, le Content-Type restant en défense secondaire. | A01 · API2 · ASVS V4.2 | `src/EventListener/JsonContentTypeGuardListener.php:45` | ✅ `c70cd6f` |
+| **GERM-002** | Contournement CSRF sur les écritures sans corps. Le garde Content-Type sortait avant tout contrôle quand le corps était vide, laissant un site tiers déclencher les routes d'action (`valider`, `rejeter`, `prendre-en-charge`) via un `<form>` vide ou un `fetch()` sans corps — requêtes « simples », donc sans préflight CORS, avec le cookie joint puisqu'il est `SameSite=None` pour l'app Capacitor. **Correction** : l'origine est vérifiée contre la liste blanche CORS existante, le Content-Type restant en défense secondaire. *Correctif initial (`c70cd6f`) incomplet : la vérification de production a révélé que web et API sont servis en même origine, cas que la liste CORS ne couvre pas — corrigé avant tout déploiement par l'ajout d'une exception « même origine » (`d13d17e`), verrouillée par 11 tests dédiés.* | A01 · API2 · ASVS V4.2 | `src/EventListener/JsonContentTypeGuardListener.php` | ✅ `c70cd6f` + `d13d17e` |
 | **GERM-003** | Injection de formule dans les 5 exports CSV. **Correction** : `AbstractController::protegerCsv()` préfixe d'une apostrophe toute valeur commençant par `=`, `+`, `-`, `@`, tabulation ou retour chariot. | A03 · ASVS V5.3 | `src/Controller/AbstractController.php` + 5 contrôleurs | ✅ `c70cd6f` |
 | **GERM-004** | La désactivation d'un compte n'invalidait pas les sessions déjà ouvertes : le user checker n'agit qu'à l'authentification. **Correction** : `User` implémente `EquatableInterface`. *Point de vigilance documenté dans le code : Symfony s'appuie alors exclusivement sur `isEqualTo()` et abandonne ses comparaisons natives — le mot de passe et l'identifiant doivent y être comparés, sous peine de supprimer silencieusement l'invalidation au changement de mot de passe.* | A07 · ASVS V3.3 | `src/Entity/User.php` | ✅ `c70cd6f` |
 
@@ -247,8 +257,8 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 
 | ID | Titre | OWASP | Statut |
 |---|---|---|---|
-| **GERM-005** | `APP_ENV=dev` dans le `.env` versionné, et le pare-feu `dev` pose `security: false` sur `^/_profiler` et `^/_wdt`. Si la production ne surcharge pas `APP_ENV`, le profiler expose sans authentification les requêtes SQL, les sessions et les variables d'environnement. **Deviendrait CRITICAL si confirmé.** | A05 · API8 | ⏸️ **À confirmer** |
-| **GERM-006** | `QR_SECRET_KEY` versionnée dans `.env` avec une valeur d'aspect aléatoire. Si c'est la clé de production, elle figure dans l'historique Git et permet de forger des jetons d'étiquette. *Impact limité : la résolution d'un jeton exige `ROLE_IT_STOCK`.* | A02 | ⏸️ **À confirmer** |
+| **GERM-005** | `APP_ENV=dev` dans le `.env` versionné, et le pare-feu `dev` pose `security: false` sur `^/_profiler` et `^/_wdt`. **Vérifié le 14/09/2026** : la production surcharge bien `APP_ENV=prod`, et `WebProfilerBundle` est de toute façon réservé à `dev`/`test` dans `config/bundles.php` — le profiler ne peut pas être chargé, quelle que soit la config du pare-feu `dev`. Aucune action requise. | A05 · API8 | ✅ **Écarté** |
+| **GERM-006** | `QR_SECRET_KEY` **confirmée non surchargée en production** : la clé versionnée dans `.env` (et son historique Git) est la clé réellement utilisée pour chiffrer les jetons d'étiquette du parc informatique. Quiconque a accès en lecture au dépôt peut forger un jeton valide. *Impact contenu : la résolution d'un jeton exige quand même `ROLE_IT_STOCK` — l'attaquant doit cumuler l'accès au dépôt et un compte IT.* **Correction : générer une nouvelle clé, la déployer via `.env.local` (jamais versionné), réimprimer les étiquettes existantes.** | A02 | ❌ **Confirmé, ouvert** |
 | **GERM-007** | Annuaire nominatif énumérable : `/verif-carte/{numero}` est public par conception et révèle nom et fonction, sans limitation de débit. **Correction** : 20 requêtes/minute/IP. *Correction de fond (jeton opaque au lieu du numéro imprimé) non retenue : elle invaliderait les cartes en circulation.* | A01 · API4 | ✅ `a2bd956` |
 | **GERM-008** | Pièces justificatives modifiables après instruction : l'appartenance était vérifiée, jamais l'état de la demande. Un agent pouvait remplacer une pièce après validation par le RH, faisant diverger le dossier officiel de ce qui avait été instruit, sans trace. **Correction** : dépôt réservé à l'état « en attente » (409 sinon). | A04 · API6 · §13 | ✅ `a2bd956` |
 | **GERM-009** | Dossier RH complet (date de naissance, adresse, téléphone, e-mail, observations) exposé à `ROLE_IT_STOCK` et `ROLE_RH_CARTE_PRO` via `GET /api/personnels`, sans pagination. Mesure effectuée : ces rôles n'utilisent que `nomComplet`, `matricule`, `nom`, `prenom`. La séparation RH/IT voulue par la configuration est contournée au niveau des données. | A01 · API3 · §61-62 | ⏸️ **Arbitrage en attente** |
@@ -269,6 +279,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-019** | `ROLE_ALLOWED_TO_SWITCH` présent dans la hiérarchie alors qu'aucun pare-feu ne déclare `switch_user` : configuration morte laissant croire à une usurpation d'identité active et non journalisée. | ✅ `a2bd956` |
 | **GERM-020** | Absence de Voter : la logique « cet objet est-il à moi ? » est réécrite à la main en 14 endroits, sous 3 formes et avec 2 codes de retour différents (403 / 404). Correct aujourd'hui — vérifié une par une — mais chaque nouvelle route repose sur la vigilance du développeur. | ❌ **Dette ouverte** |
 | **GERM-021** | Import CSV/XLSX sans limite de taille ni contrôle de type réel, avec évaluation des formules du classeur (`getCalculatedValue()`). Réservé au superadmin et jamais stocké : risque de déni de service auto-infligé. | ❌ **Ouvert** |
+| **GERM-023** | **Le SPA Angular ne porte aucun en-tête de sécurité en production.** `curl -I https://10.112.26.30/app/` (14/09/2026) : ni CSP, ni `X-Frame-Options`, ni HSTS, ni `X-Content-Type-Options` — seulement `Content-Type`. `SecurityHeadersListener` ne peut structurellement pas l'atteindre : Apache sert ce fichier en statique sans jamais passer par `index.php` (confirmé — les mêmes en-têtes sont bien présents sur `/admin/login`, servi par Symfony). C'est pourtant la première page que charge chaque utilisateur. *Correction : ajouter les mêmes en-têtes via `mod_headers` dans le vhost Apache, sur le `Location` ou `Directory` servant `/app`.* | A05 · API8 | ❌ **Nouveau, ouvert** |
 | **GERM-022** | `GET /api/docs` (documentation interactive API Platform) renvoie `401` sans authentification mais `200` pour **tout compte authentifié**, y compris un `ROLE_AGENT` sans aucun rôle métier. Les opérations restent protégées individuellement : ce n'est pas un accès aux données, mais la cartographie complète des 24 ressources, de leurs opérations et de leurs champs, offerte à un compte compromis de bas privilège. Le §34 demande de ne pas l'exposer en production. *Correction : `enable_swagger_ui: false` sous `when@prod`, ou règle `access_control` sur `^/api/docs` avant `^/api`.* | ❌ **Ouvert** |
 
 ---
@@ -296,15 +307,15 @@ indémontrable.
 
 | | Avant l'audit | Après |
 |---|---|---|
-| Fichiers de test | 8 | 10 |
-| Tests exécutés | 42 | **55** |
-| Tests de sécurité | **0** | **13** (dont 6 inactifs) |
+| Fichiers de test | 8 | 11 |
+| Tests exécutés | 42 | **66** |
+| Tests de sécurité | **0** | **24** (dont 6 inactifs) |
 | Échecs | 0 | 0 |
 
 **Commandes** :
 
 ```bash
-php vendor/bin/phpunit          # 55 tests, 0 échec, 6 ignorés
+php vendor/bin/phpunit          # 66 tests, 0 échec, 6 ignorés
 composer audit                  # aucune alerte
 cd frontend && npm audit --omit=dev   # 0 vulnérabilité
 ```
@@ -316,6 +327,11 @@ cd frontend && npm audit --omit=dev   # 0 vulnérabilité
   `/admin`, dont **6 actuellement ignorés** : le compte MySQL applicatif n'a pas le
   droit de créer `germ_db_test`. Ils s'activent seuls une fois la base créée
   (marche à suivre en commentaire dans le fichier).
+- `tests/EventListener/JsonContentTypeGuardListenerTest.php` — 11 tests
+  verrouillant GERM-002, ajoutés après que la vérification de production a
+  révélé le bug même-origine décrit en §10 : le scénario qui a failli casser
+  la production (`Origin` = hôte de la requête) est désormais un test, pas
+  seulement une vérification manuelle.
 
 **Matrice de test du §55 — état** :
 
@@ -338,28 +354,26 @@ cd frontend && npm audit --omit=dev   # 0 vulnérabilité
 **GERM n'est pas « 100 % sécurisé ». Aucune application ne l'est.** Ce qui suit
 énumère ce qui demeure, en connaissance de cause.
 
-### Bloquant — configuration de production non vérifiée
+### Configuration de production — vérifiée le 14/09/2026
 
-Trois éléments n'ont pas pu être contrôlés, et deux d'entre eux peuvent
-invalider des conclusions de ce rapport :
+| Point | Résultat | Verdict |
+|---|---|---|
+| `APP_ENV` | `prod` | ✅ GERM-005 levé — le profiler n'est de toute façon jamais chargé (`config/bundles.php` le réserve à `dev`/`test`) |
+| `CORS_ALLOW_ORIGIN` | `^(https?://(localhost\|127\.0\.0\.1)(:[0-9]+)?\|capacitor://localhost)$` — identique au local | ⚠️ A révélé un bug dans le correctif GERM-002 (voir ci-dessous), **corrigé avant tout déploiement** |
+| `QR_SECRET_KEY` | **Non surchargée** — la production utilise la valeur versionnée dans `.env` | ❌ **GERM-006 confirmé** |
+| En-têtes de sécurité du SPA | **Aucun** — `curl -I https://10.112.26.30/app/` ne renvoie que `Content-Type`, `ETag`, `Last-Modified` | ❌ **GERM-023, nouveau constat** |
 
-1. **`APP_ENV` en production.** S'il n'est pas surchargé à `prod`, le profiler
-   Symfony est accessible sans authentification (GERM-005) — ce serait la
-   vulnérabilité la plus grave du système, devant GERM-001.
-2. **`CORS_ALLOW_ORIGIN` en production.** Le correctif GERM-002 s'appuie sur
-   cette liste blanche. Une regex ne couvrant pas l'origine web réelle
-   **casserait toutes les écritures** ; une regex trop permissive annulerait
-   la protection.
-3. **`QR_SECRET_KEY`** (GERM-006) et les en-têtes de sécurité posés par Apache
-   sur le SPA — que le listener Symfony ne couvre pas, par construction.
+La vérification a évité un incident : le web et l'API de production sont
+servis depuis la **même origine** (`https://10.112.26.30` pour les deux), ce
+que `CORS_ALLOW_ORIGIN` n'a jamais eu besoin de couvrir puisque le navigateur
+n'applique pas CORS à une requête même origine. Le correctif GERM-002 traitait
+initialement tout `Origin` absent de cette liste comme suspect — sans
+exception pour ce cas, **chaque écriture du web en production serait tombée
+en 403 dès le déploiement**. Corrigé (`d13d17e`) : une origine strictement
+égale à l'hôte de la requête est désormais acceptée avant consultation de la
+liste CORS, verrouillé par 11 tests dédiés.
 
-```bash
-ssh germ-appdbserver "cd /var/www/germ && \
-  grep -h CORS_ALLOW_ORIGIN .env.local .env 2>/dev/null | tail -1; \
-  grep -h APP_ENV .env.local 2>/dev/null || echo 'APP_ENV NON SURCHARGÉ'; \
-  grep -qc QR_SECRET_KEY .env.local 2>/dev/null && echo 'QR surchargée' || echo 'QR non surchargée'"
-curl -skI https://10.112.26.30/app/ | grep -iE 'content-security|strict-transport|x-frame'
-```
+Deux constats restent ouverts, détaillés en §7 (GERM-006, GERM-023).
 
 ### Risques acceptés ou reportés
 
@@ -390,9 +404,9 @@ physique des serveurs, ni de la résistance à un test d'intrusion dynamique.
 | ASVS L2 | INITIAL | **DEVELOPING** |
 | Authentification | DEVELOPING | **DEFINED** |
 | Autorisation | DEFINED | **DEFINED** |
-| Cryptographie | DEFINED | **DEFINED** (gestion des secrets : DEVELOPING) |
+| Cryptographie | DEFINED | DEFINED (mécanismes) / **INITIAL** (gestion des secrets — clé de prod versionnée, GERM-006 confirmé) |
 | Journalisation | **INITIAL** | **INITIAL** |
-| Infrastructure | *non évalué* | *non évalué* |
+| Infrastructure | *non évalué* | **INITIAL** (SPA sans en-tête de sécurité, GERM-023 ; reste non évalué au-delà) |
 | Dépendances | MANAGED | **MANAGED** |
 | Tests | INITIAL | **DEVELOPING** |
 | DevSecOps | **INITIAL** | **INITIAL** |
@@ -412,13 +426,14 @@ prochains chantiers structurants.
 
 | Priorité | Chantier | Référence |
 |---|---|---|
-| 1 | Vérifier la configuration de production, puis déployer les lots 1 et 2 | §10 |
-| 2 | Trancher GERM-009 (minimisation) et GERM-012 (jeton SSO, avec MIC-GAR) | §7 |
-| 3 | Journalisation d'audit + préparation SIEM/Wazuh | §25-27, GERM-018 |
-| 4 | Base de test dédiée, activation des 4 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
-| 5 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
-| 6 | Lot performance | §41-47 |
-| 7 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
+| 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
+| 2 | Faire tourner `QR_SECRET_KEY` (GERM-006) et ajouter les en-têtes de sécurité au vhost Apache servant le SPA (GERM-023) | §7 |
+| 3 | Trancher GERM-009 (minimisation) et GERM-012 (jeton SSO, avec MIC-GAR) | §7 |
+| 4 | Journalisation d'audit + préparation SIEM/Wazuh | §25-27, GERM-018 |
+| 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
+| 6 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
+| 7 | Lot performance | §41-47 |
+| 8 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
 
 ---
 

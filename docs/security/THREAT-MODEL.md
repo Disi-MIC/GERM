@@ -166,7 +166,7 @@ contrôlons pas le comportement.
 |---|---|---|
 | Lecture du QR par un lecteur générique | Le QR encode `germ://materiel/<jeton chiffré>` — ni identifiant, ni URL exploitable | ✅ |
 | Forge d'un jeton | libsodium `secretbox`, chiffrement authentifié | ✅ |
-| **Clé compromise** | — | ⏸️ `QR_SECRET_KEY` versionnée (GERM-006) |
+| **Clé compromise** | — | ❌ **Confirmé** : `QR_SECRET_KEY` de production non surchargée, c'est la valeur versionnée (GERM-006) |
 | Résolution d'un jeton par un tiers | `ROLE_IT_STOCK` requis même avec un jeton valide | ✅ |
 | Étiquette d'un matériel qui n'est pas le sien | `/api/me/materiels/{id}/qrcode` restreint au matériel affecté | ✅ |
 
@@ -179,7 +179,7 @@ contrôlons pas le comportement.
 | Suppression par CSRF | `isCsrfTokenValid()` sur ~20 opérations, toutes en POST | ✅ |
 | Escalade de privilèges par le formulaire de compte | Groupes de désérialisation explicites, formulaire Twig typé | ✅ |
 | Usurpation d'identité non tracée | `switch_user` déclaré nulle part ; rôle mort retiré | ✅ *(GERM-019)* |
-| **Profiler exposé** | Dépend de `APP_ENV` en production | ⏸️ **GERM-005, non vérifié** |
+| **Profiler exposé** | `APP_ENV=prod` vérifié ; bundle réservé à `dev`/`test` de toute façon | ✅ GERM-005 écarté |
 
 ## 5. Principes de conception appliqués
 
@@ -193,16 +193,19 @@ contrôlons pas le comportement.
 
 ## 6. Scénarios d'attaque prioritaires
 
-Classés par produit *probabilité × impact*, après les lots 1 et 2.
+Classés par produit *probabilité × impact*, après les lots 1 et 2 et la
+vérification de production du 14/09/2026.
 
 | # | Scénario | Statut |
 |---|---|---|
-| 1 | **Profiler Symfony accessible en production** → variables d'environnement, requêtes SQL, sessions de tous les utilisateurs, sans aucune authentification | ⏸️ **À vérifier en priorité absolue** |
+| 1 | ~~Profiler Symfony accessible en production~~ | ✅ **Écarté** — `APP_ENV=prod` vérifié, et le bundle n'est de toute façon jamais chargé hors `dev`/`test` |
 | 2 | **Agent révoqué conservant son accès** par le web ou le mobile | ✅ Corrigé, **non déployé** |
-| 3 | **CSRF sur une validation de décision** depuis un site piégé visité par un cadre RH | ✅ Corrigé, **non déployé** |
+| 3 | **CSRF sur une validation de décision** depuis un site piégé visité par un cadre RH | ✅ Corrigé (deux passes — voir §6 de `SECURITY-CONTROLS.md`), **non déployé** |
 | 4 | **Exécution de code sur un poste RH** à l'ouverture d'un export CSV | ✅ Corrigé, **non déployé** |
-| 5 | **Exfiltration de l'état civil par un compte informatique** légitime ou compromis | ❌ Ouvert (GERM-009) |
-| 6 | **Compromission indétectable** : sans journal d'audit, aucun des scénarios ci-dessus ne laisserait de trace exploitable | ❌ Ouvert (GERM-018) |
+| 5 | **Forge d'une étiquette QR** par quiconque a accès au dépôt Git | ❌ **Confirmé** — `QR_SECRET_KEY` de production = valeur versionnée (GERM-006) |
+| 6 | **Clickjacking ou injection sur la page réellement chargée par les utilisateurs** : le SPA ne porte aucun en-tête de sécurité, contrairement aux routes Symfony | ❌ **Confirmé** (GERM-023) |
+| 7 | **Exfiltration de l'état civil par un compte informatique** légitime ou compromis | ❌ Ouvert (GERM-009) |
+| 8 | **Compromission indétectable** : sans journal d'audit, aucun des scénarios ci-dessus ne laisserait de trace exploitable | ❌ Ouvert (GERM-018) |
 
 > Le scénario 6 est transverse : il ne crée pas de vulnérabilité, il rend
 > toutes les autres invisibles. C'est ce qui justifie de placer la
