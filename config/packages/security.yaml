@@ -84,7 +84,13 @@ security:
         ROLE_RESPONSABLE_SERVICE: [ROLE_AGENT]
         ROLE_DIRECTION_MINISTERIELLE: [ROLE_RESPONSABLE_SERVICE]
         ROLE_AUTORITE: [ROLE_DIRECTION_MINISTERIELLE]
-        ROLE_SUPERADMIN: [ROLE_RH_RESPONSABLE, ROLE_IT_RESPONSABLE, ROLE_AUTORITE, ROLE_ALLOWED_TO_SWITCH]
+        # ROLE_ALLOWED_TO_SWITCH retiré : aucun pare-feu ne déclare switch_user,
+        # l'usurpation d'identité n'existe donc pas dans GERM et ce rôle ne
+        # donnait rien. Le laisser laissait croire à une fonctionnalité active
+        # et non journalisée. Si elle devait être ouverte un jour, elle devra
+        # l'être avec `switch_user: { role: ROLE_SUPERADMIN }` ET une trace
+        # applicative de chaque usurpation (cf. §26 du cahier des charges).
+        ROLE_SUPERADMIN: [ROLE_RH_RESPONSABLE, ROLE_IT_RESPONSABLE, ROLE_AUTORITE]
 
     # L'ordre compte : la première règle qui matche gagne. Les exceptions
     # doivent donc précéder la règle générale ^/admin.

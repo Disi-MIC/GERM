@@ -9,11 +9,13 @@ use App\Repository\ListeValeurRepository;
 use App\Repository\PersonnelRepository;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -82,8 +84,10 @@ class DocumentAdministratifController extends AbstractController
     /** Export CSV du registre des documents administratifs — même logique que PersonnelController::exportCsv(). */
     // priority > 0 : même raison que PersonnelController::exportCsv().
     #[Route('/api/documents-administratifs/export.csv', name: 'api_document_administratif_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(DocumentAdministratifRepository $documentRepository): StreamedResponse
+    public function exportCsv(DocumentAdministratifRepository $documentRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
     {
+        $this->limiterExportCsv($limiteurExport);
+
         $response = new StreamedResponse(function () use ($documentRepository) {
             $sortie = fopen('php://output', 'w');
             fwrite($sortie, "\xEF\xBB\xBF");

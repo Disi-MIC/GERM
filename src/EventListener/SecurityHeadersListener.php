@@ -30,7 +30,15 @@ class SecurityHeadersListener
         ."font-src 'self' https://cdn.jsdelivr.net; "
         ."img-src 'self' data:; "
         ."connect-src 'self'; "
-        ."frame-ancestors 'self'; "
+        // 'none' et non 'self' : l'en-tête X-Frame-Options ci-dessous vaut
+        // DENY, et les navigateurs modernes donnent la priorité à la CSP.
+        // Avec 'self', le framing depuis la même origine restait donc
+        // autorisé malgré un X-Frame-Options qui prétendait l'interdire —
+        // deux en-têtes contradictoires, exactement ce que le durcissement
+        // cherchait à éviter. Aucune page servie par Symfony n'est embarquée
+        // dans une iframe (les seules iframes du projet sont côté Angular, et
+        // affichent des blob: — ce que régit frame-src, pas frame-ancestors).
+        ."frame-ancestors 'none'; "
         ."base-uri 'self'; "
         ."form-action 'self'; "
         ."object-src 'none'";
@@ -47,6 +55,12 @@ class SecurityHeadersListener
         $headers->set('X-Frame-Options', 'DENY');
         $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $headers->set('Content-Security-Policy', self::CSP);
+        // Aucune page servie par Symfony (admin Twig, vérification de carte,
+        // réponses d'API) n'a besoin de ces API navigateur : les refuser
+        // explicitement limite ce qu'un script injecté pourrait en tirer.
+        // L'app mobile utilise bien l'appareil photo, mais via les plugins
+        // natifs Capacitor, hors de portée de cet en-tête.
+        $headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
 
         // HSTS uniquement en HTTPS : l'envoyer sur une réponse HTTP (ne
         // devrait jamais arriver ici, le vhost redirige déjà 80→443) forcerait

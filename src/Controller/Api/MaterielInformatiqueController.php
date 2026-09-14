@@ -24,6 +24,7 @@ use App\Service\NotificationService;
 use App\Service\QrTokenService;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\Builder\Builder;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,6 +32,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -219,8 +221,10 @@ class MaterielInformatiqueController extends AbstractController
     // priority > 0 : sans ça, la route item générée par API Platform (GET /materiels-informatiques/{id})
     // matche en premier avec id="export.csv" et répond 404 avant d'atteindre cette action.
     #[Route('/api/materiels-informatiques/export.csv', name: 'api_materiel_informatique_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(MaterielInformatiqueRepository $materielRepository): StreamedResponse
+    public function exportCsv(MaterielInformatiqueRepository $materielRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
     {
+        $this->limiterExportCsv($limiteurExport);
+
         $response = new StreamedResponse(function () use ($materielRepository) {
             $sortie = fopen('php://output', 'w');
             fwrite($sortie, "\xEF\xBB\xBF");

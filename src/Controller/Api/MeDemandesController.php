@@ -178,6 +178,10 @@ class MeDemandesController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        if ($refus = $this->refusSiDemandeFigee($demande->isEnAttente())) {
+            return $refus;
+        }
+
         $file = $request->files->get('fichier');
         if ($erreur = $this->fileStorage->erreurValidation($file)) {
             return $this->json(['errors' => ['fichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
@@ -269,6 +273,10 @@ class MeDemandesController extends AbstractController
     {
         if (!$this->appartientAMoi($demande->getPersonnel())) {
             throw $this->createAccessDeniedException();
+        }
+
+        if ($refus = $this->refusSiDemandeFigee($demande->isEnAttente())) {
+            return $refus;
         }
 
         $file = $request->files->get('fichier');
@@ -391,6 +399,10 @@ class MeDemandesController extends AbstractController
     {
         if (!$this->appartientAMoi($demande->getPersonnel())) {
             throw $this->createAccessDeniedException();
+        }
+
+        if ($refus = $this->refusSiDemandeFigee($demande->isEnAttente())) {
+            return $refus;
         }
 
         $file = $request->files->get('fichier');
@@ -543,6 +555,27 @@ class MeDemandesController extends AbstractController
         $user = $this->getUser();
 
         return $user->getPersonnel();
+    }
+
+    /**
+     * Une demande n'accepte de pièce justificative que tant qu'elle est en
+     * attente, c'est-à-dire tant que l'agent constitue encore son dossier.
+     *
+     * Passé ce stade, le service RH a instruit la demande sur la foi des
+     * pièces qu'il a vues : les remplacer ou en ajouter après coup ferait
+     * diverger le dossier officiel de ce qui a été validé, sans trace. Le
+     * contrôle d'appartenance seul ne suffit pas ici — l'agent est bien
+     * propriétaire de sa demande, c'est son instruction qui est en jeu.
+     */
+    private function refusSiDemandeFigee(bool $enAttente): ?JsonResponse
+    {
+        if ($enAttente) {
+            return null;
+        }
+
+        return $this->json([
+            'errors' => ['demande' => "Cette demande a déjà été traitée : ses pièces ne sont plus modifiables. Rapprochez-vous du service RH pour toute correction."],
+        ], JsonResponse::HTTP_CONFLICT);
     }
 
     private function appartientAMoi(?Personnel $personnel): bool

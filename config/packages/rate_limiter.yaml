@@ -1,0 +1,22 @@
+framework:
+    rate_limiter:
+        # Vérification publique d'une carte professionnelle
+        # (CarteVerificationController). Route volontairement sans
+        # authentification — c'est un scan de QR code par un tiers — donc la
+        # seule protection possible contre l'énumération de l'annuaire
+        # (nom + fonction de chaque agent) est la limitation de débit.
+        # 20/minute laisse passer un agent d'accueil qui contrôle plusieurs
+        # cartes à la suite, et coupe court à un balayage automatisé.
+        verification_carte:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '1 minute'
+
+        # Exports CSV : opérations lourdes (une table entière par appel, voir
+        # les actions export.csv). Le rôle requis les réserve déjà au RH ou à
+        # l'informatique, mais rien n'empêchait un compte légitime — ou
+        # compromis — de les déclencher en boucle jusqu'à saturer le serveur.
+        export_csv:
+            policy: 'fixed_window'
+            limit: 10
+            interval: '1 hour'

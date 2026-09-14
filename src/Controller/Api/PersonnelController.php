@@ -13,10 +13,12 @@ use App\Repository\PersonnelRepository;
 use App\Service\FileStorage;
 use App\Service\PersonnelPhotoService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -75,8 +77,10 @@ class PersonnelController extends AbstractController
     // priority > 0 : sans ça, la route item générée par API Platform (GET /personnels/{id})
     // matche en premier avec id="export.csv" et répond 404 avant d'atteindre cette action.
     #[Route('/api/personnels/export.csv', name: 'api_personnel_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(PersonnelRepository $personnelRepository): StreamedResponse
+    public function exportCsv(PersonnelRepository $personnelRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
     {
+        $this->limiterExportCsv($limiteurExport);
+
         $response = new StreamedResponse(function () use ($personnelRepository) {
             $sortie = fopen('php://output', 'w');
             fwrite($sortie, "\xEF\xBB\xBF");

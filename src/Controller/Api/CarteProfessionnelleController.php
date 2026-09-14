@@ -8,12 +8,14 @@ use App\Repository\CarteProfessionnelleRepository;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -59,8 +61,10 @@ class CarteProfessionnelleController extends AbstractController
     /** Export CSV du registre des cartes professionnelles — même logique que PersonnelController::exportCsv(). */
     // priority > 0 : même raison que PersonnelController::exportCsv().
     #[Route('/api/cartes-professionnelles/export.csv', name: 'api_carte_professionnelle_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(CarteProfessionnelleRepository $carteRepository): StreamedResponse
+    public function exportCsv(CarteProfessionnelleRepository $carteRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
     {
+        $this->limiterExportCsv($limiteurExport);
+
         $response = new StreamedResponse(function () use ($carteRepository) {
             $sortie = fopen('php://output', 'w');
             fwrite($sortie, "\xEF\xBB\xBF");

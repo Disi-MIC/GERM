@@ -6,10 +6,12 @@ use App\Controller\AbstractController;
 use App\Entity\DecisionConge;
 use App\Repository\DecisionCongeRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -52,8 +54,10 @@ class DecisionCongeController extends AbstractController
     /** Export CSV du registre des décisions de congé — même logique que PersonnelController::exportCsv(). */
     // priority > 0 : même raison que PersonnelController::exportCsv().
     #[Route('/api/decisions-conge/export.csv', name: 'api_decision_conge_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(DecisionCongeRepository $decisionRepository): StreamedResponse
+    public function exportCsv(DecisionCongeRepository $decisionRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
     {
+        $this->limiterExportCsv($limiteurExport);
+
         $response = new StreamedResponse(function () use ($decisionRepository) {
             $sortie = fopen('php://output', 'w');
             fwrite($sortie, "\xEF\xBB\xBF");
