@@ -4,7 +4,9 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\DecisionConge;
+use App\Entity\Enum\ActionAudit;
 use App\Repository\DecisionCongeRepository;
+use App\Service\AuditLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -54,9 +56,10 @@ class DecisionCongeController extends AbstractController
     /** Export CSV du registre des décisions de congé — même logique que PersonnelController::exportCsv(). */
     // priority > 0 : même raison que PersonnelController::exportCsv().
     #[Route('/api/decisions-conge/export.csv', name: 'api_decision_conge_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(DecisionCongeRepository $decisionRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
+    public function exportCsv(DecisionCongeRepository $decisionRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport, AuditLogService $auditLog): StreamedResponse
     {
         $this->limiterExportCsv($limiteurExport);
+        $auditLog->enregistrer(ActionAudit::EXPORT_CREE, details: 'Export CSV des décisions de congé');
 
         $response = new StreamedResponse(function () use ($decisionRepository) {
             $sortie = fopen('php://output', 'w');

@@ -4,7 +4,9 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
+use App\Entity\Enum\ActionAudit;
 use App\Repository\CarteProfessionnelleRepository;
+use App\Service\AuditLogService;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,9 +63,10 @@ class CarteProfessionnelleController extends AbstractController
     /** Export CSV du registre des cartes professionnelles — même logique que PersonnelController::exportCsv(). */
     // priority > 0 : même raison que PersonnelController::exportCsv().
     #[Route('/api/cartes-professionnelles/export.csv', name: 'api_carte_professionnelle_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(CarteProfessionnelleRepository $carteRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
+    public function exportCsv(CarteProfessionnelleRepository $carteRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport, AuditLogService $auditLog): StreamedResponse
     {
         $this->limiterExportCsv($limiteurExport);
+        $auditLog->enregistrer(ActionAudit::EXPORT_CREE, details: 'Export CSV des cartes professionnelles');
 
         $response = new StreamedResponse(function () use ($carteRepository) {
             $sortie = fopen('php://output', 'w');
@@ -158,13 +161,15 @@ class CarteProfessionnelleController extends AbstractController
 
     #[Route('/api/cartes-professionnelles/{id}/valider', name: 'api_carte_professionnelle_valider', methods: ['POST'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_RH_RESPONSABLE')]
-    public function valider(CarteProfessionnelle $carte): JsonResponse
+    public function valider(CarteProfessionnelle $carte, AuditLogService $auditLog): JsonResponse
     {
         /** @var \App\Entity\User $validateur */
         $validateur = $this->getUser();
         $carte->valider($validateur);
         $this->pdfStockage->genererEtStocker($carte);
         $this->em->flush();
+
+        $auditLog->enregistrer(ActionAudit::CARTE_VALIDEE, entite: 'CarteProfessionnelle', entiteId: $carte->getId(), details: $carte->getNumero());
 
         return $this->json($carte, JsonResponse::HTTP_OK, [], ['groups' => ['api:read']]);
     }

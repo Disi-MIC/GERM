@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 use App\Controller\AbstractController;
 use App\Entity\DecisionConge;
 use App\Entity\DemandeDecision;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\Personnel;
@@ -13,6 +14,7 @@ use App\Entity\User;
 use App\Repository\DecisionCongeRepository;
 use App\Repository\ListeValeurRepository;
 use App\Repository\ParametresDecisionCongeRepository;
+use App\Service\AuditLogService;
 use App\Service\EligibiliteDecisionCongeService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
@@ -196,7 +198,7 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/api/demandes-decision/{id}/valider', name: 'api_demande_decision_valider', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function valider(DemandeDecision $demande): JsonResponse
+    public function valider(DemandeDecision $demande, AuditLogService $auditLog): JsonResponse
     {
         if (!$demande->isEnAttente()) {
             return $this->json(['errors' => ['statut' => 'Cette demande a déjà été traitée.']], JsonResponse::HTTP_CONFLICT);
@@ -213,6 +215,8 @@ class DemandeDecisionController extends AbstractController
         $demande->setStatut(StatutDemande::VALIDEE);
         $demande->setDateTraitement(new \DateTimeImmutable());
         $this->em->flush();
+
+        $auditLog->enregistrer(ActionAudit::DECISION_VALIDEE, entite: 'DemandeDecision', entiteId: $demande->getId(), details: $demande->getPersonnel()?->getNomComplet());
 
         $this->notificationService->notifier(
             $demande->getPersonnel()?->getUser(),
@@ -231,7 +235,7 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/api/demandes-decision/{id}/rejeter', name: 'api_demande_decision_rejeter', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function rejeter(DemandeDecision $demande, Request $request): JsonResponse
+    public function rejeter(DemandeDecision $demande, Request $request, AuditLogService $auditLog): JsonResponse
     {
         if (!$demande->isEnAttente()) {
             return $this->json(['errors' => ['statut' => 'Cette demande a déjà été traitée.']], JsonResponse::HTTP_CONFLICT);
@@ -248,6 +252,8 @@ class DemandeDecisionController extends AbstractController
         $demande->setMotifRejet($motif);
         $demande->setCommentaireTraitement($data['commentaire'] ?? null);
         $this->em->flush();
+
+        $auditLog->enregistrer(ActionAudit::DECISION_REJETEE, entite: 'DemandeDecision', entiteId: $demande->getId(), details: \sprintf('%s — %s', $demande->getPersonnel()?->getNomComplet(), $motif->getLibelle()));
 
         $this->notificationService->notifier(
             $demande->getPersonnel()?->getUser(),

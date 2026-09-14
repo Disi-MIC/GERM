@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\TypeMouvementCarriere;
 use App\Entity\HistoriqueAffectation;
 use App\Entity\HistoriqueChangementPersonnel;
@@ -10,6 +11,7 @@ use App\Entity\Personnel;
 use App\Entity\User;
 use App\Repository\HistoriqueChangementPersonnelRepository;
 use App\Repository\PersonnelRepository;
+use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use App\Service\PersonnelPhotoService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -77,9 +79,10 @@ class PersonnelController extends AbstractController
     // priority > 0 : sans ça, la route item générée par API Platform (GET /personnels/{id})
     // matche en premier avec id="export.csv" et répond 404 avant d'atteindre cette action.
     #[Route('/api/personnels/export.csv', name: 'api_personnel_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(PersonnelRepository $personnelRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
+    public function exportCsv(PersonnelRepository $personnelRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport, AuditLogService $auditLog): StreamedResponse
     {
         $this->limiterExportCsv($limiteurExport);
+        $auditLog->enregistrer(ActionAudit::EXPORT_CREE, details: 'Export CSV des effectifs');
 
         $response = new StreamedResponse(function () use ($personnelRepository) {
             $sortie = fopen('php://output', 'w');

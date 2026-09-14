@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\CategorieListeValeur;
 use App\Entity\HistoriqueAffectationMateriel;
 use App\Entity\HistoriqueChangementMateriel;
@@ -19,6 +20,7 @@ use App\Repository\MaintenanceRepository;
 use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\PersonnelRepository;
 use App\Repository\TicketIncidentRepository;
+use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use App\Service\QrTokenService;
@@ -221,9 +223,10 @@ class MaterielInformatiqueController extends AbstractController
     // priority > 0 : sans ça, la route item générée par API Platform (GET /materiels-informatiques/{id})
     // matche en premier avec id="export.csv" et répond 404 avant d'atteindre cette action.
     #[Route('/api/materiels-informatiques/export.csv', name: 'api_materiel_informatique_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(MaterielInformatiqueRepository $materielRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
+    public function exportCsv(MaterielInformatiqueRepository $materielRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport, AuditLogService $auditLog): StreamedResponse
     {
         $this->limiterExportCsv($limiteurExport);
+        $auditLog->enregistrer(ActionAudit::EXPORT_CREE, details: 'Export CSV du parc informatique');
 
         $response = new StreamedResponse(function () use ($materielRepository) {
             $sortie = fopen('php://output', 'w');

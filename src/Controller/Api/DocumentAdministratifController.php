@@ -4,9 +4,11 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\DocumentAdministratif;
+use App\Entity\Enum\ActionAudit;
 use App\Repository\DocumentAdministratifRepository;
 use App\Repository\ListeValeurRepository;
 use App\Repository\PersonnelRepository;
+use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
@@ -84,9 +86,10 @@ class DocumentAdministratifController extends AbstractController
     /** Export CSV du registre des documents administratifs — même logique que PersonnelController::exportCsv(). */
     // priority > 0 : même raison que PersonnelController::exportCsv().
     #[Route('/api/documents-administratifs/export.csv', name: 'api_document_administratif_export_csv', methods: ['GET'], priority: 10)]
-    public function exportCsv(DocumentAdministratifRepository $documentRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport): StreamedResponse
+    public function exportCsv(DocumentAdministratifRepository $documentRepository, #[Target('export_csv')] RateLimiterFactoryInterface $limiteurExport, AuditLogService $auditLog): StreamedResponse
     {
         $this->limiterExportCsv($limiteurExport);
+        $auditLog->enregistrer(ActionAudit::EXPORT_CREE, details: 'Export CSV des documents administratifs');
 
         $response = new StreamedResponse(function () use ($documentRepository) {
             $sortie = fopen('php://output', 'w');

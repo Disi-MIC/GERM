@@ -3,11 +3,13 @@
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Personnel;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\PersonnelRepository;
 use App\Repository\UserRepository;
+use App\Service\AuditLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
@@ -33,7 +35,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, PersonnelRepository $personnelRepository): Response
+    public function new(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, PersonnelRepository $personnelRepository, AuditLogService $auditLog): Response
     {
         $user = new User();
         $form = $this->createForm(UserType::class, $user, [
@@ -47,6 +49,8 @@ class UserController extends AbstractController
             $em->persist($user);
             $em->flush();
 
+            $auditLog->enregistrer(ActionAudit::UTILISATEUR_CREE, entite: 'User', entiteId: $user->getId(), details: $user->getEmail());
+
             $this->addFlash('success', 'Compte agent créé.');
 
             return $this->redirectToRoute('admin_agent_index');
@@ -59,7 +63,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, PersonnelRepository $personnelRepository): Response
+    public function edit(Request $request, User $user, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, PersonnelRepository $personnelRepository, AuditLogService $auditLog): Response
     {
         $personnelActuel = $personnelRepository->findOneBy(['user' => $user]);
         $form = $this->createForm(UserType::class, $user, [
@@ -67,6 +71,11 @@ class UserController extends AbstractController
             'personnel_actuel' => $personnelActuel,
             'personnel_disponibles' => $personnelRepository->findDisponiblesPourCompte($personnelActuel),
         ]);
+        // Instantané avant traitement du formulaire : seule façon de détecter
+        // un changement de rôles après coup, ROLE_AGENT et les délégations
+        // actives se mêlant aux rôles réellement choisis par l'administrateur
+        // dans le tableau renvoyé par getRoles().
+        $rolesAvant = $user->getRoles();
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid() && $this->lierPersonnelOuRefuser($form, $user, $personnelActuel)) {
@@ -75,6 +84,15 @@ class UserController extends AbstractController
                 $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
             }
             $em->flush();
+
+            $rolesApres = $user->getRoles();
+            sort($rolesAvant);
+            sort($rolesApres);
+            if ($rolesAvant !== $rolesApres) {
+                $auditLog->enregistrer(ActionAudit::ROLES_MODIFIES, entite: 'User', entiteId: $user->getId(), details: \sprintf('%s : [%s] → [%s]', $user->getEmail(), implode(',', $rolesAvant), implode(',', $rolesApres)));
+            } else {
+                $auditLog->enregistrer(ActionAudit::UTILISATEUR_MODIFIE, entite: 'User', entiteId: $user->getId(), details: $user->getEmail());
+            }
 
             $this->addFlash('success', 'Compte agent mis à jour.');
 
