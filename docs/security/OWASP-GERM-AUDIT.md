@@ -164,7 +164,7 @@ leur contrôle d'accès.
 | | Catégorie | Verdict | Constats |
 |---|---|---|---|
 | **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009 (résolu), GERM-013, GERM-024 (résolu) |
-| **A02** | Cryptographic Failures | ✅ **Conforme** | GERM-006 (corrigé) |
+| **A02** | Cryptographic Failures | ⚠️ **Corrigé partiellement** | GERM-006, GERM-025 (corrigés) ; GERM-026 (MySQL, ouvert) |
 | **A03** | Injection | ⚠️ **Corrigé** | GERM-003 (CSV) — aucune injection SQL ni XSS |
 | **A04** | Insecure Design | ⚠️ **Corrigé partiellement** | GERM-008 |
 | **A05** | Security Misconfiguration | ⚠️ **Corrigé partiellement** | GERM-005 (résolu), GERM-015, GERM-016, GERM-023 (résolu), GERM-022 (ouvert) |
@@ -274,6 +274,8 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-013** | `access_control: ^/admin → ROLE_AGENT`. Aucune route n'était exposée (les 17 contrôleurs portent `ROLE_SUPERADMIN`), mais tout nouveau contrôleur déposé sans attribut l'aurait été. **Correction** : règle portée à `ROLE_SUPERADMIN`, exception explicite pour la page d'atterrissage. | A01 | ✅ `c70cd6f` |
 | **GERM-014** | Couverture de tests de sécurité quasi nulle avant l'audit : aucune garantie de non-régression sur un correctif. | §54-55 | 🔄 **En cours** |
 | **GERM-025** | Aucun chiffrement au repos des fichiers stockés (photos, pièces justificatives, cartes professionnelles) : SFTP protège le transport, pas le contenu une fois posé sur le disque distant — un accès direct à ce disque (hors périmètre du modèle de menaces, §7 de `THREAT-MODEL.md`, mais en défense en profondeur) exposait ces documents en clair. **Correction** : `App\Service\FileEncryptionService`, libsodium `secretbox` (même primitive que `QrTokenService`, clé dédiée `FILE_ENCRYPTION_KEY`), branché dans `FileStorage::store()/storeContent()/readStream()`. **Portée non rétroactive, assumée** : les fichiers déjà stockés avant ce correctif restent en clair jusqu'à leur remplacement — un format enveloppé versionné (en-tête `GRM1`) permet à `readStream()` de continuer à les servir sans erreur, plutôt que de les rendre illisibles. Vérifié en direct : nouveau fichier chiffré sur le disque (`GRM1...`), servi déchiffré via l'API ; fichier historique (sans en-tête) toujours lisible. | A02 · ASVS V8 | ✅ **Corrigé** — `f162578` |
+| **GERM-026** | **Aucun chiffrement des données MySQL, ni en transit ni au repos.** Évalué le 15/09/2026 depuis le serveur (`SHOW VARIABLES`) : `require_secure_transport=OFF`, et la connexion réelle de l'application à MySQL est en clair (`Ssl_cipher` vide sur la session active) — risque réseau nul puisque MySQL n'écoute que sur `127.0.0.1` (confirmé, aucune interface externe), mais non chiffré techniquement. Au repos : `default_table_encryption=OFF`, `innodb_redo_log_encrypt=OFF`, `binlog_encryption=OFF` — et le disque système lui-même n'est pas chiffré (`lsblk` : LVM simple sur `sda3`, aucun volume LUKS/dm-crypt détecté). L'intégralité de `germ_db` (état civil, mots de passe hachés, tout le reste) repose en clair sur disque. *Positif, vérifié dans la foulée* : `germ_user@localhost` est restreint aux connexions locales et scopé à `GRANT ALL PRIVILEGES ON germ_db.*` uniquement (pas de privilège global — il n'a même pas le droit de lire `mysql.user`). **Non corrigé** : activer le chiffrement nécessite une décision sur la gestion des clés et un test de compatibilité/performance, hors périmètre d'une simple évaluation. | A02 · ASVS V8 | ❌ **Ouvert, évalué** |
+| **GERM-027** | **Aucune preuve d'un processus de sauvegarde de la base de données.** Recherché le 15/09/2026 : aucun crontab pour l'utilisateur de déploiement, aucune entrée `/etc/cron.d/`, aucun timer systemd, aucun script ni fichier `.sql`/`.sql.gz` trouvé sur le disque. `/var/backups` ne contient que les sauvegardes système standard d'Ubuntu (dpkg/apt), rien lié à GERM. **Limite de cette vérification** : pas d'accès aux crontabs d'autres utilisateurs (`/var/spool/cron/crontabs/`, refusé sans `sudo`) ni à un éventuel mécanisme de snapshot au niveau de l'hyperviseur, invisible depuis l'intérieur de cette machine — absence constatée, non prouvée à 100 %. Historiquement hors périmètre de cet audit (§59 du cahier des charges), mais la question se pose directement au vu du resserrement vers « les données au repos ». **Si confirmée, c'est un risque de perte de données totale, au-delà de la seule confidentialité.** | Hors OWASP (continuité) | ❌ **Ouvert, à confirmer d'urgence** |
 
 ### Faible
 
@@ -394,12 +396,22 @@ Les deux constats de cette vérification ont été corrigés le 15/09/2026
 | `style-src 'unsafe-inline'` dans la CSP | Nécessaire aux attributs `style=` des templates Twig. Aucun `<script>` inline, `script-src` reste strict |
 | Contrôles d'appartenance sans Voter (GERM-020) | Corrects aujourd'hui, fragiles demain |
 | Cartes professionnelles en circulation | Le numéro imprimé reste la clé de vérification publique ; seule la limitation de débit protège l'annuaire |
+| MySQL non chiffré, ni en transit ni au repos (GERM-026) | Évalué le 15/09/2026 ; activer le chiffrement suppose une décision sur la gestion des clés et un test de compatibilité, hors périmètre d'une évaluation |
+
+**GERM-027 n'est pas un risque accepté, mais une question ouverte à trancher
+sans délai** : aucune preuve d'un processus de sauvegarde de `germ_db` n'a
+été trouvée sur le serveur le 15/09/2026 (voir §7) — si confirmé, c'est un
+risque de perte de données totale, pas seulement de confidentialité.
 
 ### Ce que cet audit ne dit pas
 
 Il ne dit rien de la sécurité réseau, de la configuration d'Apache et de PHP en
-production, des sauvegardes et de leur restauration (§59), de la sécurité
-physique des serveurs, ni de la résistance à un test d'intrusion dynamique.
+production, ni de la sécurité physique des serveurs, ni de la résistance à un
+test d'intrusion dynamique. Sur les sauvegardes (§59, initialement hors
+périmètre) : une recherche sommaire le 15/09/2026 n'en a trouvé aucune trace
+sur le serveur applicatif (GERM-027), mais un mécanisme externe (hyperviseur,
+infrastructure) reste possible et n'a pas pu être vérifié depuis cette
+machine.
 
 ---
 
@@ -412,9 +424,9 @@ physique des serveurs, ni de la résistance à un test d'intrusion dynamique.
 | ASVS L2 | INITIAL | **DEVELOPING** |
 | Authentification | DEVELOPING | **DEFINED** |
 | Autorisation | DEFINED | **DEFINED** |
-| Cryptographie | DEFINED | **DEFINED** (mécanismes et gestion des secrets — clé de prod rotée et retirée du dépôt, GERM-006 corrigé) |
+| Cryptographie | DEFINED | **DEVELOPING** (mécanismes applicatifs et gestion des secrets corrigés — GERM-006 ; MySQL non chiffré en transit ni au repos, GERM-026 ouvert) |
 | Journalisation | INITIAL | **DEVELOPING** |
-| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; configuration Apache/PHP au-delà reste non évaluée) |
+| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; aucune preuve de sauvegarde trouvée, GERM-027 ; configuration Apache/PHP au-delà reste non évaluée) |
 | Dépendances | MANAGED | **MANAGED** |
 | Tests | INITIAL | **DEVELOPING** |
 | DevSecOps | **INITIAL** | **INITIAL** |
@@ -444,11 +456,13 @@ supervision/détection externe au périmètre applicatif.
 | Priorité | Chantier | Référence |
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
-| 2 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
-| 3 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
-| 4 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
-| 5 | Lot performance | §41-47 |
-| 6 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
+| 2 | **Confirmer l'existence (ou l'absence) d'un mécanisme de sauvegarde de `germ_db`** — aucune trace trouvée sur le serveur applicatif, à vérifier au niveau infrastructure/hyperviseur avant toute autre chose | GERM-027 |
+| 3 | Décider du chiffrement de MySQL (transport + repos, y compris le disque) — décision de gestion des clés à prendre avant implémentation | GERM-026 |
+| 4 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
+| 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
+| 6 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
+| 7 | Lot performance | §41-47 |
+| 8 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
 
 ---
 

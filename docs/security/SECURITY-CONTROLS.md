@@ -205,6 +205,7 @@ Twig. Aucun `<script>` inline n'existe : `script-src` reste strict.
 | Jetons QR de matériel | libsodium `secretbox` (XSalsa20-Poly1305) — chiffrement **authentifié** : un jeton forgé échoue au déchiffrement | `src/Service/QrTokenService.php` |
 | Fichiers au repos (photos, pièces jointes, cartes) | libsodium `secretbox`, même primitive, clé dédiée (`FILE_ENCRYPTION_KEY`, distincte de `QR_SECRET_KEY`) — chiffré avant écriture sur le SFTP, déchiffré à la lecture (GERM-025) | `src/Service/FileEncryptionService.php`, `src/Service/FileStorage.php` |
 | Transport | TLS 1.2 / 1.3 confirmé en production ; SFTP (SSH) vers le stockage de fichiers | — |
+| Base de données MySQL | ❌ **Aucun** — ni en transit (`require_secure_transport=OFF`, connexion applicative en clair) ni au repos (`default_table_encryption=OFF`, disque système non chiffré) — GERM-026, évalué et ouvert | — |
 
 Le QR code encode `germ://materiel/<jeton chiffré>` : un scan avec un lecteur
 générique ne révèle ni identifiant, ni URL exploitable.
@@ -224,6 +225,17 @@ fichiers historiques et continue de les servir normalement.
 *L'intégration SSO vers MIC-GAR (jeton JWT RS256) a été abandonnée avant sa
 mise en service — décision du 15/09/2026, voir OWASP-GERM-AUDIT.md. GERM
 n'émet ni ne consomme aucun jeton pour une application tierce.*
+
+**GERM-026 — accès MySQL, évalué le 15/09/2026.** Le risque réseau du défaut
+de chiffrement en transit est nul en pratique : MySQL n'écoute que sur
+`127.0.0.1` (`bind-address`), confirmé sans aucune interface externe exposée
+(seuls 22/80/443 sont ouverts). Le compte applicatif `germ_user@localhost`
+est lui-même correctement scopé — connexions locales uniquement, privilèges
+limités à `germ_db` (pas d'accès à `mysql.user` ni à une autre base). Mais le
+chiffrement au repos est totalement absent, à la fois côté moteur (InnoDB) et
+côté disque système (pas de LUKS/dm-crypt) : tout `germ_db` — état civil,
+mots de passe hachés — repose en clair sur disque. Non corrigé : suppose une
+décision sur la gestion des clés avant toute mise en œuvre.
 
 ## 11. Protection contre le SSRF
 

@@ -204,8 +204,15 @@ vérification de production du 14/09/2026.
 ## 7. Hors périmètre de ce modèle
 
 Sécurité physique des serveurs, sécurité du réseau ministériel, configuration
-d'Apache et de PHP en production, sauvegardes et restauration (§59), postes de
-travail des agents, menace d'un administrateur système malveillant disposant
-d'un accès direct à la base ou au serveur de fichiers, et toute intégration
-avec une application tierce (MIC-GAR, décision du 15/09/2026 de ne pas
-l'intégrer pour le moment — voir OWASP-GERM-AUDIT.md).
+d'Apache et de PHP en production, postes de travail des agents, menace d'un
+administrateur système malveillant disposant d'un accès direct à la base ou
+au serveur de fichiers, et toute intégration avec une application tierce
+(MIC-GAR, décision du 15/09/2026 de ne pas l'intégrer pour le moment — voir
+OWASP-GERM-AUDIT.md).
+
+Les sauvegardes et leur restauration (§59) étaient initialement hors
+périmètre, mais une évaluation sommaire de l'accès MySQL le 15/09/2026
+(GERM-026, GERM-027 — voir OWASP-GERM-AUDIT.md) n'a trouvé aucune trace d'un
+processus de sauvegarde sur le serveur applicatif, ni de chiffrement de la
+base au repos. Un mécanisme externe (hyperviseur, infrastructure) reste
+possible et n'a pas pu être vérifié depuis cette machine.
