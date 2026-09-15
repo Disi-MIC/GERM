@@ -31,8 +31,15 @@ réels. Vérifié empiriquement avant correction : `POST /api/login` répondait
 écritures sans corps, injection de formule dans les cinq exports CSV, et
 persistance des sessions ouvertes après désactivation d'un compte.
 
-Toutes ont été corrigées et testées (lots 1 et 2). **Elles ne sont pas encore
-déployées en production.**
+Toutes ont été corrigées, testées et déployées.
+
+**Une seconde vulnérabilité critique, découverte le 15/09/2026 en évaluant
+l'accès à MySQL** : **aucun mécanisme de sauvegarde n'existe pour `germ_db`**,
+confirmé directement par le commanditaire (GERM-027). Ce n'est pas un
+problème de confidentialité comme le reste de cet audit, mais de continuité
+d'activité — un incident disque ou une erreur de manipulation effacerait
+l'intégralité des données du Ministère sans aucun moyen de restauration.
+**Non corrigé à ce jour.**
 
 ### Ce que l'audit a confirmé comme solide
 
@@ -59,6 +66,8 @@ formelle.
 |---|---|
 | ~~`QR_SECRET_KEY` de production = clé versionnée~~ | ✅ Corrigé (GERM-006) — rotée en production le 15/09/2026, retirée du dépôt |
 | ~~Aucun en-tête de sécurité sur le SPA~~ | ✅ Corrigé (GERM-023) — appliqué et vérifié en production le 15/09/2026 par un administrateur avec `sudo` |
+| **Aucune sauvegarde de `germ_db`** | ❌ **Confirmé (GERM-027), critique, non corrigé** — voir §7 |
+| MySQL non chiffré (transit et repos) | ❌ Ouvert (GERM-026), évalué le 15/09/2026 |
 | Journalisation d'audit (A09) | Socle minimal déployé — couverture partielle (§26), voir GERM-018 |
 | Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
 | Chaîne CI/CD | Aucune. Déploiement par `git push` sans barrière qualité |
@@ -250,6 +259,19 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **Statut** | ✅ Corrigé — `c70cd6f` |
 | **Test** | `tests/Entity/UserEtatCompteTest.php::testCompteDesactiveNaPlusAucunRole` + vérification empirique (401) |
 
+| | |
+|---|---|
+| **ID** | GERM-027 |
+| **Titre** | Aucun mécanisme de sauvegarde de `germ_db` |
+| **OWASP** | Hors OWASP — continuité d'activité, pas confidentialité |
+| **Sévérité** | **CRITICAL** |
+| **Fichier** | Infrastructure (serveur applicatif + MySQL), aucun fichier de code concerné |
+| **Description** | Recherche du 15/09/2026 sur le serveur applicatif : aucun crontab pour l'utilisateur de déploiement, aucune entrée `/etc/cron.d/`, aucun timer systemd, aucun script ni fichier `.sql`/`.sql.gz` — `/var/backups` ne contient que les sauvegardes système standard d'Ubuntu (dpkg/apt), rien lié à GERM. **Confirmé directement par le commanditaire le 15/09/2026** : il n'existe aucun autre mécanisme (hyperviseur, infrastructure externe). |
+| **Impact** | Un incident disque, une erreur de migration, une commande destructrice ou un ransomware efface l'intégralité des données du Ministère (état civil, carrière, cartes professionnelles, documents administratifs) **sans aucun moyen de restauration**. Contrairement aux autres constats de cet audit, ce n'est pas un risque de confidentialité mais de continuité d'activité pure — potentiellement le plus grave de tout ce document, malgré son absence du cahier des charges d'origine (§59, hors périmètre initial). |
+| **Preuve** | Absence constatée sur le serveur applicatif (recherche exhaustive des mécanismes usuels), confirmée par le commanditaire pour le reste de l'infrastructure. |
+| **Correction** | Non entreprise — nécessite une décision sur la destination des sauvegardes (idéalement hors de ce serveur, pour ne pas dépendre du même disque que les données elles-mêmes), la rétention et si elles doivent être chiffrées (cohérent avec GERM-026) avant toute mise en œuvre. |
+| **Statut** | ❌ **Confirmé, critique, non corrigé** |
+
 ### Élevée
 
 | ID | Titre | OWASP | Fichier | Statut |
@@ -275,7 +297,6 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-014** | Couverture de tests de sécurité quasi nulle avant l'audit : aucune garantie de non-régression sur un correctif. | §54-55 | 🔄 **En cours** |
 | **GERM-025** | Aucun chiffrement au repos des fichiers stockés (photos, pièces justificatives, cartes professionnelles) : SFTP protège le transport, pas le contenu une fois posé sur le disque distant — un accès direct à ce disque (hors périmètre du modèle de menaces, §7 de `THREAT-MODEL.md`, mais en défense en profondeur) exposait ces documents en clair. **Correction** : `App\Service\FileEncryptionService`, libsodium `secretbox` (même primitive que `QrTokenService`, clé dédiée `FILE_ENCRYPTION_KEY`), branché dans `FileStorage::store()/storeContent()/readStream()`. **Portée non rétroactive, assumée** : les fichiers déjà stockés avant ce correctif restent en clair jusqu'à leur remplacement — un format enveloppé versionné (en-tête `GRM1`) permet à `readStream()` de continuer à les servir sans erreur, plutôt que de les rendre illisibles. Vérifié en direct : nouveau fichier chiffré sur le disque (`GRM1...`), servi déchiffré via l'API ; fichier historique (sans en-tête) toujours lisible. | A02 · ASVS V8 | ✅ **Corrigé** — `f162578` |
 | **GERM-026** | **Aucun chiffrement des données MySQL, ni en transit ni au repos.** Évalué le 15/09/2026 depuis le serveur (`SHOW VARIABLES`) : `require_secure_transport=OFF`, et la connexion réelle de l'application à MySQL est en clair (`Ssl_cipher` vide sur la session active) — risque réseau nul puisque MySQL n'écoute que sur `127.0.0.1` (confirmé, aucune interface externe), mais non chiffré techniquement. Au repos : `default_table_encryption=OFF`, `innodb_redo_log_encrypt=OFF`, `binlog_encryption=OFF` — et le disque système lui-même n'est pas chiffré (`lsblk` : LVM simple sur `sda3`, aucun volume LUKS/dm-crypt détecté). L'intégralité de `germ_db` (état civil, mots de passe hachés, tout le reste) repose en clair sur disque. *Positif, vérifié dans la foulée* : `germ_user@localhost` est restreint aux connexions locales et scopé à `GRANT ALL PRIVILEGES ON germ_db.*` uniquement (pas de privilège global — il n'a même pas le droit de lire `mysql.user`). **Non corrigé** : activer le chiffrement nécessite une décision sur la gestion des clés et un test de compatibilité/performance, hors périmètre d'une simple évaluation. | A02 · ASVS V8 | ❌ **Ouvert, évalué** |
-| **GERM-027** | **Aucune preuve d'un processus de sauvegarde de la base de données.** Recherché le 15/09/2026 : aucun crontab pour l'utilisateur de déploiement, aucune entrée `/etc/cron.d/`, aucun timer systemd, aucun script ni fichier `.sql`/`.sql.gz` trouvé sur le disque. `/var/backups` ne contient que les sauvegardes système standard d'Ubuntu (dpkg/apt), rien lié à GERM. **Limite de cette vérification** : pas d'accès aux crontabs d'autres utilisateurs (`/var/spool/cron/crontabs/`, refusé sans `sudo`) ni à un éventuel mécanisme de snapshot au niveau de l'hyperviseur, invisible depuis l'intérieur de cette machine — absence constatée, non prouvée à 100 %. Historiquement hors périmètre de cet audit (§59 du cahier des charges), mais la question se pose directement au vu du resserrement vers « les données au repos ». **Si confirmée, c'est un risque de perte de données totale, au-delà de la seule confidentialité.** | Hors OWASP (continuité) | ❌ **Ouvert, à confirmer d'urgence** |
 
 ### Faible
 
@@ -398,20 +419,21 @@ Les deux constats de cette vérification ont été corrigés le 15/09/2026
 | Cartes professionnelles en circulation | Le numéro imprimé reste la clé de vérification publique ; seule la limitation de débit protège l'annuaire |
 | MySQL non chiffré, ni en transit ni au repos (GERM-026) | Évalué le 15/09/2026 ; activer le chiffrement suppose une décision sur la gestion des clés et un test de compatibilité, hors périmètre d'une évaluation |
 
-**GERM-027 n'est pas un risque accepté, mais une question ouverte à trancher
-sans délai** : aucune preuve d'un processus de sauvegarde de `germ_db` n'a
-été trouvée sur le serveur le 15/09/2026 (voir §7) — si confirmé, c'est un
-risque de perte de données totale, pas seulement de confidentialité.
+**GERM-027 n'est pas un risque accepté : c'est un risque confirmé, non
+traité.** Le 15/09/2026, le commanditaire a confirmé qu'aucun mécanisme de
+sauvegarde de `germ_db` n'existe, nulle part — ni sur le serveur applicatif
+(déjà constaté techniquement), ni ailleurs dans l'infrastructure. Un
+incident disque ou une erreur de manipulation effacerait l'intégralité des
+données du Ministère sans recours. C'est un risque de continuité d'activité,
+pas seulement de confidentialité — voir §7.
 
 ### Ce que cet audit ne dit pas
 
 Il ne dit rien de la sécurité réseau, de la configuration d'Apache et de PHP en
 production, ni de la sécurité physique des serveurs, ni de la résistance à un
 test d'intrusion dynamique. Sur les sauvegardes (§59, initialement hors
-périmètre) : une recherche sommaire le 15/09/2026 n'en a trouvé aucune trace
-sur le serveur applicatif (GERM-027), mais un mécanisme externe (hyperviseur,
-infrastructure) reste possible et n'a pas pu être vérifié depuis cette
-machine.
+périmètre) : leur absence totale est désormais confirmée (GERM-027), par la
+recherche technique du 15/09/2026 comme par le commanditaire directement.
 
 ---
 
@@ -426,7 +448,7 @@ machine.
 | Autorisation | DEFINED | **DEFINED** |
 | Cryptographie | DEFINED | **DEVELOPING** (mécanismes applicatifs et gestion des secrets corrigés — GERM-006 ; MySQL non chiffré en transit ni au repos, GERM-026 ouvert) |
 | Journalisation | INITIAL | **DEVELOPING** |
-| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; aucune preuve de sauvegarde trouvée, GERM-027 ; configuration Apache/PHP au-delà reste non évaluée) |
+| Infrastructure | *non évalué* | **INITIAL** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; **aucune sauvegarde confirmée, GERM-027** ; configuration Apache/PHP au-delà reste non évaluée) |
 | Dépendances | MANAGED | **MANAGED** |
 | Tests | INITIAL | **DEVELOPING** |
 | DevSecOps | **INITIAL** | **INITIAL** |
@@ -456,7 +478,7 @@ supervision/détection externe au périmètre applicatif.
 | Priorité | Chantier | Référence |
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
-| 2 | **Confirmer l'existence (ou l'absence) d'un mécanisme de sauvegarde de `germ_db`** — aucune trace trouvée sur le serveur applicatif, à vérifier au niveau infrastructure/hyperviseur avant toute autre chose | GERM-027 |
+| 2 | **Mettre en place un mécanisme de sauvegarde de `germ_db`** — confirmé inexistant, priorité absolue avant tout autre chantier | GERM-027 |
 | 3 | Décider du chiffrement de MySQL (transport + repos, y compris le disque) — décision de gestion des clés à prendre avant implémentation | GERM-026 |
 | 4 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
 | 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |

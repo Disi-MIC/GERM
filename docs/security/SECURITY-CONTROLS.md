@@ -237,6 +237,13 @@ côté disque système (pas de LUKS/dm-crypt) : tout `germ_db` — état civil,
 mots de passe hachés — repose en clair sur disque. Non corrigé : suppose une
 décision sur la gestion des clés avant toute mise en œuvre.
 
+**GERM-027 — confirmé le 15/09/2026 : aucune sauvegarde de `germ_db`
+n'existe, ni sur ce serveur ni ailleurs** (confirmé directement par le
+commanditaire). Contrairement à tous les autres constats de ce document, ce
+n'est pas un risque de confidentialité mais de continuité d'activité —
+classé critique dans `OWASP-GERM-AUDIT.md`, priorité absolue avant tout
+autre chantier.
+
 ## 11. Protection contre le SSRF
 
 Une seule sortie réseau dans toute l'application : l'import Google Sheets
