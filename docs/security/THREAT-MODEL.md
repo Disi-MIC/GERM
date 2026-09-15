@@ -16,7 +16,7 @@ Classés selon la grille du §61.
 |---|---|---|
 | **SENSIBLE** | État civil des agents : date de naissance, adresse postale, téléphone personnel, e-mail | `personnel` |
 | **SENSIBLE** | Documents administratifs (actes, pièces justificatives, décisions) | SFTP `10.112.26.31` |
-| **SENSIBLE** | Mots de passe (hachés), clé privée SSO, `QR_SECRET_KEY`, `APP_SECRET` | `user`, `config/jwt/`, `.env.local` |
+| **SENSIBLE** | Mots de passe (hachés), `QR_SECRET_KEY`, `APP_SECRET` | `user`, `.env.local` |
 | **CONFIDENTIEL** | Carrière, congés, décisions administratives, cartes professionnelles | `historique_affectation`, `conge`, `decision_conge`, `carte_professionnelle` |
 | **CONFIDENTIEL** | Inventaire du parc informatique : n° de série, vulnérabilités connues, affectations | `materiel_informatique` |
 | **INTERNE** | Organigramme : services, directions, responsables | `service`, `direction` |
@@ -40,7 +40,6 @@ Classés selon la grille du §61.
 | Responsable RH | `ROLE_RH_RESPONSABLE` | Les trois domaines RH |
 | Informatique | `ROLE_IT_STOCK` / `_TICKETS` / `_RESPONSABLE` | Parc, tickets, maintenance |
 | Superadmin | `ROLE_SUPERADMIN` | Tout, plus le back-office Twig |
-| MIC-GAR | — | Consomme le jeton SSO émis par GERM |
 
 ### Adverses
 
@@ -67,13 +66,13 @@ Classés selon la grille du §61.
         │  SYMFONY — autorité de sécurité                   │
         │  pare-feu → access_control → IsGranted →          │
         │  security: ApiResource → appartenance → état      │
-        └──────┬─────────────────┬──────────────────┬───────┘
-               │ ← FRONTIÈRE 2   │ ← FRONTIÈRE 3    │ ← FRONTIÈRE 4
-               │   Doctrine      │   SFTP           │   JWT RS256
-        ┌──────▼──────┐   ┌──────▼──────┐   ┌───────▼───────┐
-        │   MySQL     │   │  Fichiers   │   │   MIC-GAR     │
-        │ .26.30      │   │  .26.31     │   │   (tiers)     │
-        └─────────────┘   └─────────────┘   └───────────────┘
+        └──────┬─────────────────────┬───────────────────────┘
+               │ ← FRONTIÈRE 2       │ ← FRONTIÈRE 3
+               │   Doctrine          │   SFTP
+        ┌──────▼──────┐       ┌──────▼──────┐
+        │   MySQL     │       │  Fichiers   │
+        │ .26.30      │       │  .26.31     │
+        └─────────────┘       └─────────────┘
 ```
 
 **Frontière 1 — la seule qui compte vraiment.** Tout ce qui vient du client est
@@ -82,10 +81,9 @@ sont de l'**ergonomie**, jamais de la sécurité : ils masquent ce que
 l'utilisateur ne peut pas faire, ils ne l'en empêchent pas. Le backend Symfony
 est l'unique autorité.
 
-**Frontière 4 — sortante.** GERM émet un jeton que MIC-GAR consomme. GERM est
-ici la source de confiance : un défaut dans l'émission (jeton pour un compte
-désactivé, durée excessive) se propage à une application dont nous ne
-contrôlons pas le comportement.
+GERM n'a aucune frontière sortante vers une application tierce : l'intégration
+SSO prévue vers MIC-GAR a été abandonnée avant sa mise en service (décision du
+15/09/2026).
 
 ## 4. Menaces par flux
 
@@ -101,17 +99,7 @@ contrôlons pas le comportement.
 | Mot de passe trivial imposé par un admin | Contrainte de longueur à la création **et** en modification | ⚠️ Partiel — pas de complexité, pas de MFA |
 | Énumération de comptes | Message d'erreur générique | ✅ |
 
-### 4.2 SSO vers MIC-GAR
-
-| Menace | Contrôle | État |
-|---|---|---|
-| Jeton forgé | Signature RS256, clé privée hors dépôt | ✅ |
-| Fuite de données par le payload | `sub`, `email`, `nom`, `prenom`, `roles` uniquement — ni CIN, ni matricule, ni contact | ✅ |
-| Jeton émis pour un compte révoqué | Dépend entièrement de 4.1 | ✅ *depuis GERM-001* |
-| Rejeu | — | ❌ **Aucun `jti`** (GERM-012) |
-| Fenêtre d'exploitation d'un jeton volé | Durée de vie 8 h, **non révocable** | ❌ (GERM-012) |
-
-### 4.3 Données RH
+### 4.2 Données RH
 
 | Menace | Contrôle | État |
 |---|---|---|
@@ -122,7 +110,7 @@ contrôlons pas le comportement.
 | Exfiltration de masse | Quota d'exports 10/h/compte | ⚠️ Partiel — la collection `/api/personnels` reste non paginée |
 | Altération sans trace | — | ❌ **Aucune journalisation d'audit** (GERM-018) |
 
-### 4.4 Cartes professionnelles
+### 4.3 Cartes professionnelles
 
 | Menace | Contrôle | État |
 |---|---|---|
@@ -131,7 +119,7 @@ contrôlons pas le comportement.
 | Carte annulée redevenant valide | Statut porté par l'entité, transitions côté RH | ⚠️ Non testé (§13) |
 | Validation par un rôle non habilité | `ROLE_RH_CARTE_PRO` requis | ✅ |
 
-### 4.5 Documents et pièces justificatives
+### 4.4 Documents et pièces justificatives
 
 | Menace | Contrôle | État |
 |---|---|---|
@@ -142,7 +130,7 @@ contrôlons pas le comportement.
 | **Substitution de pièce après instruction** | Dépôt réservé à l'état « en attente » | ✅ *(GERM-008, corrigé)* |
 | Import malveillant (XLSX à formules) | Superadmin uniquement, jamais stocké | ⚠️ GERM-021 |
 
-### 4.6 Congés et décisions
+### 4.5 Congés et décisions
 
 | Menace | Contrôle | État |
 |---|---|---|
@@ -151,7 +139,7 @@ contrôlons pas le comportement.
 | Modification d'une décision validée sans traçabilité | Journaux `historique_changement_*` sur personnel et matériel | ⚠️ Partiel — pas de journal d'audit transverse |
 | Éligibilité contournée | `EligibiliteDecisionCongeService`, testé unitairement | ✅ |
 
-### 4.7 Exports
+### 4.6 Exports
 
 | Menace | Contrôle | État |
 |---|---|---|
@@ -161,7 +149,7 @@ contrôlons pas le comportement.
 | Épuisement mémoire sur gros volume | — | ⚠️ `findAll()` hydrate tout — reporté au lot performance |
 | Export non tracé | — | ❌ GERM-018 |
 
-### 4.8 QR codes du parc informatique
+### 4.7 QR codes du parc informatique
 
 | Menace | Contrôle | État |
 |---|---|---|
@@ -171,7 +159,7 @@ contrôlons pas le comportement.
 | Résolution d'un jeton par un tiers | `ROLE_IT_STOCK` requis même avec un jeton valide | ✅ |
 | Étiquette d'un matériel qui n'est pas le sien | `/api/me/materiels/{id}/qrcode` restreint au matériel affecté | ✅ |
 
-### 4.9 Administration
+### 4.8 Administration
 
 | Menace | Contrôle | État |
 |---|---|---|
@@ -216,5 +204,7 @@ vérification de production du 14/09/2026.
 
 Sécurité physique des serveurs, sécurité du réseau ministériel, configuration
 d'Apache et de PHP en production, sauvegardes et restauration (§59), postes de
-travail des agents, et menace d'un administrateur système malveillant disposant
-d'un accès direct à la base ou au serveur de fichiers.
+travail des agents, menace d'un administrateur système malveillant disposant
+d'un accès direct à la base ou au serveur de fichiers, et toute intégration
+avec une application tierce (MIC-GAR, décision du 15/09/2026 de ne pas
+l'intégrer pour le moment — voir OWASP-GERM-AUDIT.md).

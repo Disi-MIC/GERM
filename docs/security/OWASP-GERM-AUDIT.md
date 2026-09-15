@@ -24,9 +24,8 @@ L'audit a porté sur 21 240 lignes de PHP, 13 490 lignes de TypeScript,
 sur l'API. Un agent muté, licencié ou compromis restait bloqué sur le
 back-office `/admin` mais conservait l'accès complet au frontend web et à
 l'application mobile — c'est-à-dire là où se trouvent tous les utilisateurs
-réels — et se voyait délivrer un jeton SSO valide 8 heures pour l'application
-tierce MIC-GAR. Vérifié empiriquement avant correction : `POST /api/login`
-répondait `200` sur un compte désactivé.
+réels. Vérifié empiriquement avant correction : `POST /api/login` répondait
+`200` sur un compte désactivé.
 
 **Trois vulnérabilités élevées** : contournement de la protection CSRF sur les
 écritures sans corps, injection de formule dans les cinq exports CSV, et
@@ -84,11 +83,15 @@ formelle.
                     │  └─ Doctrine ORM         │
                     └────┬──────────┬──────────┘
                          │          │
-              ┌──────────▼───┐  ┌───▼────────────┐   ┌──────────────┐
-              │ MySQL        │  │ SFTP / Flysystem│   │ MIC-GAR      │
-              │ 10.112.26.30 │  │ 10.112.26.31    │   │ (SSO, RS256) │
-              └──────────────┘  └─────────────────┘   └──────────────┘
+              ┌──────────▼───┐  ┌───▼─────────────┐
+              │ MySQL        │  │ SFTP / Flysystem │
+              │ 10.112.26.30 │  │ 10.112.26.31     │
+              └──────────────┘  └──────────────────┘
 ```
+
+Aucune intégration sortante vers une application tierce : l'intégration SSO
+prévue vers MIC-GAR a été abandonnée avant sa mise en service (décision du
+15/09/2026, GERM-012 sans objet).
 
 | Composant | Volumétrie |
 |---|---|
@@ -160,7 +163,7 @@ leur contrôle d'accès.
 | | Catégorie | Verdict | Constats |
 |---|---|---|---|
 | **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009 (résolu), GERM-013, GERM-024 (résolu) |
-| **A02** | Cryptographic Failures | ❌ **Non conforme** | GERM-006 (confirmé), GERM-012 |
+| **A02** | Cryptographic Failures | ❌ **Non conforme** | GERM-006 (confirmé) |
 | **A03** | Injection | ⚠️ **Corrigé** | GERM-003 (CSV) — aucune injection SQL ni XSS |
 | **A04** | Insecure Design | ⚠️ **Corrigé partiellement** | GERM-008 |
 | **A05** | Security Misconfiguration | ⚠️ **Corrigé partiellement** | GERM-005 (résolu), GERM-015, GERM-016, GERM-022, GERM-023 (ouvert) |
@@ -240,8 +243,8 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **Sévérité** | **CRITICAL** |
 | **Fichier** | `config/packages/security.yaml` (pare-feu `api`) · `src/Security/UserChecker.php:15` · `src/Entity/User.php` |
 | **Description** | `user_checker: App\Security\UserChecker` n'était déclaré que sur le pare-feu `main`. Le pare-feu `api` retombait sur `InMemoryUserChecker`, qui sort immédiatement pour tout objet n'étant pas un `InMemoryUser` : le champ `actif` n'était donc **jamais** évalué sur `/api`. En complément, `User::getRoles()` ajoutait `ROLE_AGENT` inconditionnellement, satisfaisant la règle `^/api → ROLE_AGENT`. |
-| **Impact** | Un agent révoqué conserve l'accès complet au web et au mobile selon ses rôles, et obtient un jeton SSO valide 8 h pour MIC-GAR. La désactivation d'un compte, seul mécanisme de révocation de l'application, était inopérante là où se trouvent tous les utilisateurs. |
-| **Preuve** | Compte désactivé : `POST /api/login` → `200`, `GET /api/personnels` → `200`, jeton SSO émis. |
+| **Impact** | Un agent révoqué conserve l'accès complet au web et au mobile selon ses rôles. La désactivation d'un compte, seul mécanisme de révocation de l'application, était inopérante là où se trouvent tous les utilisateurs. |
+| **Preuve** | Compte désactivé : `POST /api/login` → `200`, `GET /api/personnels` → `200`. |
 | **Correction** | `user_checker` déclaré sur le pare-feu `api` ; `getRoles()` renvoie `[]` si le compte est inactif (défense en profondeur). |
 | **Statut** | ✅ Corrigé — `c70cd6f` |
 | **Test** | `tests/Entity/UserEtatCompteTest.php::testCompteDesactiveNaPlusAucunRole` + vérification empirique (401) |
@@ -266,7 +269,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-024** | `MaterielInformatique::$fournisseur` (groupe `api:read:rh`) était filtré par `MaterielInformatiqueContextBuilder`, un `SerializerContextBuilderInterface` — comme pour GERM-009, ce mécanisme ne couvre que le pipeline natif d'API Platform, jamais les réponses JSON manuelles (`create()`/`update()`/`uploadPhoto()` de `MaterielInformatiqueController`, qui répondent avec des groupes fixes incluant `api:read:rh`). **Vérifié : non exploitable aujourd'hui** — ces trois actions sont protégées par `#[IsGranted('ROLE_IT_STOCK')]` au niveau du contrôleur, qui bloque tout autre appelant avant la sérialisation (confirmé : `PUT` par un compte `ROLE_IT_TICKETS` seul renvoie 403). Le risque est structurel, pas actif : un futur point d'entrée réutilisant ces groupes avec un rôle plus large aurait hérité de la fuite en silence, exactement comme cela a été observé pour Personnel. **Correction** : `App\Serializer\MaterielInformatiqueNormalizer`, même principe que `PersonnelNormalizer` (décorateur du normalizer, chaîné à celui-ci sur `api_platform.serializer.normalizer.item`). *Bug rencontré en vérification et corrigé dans le même correctif* : les deux décorateurs typaient `$decorated` par la classe concrète `ItemNormalizer`, ce qui a cassé toutes les connexions (`TypeError`) dès que l'un des deux a reçu l'autre comme dépendance injectée au lieu de l'`ItemNormalizer` natif — remplacé par un type par intersection (`NormalizerInterface&DenormalizerInterface&SerializerAwareInterface`). `MaterielInformatiqueContextBuilder`, devenu redondant, a été supprimé. | A01 · API3 | ✅ **Corrigé** — `a17dd36` |
 | **GERM-010** | Exports CSV sans quota ni pagination. **Correction** : 10 exports/heure/compte. *Optimisation mémoire (`toIterable()`, N+1) reportée au lot performance.* | API4 · §39 | ✅ `a2bd956` |
 | **GERM-011** | Aucune contrainte de mot de passe en modification : la liste de contraintes était littéralement vide hors création, un administrateur pouvait affecter un mot de passe d'un caractère. **Correction** : contrainte de longueur appliquée aussi en édition. | A07 · ASVS V2.1 | ✅ `c70cd6f` |
-| **GERM-012** | Jeton SSO sans `jti` ni `nbf`, durée 8 h, non révocable. Combiné à GERM-001 avant correction, un jeton émis pour un compte désactivé restait accepté par MIC-GAR 8 h durant. | A02 · API2 | ⏸️ **Nécessite MIC-GAR** |
+| **GERM-012** | *Retiré — sans objet.* Concernait le jeton SSO émis pour l'intégration MIC-GAR (absence de `jti`/`nbf`, durée 8 h non révocable). **Décision du 15/09/2026 : ne pas intégrer MIC-GAR pour le moment.** L'émission du jeton a été entièrement supprimée (`SsoTokenService`, dépendance `firebase/php-jwt`, clés `config/jwt/`) plutôt que laissée en l'état — voir commits `be8afe8`/`ba8175e`. | A02 · API2 | ➖ **Sans objet** |
 | **GERM-013** | `access_control: ^/admin → ROLE_AGENT`. Aucune route n'était exposée (les 17 contrôleurs portent `ROLE_SUPERADMIN`), mais tout nouveau contrôleur déposé sans attribut l'aurait été. **Correction** : règle portée à `ROLE_SUPERADMIN`, exception explicite pour la page d'atterrissage. | A01 | ✅ `c70cd6f` |
 | **GERM-014** | Couverture de tests de sécurité quasi nulle avant l'audit : aucune garantie de non-régression sur un correctif. | §54-55 | 🔄 **En cours** |
 
@@ -426,16 +429,24 @@ prochains chantiers structurants.
 
 ## 12. Suite recommandée
 
+**Périmètre resserré (décision du 15/09/2026)** : l'intégration MIC-GAR est
+abandonnée pour le moment (GERM-012 sans objet, voir §7), et la mise en place
+d'un SIEM/SOC (Wazuh ou équivalent) est retirée de la feuille de route. La
+suite de l'audit se limite désormais à la sécurité du **code et des données**
+elles-mêmes — algorithmes, protocoles et bibliothèques à utiliser pour les
+protéger en transit (TLS, en-têtes) et au repos (hachage, chiffrement,
+gestion des clés et secrets) — à l'exclusion de toute infrastructure de
+supervision/détection externe au périmètre applicatif.
+
 | Priorité | Chantier | Référence |
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
 | 2 | Faire tourner `QR_SECRET_KEY` (GERM-006) et ajouter les en-têtes de sécurité au vhost Apache servant le SPA (GERM-023) | §7 |
-| 3 | Trancher GERM-012 (jeton SSO, avec MIC-GAR) | §7 |
-| 4 | Étendre la journalisation d'audit (couverture complète du §26) + préparation SIEM/Wazuh | §25-27, GERM-018 |
-| 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
-| 6 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
-| 7 | Lot performance | §41-47 |
-| 8 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
+| 3 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
+| 4 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
+| 5 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
+| 6 | Lot performance | §41-47 |
+| 7 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
 
 ---
 

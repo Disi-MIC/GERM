@@ -199,15 +199,14 @@ Twig. Aucun `<script>` inline n'existe : `script-src` reste strict.
 |---|---|---|
 | Mots de passe | Hachage `auto` | `security.yaml` |
 | Jetons QR de matériel | libsodium `secretbox` (XSalsa20-Poly1305) — chiffrement **authentifié** : un jeton forgé échoue au déchiffrement | `src/Service/QrTokenService.php` |
-| Jeton SSO MIC-GAR | JWT **RS256**, clé privée lue depuis `config/jwt/sso_private.pem` (gitignoré), jamais en variable d'environnement | `src/Service/SsoTokenService.php` |
 | Transport | TLS 1.2 / 1.3 confirmé en production | — |
 
 Le QR code encode `germ://materiel/<jeton chiffré>` : un scan avec un lecteur
 générique ne révèle ni identifiant, ni URL exploitable.
 
-**Contenu du jeton SSO** : `sub`, `email`, `nom`, `prenom`, `roles`. Aucun CIN,
-matricule, téléphone ni adresse — conforme au §61. Le jeton n'est jamais
-journalisé. Manquent `jti` et `nbf` (GERM-012).
+*L'intégration SSO vers MIC-GAR (jeton JWT RS256) a été abandonnée avant sa
+mise en service — décision du 15/09/2026, voir OWASP-GERM-AUDIT.md. GERM
+n'émet ni ne consomme aucun jeton pour une application tierce.*
 
 ## 11. Protection contre le SSRF
 

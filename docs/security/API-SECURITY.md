@@ -17,9 +17,6 @@ le cookie est `SameSite=None` en production — contrainte imposée par la WebVi
 Capacitor, dont l'origine `capacitor://localhost` est cross-site. C'est ce qui
 rend le contrôle d'origine de la section 3 indispensable et non optionnel.
 
-Le JWT RS256 existe bien, mais il n'authentifie **rien** dans GERM : il est
-émis à la connexion à destination de l'application tierce MIC-GAR.
-
 ## 2. Inventaire des routes
 
 Regroupé par ressource. « Audit » = la trace serait requise par le SOC (§26) ;
@@ -203,9 +200,9 @@ obsolète. À maintenir à jour à chaque ajout de ressource.
 ### API10 — Unsafe Consumption of APIs ✅
 
 Une seule API tierce consommée (Google Sheets), avec liste blanche stricte.
-GERM est en revanche **fournisseur** pour MIC-GAR : la qualité du jeton émis
-engage la sécurité d'une application tierce (voir GERM-012 — absence de `jti`
-et `nbf`, durée de 8 h, non révocable).
+GERM n'est fournisseur d'aucune API tierce : l'intégration SSO prévue vers
+MIC-GAR a été abandonnée avant sa mise en service (décision du 15/09/2026),
+ce qui rend GERM-012 sans objet.
 
 ## 4. Synthèse
 
@@ -220,7 +217,7 @@ et `nbf`, durée de 8 h, non révocable).
 | API7 SSRF | ✅ Conforme |
 | API8 Configuration | ⚠️ Corrigé partiellement — production vérifiée (GERM-005 écarté, GERM-006/GERM-023 confirmés) ; GERM-022 ouvert |
 | API9 Inventaire | ✅ Conforme |
-| API10 Consommation d'API | ✅ Conforme en entrée ; à améliorer en sortie |
+| API10 Consommation d'API | ✅ Conforme |
 
 **Chantier restant pour l'API** : la journalisation des 12 familles de routes
 marquées « Audit : Oui » (GERM-018) — le socle minimal est déployé, la
