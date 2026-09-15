@@ -181,8 +181,12 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains   (HTTPS uniqueme
 > **Portée limitée, à connaître.** Ce listener ne couvre **que** les réponses
 > passant par le noyau Symfony : API, back-office Twig, `/verif-carte`. En
 > production, le shell Angular (`index.html`, JS, CSS) est servi directement
-> par Apache en statique. **Les en-têtes du SPA dépendent donc entièrement de
-> `mod_headers`, hors de ce dépôt, et n'ont pas été vérifiés.**
+> par Apache en statique — les en-têtes du SPA dépendent donc de `mod_headers`,
+> configuré au niveau du vhost, **hors de ce dépôt**. Corrigé et vérifié en
+> production le 15/09/2026 (GERM-023) : un bloc `<Directory>` scopé au seul
+> répertoire `/app` applique les 6 mêmes en-têtes, sans toucher à ce que
+> Symfony pose déjà sur `/api` et `/admin`. Procédure :
+> `docs/security/deploiement/GERM-023-headers-apache.md`.
 
 `style-src 'unsafe-inline'` est nécessaire aux attributs `style=` des templates
 Twig. Aucun `<script>` inline n'existe : `script-src` reste strict.
@@ -242,7 +246,4 @@ ressource distante n'est chargeable depuis un gabarit.
 - **Aucun MFA**, aucune politique de complexité de mot de passe.
 - **Aucune CI/CD** : le déploiement se fait par `git push` vers un hook
   `post-receive`, sans test ni analyse de sécurité bloquante (GERM-017).
-- **Aucun en-tête de sécurité sur le SPA Angular** en production : bloqué par
-  l'absence de `mod_headers` et de `sudo` sans mot de passe sur le serveur —
-  procédure prête, nécessite un administrateur (GERM-023).
 - **Aucun Voter** : les contrôles d'appartenance sont manuels (GERM-020).

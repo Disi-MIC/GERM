@@ -1,9 +1,15 @@
 # GERM-023 — En-têtes de sécurité sur le SPA Angular
 
-**Blocage rencontré** : `mod_headers` n'est pas activé sur le serveur et `sudo`
-exige un mot de passe — ni l'activation du module, ni la modification du
-vhost, ni le rechargement d'Apache ne sont possibles par ce canal. À exécuter
-par un administrateur disposant de `sudo`.
+**✅ Appliqué et vérifié en production le 15/09/2026** par un administrateur
+disposant de `sudo` — les 6 en-têtes sont confirmés présents sur `/app/`,
+sans régression sur `/api` ni `/admin`. Procédure conservée ci-dessous pour
+référence (et en cas de réinstallation du vhost).
+
+**Blocage initial** : `mod_headers` n'était pas activé sur le serveur et
+`sudo` exigeait un mot de passe — ni l'activation du module, ni la
+modification du vhost, ni le rechargement d'Apache n'étaient possibles par
+un canal automatisé. Exécuté manuellement par un administrateur disposant de
+`sudo`.
 
 ## Ce qui a été vérifié avant de choisir la CSP
 

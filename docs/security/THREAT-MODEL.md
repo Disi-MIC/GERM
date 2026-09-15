@@ -193,11 +193,11 @@ vérification de production du 14/09/2026.
 | 3 | **CSRF sur une validation de décision** depuis un site piégé visité par un cadre RH | ✅ Corrigé (deux passes — voir §6 de `SECURITY-CONTROLS.md`), **non déployé** |
 | 4 | **Exécution de code sur un poste RH** à l'ouverture d'un export CSV | ✅ Corrigé, **non déployé** |
 | 5 | **Forge d'une étiquette QR** par quiconque a accès au dépôt Git | ❌ **Confirmé** — `QR_SECRET_KEY` de production = valeur versionnée (GERM-006) |
-| 6 | **Clickjacking ou injection sur la page réellement chargée par les utilisateurs** : le SPA ne porte aucun en-tête de sécurité, contrairement aux routes Symfony | ❌ **Confirmé** (GERM-023) |
+| 6 | **Clickjacking ou injection sur la page réellement chargée par les utilisateurs** : le SPA ne portait aucun en-tête de sécurité, contrairement aux routes Symfony | ✅ **Corrigé** (GERM-023), **déployé** — vérifié en production le 15/09/2026 |
 | 7 | **Exfiltration de l'état civil par un compte informatique** légitime ou compromis | ✅ Corrigé (GERM-009), **déployé** — `1e8bd47` |
 | 8 | **Compromission indétectable** : sans journal d'audit, aucun des scénarios ci-dessus ne laisserait de trace exploitable | ❌ Ouvert (GERM-018) |
 
-> Le scénario 6 est transverse : il ne crée pas de vulnérabilité, il rend
+> Le scénario 8 est transverse : il ne crée pas de vulnérabilité, il rend
 > toutes les autres invisibles. C'est ce qui justifie de placer la
 > journalisation d'audit immédiatement après le déploiement des correctifs.
 
