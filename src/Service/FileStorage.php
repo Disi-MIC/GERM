@@ -25,6 +25,10 @@ use Symfony\Component\Mime\MimeTypes;
  * secondes (max_execution_time) avant d'échouer, sans lien avec le code
  * appelant. La prod n'est jamais concernée : FILE_STORAGE_LOCAL vaut false
  * par défaut (voir .env) et n'est mis à true que dans .env.local (non versionné).
+ *
+ * Chaque fichier est chiffré (FileEncryptionService) avant écriture, y
+ * compris en local dev — GERM-025 : SFTP ne protège que le transport, pas le
+ * contenu une fois posé sur le disque distant.
  */
 class FileStorage
 {
@@ -52,6 +56,7 @@ class FileStorage
     private readonly FilesystemOperator $filesystem;
 
     public function __construct(
+        private readonly FileEncryptionService $encryption,
         #[Autowire('%env(bool:FILE_STORAGE_LOCAL)%')] bool $local,
         #[Autowire('%kernel.project_dir%')] string $projectDir,
         #[Autowire('%env(SFTP_HOST)%')] string $host,
@@ -125,11 +130,7 @@ class FileStorage
         $filename = bin2hex(random_bytes(16)).'.'.$file->guessExtension();
         $path = $sousDossier.'/'.$filename;
 
-        $stream = fopen($file->getPathname(), 'r');
-        $this->filesystem->writeStream($path, $stream);
-        if (\is_resource($stream)) {
-            fclose($stream);
-        }
+        $this->filesystem->write($path, $this->encryption->chiffrer(file_get_contents($file->getPathname())));
 
         return [
             'path' => $path,
@@ -145,7 +146,7 @@ class FileStorage
         $filename = bin2hex(random_bytes(16)).'.'.$extension;
         $path = $sousDossier.'/'.$filename;
 
-        $this->filesystem->write($path, $binary);
+        $this->filesystem->write($path, $this->encryption->chiffrer($binary));
 
         return [
             'path' => $path,
@@ -154,11 +155,21 @@ class FileStorage
     }
 
     /**
+     * Lit l'intégralité du fichier en mémoire (borné par TAILLE_MAX_OCTETS)
+     * pour pouvoir le déchiffrer avant de le renvoyer sous forme de flux —
+     * un secretbox ne se déchiffre pas par blocs au fil d'un flux SFTP.
+     *
      * @return resource
      */
     public function readStream(string $relativePath)
     {
-        return $this->filesystem->readStream($relativePath);
+        $dechiffre = $this->encryption->dechiffrer($this->filesystem->read($relativePath));
+
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, $dechiffre);
+        rewind($stream);
+
+        return $stream;
     }
 
     public function mimeType(string $relativePath): string
