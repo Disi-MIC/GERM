@@ -206,6 +206,7 @@ Twig. Aucun `<script>` inline n'existe : `script-src` reste strict.
 | Fichiers au repos (photos, pièces jointes, cartes) | libsodium `secretbox`, même primitive, clé dédiée (`FILE_ENCRYPTION_KEY`, distincte de `QR_SECRET_KEY`) — chiffré avant écriture sur le SFTP, déchiffré à la lecture (GERM-025) | `src/Service/FileEncryptionService.php`, `src/Service/FileStorage.php` |
 | Transport | TLS 1.2 / 1.3 confirmé en production ; SFTP (SSH) vers le stockage de fichiers | — |
 | Base de données MySQL | ❌ **Aucun** — ni en transit (`require_secure_transport=OFF`, connexion applicative en clair) ni au repos (`default_table_encryption=OFF`, disque système non chiffré) — GERM-026, évalué et ouvert | — |
+| Sauvegardes de `germ_db` | libsodium `secretbox`, même primitive, clé dédiée (`DB_BACKUP_ENCRYPTION_KEY`, distincte de `QR_SECRET_KEY` et `FILE_ENCRYPTION_KEY`) — dump chiffré avant écriture sur disque (GERM-027) | `src/Service/DatabaseBackupService.php` |
 
 Le QR code encode `germ://materiel/<jeton chiffré>` : un scan avec un lecteur
 générique ne révèle ni identifiant, ni URL exploitable.
@@ -237,12 +238,17 @@ côté disque système (pas de LUKS/dm-crypt) : tout `germ_db` — état civil,
 mots de passe hachés — repose en clair sur disque. Non corrigé : suppose une
 décision sur la gestion des clés avant toute mise en œuvre.
 
-**GERM-027 — confirmé le 15/09/2026 : aucune sauvegarde de `germ_db`
-n'existe, ni sur ce serveur ni ailleurs** (confirmé directement par le
-commanditaire). Contrairement à tous les autres constats de ce document, ce
-n'est pas un risque de confidentialité mais de continuité d'activité —
-classé critique dans `OWASP-GERM-AUDIT.md`, priorité absolue avant tout
-autre chantier.
+**GERM-027 — confirmé puis corrigé (filet minimal) le 15/09/2026.** Aucune
+sauvegarde de `germ_db` n'existait, nulle part (confirmé directement par le
+commanditaire). `App\Service\DatabaseBackupService` +
+`app:backup-database` : dump `mysqldump --single-transaction` quotidien
+(crontab, 3h), compressé, chiffré (libsodium `secretbox`, clé dédiée
+`DB_BACKUP_ENCRYPTION_KEY`), rotation sur 14 jours — voir
+`docs/security/deploiement/GERM-027-sauvegarde-mysql.md`. **Portée
+assumée** : le dump vit sur le même disque que la base, protège des erreurs
+applicatives et commandes destructrices, pas d'une panne disque. Une copie
+sur un support distinct reste une décision d'infrastructure séparée, non
+prise à ce jour.
 
 ## 11. Protection contre le SSRF
 

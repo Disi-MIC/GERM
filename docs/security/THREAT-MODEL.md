@@ -212,9 +212,9 @@ OWASP-GERM-AUDIT.md).
 
 Les sauvegardes et leur restauration (§59) étaient initialement hors
 périmètre, mais une évaluation de l'accès MySQL le 15/09/2026 a confirmé
-qu'aucun processus de sauvegarde n'existe pour `germ_db` — nulle part, pas
-seulement sur le serveur applicatif — et qu'aucun chiffrement n'est en place
-en transit ni au repos (GERM-026, GERM-027 — voir OWASP-GERM-AUDIT.md, classé
-critique). C'est un risque de continuité d'activité, pas de confidentialité :
-il dépasse le cadre de ce modèle de menaces mais méritait d'être documenté ici
-vu sa gravité.
+qu'aucun processus de sauvegarde n'existait pour `germ_db`, nulle part — et
+qu'aucun chiffrement n'est en place en transit ni au repos (GERM-026,
+GERM-027 — voir OWASP-GERM-AUDIT.md). Un filet minimal a été déployé le jour
+même (dump quotidien chiffré), mais il vit sur ce même serveur : la
+résilience face à une panne matérielle ou à la destruction physique de la
+machine reste hors périmètre de ce modèle de menaces.
