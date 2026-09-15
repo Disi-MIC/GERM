@@ -117,7 +117,8 @@ contrôlons pas le comportement.
 |---|---|---|
 | Agent lisant le dossier d'un autre | `ROLE_AGENT` n'hérite d'aucun rôle RH ; `/api/me/*` filtre sur le personnel connecté | ✅ |
 | Chef de service A lisant le service B | Périmètre dérivé du serveur (`findOneBy(['responsable' => $personnel])`), aucun paramètre client | ✅ |
-| **Rôle IT lisant l'état civil complet** | `PersonnelNormalizer` retire les champs sensibles, sauf pour sa propre fiche | ✅ **GERM-009 corrigé** — reste GERM-024 (même angle mort sur `fournisseur`, hors Personnel) |
+| **Rôle IT lisant l'état civil complet** | `PersonnelNormalizer` retire les champs sensibles, sauf pour sa propre fiche | ✅ **GERM-009 corrigé** |
+| **Rôle non-Stock lisant le fournisseur d'un matériel** | `MaterielInformatiqueNormalizer` retire `api:read:rh` pour tout appelant sans `ROLE_IT_STOCK`, y compris sur les réponses manuelles de contrôleur | ✅ **GERM-024 corrigé** |
 | Exfiltration de masse | Quota d'exports 10/h/compte | ⚠️ Partiel — la collection `/api/personnels` reste non paginée |
 | Altération sans trace | — | ❌ **Aucune journalisation d'audit** (GERM-018) |
 
@@ -186,7 +187,7 @@ contrôlons pas le comportement.
 | Principe | Application dans GERM | Tenu ? |
 |---|---|---|
 | **Defense in Depth** | CSRF : Origin **puis** Content-Type. Compte désactivé : `user_checker` **puis** `getRoles()` vide. Admin : `access_control` **puis** `IsGranted` | ✅ |
-| **Least Privilege** | 11 rôles distincts, RH et IT réellement disjoints | ✅ Tenu sur les rôles et désormais sur les données pour Personnel (GERM-009) ; GERM-024 reste ouvert sur `fournisseur` |
+| **Least Privilege** | 11 rôles distincts, RH et IT réellement disjoints | ✅ Tenu sur les rôles et désormais sur les données, pour Personnel (GERM-009) comme pour `MaterielInformatique::$fournisseur` (GERM-024) |
 | **Fail Secure** | Jeton QR invalide → 404. Objet hors périmètre → 404 plutôt que 403 (ne révèle pas l'existence). Demande instruite → 409 | ✅ |
 | **Secure by Default** | Ressources API protégées par défaut, `access_control` restrictif, listes blanches plutôt que listes noires | ✅ |
 | **Separation of Duties** | Ni le RH ni l'informatique n'hérite de l'autre ; validation des cartes réservée au responsable RH | ✅ |

@@ -96,7 +96,7 @@ Trois défauts, tous corrigés dans le lot 1 :
 | GERM-004 | Session survivant à la désactivation | `EquatableInterface` |
 | GERM-002 | Contournement CSRF sur les écritures sans corps | Contrôle de l'`Origin` |
 
-### API3 — Broken Object Property Level Authorization ⚠️
+### API3 — Broken Object Property Level Authorization ✅
 
 **En écriture : conforme.** Aucune hydratation aveugle — tous les contrôleurs
 désérialisent avec des groupes `api:write` explicites. Les champs sensibles
@@ -110,14 +110,24 @@ nouveau groupe `api:read:personnel-sensible`, retiré par
 `App\Serializer\PersonnelNormalizer` pour tout appelant sans
 `ROLE_RH_PERSONNEL`, sauf pour sa propre fiche (self-service).
 
-**GERM-024, découvert pendant cette correction** : le cloisonnement déjà en
-place pour `MaterielInformatique::$fournisseur` (isolé dans `api:read:rh`)
-repose sur un `SerializerContextBuilderInterface`, qui ne couvre que le
-pipeline natif d'API Platform — pas les réponses JSON manuelles des
-contrôleurs d'écriture. Vérifié : `PUT /api/materiels-informatiques/{id}`
-renvoie `fournisseur` même à un appelant sans `ROLE_IT_STOCK`. GERM-009 a
-évité ce piège en décorant le normalizer directement ; `fournisseur` reste
-sur l'ancien mécanisme et n'a pas été corrigé dans ce lot.
+**GERM-024, corrigé.** Le cloisonnement de `MaterielInformatique::$fournisseur`
+(isolé dans `api:read:rh`) reposait sur `MaterielInformatiqueContextBuilder`, un
+`SerializerContextBuilderInterface` qui ne couvre que le pipeline natif d'API
+Platform — pas les réponses JSON manuelles de
+`MaterielInformatiqueController::create()/update()/uploadPhoto()`, qui
+répondent avec des groupes fixes incluant `api:read:rh`. **Vérifié : non
+exploitable aujourd'hui** — ces trois actions sont protégées par
+`#[IsGranted('ROLE_IT_STOCK')]` au niveau du contrôleur ; un compte
+`ROLE_IT_TICKETS` seul reçoit bien 403 sur `PUT
+/api/materiels-informatiques/{id}`, avant toute sérialisation. Le risque
+était structurel (dépendre d'une garde de contrôleur coïncidente plutôt que
+d'un contrôle au niveau du champ), pas actif. **Correction, même principe que
+GERM-009** : `App\Serializer\MaterielInformatiqueNormalizer` remplace le
+ContextBuilder — décore le normalizer, couvre les deux chemins. Chaîné avec
+`PersonnelNormalizer` sur le même service ; un type-hint concret
+(`ItemNormalizer`) sur `$decorated` dans les deux classes a provoqué un
+`TypeError` bloquant toutes les connexions (l'un reçoit désormais l'autre
+comme dépendance), corrigé par un type par intersection.
 
 ### API4 — Unrestricted Resource Consumption ⚠️ corrigé
 
@@ -203,7 +213,7 @@ et `nbf`, durée de 8 h, non révocable).
 |---|---|
 | API1 BOLA | ✅ Conforme |
 | API2 Authentification | ⚠️ Corrigé, non déployé |
-| API3 Propriétés d'objet | ⚠️ Écriture conforme, **lecture sur-exposée** |
+| API3 Propriétés d'objet | ✅ Conforme (GERM-009, GERM-024 corrigés) |
 | API4 Consommation | ⚠️ Corrigé ; pagination à revoir |
 | API5 Fonctions | ✅ Conforme |
 | API6 Flux métier | ⚠️ Corrigé partiellement |
@@ -212,6 +222,7 @@ et `nbf`, durée de 8 h, non révocable).
 | API9 Inventaire | ✅ Conforme |
 | API10 Consommation d'API | ✅ Conforme en entrée ; à améliorer en sortie |
 
-**Deux chantiers pour l'API** : la minimisation des données en lecture
-(GERM-009, corrigé — reste GERM-024 sur `fournisseur`) et la journalisation
-des 12 familles de routes marquées « Audit : Oui » (GERM-018).
+**Chantier restant pour l'API** : la journalisation des 12 familles de routes
+marquées « Audit : Oui » (GERM-018) — le socle minimal est déployé, la
+couverture n'est pas encore exhaustive. La minimisation des données en
+lecture (GERM-009, GERM-024) est corrigée.

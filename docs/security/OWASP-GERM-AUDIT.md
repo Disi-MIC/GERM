@@ -118,8 +118,8 @@ ROLE_AGENT  (socle de tout compte)
 Les domaines RH et informatique sont **volontairement disjoints** : ni l'un ni
 l'autre n'hérite du second. C'est une séparation des tâches réelle, respectée
 au niveau des rôles — et désormais au niveau des données pour Personnel
-(GERM-009, corrigé). GERM-024 documente le même angle mort sur un autre champ
-(`MaterielInformatique::$fournisseur`), non corrigé dans ce lot.
+(GERM-009, corrigé) et pour `MaterielInformatique::$fournisseur` (GERM-024,
+corrigé selon le même principe).
 
 ---
 
@@ -159,7 +159,7 @@ leur contrôle d'accès.
 
 | | Catégorie | Verdict | Constats |
 |---|---|---|---|
-| **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009 (résolu), GERM-013, GERM-024 (nouveau) |
+| **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009 (résolu), GERM-013, GERM-024 (résolu) |
 | **A02** | Cryptographic Failures | ❌ **Non conforme** | GERM-006 (confirmé), GERM-012 |
 | **A03** | Injection | ⚠️ **Corrigé** | GERM-003 (CSV) — aucune injection SQL ni XSS |
 | **A04** | Insecure Design | ⚠️ **Corrigé partiellement** | GERM-008 |
@@ -193,7 +193,7 @@ Synthèse ; le détail figure dans `API-SECURITY.md`.
 |---|---|---|
 | **API1** | Broken Object Level Authorization | ✅ 14 routes `/api/me/*` sur 14 vérifient l'appartenance |
 | **API2** | Broken Authentication | ⚠️ Corrigé (GERM-001, GERM-002, GERM-004) |
-| **API3** | Broken Object Property Level Authorization | ✅ GERM-009 corrigé · ⚠️ GERM-024 ouvert (angle mort partagé par le mécanisme déjà en place pour MaterielInformatique::$fournisseur) |
+| **API3** | Broken Object Property Level Authorization | ✅ GERM-009 corrigé · ✅ GERM-024 corrigé |
 | **API4** | Unrestricted Resource Consumption | ⚠️ Corrigé (GERM-007, GERM-010) |
 | **API5** | Broken Function Level Authorization | ✅ Couverture `#[IsGranted]` intégrale |
 | **API6** | Unrestricted Access to Sensitive Business Flows | ⚠️ Corrigé partiellement (GERM-008) |
@@ -216,7 +216,7 @@ Niveau visé : **L2** (application manipulant des données personnelles).
 | V4 Contrôle d'accès | PARTIAL | Contrôle par rôle complet ; contrôle au niveau objet correct mais réimplémenté à la main en 14 endroits, sans Voter ni test |
 | V5 Validation & encodage | PASS | Doctrine paramétré, Twig auto-échappé, Angular non contourné, CSV neutralisé (après correction) |
 | V7 Journalisation | PARTIAL | Socle minimal déployé, couverture incomplète (§26) |
-| V8 Protection des données | PARTIAL | GERM-009 corrigé ; GERM-024 (angle mort du même mécanisme sur les réponses manuelles de contrôleur, hors Personnel) reste ouvert |
+| V8 Protection des données | PARTIAL | GERM-009 et GERM-024 corrigés (champs sensibles filtrés au niveau du normalizer, y compris sur les réponses manuelles de contrôleur) ; aucune revue exhaustive champ par champ des 31 entités n'a été menée au-delà des cas déjà signalés |
 | V9 Communications | PARTIAL | TLS 1.2/1.3 confirmé ; en-têtes du SPA vérifiés **absents** (GERM-023) |
 | V10 Code malveillant | N/A | Hors périmètre |
 | V11 Logique métier | PARTIAL | Règle « dossier figé après instruction » ajoutée ; les autres règles sensibles ne sont pas testées |
@@ -263,6 +263,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-007** | Annuaire nominatif énumérable : `/verif-carte/{numero}` est public par conception et révèle nom et fonction, sans limitation de débit. **Correction** : 20 requêtes/minute/IP. *Correction de fond (jeton opaque au lieu du numéro imprimé) non retenue : elle invaliderait les cartes en circulation.* | A01 · API4 | ✅ `a2bd956` |
 | **GERM-008** | Pièces justificatives modifiables après instruction : l'appartenance était vérifiée, jamais l'état de la demande. Un agent pouvait remplacer une pièce après validation par le RH, faisant diverger le dossier officiel de ce qui avait été instruit, sans trace. **Correction** : dépôt réservé à l'état « en attente » (409 sinon). | A04 · API6 · §13 | ✅ `a2bd956` |
 | **GERM-009** | Dossier RH complet (date de naissance, adresse, téléphone, e-mail, observations, service, carrière) exposé à `ROLE_IT_STOCK` et `ROLE_RH_CARTE_PRO` — pas seulement via `GET /api/personnels` direct, mais aussi **embarqué dans toute réponse référençant un agent** (ex. `GET /api/materiels-informatiques/{id}.affecteA`), y compris les réponses manuelles d'écriture (`PUT`), un vecteur découvert pendant la correction. Mesuré : ces rôles n'utilisent que `nomComplet`, `matricule`, `nom`, `prenom`, `id`. **Correction** : nouveau groupe `api:read:personnel-sensible`, retiré par `App\Serializer\PersonnelNormalizer` (décorateur du normalizer, pas d'un `SerializerContextBuilderInterface` — seul le premier couvre aussi les réponses manuelles) pour tout appelant sans `ROLE_RH_PERSONNEL`, sauf lorsque l'agent consulte sa propre fiche (self-service "Mon Profil", vérifié non régressé). | A01 · API3 · §61-62 | ✅ **Corrigé** — `1e8bd47` |
+| **GERM-024** | `MaterielInformatique::$fournisseur` (groupe `api:read:rh`) était filtré par `MaterielInformatiqueContextBuilder`, un `SerializerContextBuilderInterface` — comme pour GERM-009, ce mécanisme ne couvre que le pipeline natif d'API Platform, jamais les réponses JSON manuelles (`create()`/`update()`/`uploadPhoto()` de `MaterielInformatiqueController`, qui répondent avec des groupes fixes incluant `api:read:rh`). **Vérifié : non exploitable aujourd'hui** — ces trois actions sont protégées par `#[IsGranted('ROLE_IT_STOCK')]` au niveau du contrôleur, qui bloque tout autre appelant avant la sérialisation (confirmé : `PUT` par un compte `ROLE_IT_TICKETS` seul renvoie 403). Le risque est structurel, pas actif : un futur point d'entrée réutilisant ces groupes avec un rôle plus large aurait hérité de la fuite en silence, exactement comme cela a été observé pour Personnel. **Correction** : `App\Serializer\MaterielInformatiqueNormalizer`, même principe que `PersonnelNormalizer` (décorateur du normalizer, chaîné à celui-ci sur `api_platform.serializer.normalizer.item`). *Bug rencontré en vérification et corrigé dans le même correctif* : les deux décorateurs typaient `$decorated` par la classe concrète `ItemNormalizer`, ce qui a cassé toutes les connexions (`TypeError`) dès que l'un des deux a reçu l'autre comme dépendance injectée au lieu de l'`ItemNormalizer` natif — remplacé par un type par intersection (`NormalizerInterface&DenormalizerInterface&SerializerAwareInterface`). `MaterielInformatiqueContextBuilder`, devenu redondant, a été supprimé. | A01 · API3 | ✅ **Corrigé** — `a17dd36` |
 | **GERM-010** | Exports CSV sans quota ni pagination. **Correction** : 10 exports/heure/compte. *Optimisation mémoire (`toIterable()`, N+1) reportée au lot performance.* | API4 · §39 | ✅ `a2bd956` |
 | **GERM-011** | Aucune contrainte de mot de passe en modification : la liste de contraintes était littéralement vide hors création, un administrateur pouvait affecter un mot de passe d'un caractère. **Correction** : contrainte de longueur appliquée aussi en édition. | A07 · ASVS V2.1 | ✅ `c70cd6f` |
 | **GERM-012** | Jeton SSO sans `jti` ni `nbf`, durée 8 h, non révocable. Combiné à GERM-001 avant correction, un jeton émis pour un compte désactivé restait accepté par MIC-GAR 8 h durant. | A02 · API2 | ⏸️ **Nécessite MIC-GAR** |
@@ -429,7 +430,7 @@ prochains chantiers structurants.
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
 | 2 | Faire tourner `QR_SECRET_KEY` (GERM-006) et ajouter les en-têtes de sécurité au vhost Apache servant le SPA (GERM-023) | §7 |
-| 3 | Trancher GERM-012 (jeton SSO, avec MIC-GAR) ; évaluer GERM-024 | §7 |
+| 3 | Trancher GERM-012 (jeton SSO, avec MIC-GAR) | §7 |
 | 4 | Étendre la journalisation d'audit (couverture complète du §26) + préparation SIEM/Wazuh | §25-27, GERM-018 |
 | 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
 | 6 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
