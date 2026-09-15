@@ -215,7 +215,7 @@ ce qui rend GERM-012 sans objet.
 | API5 Fonctions | ✅ Conforme |
 | API6 Flux métier | ⚠️ Corrigé partiellement |
 | API7 SSRF | ✅ Conforme |
-| API8 Configuration | ⚠️ Corrigé partiellement — production vérifiée (GERM-005 écarté, GERM-023 corrigé) ; GERM-006 confirmé, GERM-022 ouvert |
+| API8 Configuration | ⚠️ Corrigé partiellement — production vérifiée (GERM-005 écarté, GERM-006 et GERM-023 corrigés) ; GERM-022 ouvert |
 | API9 Inventaire | ✅ Conforme |
 | API10 Consommation d'API | ✅ Conforme |
 

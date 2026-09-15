@@ -57,7 +57,7 @@ formelle.
 
 | Sujet | Portée |
 |---|---|
-| **`QR_SECRET_KEY` de production = clé versionnée** | Confirmé (GERM-006) — à faire tourner |
+| ~~`QR_SECRET_KEY` de production = clé versionnée~~ | ✅ Corrigé (GERM-006) — rotée en production le 15/09/2026, retirée du dépôt |
 | ~~Aucun en-tête de sécurité sur le SPA~~ | ✅ Corrigé (GERM-023) — appliqué et vérifié en production le 15/09/2026 par un administrateur avec `sudo` |
 | Journalisation d'audit (A09) | Socle minimal déployé — couverture partielle (§26), voir GERM-018 |
 | Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
@@ -141,7 +141,7 @@ La transparence sur ce qui n'a *pas* été audité vaut autant que les constats.
 | Domaine | Couverture | Base |
 |---|---|---|
 | A01 Contrôle d'accès | **Approfondie** | Lecture intégrale des 45 contrôleurs, des 24 expressions `security:`, des 39 routes du périmètre `ROLE_AGENT` |
-| A02 Cryptographie | **Approfondie** | Code lu ; `QR_SECRET_KEY` de production vérifiée — **non surchargée** (GERM-006 confirmé) |
+| A02 Cryptographie | **Approfondie** | Code lu ; `QR_SECRET_KEY` de production vérifiée — non surchargée au 14/09/2026 (GERM-006), **rotée et retirée du dépôt le 15/09/2026** |
 | A03 Injection | **Approfondie** | 0 SQL natif, 0 concaténation en QueryBuilder, 44 `setParameter`, 0 `\|raw` Twig, 2 `bypassSecurityTrust` justifiés |
 | A04 Conception | **Partielle** | Règles métier sensibles échantillonnées, pas exhaustives |
 | A05 Mauvaise configuration | **Approfondie** | `APP_ENV`, CORS et en-têtes vérifiés en production, y compris sur le SPA depuis sa correction (GERM-023). Reste non vérifié : configuration Apache/PHP au-delà des en-têtes |
@@ -164,7 +164,7 @@ leur contrôle d'accès.
 | | Catégorie | Verdict | Constats |
 |---|---|---|---|
 | **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009 (résolu), GERM-013, GERM-024 (résolu) |
-| **A02** | Cryptographic Failures | ❌ **Non conforme** | GERM-006 (confirmé) |
+| **A02** | Cryptographic Failures | ✅ **Conforme** | GERM-006 (corrigé) |
 | **A03** | Injection | ⚠️ **Corrigé** | GERM-003 (CSV) — aucune injection SQL ni XSS |
 | **A04** | Insecure Design | ⚠️ **Corrigé partiellement** | GERM-008 |
 | **A05** | Security Misconfiguration | ⚠️ **Corrigé partiellement** | GERM-005 (résolu), GERM-015, GERM-016, GERM-023 (résolu), GERM-022 (ouvert) |
@@ -226,7 +226,7 @@ Niveau visé : **L2** (application manipulant des données personnelles).
 | V11 Logique métier | PARTIAL | Règle « dossier figé après instruction » ajoutée ; les autres règles sensibles ne sont pas testées |
 | V12 Fichiers & ressources | PASS | Nom aléatoire, type MIME reniflé, hors racine web, ré-encodage des images |
 | V13 API & services web | PARTIAL | Voir API3 et API4 |
-| V14 Configuration | PARTIAL | `APP_ENV`, CORS et en-têtes du SPA (GERM-023) vérifiés conformes ; secrets non conformes (GERM-006) |
+| V14 Configuration | PASS | `APP_ENV`, CORS, en-têtes du SPA (GERM-023) et gestion des secrets (GERM-006) vérifiés conformes |
 
 ---
 
@@ -263,7 +263,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | ID | Titre | OWASP | Statut |
 |---|---|---|---|
 | **GERM-005** | `APP_ENV=dev` dans le `.env` versionné, et le pare-feu `dev` pose `security: false` sur `^/_profiler` et `^/_wdt`. **Vérifié le 14/09/2026** : la production surcharge bien `APP_ENV=prod`, et `WebProfilerBundle` est de toute façon réservé à `dev`/`test` dans `config/bundles.php` — le profiler ne peut pas être chargé, quelle que soit la config du pare-feu `dev`. Aucune action requise. | A05 · API8 | ✅ **Écarté** |
-| **GERM-006** | `QR_SECRET_KEY` **confirmée non surchargée en production** : la clé versionnée dans `.env` (et son historique Git) est la clé réellement utilisée pour chiffrer les jetons d'étiquette du parc informatique. Quiconque a accès en lecture au dépôt peut forger un jeton valide. *Impact contenu : la résolution d'un jeton exige quand même `ROLE_IT_STOCK` — l'attaquant doit cumuler l'accès au dépôt et un compte IT.* **Correction : générer une nouvelle clé, la déployer via `.env.local` (jamais versionné), réimprimer les étiquettes existantes.** | A02 | ❌ **Confirmé, ouvert** |
+| **GERM-006** | `QR_SECRET_KEY` était **confirmée non surchargée en production** : la clé versionnée dans `.env` (et son historique Git) était la clé réellement utilisée pour chiffrer les jetons d'étiquette du parc informatique. Quiconque avait accès en lecture au dépôt pouvait forger un jeton valide. *Impact contenu : la résolution d'un jeton exige quand même `ROLE_IT_STOCK` — l'attaquant devait cumuler l'accès au dépôt et un compte IT.* **Correction** : nouvelle clé générée directement sur le serveur de production (jamais transitée par le dépôt ni par un canal de discussion), déposée dans `.env.local` ; `QR_SECRET_KEY` retirée de `.env` versionné (vide, en échec explicite plutôt qu'en silence si absente). Vérifié par un cycle chiffrement/déchiffrement réel avec la nouvelle clé, sans compte utilisateur réel impliqué. **Impact opérationnel assumé, confirmé avec le service informatique avant exécution** : toutes les étiquettes déjà imprimées cessent de fonctionner et doivent être réimprimées. | A02 | ✅ **Corrigé** — `f4f2129` |
 | **GERM-007** | Annuaire nominatif énumérable : `/verif-carte/{numero}` est public par conception et révèle nom et fonction, sans limitation de débit. **Correction** : 20 requêtes/minute/IP. *Correction de fond (jeton opaque au lieu du numéro imprimé) non retenue : elle invaliderait les cartes en circulation.* | A01 · API4 | ✅ `a2bd956` |
 | **GERM-008** | Pièces justificatives modifiables après instruction : l'appartenance était vérifiée, jamais l'état de la demande. Un agent pouvait remplacer une pièce après validation par le RH, faisant diverger le dossier officiel de ce qui avait été instruit, sans trace. **Correction** : dépôt réservé à l'état « en attente » (409 sinon). | A04 · API6 · §13 | ✅ `a2bd956` |
 | **GERM-009** | Dossier RH complet (date de naissance, adresse, téléphone, e-mail, observations, service, carrière) exposé à `ROLE_IT_STOCK` et `ROLE_RH_CARTE_PRO` — pas seulement via `GET /api/personnels` direct, mais aussi **embarqué dans toute réponse référençant un agent** (ex. `GET /api/materiels-informatiques/{id}.affecteA`), y compris les réponses manuelles d'écriture (`PUT`), un vecteur découvert pendant la correction. Mesuré : ces rôles n'utilisent que `nomComplet`, `matricule`, `nom`, `prenom`, `id`. **Correction** : nouveau groupe `api:read:personnel-sensible`, retiré par `App\Serializer\PersonnelNormalizer` (décorateur du normalizer, pas d'un `SerializerContextBuilderInterface` — seul le premier couvre aussi les réponses manuelles) pour tout appelant sans `ROLE_RH_PERSONNEL`, sauf lorsque l'agent consulte sa propre fiche (self-service "Mon Profil", vérifié non régressé). | A01 · API3 · §61-62 | ✅ **Corrigé** — `1e8bd47` |
@@ -367,7 +367,7 @@ cd frontend && npm audit --omit=dev   # 0 vulnérabilité
 |---|---|---|
 | `APP_ENV` | `prod` | ✅ GERM-005 levé — le profiler n'est de toute façon jamais chargé (`config/bundles.php` le réserve à `dev`/`test`) |
 | `CORS_ALLOW_ORIGIN` | `^(https?://(localhost\|127\.0\.0\.1)(:[0-9]+)?\|capacitor://localhost)$` — identique au local | ⚠️ A révélé un bug dans le correctif GERM-002 (voir ci-dessous), **corrigé avant tout déploiement** |
-| `QR_SECRET_KEY` | **Non surchargée** — la production utilise la valeur versionnée dans `.env` | ❌ **GERM-006 confirmé** |
+| `QR_SECRET_KEY` | **Non surchargée** au 14/09/2026 — la production utilisait la valeur versionnée dans `.env` | ✅ **GERM-006, corrigé le 15/09/2026** — rotée en production, retirée du dépôt |
 | En-têtes de sécurité du SPA | **Aucun** au 14/09/2026 — `curl -I https://10.112.26.30/app/` ne renvoyait que `Content-Type`, `ETag`, `Last-Modified` | ✅ **GERM-023, corrigé le 15/09/2026** — les 6 en-têtes sont désormais présents, vérifié en production |
 
 La vérification a évité un incident : le web et l'API de production sont
@@ -380,7 +380,8 @@ en 403 dès le déploiement**. Corrigé (`d13d17e`) : une origine strictement
 égale à l'hôte de la requête est désormais acceptée avant consultation de la
 liste CORS, verrouillé par 11 tests dédiés.
 
-Un constat reste ouvert, détaillé en §7 (GERM-006) — GERM-023 a été corrigé le 15/09/2026.
+Les deux constats de cette vérification ont été corrigés le 15/09/2026
+(GERM-006, GERM-023), détaillés en §7.
 
 ### Risques acceptés ou reportés
 
@@ -411,7 +412,7 @@ physique des serveurs, ni de la résistance à un test d'intrusion dynamique.
 | ASVS L2 | INITIAL | **DEVELOPING** |
 | Authentification | DEVELOPING | **DEFINED** |
 | Autorisation | DEFINED | **DEFINED** |
-| Cryptographie | DEFINED | DEFINED (mécanismes) / **INITIAL** (gestion des secrets — clé de prod versionnée, GERM-006 confirmé) |
+| Cryptographie | DEFINED | **DEFINED** (mécanismes et gestion des secrets — clé de prod rotée et retirée du dépôt, GERM-006 corrigé) |
 | Journalisation | INITIAL | **DEVELOPING** |
 | Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; configuration Apache/PHP au-delà reste non évaluée) |
 | Dépendances | MANAGED | **MANAGED** |
@@ -443,12 +444,11 @@ supervision/détection externe au périmètre applicatif.
 | Priorité | Chantier | Référence |
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
-| 2 | Faire tourner `QR_SECRET_KEY` (GERM-006) | §7 |
-| 3 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
-| 4 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
-| 5 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
-| 6 | Lot performance | §41-47 |
-| 7 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
+| 2 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
+| 3 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
+| 4 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
+| 5 | Lot performance | §41-47 |
+| 6 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
 
 ---
 

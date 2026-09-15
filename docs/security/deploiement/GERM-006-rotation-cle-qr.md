@@ -1,11 +1,16 @@
 # GERM-006 — Rotation de `QR_SECRET_KEY`
 
-**Ne pas exécuter sans en avoir informé le service informatique** : cette
-rotation invalide **toutes les étiquettes QR déjà imprimées et collées** sur
-le matériel du parc. Après bascule, scanner une ancienne étiquette renverra
-« matériel introuvable » (`resoudreQrcode()` : jeton invalide → 404, par
-conception, pour ne rien révéler du format attendu — voir `QrTokenService`).
-Il faudra réimprimer les étiquettes du matériel actif.
+**✅ Appliqué et vérifié en production le 15/09/2026**, après confirmation
+que le service informatique était informé et prêt pour la réimpression des
+étiquettes. Procédure conservée ci-dessous pour référence (prochaine
+rotation, ou en cas de suspicion de compromission).
+
+**Impact accepté à l'exécution** : cette rotation invalide **toutes les
+étiquettes QR déjà imprimées et collées** sur le matériel du parc. Après
+bascule, scanner une ancienne étiquette renvoie « matériel introuvable »
+(`resoudreQrcode()` : jeton invalide → 404, par conception, pour ne rien
+révéler du format attendu — voir `QrTokenService`). Les étiquettes du
+matériel actif doivent être réimprimées.
 
 ## Pourquoi
 
@@ -67,3 +72,7 @@ opération serveur : je peux la faire moi-même sur simple confirmation, une
 fois la bascule en production effectuée** — sinon `.env` local (dev)
 n'aurait plus de valeur par défaut pour développer, il faudra alors que
 chaque développeur ait sa propre clé de dev dans son propre `.env.local`.
+
+*Faite le 15/09/2026 (`f4f2129`) : `QR_SECRET_KEY` est désormais vide dans
+`.env`, chaque environnement (y compris chaque poste de développement) doit
+fournir la sienne via son propre `.env.local`.*

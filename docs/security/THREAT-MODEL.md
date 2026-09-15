@@ -156,7 +156,7 @@ SSO prévue vers MIC-GAR a été abandonnée avant sa mise en service (décision
 |---|---|---|
 | Lecture du QR par un lecteur générique | Le QR encode `germ://materiel/<jeton chiffré>` — ni identifiant, ni URL exploitable | ✅ |
 | Forge d'un jeton | libsodium `secretbox`, chiffrement authentifié | ✅ |
-| **Clé compromise** | — | ❌ **Confirmé** : `QR_SECRET_KEY` de production non surchargée, c'est la valeur versionnée (GERM-006) |
+| **Clé compromise** | Rotation effectuée, clé retirée du dépôt | ✅ **Corrigé** (GERM-006) — étiquettes existantes invalidées, réimpression en cours |
 | Résolution d'un jeton par un tiers | `ROLE_IT_STOCK` requis même avec un jeton valide | ✅ |
 | Étiquette d'un matériel qui n'est pas le sien | `/api/me/materiels/{id}/qrcode` restreint au matériel affecté | ✅ |
 
@@ -192,7 +192,7 @@ vérification de production du 14/09/2026.
 | 2 | **Agent révoqué conservant son accès** par le web ou le mobile | ✅ Corrigé, **non déployé** |
 | 3 | **CSRF sur une validation de décision** depuis un site piégé visité par un cadre RH | ✅ Corrigé (deux passes — voir §6 de `SECURITY-CONTROLS.md`), **non déployé** |
 | 4 | **Exécution de code sur un poste RH** à l'ouverture d'un export CSV | ✅ Corrigé, **non déployé** |
-| 5 | **Forge d'une étiquette QR** par quiconque a accès au dépôt Git | ❌ **Confirmé** — `QR_SECRET_KEY` de production = valeur versionnée (GERM-006) |
+| 5 | **Forge d'une étiquette QR** par quiconque a accès au dépôt Git | ✅ **Corrigé** (GERM-006), **déployé** — clé retirée du dépôt, rotée en production le 15/09/2026 |
 | 6 | **Clickjacking ou injection sur la page réellement chargée par les utilisateurs** : le SPA ne portait aucun en-tête de sécurité, contrairement aux routes Symfony | ✅ **Corrigé** (GERM-023), **déployé** — vérifié en production le 15/09/2026 |
 | 7 | **Exfiltration de l'état civil par un compte informatique** légitime ou compromis | ✅ Corrigé (GERM-009), **déployé** — `1e8bd47` |
 | 8 | **Compromission indétectable** : sans journal d'audit, aucun des scénarios ci-dessus ne laisserait de trace exploitable | ❌ Ouvert (GERM-018) |
