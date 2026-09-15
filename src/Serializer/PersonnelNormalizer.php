@@ -2,7 +2,6 @@
 
 namespace App\Serializer;
 
-use ApiPlatform\Serializer\ItemNormalizer;
 use App\Entity\Personnel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
@@ -27,24 +26,32 @@ use Symfony\Component\Serializer\SerializerInterface;
  * cette exception, un simple ROLE_AGENT consultant son propre profil se
  * serait vu retirer ses propres données.
  *
- * Décore le NORMALIZER (ApiPlatform\Serializer\ItemNormalizer), pas le
- * SerializerContextBuilderInterface comme MaterielInformatiqueContextBuilder
- * pour son champ fournisseur : un ContextBuilder n'est consulté que par le
- * pipeline natif d'API Platform (GetCollection/Get), jamais par une réponse
- * JSON manuelle de contrôleur ($this->json($materiel, ...)). Vérifié
- * empiriquement : PUT /api/materiels-informatiques/{id} (réponse manuelle
- * de MaterielInformatiqueController::update()) embarque le Personnel affecté
- * en entier — le ContextBuilder existant ne l'aurait pas empêché, et
- * fournisseur souffre d'ailleurs du même angle mort (GERM-024, non traité
- * ici). Ce normalizer est invoqué dans les deux cas, puisque $this->json()
- * comme le pipeline natif passent par le même service 'serializer' — donc
- * par la même chaîne de normalizers.
+ * Décore le NORMALIZER (ApiPlatform\Serializer\ItemNormalizer), pas un
+ * SerializerContextBuilderInterface : un ContextBuilder n'est consulté que
+ * par le pipeline natif d'API Platform (GetCollection/Get), jamais par une
+ * réponse JSON manuelle de contrôleur ($this->json($materiel, ...)). Vérifié
+ * empiriquement : PUT /api/materiels-informatiques/{id} (réponse manuelle de
+ * MaterielInformatiqueController::update()) embarque le Personnel affecté en
+ * entier — un ContextBuilder ne l'aurait pas empêché. Ce normalizer est
+ * invoqué dans les deux cas, puisque $this->json() comme le pipeline natif
+ * passent par le même service 'serializer' — donc par la même chaîne de
+ * normalizers. MaterielInformatique::$fournisseur souffrait du même angle
+ * mort ; voir App\Serializer\MaterielInformatiqueNormalizer (GERM-024,
+ * corrigé selon ce même principe, décorateur chaîné à celui-ci).
+ *
+ * $decorated est typé par intersection plutôt que par ItemNormalizer : les
+ * deux décorateurs se chaînent sur le même id ('api_platform.serializer.
+ * normalizer.item'), donc selon l'ordre de chaînage choisi par le
+ * conteneur, $decorated ici peut être MaterielInformatiqueNormalizer plutôt
+ * que l'ItemNormalizer natif — un type-hint concret avait provoqué un
+ * TypeError bloquant *toutes* les connexions dès l'ajout du second
+ * décorateur (rencontré en vérification).
  */
 #[AsDecorator(decorates: 'api_platform.serializer.normalizer.item')]
 final class PersonnelNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
 {
     public function __construct(
-        #[AutowireDecorated] private readonly ItemNormalizer $decorated,
+        #[AutowireDecorated] private readonly NormalizerInterface&DenormalizerInterface&SerializerAwareInterface $decorated,
         private readonly Security $security,
     ) {
     }
@@ -94,8 +101,6 @@ final class PersonnelNormalizer implements NormalizerInterface, DenormalizerInte
      */
     public function setSerializer(SerializerInterface $serializer): void
     {
-        if ($this->decorated instanceof SerializerAwareInterface) {
-            $this->decorated->setSerializer($serializer);
-        }
+        $this->decorated->setSerializer($serializer);
     }
 }

@@ -47,7 +47,13 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * actions dédiées — même logique que PersonnelController. Les groupes
  * api:read:rh/api:write:rh (fournisseur) sont demandés en plus des groupes
  * de base ici, contrairement à la vue self-service "Mon parc informatique"
- * (MeController::materiels()) qui ne les demande jamais.
+ * (MeController::materiels()) qui ne les demande jamais. Ce contrôleur est
+ * réservé à ROLE_IT_STOCK (voir #[IsGranted] ci-dessous) : c'est aujourd'hui
+ * ce qui empêche fournisseur de fuiter par ces réponses JSON manuelles.
+ * App\Serializer\MaterielInformatiqueNormalizer retire en plus api:read:rh à
+ * la normalisation pour tout appelant sans ROLE_IT_STOCK (GERM-024), pour ne
+ * pas dépendre uniquement de cette garde de contrôleur si un futur point
+ * d'entrée réutilise GROUPES_LECTURE avec un rôle plus large.
  *
  * `affecteA` reste éditable directement dans ce même formulaire (comme
  * Personnel.service/fonction/grade) plutôt que via une action dédiée : create()

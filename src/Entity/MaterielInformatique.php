@@ -27,7 +27,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  * exposée à l'agent affecté (src/Controller/Api/MeController.php) ne demande
  * que le groupe api:read et ne doit jamais voir ce champ. Aucune donnée
  * financière (coût, valeur d'acquisition) n'est suivie ici — hors périmètre
- * du parc informatique, volontairement.
+ * du parc informatique, volontairement. `api:read:rh` est retiré à la
+ * normalisation pour tout appelant sans ROLE_IT_STOCK, y compris sur les
+ * réponses JSON manuelles des contrôleurs — voir
+ * App\Serializer\MaterielInformatiqueNormalizer (GERM-024).
  */
 #[ORM\Entity(repositoryClass: MaterielInformatiqueRepository::class)]
 #[ORM\Table(name: 'materiel_informatique')]
