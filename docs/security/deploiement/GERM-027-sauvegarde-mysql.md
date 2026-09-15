@@ -1,14 +1,18 @@
 # GERM-027 — Sauvegarde de `germ_db`
 
-**Portée assumée** : ce correctif met en place un filet minimal — dump
-`mysqldump` quotidien, compressé, chiffré, avec rotation sur 14 jours,
-stocké sous `var/backups/` **sur ce même serveur**. Il protège contre une
-erreur applicative, une commande destructrice ou une migration ratée — pas
-contre une panne disque ni la destruction physique de la machine, qui
-emporterait la base et ses sauvegardes en même temps. Une résilience réelle
-suppose une copie régulière vers un support distinct (autre serveur, espace
-de stockage externe), hors périmètre de ce correctif : décision
-d'infrastructure à prendre séparément.
+**✅ Déployé et vérifié en production le 15/09/2026** — dump `mysqldump`
+quotidien, compressé, chiffré, avec rotation sur 14 jours, conservé
+localement sous `var/backups/` **et** copié vers le serveur SFTP de
+stockage de fichiers (10.112.26.31, déjà utilisé par `FileStorage`), avec
+la même rotation appliquée côté distant.
+
+**Réserve non levée** : cette copie suppose que 10.112.26.31 ne partage pas
+la même infrastructure physique (alimentation, baie) que
+`germ-appdbserver` — non vérifié depuis ces deux machines, à confirmer
+auprès de qui gère l'infrastructure physique du Ministère. Si les deux
+serveurs sont en réalité colocalisés, ce correctif protège toujours contre
+une erreur applicative ou une commande destructrice, mais pas contre un
+sinistre touchant les deux machines à la fois.
 
 ## Ce qui a été vérifié avant d'écrire ce correctif
 
@@ -99,3 +103,9 @@ explicitement avant tout `mysql ... germ_db < restauration.sql`.
 crontab -l | grep backup-database   # présent
 ls -la /var/www/germ/var/backups/    # au moins un fichier .sql.gz.enc
 ```
+
+La copie distante se vérifie avec les mêmes identifiants SFTP que
+`FileStorage` (`SFTP_HOST`/`SFTP_USERNAME`/`SFTP_PASSWORD` dans
+`.env.local`) — pas d'accès SSH direct à 10.112.26.31 nécessaire, Flysystem
+suffit. Un fichier apparaît sous `db-backups/` sur ce serveur après chaque
+exécution de `app:backup-database`.

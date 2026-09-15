@@ -39,12 +39,12 @@ l'accès à MySQL** : **aucun mécanisme de sauvegarde n'existait pour
 n'était pas un problème de confidentialité comme le reste de cet audit,
 mais de continuité d'activité — un incident disque ou une erreur de
 manipulation aurait effacé l'intégralité des données du Ministère sans
-aucun moyen de restauration. **Filet minimal déployé le jour même**
-(`app:backup-database`, dump quotidien chiffré avec rotation) : couvre une
-erreur applicative ou une commande destructrice, mais pas une panne disque
-— le dump vit sur le même disque que la base. Une résilience réelle
-suppose une copie hors de ce serveur, décision d'infrastructure distincte
-et non prise à ce jour.
+aucun moyen de restauration. **Corrigé le jour même**
+(`app:backup-database`, dump quotidien chiffré avec rotation, copié vers un
+second serveur — 10.112.26.31) : couvre désormais une erreur applicative,
+une commande destructrice et, dans la mesure où les deux serveurs ne
+partagent pas la même infrastructure physique (non confirmé), une panne
+disque du serveur applicatif.
 
 ### Ce que l'audit a confirmé comme solide
 
@@ -71,7 +71,7 @@ formelle.
 |---|---|
 | ~~`QR_SECRET_KEY` de production = clé versionnée~~ | ✅ Corrigé (GERM-006) — rotée en production le 15/09/2026, retirée du dépôt |
 | ~~Aucun en-tête de sécurité sur le SPA~~ | ✅ Corrigé (GERM-023) — appliqué et vérifié en production le 15/09/2026 par un administrateur avec `sudo` |
-| ~~Aucune sauvegarde de `germ_db`~~ | ⚠️ **Filet minimal déployé (GERM-027)** — dump quotidien chiffré, local à ce serveur ; résilience réelle (copie hors site) non traitée, voir §7 |
+| ~~Aucune sauvegarde de `germ_db`~~ | ✅ **Corrigée (GERM-027)** — dump quotidien chiffré, copié vers un serveur distinct (10.112.26.31) ; séparation physique réelle non confirmée, voir §7 |
 | MySQL non chiffré (transit et repos) | ❌ Ouvert (GERM-026), évalué le 15/09/2026 |
 | Journalisation d'audit (A09) | Socle minimal déployé — couverture partielle (§26), voir GERM-018 |
 | Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
@@ -274,9 +274,9 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **Description** | Recherche du 15/09/2026 sur le serveur applicatif : aucun crontab pour l'utilisateur de déploiement, aucune entrée `/etc/cron.d/`, aucun timer systemd, aucun script ni fichier `.sql`/`.sql.gz` — `/var/backups` ne contient que les sauvegardes système standard d'Ubuntu (dpkg/apt), rien lié à GERM. **Confirmé directement par le commanditaire le 15/09/2026** : il n'existe aucun autre mécanisme (hyperviseur, infrastructure externe). |
 | **Impact** | Un incident disque, une erreur de migration, une commande destructrice ou un ransomware efface l'intégralité des données du Ministère (état civil, carrière, cartes professionnelles, documents administratifs) **sans aucun moyen de restauration**. Contrairement aux autres constats de cet audit, ce n'est pas un risque de confidentialité mais de continuité d'activité pure — potentiellement le plus grave de tout ce document, malgré son absence du cahier des charges d'origine (§59, hors périmètre initial). |
 | **Preuve** | Absence constatée sur le serveur applicatif (recherche exhaustive des mécanismes usuels), confirmée par le commanditaire pour le reste de l'infrastructure. |
-| **Correction** | `App\Service\DatabaseBackupService` + `app:backup-database` : dump `mysqldump --single-transaction` quotidien (crontab, 3h), compressé, chiffré (libsodium `secretbox`, clé dédiée `DB_BACKUP_ENCRYPTION_KEY`), rotation sur 14 jours. Procédure : `docs/security/deploiement/GERM-027-sauvegarde-mysql.md`. **Portée assumée et non résolue** : le dump vit sur le même disque que `germ_db` — protège contre une erreur applicative ou une commande destructrice, pas contre une panne disque ni la destruction physique du serveur. Une résilience réelle (copie sur un support distinct) reste une décision d'infrastructure à prendre séparément. |
-| **Vérifié** | Sauvegarde réelle produite en production (`germ_db_20260915_132905.sql.gz.enc`, 33 tables), déchiffrée et décompressée pour confirmer un dump SQL complet et valide — sans jamais toucher à la base réelle. Rotation testée avec 15 fichiers simulés : exactement 14 conservés après une nouvelle sauvegarde. Crontab installé et confirmé (`crontab -l`), démon `cron` actif. |
-| **Statut** | ⚠️ **Filet minimal corrigé et déployé** — `1c6200b` ; résilience hors site non traitée |
+| **Correction** | `App\Service\DatabaseBackupService` + `app:backup-database` : dump `mysqldump --single-transaction` quotidien (crontab, 3h), compressé, chiffré (libsodium `secretbox`, clé dédiée `DB_BACKUP_ENCRYPTION_KEY`), rotation sur 14 jours — conservé localement **et** copié vers le serveur SFTP de stockage de fichiers (10.112.26.31, déjà utilisé par `FileStorage`), avec la même rotation appliquée côté distant. Procédure : `docs/security/deploiement/GERM-027-sauvegarde-mysql.md`. **Réserve non levée** : cette copie suppose que 10.112.26.31 ne partage pas la même infrastructure physique (alimentation, baie) que le serveur applicatif — non vérifié depuis ces deux machines, à confirmer auprès de qui gère l'infrastructure physique du Ministère. |
+| **Vérifié** | Sauvegarde réelle produite en production (33 tables), déchiffrée et décompressée pour confirmer un dump SQL complet et valide — sans jamais toucher à la base réelle. Rotation testée avec 15 fichiers simulés : exactement 14 conservés après une nouvelle sauvegarde. Crontab installé et confirmé (`crontab -l`), démon `cron` actif. **Copie distante** : fichier confirmé présent sur 10.112.26.31 (`db-backups/`), déchiffré depuis cette machine distante pour retrouver le même dump complet (33 tables). |
+| **Statut** | ✅ **Corrigé et déployé** — `1c6200b`, `cd6c218` ; séparation physique réelle des deux serveurs non confirmée |
 
 ### Élevée
 
@@ -425,13 +425,13 @@ Les deux constats de cette vérification ont été corrigés le 15/09/2026
 | Cartes professionnelles en circulation | Le numéro imprimé reste la clé de vérification publique ; seule la limitation de débit protège l'annuaire |
 | MySQL non chiffré, ni en transit ni au repos (GERM-026) | Évalué le 15/09/2026 ; activer le chiffrement suppose une décision sur la gestion des clés et un test de compatibilité, hors périmètre d'une évaluation |
 
-**GERM-027 — filet minimal déployé le 15/09/2026, résilience réelle non
-traitée.** Le commanditaire a confirmé qu'aucun mécanisme de sauvegarde de
-`germ_db` n'existait, nulle part. `app:backup-database` (dump chiffré
-quotidien, rotation 14 jours) comble l'absence pure, mais reste sur le même
-disque que la base : une panne matérielle ou la destruction du serveur
-emporterait toujours les deux à la fois. Une copie sur un support distinct
-reste une décision d'infrastructure à prendre séparément — voir §7.
+**GERM-027 — corrigé le 15/09/2026.** Le commanditaire a confirmé qu'aucun
+mécanisme de sauvegarde de `germ_db` n'existait, nulle part.
+`app:backup-database` (dump chiffré quotidien, rotation 14 jours) est
+désormais conservé localement **et** copié vers un second serveur
+(10.112.26.31). Réserve non levée : que ces deux serveurs ne partagent pas
+la même infrastructure physique (alimentation, baie) n'a pas été confirmé
+— voir §7.
 
 ### Ce que cet audit ne dit pas
 
@@ -455,7 +455,7 @@ résilience physique reste, elle, hors périmètre de cet audit.
 | Autorisation | DEFINED | **DEFINED** |
 | Cryptographie | DEFINED | **DEVELOPING** (mécanismes applicatifs et gestion des secrets corrigés — GERM-006 ; MySQL non chiffré en transit ni au repos, GERM-026 ouvert) |
 | Journalisation | INITIAL | **DEVELOPING** |
-| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; sauvegarde minimale déployée mais locale au serveur, GERM-027 ; configuration Apache/PHP au-delà reste non évaluée) |
+| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; sauvegarde quotidienne chiffrée sur un second serveur, GERM-027 — séparation physique réelle non confirmée ; configuration Apache/PHP au-delà reste non évaluée) |
 | Dépendances | MANAGED | **MANAGED** |
 | Tests | INITIAL | **DEVELOPING** |
 | DevSecOps | **INITIAL** | **INITIAL** |
@@ -485,7 +485,7 @@ supervision/détection externe au périmètre applicatif.
 | Priorité | Chantier | Référence |
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
-| 2 | **Copier les sauvegardes de `germ_db` hors de ce serveur** — le filet minimal (GERM-027) protège des erreurs applicatives, pas d'une panne disque ni de la destruction du serveur | GERM-027 |
+| 2 | **Confirmer que 10.112.26.31 (destination des sauvegardes) ne partage pas l'infrastructure physique de germ-appdbserver** — sans quoi GERM-027 protège moins qu'annoncé | GERM-027 |
 | 3 | Décider du chiffrement de MySQL (transport + repos, y compris le disque) — décision de gestion des clés à prendre avant implémentation | GERM-026 |
 | 4 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
 | 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
