@@ -15,8 +15,8 @@ Classés selon la grille du §61.
 | Classification | Actif | Où |
 |---|---|---|
 | **SENSIBLE** | État civil des agents : date de naissance, adresse postale, téléphone personnel, e-mail | `personnel` |
-| **SENSIBLE** | Documents administratifs (actes, pièces justificatives, décisions) | SFTP `10.112.26.31` |
-| **SENSIBLE** | Mots de passe (hachés), `QR_SECRET_KEY`, `APP_SECRET` | `user`, `.env.local` |
+| **SENSIBLE** | Documents administratifs (actes, pièces justificatives, décisions) — chiffrés au repos depuis GERM-025, sauf ceux stockés avant ce correctif | SFTP `10.112.26.31` |
+| **SENSIBLE** | Mots de passe (hachés), `QR_SECRET_KEY`, `FILE_ENCRYPTION_KEY`, `APP_SECRET` | `user`, `.env.local` |
 | **CONFIDENTIEL** | Carrière, congés, décisions administratives, cartes professionnelles | `historique_affectation`, `conge`, `decision_conge`, `carte_professionnelle` |
 | **CONFIDENTIEL** | Inventaire du parc informatique : n° de série, vulnérabilités connues, affectations | `materiel_informatique` |
 | **INTERNE** | Organigramme : services, directions, responsables | `service`, `direction` |
@@ -127,6 +127,7 @@ SSO prévue vers MIC-GAR a été abandonnée avant sa mise en service (décision
 | Path traversal | Chemins issus de la base uniquement, noms aléatoires | ✅ |
 | Upload d'exécutable / SVG piégé | Type MIME reniflé, liste blanche de 5 types, ré-encodage des images | ✅ |
 | Accès direct sans passer par Symfony | Stockage hors racine web | ✅ |
+| **Compromission du disque SFTP ou du transport** | Chiffrement du contenu au repos, libsodium `secretbox` | ✅ **GERM-025 corrigé** — non rétroactif sur les fichiers déjà stockés |
 | **Substitution de pièce après instruction** | Dépôt réservé à l'état « en attente » | ✅ *(GERM-008, corrigé)* |
 | Import malveillant (XLSX à formules) | Superadmin uniquement, jamais stocké | ⚠️ GERM-021 |
 

@@ -58,11 +58,12 @@ formelle.
 | Sujet | Portée |
 |---|---|
 | **`QR_SECRET_KEY` de production = clé versionnée** | Confirmé (GERM-006) — à faire tourner |
-| **Aucun en-tête de sécurité sur le SPA** | Confirmé (GERM-023) — nouveau constat |
+| **Aucun en-tête de sécurité sur le SPA** | Confirmé (GERM-023) — bloqué : `mod_headers` absent, `sudo` exige un mot de passe, nécessite un administrateur |
 | Journalisation d'audit (A09) | Socle minimal déployé — couverture partielle (§26), voir GERM-018 |
 | Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
 | Chaîne CI/CD | Aucune. Déploiement par `git push` sans barrière qualité |
-| Minimisation des données (§61-62) | Données RH complètes exposées aux rôles non-RH |
+| Minimisation des données (§61-62) | ✅ Corrigée (GERM-009, GERM-024) |
+| Chiffrement au repos des fichiers stockés | ✅ Corrigé (GERM-025), non rétroactif sur les fichiers déjà stockés |
 
 ---
 
@@ -272,6 +273,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-012** | *Retiré — sans objet.* Concernait le jeton SSO émis pour l'intégration MIC-GAR (absence de `jti`/`nbf`, durée 8 h non révocable). **Décision du 15/09/2026 : ne pas intégrer MIC-GAR pour le moment.** L'émission du jeton a été entièrement supprimée (`SsoTokenService`, dépendance `firebase/php-jwt`, clés `config/jwt/`) plutôt que laissée en l'état — voir commits `be8afe8`/`ba8175e`. | A02 · API2 | ➖ **Sans objet** |
 | **GERM-013** | `access_control: ^/admin → ROLE_AGENT`. Aucune route n'était exposée (les 17 contrôleurs portent `ROLE_SUPERADMIN`), mais tout nouveau contrôleur déposé sans attribut l'aurait été. **Correction** : règle portée à `ROLE_SUPERADMIN`, exception explicite pour la page d'atterrissage. | A01 | ✅ `c70cd6f` |
 | **GERM-014** | Couverture de tests de sécurité quasi nulle avant l'audit : aucune garantie de non-régression sur un correctif. | §54-55 | 🔄 **En cours** |
+| **GERM-025** | Aucun chiffrement au repos des fichiers stockés (photos, pièces justificatives, cartes professionnelles) : SFTP protège le transport, pas le contenu une fois posé sur le disque distant — un accès direct à ce disque (hors périmètre du modèle de menaces, §7 de `THREAT-MODEL.md`, mais en défense en profondeur) exposait ces documents en clair. **Correction** : `App\Service\FileEncryptionService`, libsodium `secretbox` (même primitive que `QrTokenService`, clé dédiée `FILE_ENCRYPTION_KEY`), branché dans `FileStorage::store()/storeContent()/readStream()`. **Portée non rétroactive, assumée** : les fichiers déjà stockés avant ce correctif restent en clair jusqu'à leur remplacement — un format enveloppé versionné (en-tête `GRM1`) permet à `readStream()` de continuer à les servir sans erreur, plutôt que de les rendre illisibles. Vérifié en direct : nouveau fichier chiffré sur le disque (`GRM1...`), servi déchiffré via l'API ; fichier historique (sans en-tête) toujours lisible. | A02 · ASVS V8 | ✅ **Corrigé** — `f162578` |
 
 ### Faible
 

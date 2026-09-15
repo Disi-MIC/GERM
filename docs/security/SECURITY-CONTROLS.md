@@ -199,10 +199,23 @@ Twig. Aucun `<script>` inline n'existe : `script-src` reste strict.
 |---|---|---|
 | Mots de passe | Hachage `auto` | `security.yaml` |
 | Jetons QR de matériel | libsodium `secretbox` (XSalsa20-Poly1305) — chiffrement **authentifié** : un jeton forgé échoue au déchiffrement | `src/Service/QrTokenService.php` |
-| Transport | TLS 1.2 / 1.3 confirmé en production | — |
+| Fichiers au repos (photos, pièces jointes, cartes) | libsodium `secretbox`, même primitive, clé dédiée (`FILE_ENCRYPTION_KEY`, distincte de `QR_SECRET_KEY`) — chiffré avant écriture sur le SFTP, déchiffré à la lecture (GERM-025) | `src/Service/FileEncryptionService.php`, `src/Service/FileStorage.php` |
+| Transport | TLS 1.2 / 1.3 confirmé en production ; SFTP (SSH) vers le stockage de fichiers | — |
 
 Le QR code encode `germ://materiel/<jeton chiffré>` : un scan avec un lecteur
 générique ne révèle ni identifiant, ni URL exploitable.
+
+**GERM-025 — portée du chiffrement au repos.** SFTP protège le transport, pas
+le fichier une fois posé sur le disque distant : n'importe qui disposant d'un
+accès direct à ce disque (hors périmètre applicatif, voir §7 de
+`THREAT-MODEL.md`) pouvait jusqu'ici lire les photos et pièces justificatives
+en clair. Chaque fichier est désormais chiffré avant écriture. **Portée
+volontairement non rétroactive** : les fichiers déjà stockés avant ce
+correctif restent en clair jusqu'à leur remplacement — les rechiffrer en
+masse suppose de parcourir tout le SFTP de production, une opération plus
+risquée et distincte de cette correction, non entreprise ici sans décision
+explicite. Le format enveloppé (`FileEncryptionService`) reconnaît les
+fichiers historiques et continue de les servir normalement.
 
 *L'intégration SSO vers MIC-GAR (jeton JWT RS256) a été abandonnée avant sa
 mise en service — décision du 15/09/2026, voir OWASP-GERM-AUDIT.md. GERM
@@ -229,5 +242,7 @@ ressource distante n'est chargeable depuis un gabarit.
 - **Aucun MFA**, aucune politique de complexité de mot de passe.
 - **Aucune CI/CD** : le déploiement se fait par `git push` vers un hook
   `post-receive`, sans test ni analyse de sécurité bloquante (GERM-017).
-- **Aucun chiffrement au repos** des documents stockés sur le serveur SFTP.
+- **Aucun en-tête de sécurité sur le SPA Angular** en production : bloqué par
+  l'absence de `mod_headers` et de `sudo` sans mot de passe sur le serveur —
+  procédure prête, nécessite un administrateur (GERM-023).
 - **Aucun Voter** : les contrôles d'appartenance sont manuels (GERM-020).
