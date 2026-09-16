@@ -16,10 +16,15 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
  * séparément côté configuration Apache (mod_headers).
  *
  * CSP autorise cdn.jsdelivr.net (script/style/font) : templates/base.html.twig
- * y charge Bootstrap et Bootstrap Icons — retirer cette autorisation casserait
- * tout le rendu de l'admin Twig. `style-src 'unsafe-inline'` reste nécessaire
- * pour les nombreux attributs `style="..."` des templates admin (aucun
- * `<script>` inline trouvé en revanche, donc script-src reste strict).
+ * y charge Bootstrap Icons, les polices Inter (@fontsource, voir ce même
+ * fichier) et le bundle JS de Bootstrap — Bootstrap CSS lui-même est
+ * recompilé localement (public/css/admin-theme.css, voir sa source .scss)
+ * pour reprendre la palette Gentelella du SPA Angular, donc servi en
+ * 'self'. Retirer l'autorisation jsdelivr casserait quand même le rendu de
+ * l'admin Twig (icônes, police, interactions JS). `style-src 'unsafe-inline'`
+ * reste nécessaire pour les nombreux attributs `style="..."` des templates
+ * admin (aucun `<script>` inline trouvé en revanche, donc script-src reste
+ * strict).
  */
 #[AsEventListener(event: ResponseEvent::class)]
 class SecurityHeadersListener

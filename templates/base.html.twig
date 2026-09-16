@@ -4,19 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}GERM — Ministère{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    {# Bootstrap recompilé depuis sa source (public/css/admin-theme.scss) avec les
+       mêmes variables Sass que le SPA Angular (voir frontend/src/styles.scss),
+       plutôt que le bootstrap.min.css précompilé du CDN : sans ça, seuls les
+       styles écrits à la main ci-dessous (sidebar/topbar/stat-card) reprenaient
+       la palette Gentelella — .btn-primary, badges, focus de champ, pagination...
+       restaient au bleu Bootstrap par défaut. Fichier committé (pas d'étape de
+       build au déploiement) ; régénérer après toute modification de la palette
+       en suivant la commande en tête de admin-theme.scss. #}
+    <link href="{{ asset('css/admin-theme.css') }}" rel="stylesheet">
+    {# integrity/crossorigin sur chaque ressource CDN épinglée à une version exacte :
+       une compromission de jsdelivr ne peut pas substituer un fichier différent sans
+       faire échouer son chargement (hachage vérifié par le navigateur lui-même). #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet" integrity="sha384-Bk5cbLkZQ5raZ0+H2/+VbfYx3WpvxvQK4zqXZr7sYODuaX7bKXoSOnipQxkaS8sv" crossorigin="anonymous">
+    {# Polices via le CDN de @fontsource/inter (npm) plutôt que fonts.googleapis.com :
+       tout reste sous cdn.jsdelivr.net, déjà seul hôte externe autorisé par la CSP de
+       SecurityHeadersListener — ajouter fonts.googleapis.com/fonts.gstatic.com aurait
+       exigé d'élargir cette CSP, une décision de sécurité à part entière. #}
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.css" rel="stylesheet" integrity="sha384-xIqhvN2Z/Umq7Ox8y6t3uFHhjyQo0knjgs1wcj13JjTuHOGIaXBHO7eal9RhNMdd" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/500.css" rel="stylesheet" integrity="sha384-V0O4X1tN0UwvdYzAEJQFmI91MWdJS28KYainePiRQIAtDyKH5cZxjVuoOPp/0v9g" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/600.css" rel="stylesheet" integrity="sha384-zZdQWz6lweHJ9ZIJxqSYDpVJzhjcCKCxfftjlgIC/g3Ok/FynI4BfyMWG5/0mJt9" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/700.css" rel="stylesheet" integrity="sha384-ABwFxKIeYuLxwfO9KnWKaJWmYGG07Ug5PUbvSA8+tyO6Mu3ceWIGYbq+DW5ktdGH" crossorigin="anonymous">
+    {# Palette et rayon alignés sur le thème Gentelella du SPA Angular (voir
+       frontend/src/styles.scss et shell.component.scss) : même navy de sidebar
+       (#1a2332), même accent sarcelle (#1abb9c) avec la barre d'accent posée en
+       inset box-shadow plutôt qu'un simple fond plein, même police. Les deux
+       interfaces (SPA agent et back-office superadmin) partagent désormais un
+       seul système de tokens visuels, même si l'admin les porte en CSS Bootstrap
+       précompilé (CDN) plutôt qu'en variables Sass — pas d'étape de build ici. #}
     <style>
-        body { background-color: #f4f6f9; }
+        body {
+            background-color: #f5f7fb;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
         .germ-sidebar {
             min-height: 100vh;
-            width: 250px;
-            background: #1c2b45;
-            color: #cfd7e6;
+            width: 252px;
+            background: #1a2332;
+            color: #7b8fa3;
         }
         .germ-sidebar .brand {
             color: #fff;
-            font-weight: 700;
+            font-weight: 600;
             letter-spacing: .5px;
         }
         .germ-sidebar .brand .brand-logo {
@@ -25,18 +54,24 @@
             filter: brightness(0) invert(1);
         }
         .germ-sidebar a {
-            color: #cfd7e6;
+            color: #7b8fa3;
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: .6rem;
-            padding: .6rem 1rem;
-            border-radius: .4rem;
-            margin: .1rem .6rem;
+            padding: .375rem .75rem;
+            border-radius: .25rem;
+            margin: 0 .5rem 1px;
+            font-size: .8125rem;
         }
-        .germ-sidebar a:hover, .germ-sidebar a.active {
-            background: #2c3e63;
+        .germ-sidebar a:hover {
+            background: rgba(255, 255, 255, .04);
+            color: #c5d0dc;
+        }
+        .germ-sidebar a.active {
+            background: rgba(26, 187, 156, .08);
             color: #fff;
+            box-shadow: inset 2px 0 0 #1abb9c;
         }
         .germ-sidebar .submenu-toggle {
             cursor: pointer;
@@ -44,25 +79,26 @@
         }
         .germ-sidebar .submenu-toggle .bi-chevron-down {
             transition: transform .15s ease-in-out;
-            font-size: .75rem;
+            font-size: .7rem;
+            margin-left: auto;
         }
         .germ-sidebar .submenu-toggle[aria-expanded="true"] .bi-chevron-down {
             transform: rotate(180deg);
         }
         .germ-sidebar .submenu a {
-            padding-left: 2.4rem;
-            font-size: .92rem;
+            padding-left: 2.35rem;
+            font-size: .78125rem;
         }
         .germ-sidebar .submenu .submenu a {
-            padding-left: 3.8rem;
-            font-size: .88rem;
+            padding-left: 3.7rem;
+            font-size: .75rem;
         }
         .germ-topbar {
             background: #fff;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e6e7eb;
         }
         .germ-main { flex: 1; min-width: 0; }
-        .stat-card { border: none; border-radius: .8rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+        .stat-card { border: none; border-radius: .5rem; box-shadow: 0 2px 4px 0 rgba(30, 38, 51, .04); }
     </style>
     {% block stylesheets %}{% endblock %}
 </head>
@@ -224,7 +260,7 @@
 {% else %}
     {% block full_body %}{% endblock %}
 {% endif %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 {% block javascripts %}{% endblock %}
 </body>
 </html>

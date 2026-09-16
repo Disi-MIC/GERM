@@ -1,0 +1,69 @@
+// Source du thème Bootstrap du back-office Twig (/admin) — voir base.html.twig,
+// qui charge admin-theme.css (compilé, ne pas éditer directement) plutôt que le
+// bootstrap.min.css précompilé du CDN. Sans cette recompilation, seuls les
+// styles germ-sidebar/germ-topbar/stat-card (CSS à la main dans base.html.twig)
+// reprenaient la palette Gentelella : les composants Bootstrap eux-mêmes
+// (.btn-primary, badges, focus des champs, pagination...) restaient bleu
+// Bootstrap par défaut, visuellement incohérents avec le reste de l'admin et
+// avec le SPA Angular. Mêmes valeurs de variables que frontend/src/styles.scss
+// — à garder synchronisées si la palette change d'un côté.
+//
+// Recompilation (aucune étape de build au déploiement pour ce fichier ; le
+// fichier .css ci-contre, committé, est le résultat déjà généré) :
+//   cd frontend && node_modules/.bin/sass --load-path=node_modules \
+//     ../public/css/admin-theme.scss ../public/css/admin-theme.css --style=compressed --no-source-map
+
+$primary: #1abb9c;
+$secondary: #626d7d;
+$success: #2fb344;
+$info: #17a2b8;
+$warning: #f59f00;
+$danger: #d63939;
+$light: #f5f7fb;
+$dark: #1e2633;
+
+$body-bg: #f5f7fb;
+$body-color: #1e2633;
+$border-color: #e6e7eb;
+
+$font-family-sans-serif:
+  'Inter',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  sans-serif;
+$font-size-base: 0.875rem;
+
+$border-radius: 0.375rem;
+$border-radius-sm: 0.25rem;
+$border-radius-lg: 0.5rem;
+
+$box-shadow-sm: 0 2px 4px 0 rgba(30, 38, 51, 0.04);
+$box-shadow: 0 0 0 1px rgba(4, 32, 69, 0.08), 0 2px 4px 0 rgba(30, 38, 51, 0.04);
+
+$card-border-color: $border-color;
+$card-box-shadow: $box-shadow-sm;
+
+@use 'bootstrap/scss/bootstrap' with (
+  $primary: $primary,
+  $secondary: $secondary,
+  $success: $success,
+  $info: $info,
+  $warning: $warning,
+  $danger: $danger,
+  $light: $light,
+  $dark: $dark,
+  $body-bg: $body-bg,
+  $body-color: $body-color,
+  $border-color: $border-color,
+  $font-family-sans-serif: $font-family-sans-serif,
+  $font-size-base: $font-size-base,
+  $border-radius: $border-radius,
+  $border-radius-sm: $border-radius-sm,
+  $border-radius-lg: $border-radius-lg,
+  $box-shadow-sm: $box-shadow-sm,
+  $box-shadow: $box-shadow,
+  $card-border-color: $card-border-color,
+  $card-box-shadow: $card-box-shadow
+);
