@@ -23,6 +23,7 @@ use App\Repository\TicketIncidentRepository;
 use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
+use App\Service\NumeroInventaireGenerator;
 use App\Service\QrTokenService;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\Builder\Builder;
@@ -84,9 +85,14 @@ class MaterielInformatiqueController extends AbstractController
     }
 
     #[Route('/api/materiels-informatiques', name: 'api_materiel_informatique_create', methods: ['POST'])]
-    public function create(Request $request): JsonResponse
+    public function create(Request $request, NumeroInventaireGenerator $numeroInventaireGenerator): JsonResponse
     {
         $materiel = $this->serializer->deserialize($request->getContent(), MaterielInformatique::class, 'json', ['groups' => self::GROUPES_ECRITURE]);
+        // Toujours généré, jamais accepté du client : même si numeroInventaire
+        // reste dans le groupe api:write (nécessaire pour update(), voir
+        // MaterielInformatiqueType côté admin), une valeur envoyée à la
+        // création est ici systématiquement écrasée avant validation.
+        $materiel->setNumeroInventaire($numeroInventaireGenerator->suivant());
 
         $violations = $this->validator->validate($materiel);
         if (\count($violations) > 0) {

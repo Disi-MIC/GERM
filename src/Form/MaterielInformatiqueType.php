@@ -21,8 +21,17 @@ class MaterielInformatiqueType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // Le numéro d'inventaire est généré par l'application à la création
+        // (voir NumeroInventaireGenerator, appelé par
+        // MaterielInformatiqueController::new() avant createForm()) : jamais
+        // un champ de saisie ici. En modification, il reste éditable — un
+        // superadmin doit pouvoir corriger une erreur de frappe sur un
+        // matériel déjà créé, y compris si son étiquette physique a déjà été
+        // imprimée avec ce numéro.
+        if ($options['is_edit']) {
+            $builder->add('numeroInventaire', TextType::class, ['label' => "N° d'inventaire"]);
+        }
         $builder
-            ->add('numeroInventaire', TextType::class, ['label' => "N° d'inventaire"])
             ->add('type', EntityType::class, [
                 'label' => 'Type de matériel',
                 'class' => ListeValeur::class,
@@ -84,6 +93,8 @@ class MaterielInformatiqueType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => MaterielInformatique::class,
+            'is_edit' => false,
         ]);
+        $resolver->setAllowedTypes('is_edit', 'bool');
     }
 }

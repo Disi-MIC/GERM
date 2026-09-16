@@ -1,6 +1,14 @@
 {{ form_start(form) }}
 <div class="row">
-    <div class="col-md-4">{{ form_row(form.numeroInventaire) }}</div>
+    <div class="col-md-4">
+        {% if form.numeroInventaire is defined %}
+            {{ form_row(form.numeroInventaire) }}
+        {% else %}
+            <label class="form-label">N° d'inventaire</label>
+            <input type="text" class="form-control" value="{{ materiel.numeroInventaire }}" disabled>
+            <div class="form-text">Généré automatiquement à l'enregistrement.</div>
+        {% endif %}
+    </div>
     <div class="col-md-4">{{ form_row(form.type) }}</div>
     <div class="col-md-4">{{ form_row(form.etat) }}</div>
     <div class="col-md-4">{{ form_row(form.marque) }}</div>

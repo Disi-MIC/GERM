@@ -8,6 +8,7 @@ use App\Repository\ListeValeurRepository;
 use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\PersonnelRepository;
 use App\Repository\ServiceRepository;
+use App\Service\NumeroInventaireGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -22,6 +23,7 @@ class MaterielInformatiqueImporter implements EntityImporterInterface
         private readonly ServiceRepository $serviceRepository,
         private readonly ListeValeurRepository $listeValeurRepository,
         private readonly PersonnelRepository $personnelRepository,
+        private readonly NumeroInventaireGenerator $numeroInventaireGenerator,
     ) {
     }
 
@@ -33,7 +35,7 @@ class MaterielInformatiqueImporter implements EntityImporterInterface
     public function getColumns(): array
     {
         return [
-            new ImportColumnDefinition('numero_inventaire', "N° d'inventaire (obligatoire, unique)", true, 'INV-0001'),
+            new ImportColumnDefinition('numero_inventaire', "N° d'inventaire (facultatif, généré automatiquement si absent — voir NumeroInventaireGenerator)", false, 'MAT-000123'),
             new ImportColumnDefinition('type_code', 'Code du type de matériel (obligatoire, voir Listes de valeurs)', true, 'ordinateur_bureau'),
             new ImportColumnDefinition('marque', 'Marque (obligatoire)', true, 'Dell'),
             new ImportColumnDefinition('modele', 'Modèle (obligatoire)', true, 'OptiPlex'),
@@ -51,14 +53,16 @@ class MaterielInformatiqueImporter implements EntityImporterInterface
 
     public function importRow(array $row, int $lineNumber): ImportRowResult
     {
+        // Facultatif depuis l'automatisation du numéro d'inventaire : une
+        // valeur explicite dans le fichier reste acceptée (reprise d'un
+        // parc déjà numéroté ailleurs) et passe par la même vérification
+        // d'unicité qu'avant ; en son absence, généré comme pour une
+        // création manuelle (voir NumeroInventaireGenerator).
         $numeroInventaire = $this->parseString($row['numero_inventaire'] ?? null);
-        if (null === $numeroInventaire) {
-            return new ImportRowResult($lineNumber, ImportRowStatus::ERROR, "Le n° d'inventaire est obligatoire.");
-        }
-
-        if ($this->materielRepository->findOneBy(['numeroInventaire' => $numeroInventaire])) {
+        if (null !== $numeroInventaire && $this->materielRepository->findOneBy(['numeroInventaire' => $numeroInventaire])) {
             return new ImportRowResult($lineNumber, ImportRowStatus::SKIPPED_EXISTING, sprintf("Le matériel '%s' existe déjà.", $numeroInventaire));
         }
+        $numeroInventaire ??= $this->numeroInventaireGenerator->suivant();
 
         $marque = $this->parseString($row['marque'] ?? null);
         $modele = $this->parseString($row['modele'] ?? null);

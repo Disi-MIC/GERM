@@ -8,6 +8,7 @@ use App\Entity\MaterielInformatique;
 use App\Form\MaterielInformatiqueType;
 use App\Repository\ListeValeurRepository;
 use App\Repository\MaterielInformatiqueRepository;
+use App\Service\NumeroInventaireGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,14 +29,20 @@ class MaterielInformatiqueController extends AbstractController
     }
 
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, ListeValeurRepository $listeValeurRepository): Response
+    public function new(Request $request, EntityManagerInterface $em, ListeValeurRepository $listeValeurRepository, NumeroInventaireGenerator $numeroInventaireGenerator): Response
     {
         $materiel = new MaterielInformatique();
         $materiel->setEtat($listeValeurRepository->findOneBy([
             'categorie' => CategorieListeValeur::ETAT_MATERIEL,
             'code' => 'en_stock',
         ]));
-        $form = $this->createForm(MaterielInformatiqueType::class, $materiel);
+        // Généré avant la construction du formulaire : numeroInventaire n'y
+        // est pas un champ de saisie (voir MaterielInformatiqueType), mais
+        // reste soumis à la contrainte NotBlank de l'entité — sans cette
+        // valeur, la validation échouerait pour un champ que l'utilisateur
+        // ne voit jamais.
+        $materiel->setNumeroInventaire($numeroInventaireGenerator->suivant());
+        $form = $this->createForm(MaterielInformatiqueType::class, $materiel, ['is_edit' => false]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -64,7 +71,7 @@ class MaterielInformatiqueController extends AbstractController
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(Request $request, MaterielInformatique $materiel, EntityManagerInterface $em): Response
     {
-        $form = $this->createForm(MaterielInformatiqueType::class, $materiel);
+        $form = $this->createForm(MaterielInformatiqueType::class, $materiel, ['is_edit' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

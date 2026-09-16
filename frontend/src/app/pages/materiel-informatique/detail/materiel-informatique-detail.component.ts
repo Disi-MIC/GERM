@@ -65,7 +65,11 @@ export class MaterielInformatiqueDetailComponent implements OnInit, OnDestroy {
   });
 
   form = this.fb.nonNullable.group({
-    numeroInventaire: ['', Validators.required],
+    // Pas de Validators.required : généré par le serveur à la création
+    // (voir NumeroInventaireGenerator côté API), jamais saisi. Reste
+    // modifiable une fois le matériel créé (voir le template), pour
+    // corriger une erreur sans devoir supprimer puis recréer la fiche.
+    numeroInventaire: [''],
     type: [null as number | null, Validators.required],
     marque: ['', Validators.required],
     modele: ['', Validators.required],

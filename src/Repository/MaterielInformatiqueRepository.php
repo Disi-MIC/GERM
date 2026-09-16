@@ -96,6 +96,34 @@ class MaterielInformatiqueRepository extends ServiceEntityRepository
     }
 
     /**
+     * Plus grand numéro déjà utilisé sous ce préfixe (voir
+     * NumeroInventaireGenerator) — comparé numériquement en PHP plutôt
+     * qu'en SQL : un tri/MAX() alphabétique sur `numero_inventaire`
+     * classerait "MAT-000010" avant "MAT-000002", et la colonne mélange de
+     * toute façon des valeurs historiques hors de ce format
+     * ("CI-1", "OP-01") qu'une expression SQL sur ce seul préfixe ignore
+     * déjà naturellement.
+     */
+    public function dernierNumeroSequentiel(string $prefixe): int
+    {
+        $numeros = $this->createQueryBuilder('m')
+            ->select('m.numeroInventaire')
+            ->where('m.numeroInventaire LIKE :prefixe')
+            ->setParameter('prefixe', $prefixe.'%')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        $max = 0;
+        foreach ($numeros as $numero) {
+            if (preg_match('/^'.preg_quote($prefixe, '/').'(\d+)$/', (string) $numero, $matches)) {
+                $max = max($max, (int) $matches[1]);
+            }
+        }
+
+        return $max;
+    }
+
+    /**
      * Matériel filtré par direction et/ou service (directement ou via
      * l'agent affecté, même règle que MaterielInformatique::getService(),
      * où affecteA prévaut) — pour l'aperçu
