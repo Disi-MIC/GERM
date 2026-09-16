@@ -6,13 +6,34 @@ localement sous `var/backups/` **et** copié vers le serveur SFTP de
 stockage de fichiers (10.112.26.31, déjà utilisé par `FileStorage`), avec
 la même rotation appliquée côté distant.
 
-**Réserve non levée** : cette copie suppose que 10.112.26.31 ne partage pas
-la même infrastructure physique (alimentation, baie) que
-`germ-appdbserver` — non vérifié depuis ces deux machines, à confirmer
-auprès de qui gère l'infrastructure physique du Ministère. Si les deux
-serveurs sont en réalité colocalisés, ce correctif protège toujours contre
-une erreur applicative ou une commande destructrice, mais pas contre un
-sinistre touchant les deux machines à la fois.
+**⚠️ Mise à jour du 16/09/2026 — la réserve se confirme mal.** Vérifié
+depuis `germ-appdbserver` :
+
+```bash
+ip link show enp6s18 | grep link/ether   # bc:24:11:79:3c:50 — préfixe Proxmox
+ip neigh show 10.112.26.31               # bc:24:11:8a:fb:2d — même préfixe
+ping -c 4 10.112.26.31                   # 0,3-0,5 ms
+tracepath 10.112.26.31                   # 1 seul saut
+cat /sys/class/dmi/id/sys_vendor         # QEMU
+```
+
+Les deux machines portent une adresse MAC au préfixe `BC:24:11` — l'OUI que
+Proxmox VE attribue à ses VM — sont jointes en un seul saut réseau à une
+latence sub-milliseconde, et `germ-appdbserver` lui-même s'identifie comme
+une VM QEMU/KVM (GPU QXL, ponts PCIe QEMU, ballon mémoire VirtIO). Faisceau
+d'indices convergent vers **deux VM du même hyperviseur physique** : une
+panne matérielle de cet hyperviseur emporterait probablement les deux à la
+fois, ce qui annule l'essentiel du bénéfice attendu de cette copie contre
+ce scénario précis (elle reste utile contre une erreur applicative ou une
+commande destructrice).
+
+**Non exclu** : un cluster Proxmox à plusieurs nœuds physiques peut
+produire une latence similaire tout en plaçant réellement les deux VM sur
+des nœuds séparés. Seul un accès à la console Proxmox, ou la personne qui
+gère cet hyperviseur, peut trancher définitivement. Si la colocalisation
+est confirmée, il faudra identifier une véritable destination hors site
+(autre hyperviseur, autre site physique) pour que GERM-027 protège
+réellement contre un sinistre matériel.
 
 ## Ce qui a été vérifié avant d'écrire ce correctif
 

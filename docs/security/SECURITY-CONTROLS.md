@@ -246,9 +246,12 @@ commanditaire). `App\Service\DatabaseBackupService` +
 `DB_BACKUP_ENCRYPTION_KEY`), rotation sur 14 jours — conservé localement
 **et** copié vers le serveur SFTP de stockage de fichiers (10.112.26.31,
 déjà utilisé par `FileStorage`), avec la même rotation appliquée à distance.
-Voir `docs/security/deploiement/GERM-027-sauvegarde-mysql.md`. **Réserve
-non levée** : suppose que les deux serveurs ne partagent pas la même
-infrastructure physique (alimentation, baie) — non confirmé.
+Voir `docs/security/deploiement/GERM-027-sauvegarde-mysql.md`. **Mise à
+jour du 16/09/2026** : des indices techniques (préfixe MAC Proxmox commun
+aux deux machines, 1 seul saut réseau, latence sub-milliseconde) suggèrent
+qu'elles sont en réalité deux VM du même hyperviseur — la protection
+apportée contre une panne matérielle n'est donc probablement pas celle
+initialement annoncée.
 
 ## 11. Protection contre le SSRF
 

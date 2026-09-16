@@ -39,12 +39,14 @@ l'accès à MySQL** : **aucun mécanisme de sauvegarde n'existait pour
 n'était pas un problème de confidentialité comme le reste de cet audit,
 mais de continuité d'activité — un incident disque ou une erreur de
 manipulation aurait effacé l'intégralité des données du Ministère sans
-aucun moyen de restauration. **Corrigé le jour même**
-(`app:backup-database`, dump quotidien chiffré avec rotation, copié vers un
-second serveur — 10.112.26.31) : couvre désormais une erreur applicative,
-une commande destructrice et, dans la mesure où les deux serveurs ne
-partagent pas la même infrastructure physique (non confirmé), une panne
-disque du serveur applicatif.
+aucun moyen de restauration. **Corrigé le jour même** (`app:backup-database`, dump quotidien chiffré
+avec rotation, copié vers un second serveur — 10.112.26.31) : couvre
+désormais une erreur applicative ou une commande destructrice. **Réserve
+ajoutée le 16/09/2026** : des indices techniques (adresses MAC au préfixe
+Proxmox, 1 seul saut réseau, latence sub-milliseconde) suggèrent que les
+deux serveurs sont en réalité deux VM du même hyperviseur — la protection
+contre une panne matérielle n'est donc pas acquise, contrairement à ce qui
+avait été annoncé initialement.
 
 ### Ce que l'audit a confirmé comme solide
 
@@ -71,7 +73,7 @@ formelle.
 |---|---|
 | ~~`QR_SECRET_KEY` de production = clé versionnée~~ | ✅ Corrigé (GERM-006) — rotée en production le 15/09/2026, retirée du dépôt |
 | ~~Aucun en-tête de sécurité sur le SPA~~ | ✅ Corrigé (GERM-023) — appliqué et vérifié en production le 15/09/2026 par un administrateur avec `sudo` |
-| ~~Aucune sauvegarde de `germ_db`~~ | ✅ **Corrigée (GERM-027)** — dump quotidien chiffré, copié vers un serveur distinct (10.112.26.31) ; séparation physique réelle non confirmée, voir §7 |
+| ~~Aucune sauvegarde de `germ_db`~~ | ⚠️ **Corrigée pour l'essentiel (GERM-027)** — dump quotidien chiffré, copié vers 10.112.26.31 ; preuves techniques (16/09/2026) indiquant que les deux serveurs sont probablement des VM du **même hyperviseur** — voir §7 |
 | MySQL non chiffré (transit et repos) | ❌ Ouvert (GERM-026), évalué le 15/09/2026 |
 | Journalisation d'audit (A09) | Socle minimal déployé — couverture partielle (§26), voir GERM-018 |
 | Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
@@ -274,9 +276,10 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **Description** | Recherche du 15/09/2026 sur le serveur applicatif : aucun crontab pour l'utilisateur de déploiement, aucune entrée `/etc/cron.d/`, aucun timer systemd, aucun script ni fichier `.sql`/`.sql.gz` — `/var/backups` ne contient que les sauvegardes système standard d'Ubuntu (dpkg/apt), rien lié à GERM. **Confirmé directement par le commanditaire le 15/09/2026** : il n'existe aucun autre mécanisme (hyperviseur, infrastructure externe). |
 | **Impact** | Un incident disque, une erreur de migration, une commande destructrice ou un ransomware efface l'intégralité des données du Ministère (état civil, carrière, cartes professionnelles, documents administratifs) **sans aucun moyen de restauration**. Contrairement aux autres constats de cet audit, ce n'est pas un risque de confidentialité mais de continuité d'activité pure — potentiellement le plus grave de tout ce document, malgré son absence du cahier des charges d'origine (§59, hors périmètre initial). |
 | **Preuve** | Absence constatée sur le serveur applicatif (recherche exhaustive des mécanismes usuels), confirmée par le commanditaire pour le reste de l'infrastructure. |
-| **Correction** | `App\Service\DatabaseBackupService` + `app:backup-database` : dump `mysqldump --single-transaction` quotidien (crontab, 3h), compressé, chiffré (libsodium `secretbox`, clé dédiée `DB_BACKUP_ENCRYPTION_KEY`), rotation sur 14 jours — conservé localement **et** copié vers le serveur SFTP de stockage de fichiers (10.112.26.31, déjà utilisé par `FileStorage`), avec la même rotation appliquée côté distant. Procédure : `docs/security/deploiement/GERM-027-sauvegarde-mysql.md`. **Réserve non levée** : cette copie suppose que 10.112.26.31 ne partage pas la même infrastructure physique (alimentation, baie) que le serveur applicatif — non vérifié depuis ces deux machines, à confirmer auprès de qui gère l'infrastructure physique du Ministère. |
+| **Correction** | `App\Service\DatabaseBackupService` + `app:backup-database` : dump `mysqldump --single-transaction` quotidien (crontab, 3h), compressé, chiffré (libsodium `secretbox`, clé dédiée `DB_BACKUP_ENCRYPTION_KEY`), rotation sur 14 jours — conservé localement **et** copié vers le serveur SFTP de stockage de fichiers (10.112.26.31, déjà utilisé par `FileStorage`), avec la même rotation appliquée côté distant. Procédure : `docs/security/deploiement/GERM-027-sauvegarde-mysql.md`. |
 | **Vérifié** | Sauvegarde réelle produite en production (33 tables), déchiffrée et décompressée pour confirmer un dump SQL complet et valide — sans jamais toucher à la base réelle. Rotation testée avec 15 fichiers simulés : exactement 14 conservés après une nouvelle sauvegarde. Crontab installé et confirmé (`crontab -l`), démon `cron` actif. **Copie distante** : fichier confirmé présent sur 10.112.26.31 (`db-backups/`), déchiffré depuis cette machine distante pour retrouver le même dump complet (33 tables). |
-| **Statut** | ✅ **Corrigé et déployé** — `1c6200b`, `cd6c218` ; séparation physique réelle des deux serveurs non confirmée |
+| **Réserve du 16/09/2026, non résolue** | La copie vers 10.112.26.31 supposait une séparation physique jamais vérifiée. Vérification effectuée depuis `germ-appdbserver` : les deux machines portent une adresse MAC au préfixe `BC:24:11` (OUI attribué par Proxmox VE à ses VM), jointes en **1 seul saut réseau** à une latence de 0,3–0,5 ms ; `germ-appdbserver` lui-même s'identifie comme une VM QEMU/KVM (DMI `QEMU`, GPU QXL, ponts PCIe et ballon mémoire VirtIO). Faisceau d'indices convergent vers **deux VM du même hyperviseur physique** — une panne matérielle de cet hyperviseur emporterait probablement les deux à la fois. Non exclu : un cluster Proxmox multi-nœuds produirait une latence similaire avec une réelle séparation physique — seul un accès à la console Proxmox ou la personne gérant cet hyperviseur peut trancher définitivement. |
+| **Statut** | ⚠️ **Corrigé pour l'absence de sauvegarde (bug d'origine), résilience matérielle non prouvée** — `1c6200b`, `cd6c218` |
 
 ### Élevée
 
@@ -425,13 +428,14 @@ Les deux constats de cette vérification ont été corrigés le 15/09/2026
 | Cartes professionnelles en circulation | Le numéro imprimé reste la clé de vérification publique ; seule la limitation de débit protège l'annuaire |
 | MySQL non chiffré, ni en transit ni au repos (GERM-026) | Évalué le 15/09/2026 ; activer le chiffrement suppose une décision sur la gestion des clés et un test de compatibilité, hors périmètre d'une évaluation |
 
-**GERM-027 — corrigé le 15/09/2026.** Le commanditaire a confirmé qu'aucun
-mécanisme de sauvegarde de `germ_db` n'existait, nulle part.
-`app:backup-database` (dump chiffré quotidien, rotation 14 jours) est
-désormais conservé localement **et** copié vers un second serveur
-(10.112.26.31). Réserve non levée : que ces deux serveurs ne partagent pas
-la même infrastructure physique (alimentation, baie) n'a pas été confirmé
-— voir §7.
+**GERM-027 — corrigé pour l'absence de sauvegarde, pas pour la résilience
+matérielle.** Le commanditaire a confirmé qu'aucun mécanisme de sauvegarde
+de `germ_db` n'existait, nulle part. `app:backup-database` (dump chiffré
+quotidien, rotation 14 jours) est désormais conservé localement **et**
+copié vers un second serveur (10.112.26.31). **Mise à jour du
+16/09/2026** : des indices techniques (préfixe MAC Proxmox commun aux deux
+machines, 1 seul saut réseau, latence sub-milliseconde) suggèrent qu'elles
+sont en réalité deux VM du même hyperviseur — voir §7.
 
 ### Ce que cet audit ne dit pas
 
@@ -455,7 +459,7 @@ résilience physique reste, elle, hors périmètre de cet audit.
 | Autorisation | DEFINED | **DEFINED** |
 | Cryptographie | DEFINED | **DEVELOPING** (mécanismes applicatifs et gestion des secrets corrigés — GERM-006 ; MySQL non chiffré en transit ni au repos, GERM-026 ouvert) |
 | Journalisation | INITIAL | **DEVELOPING** |
-| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; sauvegarde quotidienne chiffrée sur un second serveur, GERM-027 — séparation physique réelle non confirmée ; configuration Apache/PHP au-delà reste non évaluée) |
+| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; sauvegarde quotidienne chiffrée sur un second serveur, GERM-027 — indices techniques suggérant que les deux machines partagent le même hyperviseur, résilience matérielle non acquise ; configuration Apache/PHP au-delà reste non évaluée) |
 | Dépendances | MANAGED | **MANAGED** |
 | Tests | INITIAL | **DEVELOPING** |
 | DevSecOps | **INITIAL** | **INITIAL** |
@@ -485,7 +489,7 @@ supervision/détection externe au périmètre applicatif.
 | Priorité | Chantier | Référence |
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
-| 2 | **Confirmer que 10.112.26.31 (destination des sauvegardes) ne partage pas l'infrastructure physique de germ-appdbserver** — sans quoi GERM-027 protège moins qu'annoncé | GERM-027 |
+| 2 | **Trancher si 10.112.26.31 (destination des sauvegardes) est une VM du même hyperviseur que germ-appdbserver** — indices techniques du 16/09/2026 en ce sens (préfixe MAC Proxmox commun, 1 saut réseau) ; si confirmé, trouver une véritable destination hors site | GERM-027 |
 | 3 | Décider du chiffrement de MySQL (transport + repos, y compris le disque) — décision de gestion des clés à prendre avant implémentation | GERM-026 |
 | 4 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
 | 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
