@@ -66,7 +66,26 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
   }
 
   get materielOptions(): SearchableSelectOption[] {
-    return this.materiels.map((m) => ({ value: m.id, label: `${m.marque} ${m.modele} (${m.numeroInventaire})` }));
+    return this.materiels.map((m) => ({ value: m.id, label: this.materielLabel(m) }));
+  }
+
+  /**
+   * Priorité à l'agent affecté (nom + matricule) plutôt qu'à la marque : dans
+   * ce formulaire, le technicien recherche le plus souvent "le poste de tel
+   * agent", pas une référence matérielle — le type et le modèle restent
+   * affichés pour départager plusieurs postes d'un même agent.
+   */
+  private materielLabel(m: MaterielInformatique): string {
+    const type = typeof m.type === 'string' ? m.type : m.type.libelle;
+    const materiel = `${type} ${m.modele}`;
+
+    const agent = m.affecteA;
+    if (!agent || typeof agent === 'string') {
+      return `${materiel} (${m.numeroInventaire}) — Non affecté`;
+    }
+
+    const nomAgent = agent.nomComplet ?? `${agent.prenom} ${agent.nom}`;
+    return `${nomAgent} — ${agent.matricule ?? '—'} — ${materiel}`;
   }
 
   get personnelOptions(): SearchableSelectOption[] {
