@@ -10,9 +10,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
- * Journalise chaque refus d'accès (#[IsGranted], denyAccessUnlessGranted(),
- * contrôle d'appartenance manuel via createAccessDeniedException() — voir
- * MeDemandesController::appartientAMoi() — ou levée directe de
+ * Journalise chaque refus d'accès (#[IsGranted], denyAccessUnlessGranted() —
+ * y compris le contrôle d'appartenance centralisé dans
+ * App\Security\PersonnelOwnershipVoter, GERM-020 — ou levée directe de
  * AccessDeniedHttpException, ex. CarteProfessionnelleController::pdfTelecharger())
  * sur /api et /admin.
  *

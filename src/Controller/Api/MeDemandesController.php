@@ -22,6 +22,7 @@ use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\DecisionCongeRepository;
 use App\Repository\ListeValeurRepository;
 use App\Repository\MaterielInformatiqueRepository;
+use App\Security\PersonnelOwnershipVoter;
 use App\Service\EligibiliteDecisionCongeService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
@@ -111,7 +112,7 @@ class MeDemandesController extends AbstractController
 
         if (!empty($data['carteReferenceId'])) {
             $carte = $this->carteProfessionnelleRepository->find($data['carteReferenceId']);
-            if (!$carte || $carte->getPersonnel() !== $personnel) {
+            if (!$carte || !$this->isGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $carte)) {
                 return $this->json(['errors' => ['carteReference' => "Cette carte n'appartient pas à votre fiche agent."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
             }
             $demande->setCarteReference($carte);
@@ -174,9 +175,7 @@ class MeDemandesController extends AbstractController
     #[Route('/api/me/demandes-carte-pro/{id}/piece', name: 'api_me_demande_carte_pro_piece', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function pieceDemandeCartePro(DemandeCartePro $demande, Request $request): JsonResponse
     {
-        if (!$this->appartientAMoi($demande->getPersonnel())) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $demande);
 
         if ($refus = $this->refusSiDemandeFigee($demande->isEnAttente())) {
             return $refus;
@@ -271,9 +270,7 @@ class MeDemandesController extends AbstractController
 
     private function attacherPieceDecision(DemandeDecision $demande, Request $request): JsonResponse
     {
-        if (!$this->appartientAMoi($demande->getPersonnel())) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $demande);
 
         if ($refus = $this->refusSiDemandeFigee($demande->isEnAttente())) {
             return $refus;
@@ -305,9 +302,7 @@ class MeDemandesController extends AbstractController
     #[Route('/api/me/demandes-decision/{id}/confirmer-depot-courrier', name: 'api_me_demande_decision_confirmer_depot_courrier', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function confirmerDepotCourrierDecision(DemandeDecision $demande): JsonResponse
     {
-        if (!$this->appartientAMoi($demande->getPersonnel())) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $demande);
 
         if (!$demande->isValidee()) {
             return $this->json(['errors' => ['statut' => "Cette demande doit d'abord être validée par le RH Congé avant de confirmer le dépôt au service courrier."]], JsonResponse::HTTP_CONFLICT);
@@ -356,7 +351,7 @@ class MeDemandesController extends AbstractController
         $data = json_decode($request->getContent(), true) ?? [];
         if (!empty($data['decisionId'])) {
             $decision = $this->decisionCongeRepository->find($data['decisionId']);
-            if (!$decision || $decision->getPersonnel() !== $personnel) {
+            if (!$decision || !$this->isGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $decision)) {
                 return $this->json(['errors' => ['decision' => "Cette décision de congé n'appartient pas à votre fiche agent."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
             }
             if (!$decision->isValide()) {
@@ -397,9 +392,7 @@ class MeDemandesController extends AbstractController
 
     private function attacherPieceJouissance(DemandeJouissance $demande, Request $request): JsonResponse
     {
-        if (!$this->appartientAMoi($demande->getPersonnel())) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $demande);
 
         if ($refus = $this->refusSiDemandeFigee($demande->isEnAttente())) {
             return $refus;
@@ -438,7 +431,7 @@ class MeDemandesController extends AbstractController
         $data = json_decode($request->getContent(), true) ?? [];
 
         $materiel = !empty($data['materielId']) ? $this->materielInformatiqueRepository->find($data['materielId']) : null;
-        if (!$materiel || $materiel->getAffecteA() !== $personnel) {
+        if (!$materiel || !$this->isGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $materiel)) {
             return $this->json(['errors' => ['materiel' => "Ce matériel ne vous est pas affecté."]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -576,11 +569,6 @@ class MeDemandesController extends AbstractController
         return $this->json([
             'errors' => ['demande' => "Cette demande a déjà été traitée : ses pièces ne sont plus modifiables. Rapprochez-vous du service RH pour toute correction."],
         ], JsonResponse::HTTP_CONFLICT);
-    }
-
-    private function appartientAMoi(?Personnel $personnel): bool
-    {
-        return null !== $personnel && $personnel === $this->personnelConnecte();
     }
 
     private function reponsePersonnelManquant(): JsonResponse

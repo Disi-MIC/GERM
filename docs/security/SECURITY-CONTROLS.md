@@ -49,29 +49,39 @@ protection CSRF de la section 4 indispensable.
 | Global | `access_control` | `security.yaml` — `^/admin/login` et `^/api/login` publics, `^/admin/aucun-acces` → `ROLE_AGENT`, `^/api` → `ROLE_AGENT`, `^/admin` → **`ROLE_SUPERADMIN`** |
 | Contrôleur | `#[IsGranted]` | 45 contrôleurs ; couverture intégrale hors routes publiques par conception |
 | Ressource API | expression `security:` | 24 entités `#[ApiResource]`, toutes protégées |
-| Objet | contrôle d'appartenance manuel | 14 emplacements dans `MeController` / `MeDemandesController` |
+| Objet | `App\Security\PersonnelOwnershipVoter` | 11 emplacements via `denyAccessUnlessGranted()`, 3 via `isGranted()` — `MeController` / `MeDemandesController` |
 | Métier | contrôle d'état | `MeDemandesController::refusSiDemandeFigee()` |
 
 **L'ordre des règles `access_control` est signifiant** : la première qui
 correspond l'emporte. Les exceptions (`/admin/login`, `/admin/aucun-acces`)
 doivent rester **avant** la règle générale `^/admin`.
 
-**Aucun Voter n'existe** (GERM-020). Les trois formes de contrôle
-d'appartenance utilisées :
+**GERM-020 corrigé, `PersonnelOwnershipVoter`.** Les trois formes de
+contrôle d'appartenance jusqu'ici dupliquées à la main (comparaison
+directe, helper `appartientAMoi()` propre à `MeDemandesController`, requête
+scopée) sont remplacées par un seul Voter, dont la correspondance
+entité → propriétaire couvre `CarteProfessionnelle`, `DocumentAdministratif`,
+`DemandeCartePro`, `DemandeDecision`, `DemandeJouissance`, `DecisionConge`
+(`getPersonnel()`) et `MaterielInformatique` (`getAffecteA()`) :
 
 ```php
-// 1. Comparaison directe → 403
-if ($carte->getPersonnel() !== $personnel) { throw $this->createAccessDeniedException(); }
+// 403 uniforme, sur les 11 endroits qui protègent l'accès à l'objet lui-même
+$this->denyAccessUnlessGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $carte);
 
-// 2. Helper partagé → 403
-if (!$this->appartientAMoi($demande->getPersonnel())) { ... }
-
-// 3. Requête scopée → 404 (ne révèle pas l'existence de l'objet)
-$repository->findOneBy(['id' => $id, 'affecteA' => $personnel]);
+// booléen, sur les 3 endroits qui vérifient l'appartenance d'un objet
+// référencé et répondent en 422 avec un message de champ dédié — code HTTP
+// et forme de réponse volontairement inchangés, seule la comparaison est
+// désormais partagée
+if (!$this->isGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $carte)) { ... }
 ```
 
-La forme 3 est la plus sûre (elle ne divulgue pas l'existence d'un objet
-appartenant à autrui) et devrait servir de modèle.
+**Restent volontairement hors de ce Voter**, chacun pour une raison
+documentée dans son propre code : `MeController::marquerNotificationLue()`
+et `materielQrcode()`, qui renvoient délibérément 404 (pas 403) pour ne pas
+confirmer l'existence d'un objet à un tiers — la requête scopée
+(`$repository->findOneBy(['id' => $id, 'affecteA' => $personnel])`) reste
+le bon modèle pour ce cas précis, plus sûr qu'un 403 qui révèle que l'objet
+existe.
 
 ## 4. Protection CSRF
 
@@ -290,4 +300,3 @@ ressource distante n'est chargeable depuis un gabarit.
   (GERM-017) : `.github/workflows/ci.yml` fait tourner tests et analyse de
   dépendances sur `origin` (GitHub), mais le déploiement passe par un
   second dépôt (`production`) totalement indépendant.
-- **Aucun Voter** : les contrôles d'appartenance sont manuels (GERM-020).

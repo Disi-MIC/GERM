@@ -21,6 +21,7 @@ use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Repository\VehiculeRepository;
+use App\Security\PersonnelOwnershipVoter;
 use App\Service\AuditLogService;
 use App\Service\CurrentUserPayloadBuilder;
 use App\Service\FileStorage;
@@ -318,10 +319,7 @@ class MeController extends AbstractController
 
     private function streamCartePdf(CarteProfessionnelle $carte, string $disposition, AuditLogService $auditLog): StreamedResponse
     {
-        $personnel = $this->personnelConnecte();
-        if (!$personnel || $carte->getPersonnel() !== $personnel) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $carte);
 
         if (!$carte->isValideeParAdminRh()) {
             throw new AccessDeniedHttpException("La carte doit d'abord être validée par le RH Admin pour être consultable.");
@@ -399,10 +397,7 @@ class MeController extends AbstractController
     #[Route('/api/me/documents-administratifs/{id}/fichier', name: 'api_me_document_administratif_fichier', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function documentAdministratifFichier(DocumentAdministratif $document, AuditLogService $auditLog): StreamedResponse
     {
-        $personnel = $this->personnelConnecte();
-        if (!$personnel || $document->getPersonnel() !== $personnel) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyAccessUnlessGranted(PersonnelOwnershipVoter::EST_PROPRIETAIRE, $document);
 
         $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'DocumentAdministratif', entiteId: $document->getId(), details: $document->getLibelle());
 
