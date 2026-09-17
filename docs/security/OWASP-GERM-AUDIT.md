@@ -198,7 +198,7 @@ leur contrôle d'accès.
 | **A05** | Security Misconfiguration | ⚠️ **Corrigé partiellement** | GERM-005 (résolu), GERM-015, GERM-016, GERM-023 (résolu), GERM-022 (ouvert) |
 | **A06** | Vulnerable Components | ✅ **Conforme** | 0 vulnérabilité en production |
 | **A07** | Identification & Auth Failures | ⚠️ **Corrigé** | GERM-001, GERM-004, GERM-011 |
-| **A08** | Software & Data Integrity | ❌ **Non conforme** | GERM-017 (aucune CI/CD) |
+| **A08** | Software & Data Integrity | ⚠️ **Corrigé partiellement** | GERM-017 (CI/CD en place, pas encore bloquant sur le déploiement réel) |
 | **A09** | Logging & Monitoring Failures | ⚠️ **Corrigé partiellement** | GERM-018 (socle minimal déployé — `47561dd`) |
 | **A10** | SSRF | ✅ **Conforme** | Liste blanche stricte sur la seule sortie réseau |
 
@@ -315,7 +315,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-011** | Aucune contrainte de mot de passe en modification : la liste de contraintes était littéralement vide hors création, un administrateur pouvait affecter un mot de passe d'un caractère. **Correction** : contrainte de longueur appliquée aussi en édition. | A07 · ASVS V2.1 | ✅ `c70cd6f` |
 | **GERM-012** | *Retiré — sans objet.* Concernait le jeton SSO émis pour l'intégration MIC-GAR (absence de `jti`/`nbf`, durée 8 h non révocable). **Décision du 15/09/2026 : ne pas intégrer MIC-GAR pour le moment.** L'émission du jeton a été entièrement supprimée (`SsoTokenService`, dépendance `firebase/php-jwt`, clés `config/jwt/`) plutôt que laissée en l'état — voir commits `be8afe8`/`ba8175e`. | A02 · API2 | ➖ **Sans objet** |
 | **GERM-013** | `access_control: ^/admin → ROLE_AGENT`. Aucune route n'était exposée (les 17 contrôleurs portent `ROLE_SUPERADMIN`), mais tout nouveau contrôleur déposé sans attribut l'aurait été. **Correction** : règle portée à `ROLE_SUPERADMIN`, exception explicite pour la page d'atterrissage. | A01 | ✅ `c70cd6f` |
-| **GERM-014** | Couverture de tests de sécurité quasi nulle avant l'audit : aucune garantie de non-régression sur un correctif. | §54-55 | 🔄 **En cours** |
+| **GERM-014** | Couverture de tests de sécurité quasi nulle avant l'audit : aucune garantie de non-régression sur un correctif. Les 6 tests de `AccessControlTest` (barrière `^/admin`, GERM-013) étaient inertes faute de base de test peuplée (`markTestSkipped` systématique) — masquant une régression aussi bien qu'une absence de test. **Corrigé pour la CI** : `src/DataFixtures/AppFixtures.php` (jusque-là un squelette vide) crée désormais les 3 comptes attendus par le test ; combiné à la base MySQL jetable de GERM-017, ces 6 tests s'exécutent réellement à chaque push. **Toujours inactifs en local** : créer `germ_db_test` et accorder les droits à `germ_user` exige un accès root MySQL que je n'ai pas — procédure dans `docs/security/deploiement/GERM-014-base-test.md`. Matrice non étendue au-delà de GERM-013 (un scénario par rôle métier, comptes désactivés, GERM-020) — proposé dans le même document. | §54-55 | ⚠️ **Corrigé pour la CI, local et extension de la matrice restants** |
 | **GERM-025** | Aucun chiffrement au repos des fichiers stockés (photos, pièces justificatives, cartes professionnelles) : SFTP protège le transport, pas le contenu une fois posé sur le disque distant — un accès direct à ce disque (hors périmètre du modèle de menaces, §7 de `THREAT-MODEL.md`, mais en défense en profondeur) exposait ces documents en clair. **Correction** : `App\Service\FileEncryptionService`, libsodium `secretbox` (même primitive que `QrTokenService`, clé dédiée `FILE_ENCRYPTION_KEY`), branché dans `FileStorage::store()/storeContent()/readStream()`. **Portée non rétroactive, assumée** : les fichiers déjà stockés avant ce correctif restent en clair jusqu'à leur remplacement — un format enveloppé versionné (en-tête `GRM1`) permet à `readStream()` de continuer à les servir sans erreur, plutôt que de les rendre illisibles. Vérifié en direct : nouveau fichier chiffré sur le disque (`GRM1...`), servi déchiffré via l'API ; fichier historique (sans en-tête) toujours lisible. | A02 · ASVS V8 | ✅ **Corrigé** — `f162578` |
 | **GERM-026** | **Aucun chiffrement des données MySQL, ni en transit ni au repos.** Évalué le 15/09/2026 depuis le serveur (`SHOW VARIABLES`) : `require_secure_transport=OFF`, et la connexion réelle de l'application à MySQL est en clair (`Ssl_cipher` vide sur la session active) — risque réseau nul puisque MySQL n'écoute que sur `127.0.0.1` (confirmé, aucune interface externe), mais non chiffré techniquement. Au repos : `default_table_encryption=OFF`, `innodb_redo_log_encrypt=OFF`, `binlog_encryption=OFF` — et le disque système lui-même n'est pas chiffré (`lsblk` : LVM simple sur `sda3`, aucun volume LUKS/dm-crypt détecté). L'intégralité de `germ_db` (état civil, mots de passe hachés, tout le reste) repose en clair sur disque. *Positif, vérifié dans la foulée* : `germ_user@localhost` est restreint aux connexions locales et scopé à `GRANT ALL PRIVILEGES ON germ_db.*` uniquement (pas de privilège global — il n'a même pas le droit de lire `mysql.user`). **Décision du 17/09/2026** : chiffrer transport et repos. **Transport corrigé** : MySQL générait déjà ses propres certificats TLS auto-signés (`have_ssl=YES`) mais l'application ne les utilisait pas ; `config/packages/doctrine.yaml` force désormais TLS côté client (`PDO::MYSQL_ATTR_SSL_CIPHER` + `SSL_VERIFY_SERVER_CERT=false`, faute d'accès en lecture à `ca.pem` sans `sudo`) — testé sur la base tunnelée puis confirmé sur la connexion applicative réelle (`Ssl_cipher=TLS_AES_256_GCM_SHA384`), voir `docs/security/deploiement/GERM-026-chiffrement-mysql.md`. **Repos toujours ouvert** : le chiffrement InnoDB (plugin keyring, `ALTER TABLE ... ENCRYPTION`) et `require_secure_transport=ON` exigent tous deux un accès `sudo` que je n'ai pas — procédure complète préparée dans le même document, à exécuter par un administrateur. | A02 · ASVS V8 | ⚠️ **Corrigé partiellement (transport)** |
 
@@ -325,7 +325,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 |---|---|---|
 | **GERM-015** | `X-Frame-Options: DENY` contredisait `CSP frame-ancestors 'self'` ; les navigateurs modernes suivant la CSP, le framing same-origin restait autorisé malgré l'intention inverse. | ✅ `a2bd956` |
 | **GERM-016** | En-tête `Permissions-Policy` absent. | ✅ `a2bd956` |
-| **GERM-017** | Aucune chaîne CI/CD : le déploiement se fait par `git push` vers un hook `post-receive`, sans test, sans analyse de dépendances, sans barrière qualité. Une vulnérabilité critique n'empêche rien. | ❌ **Ouvert** |
+| **GERM-017** | Aucune chaîne CI/CD : le déploiement se fait par `git push` vers un hook `post-receive`, sans test, sans analyse de dépendances, sans barrière qualité. Une vulnérabilité critique n'empêche rien. **Correction** : `.github/workflows/ci.yml` — à chaque push/PR sur `main`, exécute la suite PHPUnit complète (contre un MySQL 8 jetable, avec fixtures désormais peuplées — GERM-014) et `composer audit` côté back ; `tsc --noEmit`, le build de production et `npm audit --omit=dev` côté front. **Barrière non encore bloquante à proprement parler** : ce workflow tourne sur `origin` (GitHub), alors que le déploiement réel se fait vers un second dépôt (`production`, hors GitHub) par un hook `post-receive` totalement indépendant — rien n'empêche aujourd'hui un `git push production main` de contourner la CI. La rendre réellement bloquante suppose soit une règle de protection de branche GitHub (n'empêcherait qu'un merge sur `main`, pas un push direct vers `production`), soit de faire dépendre le hook `post-receive` du résultat de ce workflow (ex. vérifier le statut du commit via l'API GitHub avant d'accepter le déploiement) — décision d'infrastructure non tranchée ici. | ⚠️ **Corrigé partiellement (exécution), pas encore bloquant sur le déploiement réel** |
 | **GERM-018** | Aucune journalisation d'audit applicative : ni connexion, ni changement de rôle, ni accès refusé, ni export, ni téléchargement de document. Une compromission serait indétectable et non reconstituable. **Correction (socle minimal, `47561dd`, déployé et vérifié en production)** : `AuditLog` (append-only) + `AuditLogService`, branché sur les connexions/échecs/déconnexions (tous pare-feu), les accès refusés, les 5 exports CSV, la validation/le rejet de décision, la validation de carte, et la création/modification de compte avec diff des rôles. Ne couvre pas encore la liste complète du §26 (téléchargement de document, création/suppression sur chaque entité RH) — extensible, pas exhaustif. | ⚠️ **Corrigé partiellement** — `47561dd` |
 | **GERM-019** | `ROLE_ALLOWED_TO_SWITCH` présent dans la hiérarchie alors qu'aucun pare-feu ne déclare `switch_user` : configuration morte laissant croire à une usurpation d'identité active et non journalisée. | ✅ `a2bd956` |
 | **GERM-020** | Absence de Voter : la logique « cet objet est-il à moi ? » est réécrite à la main en 14 endroits, sous 3 formes et avec 2 codes de retour différents (403 / 404). Correct aujourd'hui — vérifié une par une — mais chaque nouvelle route repose sur la vigilance du développeur. | ❌ **Dette ouverte** |
@@ -372,13 +372,23 @@ composer audit                  # aucune alerte
 cd frontend && npm audit --omit=dev   # 0 vulnérabilité
 ```
 
+**Mise à jour du 17/09/2026 (GERM-014, GERM-017)** : les chiffres ci-dessus
+datent du milieu de l'audit (108 tests au 17/09/2026, en constante
+augmentation depuis). Plus significatif que le compte brut : les 6 tests de
+`AccessControlTest`, ignorés depuis leur écriture faute de base de test,
+tournent désormais réellement — pas en local (toujours bloqué, `sudo`/accès
+root MySQL requis), mais en CI (`.github/workflows/ci.yml`, base MySQL
+jetable + `src/DataFixtures/AppFixtures.php` désormais peuplée). Le tableau
+« Matrice de test » ci-dessous reflète encore l'état local.
+
 **Tests ajoutés** :
 - `tests/Entity/UserEtatCompteTest.php` — 6 tests verrouillant GERM-001 et
   GERM-004, dont un test dédié au piège `EquatableInterface` décrit plus haut.
 - `tests/Security/AccessControlTest.php` — 7 tests fonctionnels sur la barrière
-  `/admin`, dont **6 actuellement ignorés** : le compte MySQL applicatif n'a pas le
+  `/admin`, dont **6 ignorés en local** : le compte MySQL applicatif n'a pas le
   droit de créer `germ_db_test`. Ils s'activent seuls une fois la base créée
-  (marche à suivre en commentaire dans le fichier).
+  (voir `docs/security/deploiement/GERM-014-base-test.md`) — et tournent déjà
+  en CI, voir ci-dessus.
 - `tests/EventListener/JsonContentTypeGuardListenerTest.php` — 11 tests
   verrouillant GERM-002, ajoutés après que la vérification de production a
   révélé le bug même-origine décrit en §10 : le scénario qui a failli casser
@@ -433,7 +443,7 @@ Les deux constats de cette vérification ont été corrigés le 15/09/2026
 | Risque | Raison |
 |---|---|
 | Journalisation d'audit partielle (GERM-018) | Socle minimal déployé ; ne couvre pas encore tous les événements du §26 (ex. téléchargement de document) |
-| Aucune CI/CD (GERM-017) | Lot ultérieur. Rien n'empêche de déployer du code non testé |
+| CI/CD non bloquante sur le déploiement réel (GERM-017) | Le workflow tourne et fait échouer le build sur régression/dépendance vulnérable, mais le dépôt `production` (hors GitHub) reste un second remote indépendant — un push direct le contourne |
 | Aucun MFA (§21) | Non demandé à ce stade ; recommandé pour `ROLE_SUPERADMIN` |
 | Aucun flux de réinitialisation de mot de passe | Tout renouvellement passe par un administrateur — moins de surface, plus de friction |
 | `style-src 'unsafe-inline'` dans la CSP | Nécessaire aux attributs `style=` des templates Twig. Aucun `<script>` inline, `script-src` reste strict |
@@ -506,8 +516,8 @@ supervision/détection externe au périmètre applicatif.
 | 2 | **Trouver une véritable destination hors site pour la sauvegarde** — 10.112.26.31 et germ-appdbserver **confirmés le 17/09/2026** comme deux VM du même hyperviseur par le commanditaire ; la copie actuelle ne protège donc pas contre un sinistre matériel de cet hyperviseur | GERM-027 |
 | 3 | **Chiffrer MySQL au repos** — décidé le 17/09/2026 ; volet transport déjà corrigé, procédure du volet repos (plugin keyring, `ALTER TABLE ... ENCRYPTION`) préparée, à exécuter par un administrateur `sudo` | GERM-026 |
 | 4 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
-| 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
-| 6 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |
+| 5 | **Base de test dédiée (CI) et fixtures ✅** ; reste : activation en local (accès root MySQL requis) et extension de la matrice au-delà de GERM-013 | §54-55, GERM-014 |
+| 6 | **Chaîne CI/CD ✅** (`.github/workflows/ci.yml`) ; reste à la rendre bloquante sur le déploiement réel (`production` est un second dépôt hors GitHub, non couvert par une protection de branche GitHub) | §58, GERM-017 |
 | 7 | Lot performance | §41-47 |
 | 8 | `PersonnelOwnershipVoter` pour centraliser les 14 contrôles d'appartenance | GERM-020 |
 

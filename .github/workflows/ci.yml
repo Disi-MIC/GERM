@@ -1,0 +1,94 @@
+name: CI
+
+# GERM-017 : jusqu'ici, le déploiement se faisait par un simple `git push`
+# vers le dépôt de production, sans aucun test, analyse de dépendances ni
+# barrière qualité — une vulnérabilité critique n'empêchait rien. Cette
+# chaîne fait tourner les tests et l'analyse de dépendances à chaque
+# push/PR ; elle ne bloque pas encore techniquement le remote `production`
+# (un second dépôt, hors GitHub) tant qu'une règle de protection de branche
+# n'impose pas ce workflow avant merge sur `main` — réglage à faire côté
+# administrateur du dépôt GitHub.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: germ_db_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, iconv, pdo_mysql, sodium, intl
+          coverage: none
+
+      - name: Installer les dépendances PHP
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      # GERM-017 : une dépendance avec une vulnérabilité connue (avisée par
+      # FriendsOfPHP/security-advisories) fait échouer le build.
+      - name: Auditer les dépendances PHP
+        run: composer audit
+
+      - name: Préparer la base de test
+        env:
+          DATABASE_URL: 'mysql://root@127.0.0.1:3306/germ_db_test?serverVersion=8.0&charset=utf8mb4'
+        run: |
+          php bin/console doctrine:schema:create --env=test --no-interaction
+          php bin/console doctrine:fixtures:load --env=test --no-interaction
+
+      - name: PHPUnit
+        env:
+          DATABASE_URL: 'mysql://root@127.0.0.1:3306/germ_db_test?serverVersion=8.0&charset=utf8mb4'
+        run: php bin/phpunit
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Installer les dépendances
+        working-directory: frontend
+        run: npm ci
+
+      # GERM-017 : ne couvre que les dépendances de production (celles
+      # réellement livrées au navigateur) — les vulnérabilités connues des
+      # seuls outils de build (ex. webpack-dev-server, @capacitor/cli) sont
+      # un risque bien moindre et suivies séparément, pas bloquantes ici.
+      - name: Auditer les dépendances de production
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Vérification des types
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Build de production
+        working-directory: frontend
+        run: npm run build -- --configuration=production
