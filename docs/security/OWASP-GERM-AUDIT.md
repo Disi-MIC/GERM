@@ -517,8 +517,17 @@ supervision/détection externe au périmètre applicatif.
 | 4 | **Journalisation d'audit ✅ étendue** (téléchargements sensibles, création/suppression RH) ; reste : entités opérationnelles IT (tickets, maintenance) et extension de la matrice de test à ces événements | §25-27, GERM-018 |
 | 5 | **Base de test dédiée (CI) et fixtures ✅** ; reste : activation en local (accès root MySQL requis) et extension de la matrice au-delà de GERM-013 | §54-55, GERM-014 |
 | 6 | **Chaîne CI/CD ✅** (`.github/workflows/ci.yml`) ; reste à la rendre bloquante sur le déploiement réel (`production` est un second dépôt hors GitHub, non couvert par une protection de branche GitHub) | §58, GERM-017 |
-| 7 | Lot performance | §41-47 |
+| 7 | ~~Lot performance~~ — hors périmètre resserré du 15/09/2026 (code/données uniquement) | §41-47 |
 | 8 | **`PersonnelOwnershipVoter` ✅** — centralise les 14 contrôles d'appartenance | GERM-020 |
+
+**État au 17/09/2026** : tout ce qui était réalisable par du code applicatif
+seul (4, 5 pour partie, 6, 8) est fait. Les items restants (2, 3 pour le
+volet repos, 5 pour l'activation locale, 6 pour le blocage réel du
+déploiement) exigent tous soit un accès `sudo`/administrateur MySQL, soit
+une décision ou une ressource d'infrastructure (nouvelle destination de
+sauvegarde, règle de protection de dépôt) hors de portée d'un correctif de
+code — chacun documenté avec une procédure prête à exécuter dans
+`docs/security/deploiement/`.
 
 ---
 
