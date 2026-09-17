@@ -216,9 +216,11 @@ qu'aucun processus de sauvegarde n'existait pour `germ_db`, nulle part — et
 qu'aucun chiffrement n'est en place en transit ni au repos (GERM-026,
 GERM-027 — voir OWASP-GERM-AUDIT.md). Corrigé le jour même : dump quotidien
 chiffré, conservé localement et copié vers un second serveur
-(10.112.26.31). **Mise à jour du 16/09/2026** : des indices techniques
-(adresses MAC au préfixe Proxmox commun aux deux machines, 1 seul saut
-réseau, latence sub-milliseconde) suggèrent qu'elles sont en réalité deux
-VM du même hyperviseur — la sécurité physique de cet hyperviseur reste hors
-périmètre de ce modèle de menaces, mais sa nature partagée réduit la
-protection réelle apportée par cette copie.
+(10.112.26.31). **Confirmé par le commanditaire le 17/09/2026** : les deux
+serveurs sont en réalité deux VM du même hyperviseur physique (indices
+techniques du 16/09/2026 — adresses MAC au préfixe Proxmox commun, 1 seul
+saut réseau, latence sub-milliseconde — confirmés). La sécurité physique de
+cet hyperviseur reste hors périmètre de ce modèle de menaces, mais sa
+nature partagée réduit la protection réelle apportée par cette copie : une
+panne matérielle de l'hyperviseur emporterait probablement les deux
+serveurs à la fois. Une destination hors site reste à identifier.
