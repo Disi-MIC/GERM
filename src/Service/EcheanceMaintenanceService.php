@@ -25,9 +25,15 @@ class EcheanceMaintenanceService
     }
 
     /**
+     * $serviceId, quand fourni (filtre agent/service du tableau de bord
+     * informatique, voir DashboardController::informatique()), réduit aux
+     * matériels de ce service — sans effet sur
+     * NotifierAlertesParcInformatiqueCommand, qui appelle toujours
+     * calculer() positionnellement sans ce paramètre.
+     *
      * @return array{enRetard: list<array<string, mixed>>, aVenir: list<array<string, mixed>>}
      */
-    public function calculer(int $fenetreJours = 30): array
+    public function calculer(int $fenetreJours = 30, ?int $serviceId = null): array
     {
         $dernieresDates = $this->maintenanceRepository->findDernieresDatesParMateriel();
         $aujourdhui = new \DateTimeImmutable('today');
@@ -37,6 +43,10 @@ class EcheanceMaintenanceService
         $aVenir = [];
 
         foreach ($this->materielRepository->findAvecPeriodiciteMaintenance() as $materiel) {
+            if (null !== $serviceId && $serviceId !== $materiel->getService()?->getId()) {
+                continue;
+            }
+
             $reference = $dernieresDates[$materiel->getId()]
                 ?? $materiel->getDateAcquisition()
                 ?? $materiel->getCreatedAt();

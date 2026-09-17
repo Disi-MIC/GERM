@@ -9,6 +9,8 @@ use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\Enum\StatutDemandeCartePro;
 use App\Entity\Enum\StatutTicket;
+use App\Entity\MaterielInformatique;
+use App\Entity\TicketIncident;
 use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\ChangementCartoucheRepository;
 use App\Repository\DecisionCongeRepository;
@@ -197,40 +199,70 @@ class DashboardController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        // Filtre agent/service (AgentOuServiceFiltreComponent) : réduit
+        // désormais l'intégralité du tableau de bord à ce périmètre, pas
+        // seulement le bloc Cartouches (voir git blame pour l'historique —
+        // signalé le 17/09/2026, le filtre semblait sans effet sur le reste).
+        // Deux critères selon la nature de la donnée :
+        // - matériel/maintenance/cartouches : équipement rattaché au service
+        //   (MaterielInformatique::getService(), déjà le service effectif) ;
+        // - tickets : agent qui a SIGNALÉ le ticket (Ticket::$personnel), pas
+        //   le matériel concerné — décision du 17/09/2026, pour ne pas faire
+        //   disparaître des statistiques filtrées les tickets sans matériel
+        //   précis (accès, logiciel).
+        // licencesExpirantBientot reste hors périmètre : LicenceLogiciel n'a
+        // aucun lien vers un service ou un agent en base.
+        $serviceId = $request->query->get('service') ? (int) $request->query->get('service') : null;
+
         $bornes = $this->bornesPeriode();
 
+        $ticketsOuverts = $this->filtrerTicketsParServiceDeclarant($ticketIncidentRepository->findBy(['statut' => StatutTicket::OUVERT]), $serviceId);
+        $ticketsEnCours = $this->filtrerTicketsParServiceDeclarant($ticketIncidentRepository->findBy(['statut' => StatutTicket::EN_COURS]), $serviceId);
+
         $ticketsTraites = $this->bucketsVides(['resolus', 'refuses']);
-        foreach ($ticketIncidentRepository->findBy(['statut' => StatutTicket::CLOTURE]) as $ticket) {
+        foreach ($this->filtrerTicketsParServiceDeclarant($ticketIncidentRepository->findBy(['statut' => StatutTicket::CLOTURE]), $serviceId) as $ticket) {
             $this->accumulerTraitement($ticketsTraites, $ticket->getDateCloture(), 'resolus', $bornes);
         }
-        foreach ($ticketIncidentRepository->findBy(['statut' => StatutTicket::REFUSE]) as $ticket) {
+        foreach ($this->filtrerTicketsParServiceDeclarant($ticketIncidentRepository->findBy(['statut' => StatutTicket::REFUSE]), $serviceId) as $ticket) {
             $this->accumulerTraitement($ticketsTraites, $ticket->getDateResolution() ?? $ticket->getCreatedAt(), 'refuses', $bornes);
         }
 
         $maintenances = $this->bucketsPeriode();
         foreach ($maintenanceRepository->findAll() as $maintenance) {
+            if (null !== $serviceId && $serviceId !== $maintenance->getMateriel()?->getService()?->getId()) {
+                continue;
+            }
             $this->accumulerPeriode($maintenances, $maintenance->getDateRealisation(), $bornes);
         }
 
+        $materiels = $materielInformatiqueRepository->findAll();
+        if (null !== $serviceId) {
+            $materiels = array_filter($materiels, fn (MaterielInformatique $m) => $serviceId === $m->getService()?->getId());
+        }
         $parEtat = [];
-        foreach ($materielInformatiqueRepository->findAll() as $materiel) {
+        foreach ($materiels as $materiel) {
             $etatLibelle = $materiel->getEtat()?->getLibelle() ?? 'Non renseigné';
             $parEtat[$etatLibelle] = ($parEtat[$etatLibelle] ?? 0) + 1;
         }
         ksort($parEtat);
 
+        $materielsSansNiveau = $materielInformatiqueRepository->findSansNiveauVulnerabilite();
+        if (null !== $serviceId) {
+            $materielsSansNiveau = array_filter($materielsSansNiveau, fn (MaterielInformatique $m) => $serviceId === $m->getService()?->getId());
+        }
+
         return $this->json([
             'tickets' => [
-                'ouverts' => $ticketIncidentRepository->count(['statut' => StatutTicket::OUVERT]),
-                'enCours' => $ticketIncidentRepository->count(['statut' => StatutTicket::EN_COURS]),
+                'ouverts' => \count($ticketsOuverts),
+                'enCours' => \count($ticketsEnCours),
                 'traites' => $ticketsTraites,
             ],
             'maintenance' => $maintenances,
             'materiel' => [
-                'total' => $materielInformatiqueRepository->count([]),
+                'total' => \count($materiels),
                 'parEtat' => $parEtat,
             ],
-            'echeancesMaintenance' => $echeanceMaintenanceService->calculer(),
+            'echeancesMaintenance' => $echeanceMaintenanceService->calculer(serviceId: $serviceId),
             'materielsSansNiveauVulnerabilite' => array_map(
                 fn ($m) => [
                     'materielId' => $m->getId(),
@@ -238,11 +270,11 @@ class DashboardController extends AbstractController
                     'marque' => $m->getMarque(),
                     'modele' => $m->getModele(),
                 ],
-                $materielInformatiqueRepository->findSansNiveauVulnerabilite(),
+                $materielsSansNiveau,
             ),
             'licencesExpirantBientot' => $this->calculerEcheancesLicences($licenceLogicielRepository, $materielInformatiqueRepository),
-            'slaTickets' => $this->calculerSlaTickets($ticketIncidentRepository),
-            'cartouches' => $this->calculerCartouches($changementCartoucheRepository, $request->query->get('service') ? (int) $request->query->get('service') : null),
+            'slaTickets' => $this->calculerSlaTickets($ticketIncidentRepository, $serviceId),
+            'cartouches' => $this->calculerCartouches($changementCartoucheRepository, $serviceId),
         ]);
     }
 
@@ -404,16 +436,16 @@ class DashboardController extends AbstractController
      *
      * @return array{enRetard: list<array<string, mixed>>, aRisque: list<array<string, mixed>>}
      */
-    private function calculerSlaTickets(TicketIncidentRepository $ticketIncidentRepository): array
+    private function calculerSlaTickets(TicketIncidentRepository $ticketIncidentRepository, ?int $serviceId = null): array
     {
         $maintenant = new \DateTimeImmutable();
         $enRetard = [];
         $aRisque = [];
 
-        $ticketsActifs = [
+        $ticketsActifs = $this->filtrerTicketsParServiceDeclarant([
             ...$ticketIncidentRepository->findBy(['statut' => StatutTicket::OUVERT]),
             ...$ticketIncidentRepository->findBy(['statut' => StatutTicket::EN_COURS]),
-        ];
+        ], $serviceId);
 
         foreach ($ticketsActifs as $ticket) {
             $echeance = $ticket->getEcheanceSla();
@@ -448,6 +480,27 @@ class DashboardController extends AbstractController
         usort($aRisque, fn ($a, $b) => $a['heures'] <=> $b['heures']);
 
         return ['enRetard' => $enRetard, 'aRisque' => $aRisque];
+    }
+
+    /**
+     * Filtre par le service de l'agent qui a SIGNALÉ le ticket
+     * (TicketIncident::$personnel), pas par le matériel concerné —
+     * contrairement à calculerCartouches()/EcheanceMaintenanceService, qui
+     * filtrent par équipement. Décision du 17/09/2026 : un ticket sans
+     * matériel précis (accès, logiciel) doit rester compté quand on filtre
+     * par l'agent qui l'a soumis, pas disparaître des statistiques.
+     *
+     * @param TicketIncident[] $tickets
+     *
+     * @return TicketIncident[]
+     */
+    private function filtrerTicketsParServiceDeclarant(array $tickets, ?int $serviceId): array
+    {
+        if (null === $serviceId) {
+            return $tickets;
+        }
+
+        return array_filter($tickets, fn (TicketIncident $t) => $serviceId === $t->getPersonnel()?->getService()?->getId());
     }
 
     /**

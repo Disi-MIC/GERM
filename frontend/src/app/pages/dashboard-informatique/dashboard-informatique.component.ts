@@ -51,7 +51,18 @@ export class DashboardInformatiqueComponent implements OnInit {
   readonly labelsPeriodeCartouches = LABELS_PERIODE_CARTOUCHES;
   readonly labelsCouleurCartouche = LABELS_COULEUR_CARTOUCHE;
 
-  /** Périmètre du bloc Cartouches (voir AgentOuServiceFiltreComponent) — recharge le tableau de bord entier au changement, comme dashboard.component.ts (filtreDirection/filtreService) plutôt qu'un re-filtrage client des agrégats déjà réduits côté serveur. */
+  /**
+   * Filtre agent/service (voir AgentOuServiceFiltreComponent) réduisant
+   * l'intégralité du tableau de bord à ce périmètre côté serveur — recharge
+   * tout au changement plutôt qu'un re-filtrage client des agrégats déjà
+   * réduits, comme dashboard.component.ts (filtreDirection/filtreService).
+   * Jusqu'au 17/09/2026, ne réduisait que le bloc Cartouches (signalé comme
+   * ne fonctionnant pas par le commanditaire) : voir
+   * DashboardController::informatique() pour le détail des critères
+   * (équipement rattaché au service pour matériel/maintenance/cartouches,
+   * agent déclarant pour les tickets — licencesExpirantBientot reste hors
+   * périmètre, LicenceLogiciel n'ayant aucun lien vers un service).
+   */
   filtreServiceId: number | null = null;
 
   /** Champs simples recalculés au chargement/changement de période plutôt que des getters — voir dashboard.component.ts. */
