@@ -4,12 +4,14 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\ChangementCartouche;
+use App\Entity\Direction;
 use App\Entity\Enum\CouleurCartouche;
 use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\Enum\StatutDemandeCartePro;
 use App\Entity\Enum\StatutTicket;
 use App\Entity\MaterielInformatique;
+use App\Entity\Service;
 use App\Entity\TicketIncident;
 use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\ChangementCartoucheRepository;
@@ -86,9 +88,34 @@ class DashboardController extends AbstractController
         ksort($repartitionParDirection);
         ksort($repartitionParService);
 
+        // Filtre direction/service (signalé le 17/09/2026 : ne réduisait que
+        // parDirection/parService, pas les autres cartes — même défaut que
+        // GERM sur le tableau de bord informatique, corrigé au même moment).
+        // Service prioritaire sur direction, même précédence que
+        // PersonnelRepository::findForStats().
+        $directionEffective = $filtreService?->getDirection() ?? $filtreDirection;
+
+        $nbServices = match (true) {
+            null !== $filtreService => 1,
+            null !== $filtreDirection => $serviceRepository->count(['direction' => $filtreDirection]),
+            default => $serviceRepository->count([]),
+        };
+
+        $servicesSansResponsable = $serviceRepository->findSansResponsable();
+        if (null !== $filtreService) {
+            $servicesSansResponsable = array_filter($servicesSansResponsable, fn (Service $s) => $s === $filtreService);
+        } elseif (null !== $filtreDirection) {
+            $servicesSansResponsable = array_filter($servicesSansResponsable, fn (Service $s) => $s->getDirection() === $filtreDirection);
+        }
+
+        $directionsSansDirecteur = $directionRepository->findSansDirecteur();
+        if (null !== $directionEffective) {
+            $directionsSansDirecteur = array_filter($directionsSansDirecteur, fn (Direction $d) => $d === $directionEffective);
+        }
+
         return $this->json([
-            'nbPersonnel' => $personnelRepository->count([]),
-            'nbServices' => $serviceRepository->count([]),
+            'nbPersonnel' => \count($personnels),
+            'nbServices' => $nbServices,
             'parDirection' => $repartitionParDirection,
             'parService' => $repartitionParService,
             'directions' => array_map(
@@ -101,21 +128,21 @@ class DashboardController extends AbstractController
             ),
             'filtreDirection' => $filtreDirection?->getId(),
             'filtreService' => $filtreService?->getId(),
-            'documentsExpirants' => $echeanceRhService->calculerDocuments(),
+            'documentsExpirants' => $echeanceRhService->calculerDocuments(serviceId: $filtreService?->getId(), directionId: $filtreDirection?->getId()),
             'structureIncomplete' => [
                 'servicesSansResponsable' => array_map(
                     fn ($s) => ['serviceId' => $s->getId(), 'nom' => $s->getNom(), 'direction' => $s->getDirection()?->getNom() ?? ''],
-                    $serviceRepository->findSansResponsable(),
+                    $servicesSansResponsable,
                 ),
                 'directionsSansDirecteur' => array_map(
                     fn ($d) => ['directionId' => $d->getId(), 'nom' => $d->getNom()],
-                    $directionRepository->findSansDirecteur(),
+                    $directionsSansDirecteur,
                 ),
             ],
             // Délégations : réservé au RH Responsable, comme Delegation::$security — un
             // simple ROLE_RH_PERSONNEL (qui a accès à ce dashboard) n'y a pas droit.
             'delegationsExpirantes' => $this->isGranted('ROLE_RH_RESPONSABLE')
-                ? $echeanceRhService->calculerDelegations()
+                ? $echeanceRhService->calculerDelegations(serviceId: $filtreService?->getId(), directionId: $filtreDirection?->getId())
                 : null,
         ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Enum\StatutCarteProfessionnelle;
+use App\Entity\Personnel;
 use App\Repository\CarteProfessionnelleRepository;
 use App\Repository\DecisionCongeRepository;
 use App\Repository\DelegationRepository;
@@ -35,15 +36,26 @@ class EcheanceRhService
     }
 
     /**
+     * $serviceId/$directionId, quand fournis (filtre du tableau de bord
+     * Personnel — voir DashboardController::personnel()), réduisent aux
+     * documents dont l'agent appartient à ce périmètre, service prioritaire
+     * sur direction comme PersonnelRepository::findForStats(). Sans effet
+     * sur NotifierAlertesRhCommand, qui appelle toujours calculerDocuments()
+     * sans ces paramètres.
+     *
      * @return array{enRetard: list<array<string, mixed>>, aVenir: list<array<string, mixed>>}
      */
-    public function calculerDocuments(int $fenetreJours = self::FENETRE_JOURS_DOCUMENTS): array
+    public function calculerDocuments(int $fenetreJours = self::FENETRE_JOURS_DOCUMENTS, ?int $serviceId = null, ?int $directionId = null): array
     {
         $enRetard = [];
         $aVenir = [];
         [$aujourdhui, $limite] = $this->bornes($fenetreJours);
 
         foreach ($this->documentRepository->findAvecExpiration() as $document) {
+            if (!$this->correspondFiltre($document->getPersonnel(), $serviceId, $directionId)) {
+                continue;
+            }
+
             $echeance = $document->getDateExpiration();
             if (null === $echeance) {
                 continue;
@@ -125,13 +137,21 @@ class EcheanceRhService
     /**
      * @return array{enRetard: list<array<string, mixed>>, aVenir: list<array<string, mixed>>}
      */
-    public function calculerDelegations(int $fenetreJours = self::FENETRE_JOURS_DELEGATIONS): array
+    public function calculerDelegations(int $fenetreJours = self::FENETRE_JOURS_DELEGATIONS, ?int $serviceId = null, ?int $directionId = null): array
     {
         $enRetard = [];
         $aVenir = [];
         [$aujourdhui, $limite] = $this->bornes($fenetreJours);
 
         foreach ($this->delegationRepository->findActives() as $delegation) {
+            // Le délégant ou le délégataire suffit : une délégation concerne
+            // les deux parties, qui peuvent appartenir à des services
+            // différents.
+            if (!$this->correspondFiltre($delegation->getDelegant()?->getPersonnel(), $serviceId, $directionId)
+                && !$this->correspondFiltre($delegation->getDelegataire()?->getPersonnel(), $serviceId, $directionId)) {
+                continue;
+            }
+
             $echeance = $delegation->getDateFin();
             if (null === $echeance) {
                 continue;
@@ -157,6 +177,23 @@ class EcheanceRhService
         $aujourdhui = new \DateTimeImmutable('today');
 
         return [$aujourdhui, $aujourdhui->modify(\sprintf('+%d days', $fenetreJours))];
+    }
+
+    /**
+     * Sans filtre actif (les deux à null), correspond toujours — c'est le
+     * cas par défaut de tous les appelants hors DashboardController::personnel().
+     */
+    private function correspondFiltre(?Personnel $personnel, ?int $serviceId, ?int $directionId): bool
+    {
+        if (null === $serviceId && null === $directionId) {
+            return true;
+        }
+
+        if (null !== $serviceId) {
+            return $serviceId === $personnel?->getService()?->getId();
+        }
+
+        return $directionId === $personnel?->getService()?->getDirection()?->getId();
     }
 
     /**
