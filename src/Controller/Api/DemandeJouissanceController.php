@@ -5,8 +5,10 @@ namespace App\Controller\Api;
 use App\Controller\AbstractController;
 use App\Entity\Conge;
 use App\Entity\DemandeJouissance;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\PieceJustificativeJouissance;
+use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -87,8 +89,10 @@ class DemandeJouissanceController extends AbstractController
     }
 
     #[Route('/api/pieces-jouissance/{id}', name: 'api_piece_jouissance_download', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function downloadPiece(PieceJustificativeJouissance $piece): StreamedResponse
+    public function downloadPiece(PieceJustificativeJouissance $piece, AuditLogService $auditLog): StreamedResponse
     {
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'PieceJustificativeJouissance', entiteId: $piece->getId());
+
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('Piece justificative jouissance - %s', $piece->getDemande()?->getPersonnel()?->getNomComplet() ?? ''),
             pathinfo($piece->getCheminFichier(), \PATHINFO_EXTENSION),

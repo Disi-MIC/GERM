@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
 use App\Entity\DocumentAdministratif;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Notification;
 use App\Entity\Personnel;
@@ -20,6 +21,7 @@ use App\Repository\MaterielInformatiqueRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\TicketIncidentRepository;
 use App\Repository\VehiculeRepository;
+use App\Service\AuditLogService;
 use App\Service\CurrentUserPayloadBuilder;
 use App\Service\FileStorage;
 use App\Service\PersonnelPhotoService;
@@ -303,18 +305,18 @@ class MeController extends AbstractController
      * (iframe) ; `pdfTelecharger` force le téléchargement.
      */
     #[Route('/api/me/cartes-professionnelles/{id}/pdf', name: 'api_me_carte_professionnelle_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function cartePdf(CarteProfessionnelle $carte): StreamedResponse
+    public function cartePdf(CarteProfessionnelle $carte, AuditLogService $auditLog): StreamedResponse
     {
-        return $this->streamCartePdf($carte, ResponseHeaderBag::DISPOSITION_INLINE);
+        return $this->streamCartePdf($carte, ResponseHeaderBag::DISPOSITION_INLINE, $auditLog);
     }
 
     #[Route('/api/me/cartes-professionnelles/{id}/pdf/telecharger', name: 'api_me_carte_professionnelle_pdf_telecharger', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function cartePdfTelecharger(CarteProfessionnelle $carte): StreamedResponse
+    public function cartePdfTelecharger(CarteProfessionnelle $carte, AuditLogService $auditLog): StreamedResponse
     {
-        return $this->streamCartePdf($carte, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
+        return $this->streamCartePdf($carte, ResponseHeaderBag::DISPOSITION_ATTACHMENT, $auditLog);
     }
 
-    private function streamCartePdf(CarteProfessionnelle $carte, string $disposition): StreamedResponse
+    private function streamCartePdf(CarteProfessionnelle $carte, string $disposition, AuditLogService $auditLog): StreamedResponse
     {
         $personnel = $this->personnelConnecte();
         if (!$personnel || $carte->getPersonnel() !== $personnel) {
@@ -328,6 +330,8 @@ class MeController extends AbstractController
         if (!$carte->getCheminFichier()) {
             throw $this->createNotFoundException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'CarteProfessionnelle', entiteId: $carte->getId(), details: $carte->getNumero());
 
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('Carte professionnelle %s - %s', $carte->getNumero(), $carte->getPersonnel()?->getNomComplet() ?? ''),
@@ -393,12 +397,14 @@ class MeController extends AbstractController
      * propriété plutôt que par rôle RH_PERSONNEL).
      */
     #[Route('/api/me/documents-administratifs/{id}/fichier', name: 'api_me_document_administratif_fichier', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function documentAdministratifFichier(DocumentAdministratif $document): StreamedResponse
+    public function documentAdministratifFichier(DocumentAdministratif $document, AuditLogService $auditLog): StreamedResponse
     {
         $personnel = $this->personnelConnecte();
         if (!$personnel || $document->getPersonnel() !== $personnel) {
             throw $this->createAccessDeniedException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'DocumentAdministratif', entiteId: $document->getId(), details: $document->getLibelle());
 
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('%s - %s', $document->getLibelle(), $document->getPersonnel()?->getNomComplet() ?? ''),

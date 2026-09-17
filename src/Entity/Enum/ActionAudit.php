@@ -3,13 +3,13 @@
 namespace App\Entity\Enum;
 
 /**
- * Types d'événements journalisés par AuditLog — socle minimal (§25-26 de
+ * Types d'événements journalisés par AuditLog. Socle initial (§25-26 de
  * l'audit OWASP) : connexions, échecs d'accès, exports, validations
- * métier sensibles et gestion des comptes. Volontairement plus restreint
- * que la liste complète du cahier des charges (qui couvre aussi les
- * créations/suppressions sur chaque entité RH) : à étendre au fil des
- * besoins réels plutôt que journaliser par anticipation ce qui n'est
- * jamais consulté.
+ * métier sensibles et gestion des comptes. Étendu le 17/09/2026 (GERM-018)
+ * aux téléchargements de document et aux créations/suppressions sur les
+ * entités RH (voir RhEntityAuditListener) — la couverture complète encore
+ * ouverte (§25-27) concerne le volet SIEM, hors périmètre depuis la
+ * décision du 15/09/2026 (voir OWASP-GERM-AUDIT.md).
  */
 enum ActionAudit: string
 {
@@ -23,7 +23,11 @@ enum ActionAudit: string
     case DECISION_REJETEE = 'decision_rejetee';
     case UTILISATEUR_CREE = 'utilisateur_cree';
     case UTILISATEUR_MODIFIE = 'utilisateur_modifie';
+    case UTILISATEUR_SUPPRIME = 'utilisateur_supprime';
     case ROLES_MODIFIES = 'roles_modifies';
+    case DOCUMENT_TELECHARGE = 'document_telecharge';
+    case ENTITE_CREEE = 'entite_creee';
+    case ENTITE_SUPPRIMEE = 'entite_supprimee';
 
     public function label(): string
     {
@@ -38,7 +42,11 @@ enum ActionAudit: string
             self::DECISION_REJETEE => 'Décision de congé rejetée',
             self::UTILISATEUR_CREE => 'Compte utilisateur créé',
             self::UTILISATEUR_MODIFIE => 'Compte utilisateur modifié',
+            self::UTILISATEUR_SUPPRIME => 'Compte utilisateur supprimé',
             self::ROLES_MODIFIES => 'Rôles modifiés',
+            self::DOCUMENT_TELECHARGE => 'Document téléchargé ou consulté',
+            self::ENTITE_CREEE => 'Enregistrement créé',
+            self::ENTITE_SUPPRIMEE => 'Enregistrement supprimé',
         };
     }
 }

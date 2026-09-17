@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Controller\AbstractController;
 use App\Entity\Conge;
 use App\Entity\DemandeJouissance;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\Enum\TypeConge;
 use App\Entity\Personnel;
@@ -12,6 +13,7 @@ use App\Entity\PieceJustificativeJouissance;
 use App\Form\DemandeJouissanceType;
 use App\Repository\DemandeJouissanceRepository;
 use App\Repository\PersonnelRepository;
+use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -190,8 +192,10 @@ class DemandeJouissanceController extends AbstractController
     }
 
     #[Route('/admin/piece-justificative/jouissance/{id}/download', name: 'admin_piece_jouissance_download', requirements: ['id' => '\d+'])]
-    public function downloadPiece(PieceJustificativeJouissance $piece, FileStorage $uploader): StreamedResponse
+    public function downloadPiece(PieceJustificativeJouissance $piece, FileStorage $uploader, AuditLogService $auditLog): StreamedResponse
     {
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'PieceJustificativeJouissance', entiteId: $piece->getId());
+
         $response = new StreamedResponse(function () use ($uploader, $piece) {
             fpassthru($uploader->readStream($piece->getCheminFichier()));
         });

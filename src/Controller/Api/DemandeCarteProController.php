@@ -5,10 +5,12 @@ namespace App\Controller\Api;
 use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
 use App\Entity\DemandeCartePro;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Enum\StatutDemandeCartePro;
 use App\Entity\Enum\TypeDemandeCartePro;
 use App\Entity\User;
+use App\Service\AuditLogService;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use App\Service\NotificationService;
@@ -170,11 +172,13 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/api/demandes-carte-pro/{id}/piece', name: 'api_demande_carte_pro_piece_download', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function downloadPiece(DemandeCartePro $demande): StreamedResponse
+    public function downloadPiece(DemandeCartePro $demande, AuditLogService $auditLog): StreamedResponse
     {
         if (!$demande->getCheminFichier()) {
             throw $this->createNotFoundException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'DemandeCartePro', entiteId: $demande->getId());
 
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('Piece justificative carte pro - %s', $demande->getPersonnel()?->getNomComplet() ?? ''),

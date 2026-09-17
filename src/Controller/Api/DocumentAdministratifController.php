@@ -133,8 +133,10 @@ class DocumentAdministratifController extends AbstractController
     }
 
     #[Route('/api/documents-administratifs/{id}/fichier', name: 'api_document_administratif_fichier', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function fichier(DocumentAdministratif $document): StreamedResponse
+    public function fichier(DocumentAdministratif $document, AuditLogService $auditLog): StreamedResponse
     {
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'DocumentAdministratif', entiteId: $document->getId(), details: $document->getLibelle());
+
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('%s - %s', $document->getLibelle(), $document->getPersonnel()?->getNomComplet() ?? ''),
             pathinfo($document->getCheminFichier(), \PATHINFO_EXTENSION),

@@ -149,14 +149,19 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function delete(Request $request, User $user, EntityManagerInterface $em): Response
+    public function delete(Request $request, User $user, EntityManagerInterface $em, AuditLogService $auditLog): Response
     {
         if ($this->isCsrfTokenValid('delete-agent-'.$user->getId(), $request->request->get('_token'))) {
             if (!$user->getDelegationsRecues()->isEmpty() || !$user->getDelegationsAccordees()->isEmpty()) {
                 $this->addFlash('danger', 'Impossible de supprimer ce compte : il est impliqué dans une ou plusieurs délégations de rôle.');
             } else {
+                // Capturés avant remove() : getId() n'est plus fiable une fois
+                // l'entité supprimée (voir RhEntityAuditListener).
+                $id = $user->getId();
+                $email = $user->getEmail();
                 $em->remove($user);
                 $em->flush();
+                $auditLog->enregistrer(ActionAudit::UTILISATEUR_SUPPRIME, entite: 'User', entiteId: $id, details: $email);
                 $this->addFlash('success', 'Compte agent supprimé.');
             }
         }

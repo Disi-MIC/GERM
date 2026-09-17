@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
 use App\Entity\DemandeCartePro;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\StatutCarteProfessionnelle;
 use App\Entity\Enum\StatutDemandeCartePro;
 use App\Entity\Enum\TypeDemandeCartePro;
@@ -13,6 +14,7 @@ use App\Entity\User;
 use App\Form\DemandeCarteProType;
 use App\Repository\DemandeCarteProRepository;
 use App\Repository\PersonnelRepository;
+use App\Service\AuditLogService;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -249,11 +251,13 @@ class DemandeCarteProController extends AbstractController
     }
 
     #[Route('/admin/piece-justificative/carte-pro/{id}/download', name: 'admin_piece_carte_pro_download', requirements: ['id' => '\d+'])]
-    public function downloadPiece(DemandeCartePro $demande, FileStorage $uploader): StreamedResponse
+    public function downloadPiece(DemandeCartePro $demande, FileStorage $uploader, AuditLogService $auditLog): StreamedResponse
     {
         if (!$demande->getCheminFichier()) {
             throw $this->createNotFoundException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'DemandeCartePro', entiteId: $demande->getId());
 
         $response = new StreamedResponse(function () use ($uploader, $demande) {
             fpassthru($uploader->readStream($demande->getCheminFichier()));

@@ -182,8 +182,10 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/api/pieces-decision/{id}', name: 'api_piece_decision_download', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function downloadPiece(PieceJustificativeDecision $piece): StreamedResponse
+    public function downloadPiece(PieceJustificativeDecision $piece, AuditLogService $auditLog): StreamedResponse
     {
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'PieceJustificativeDecision', entiteId: $piece->getId());
+
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('Piece justificative decision - %s', $piece->getDemande()?->getPersonnel()?->getNomComplet() ?? ''),
             pathinfo($piece->getCheminFichier(), \PATHINFO_EXTENSION),
@@ -309,11 +311,13 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/api/demandes-decision/{id}/document-retour', name: 'api_demande_decision_document_retour_download', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function downloadDocumentRetour(DemandeDecision $demande): StreamedResponse
+    public function downloadDocumentRetour(DemandeDecision $demande, AuditLogService $auditLog): StreamedResponse
     {
         if (!$demande->getCheminDocumentRetour()) {
             throw $this->createNotFoundException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'DemandeDecision', entiteId: $demande->getId(), details: 'document-retour');
 
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('Retour circuit decision - %s', $demande->getPersonnel()?->getNomComplet() ?? ''),

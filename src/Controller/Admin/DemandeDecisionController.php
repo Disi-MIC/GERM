@@ -5,12 +5,14 @@ namespace App\Controller\Admin;
 use App\Controller\AbstractController;
 use App\Entity\DecisionConge;
 use App\Entity\DemandeDecision;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Enum\StatutDemande;
 use App\Entity\Personnel;
 use App\Entity\PieceJustificativeDecision;
 use App\Form\DemandeDecisionType;
 use App\Repository\DemandeDecisionRepository;
 use App\Repository\PersonnelRepository;
+use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormInterface;
@@ -185,8 +187,10 @@ class DemandeDecisionController extends AbstractController
     }
 
     #[Route('/admin/piece-justificative/decision/{id}/download', name: 'admin_piece_decision_download', requirements: ['id' => '\d+'])]
-    public function downloadPiece(PieceJustificativeDecision $piece, FileStorage $uploader): StreamedResponse
+    public function downloadPiece(PieceJustificativeDecision $piece, FileStorage $uploader, AuditLogService $auditLog): StreamedResponse
     {
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'PieceJustificativeDecision', entiteId: $piece->getId());
+
         $response = new StreamedResponse(function () use ($uploader, $piece) {
             fpassthru($uploader->readStream($piece->getCheminFichier()));
         });

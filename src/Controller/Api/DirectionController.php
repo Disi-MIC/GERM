@@ -4,6 +4,8 @@ namespace App\Controller\Api;
 
 use App\Controller\AbstractController;
 use App\Entity\Direction;
+use App\Entity\Enum\ActionAudit;
+use App\Service\AuditLogService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -104,11 +106,13 @@ class DirectionController extends AbstractController
     }
 
     #[Route('/api/directions/{id}/note-service', name: 'api_direction_note_service_fichier', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function noteServiceFichier(Direction $direction): StreamedResponse
+    public function noteServiceFichier(Direction $direction, AuditLogService $auditLog): StreamedResponse
     {
         if (!$direction->getNoteServiceFichier()) {
             throw $this->createNotFoundException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'Direction', entiteId: $direction->getId(), details: 'note-service');
 
         $nom = $this->fileStorage->nomTelechargement(
             \sprintf('Note de service - %s', $direction->getNom() ?? ''),

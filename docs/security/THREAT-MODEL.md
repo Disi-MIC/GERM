@@ -108,7 +108,7 @@ SSO prévue vers MIC-GAR a été abandonnée avant sa mise en service (décision
 | **Rôle IT lisant l'état civil complet** | `PersonnelNormalizer` retire les champs sensibles, sauf pour sa propre fiche | ✅ **GERM-009 corrigé** |
 | **Rôle non-Stock lisant le fournisseur d'un matériel** | `MaterielInformatiqueNormalizer` retire `api:read:rh` pour tout appelant sans `ROLE_IT_STOCK`, y compris sur les réponses manuelles de contrôleur | ✅ **GERM-024 corrigé** |
 | Exfiltration de masse | Quota d'exports 10/h/compte | ⚠️ Partiel — la collection `/api/personnels` reste non paginée |
-| Altération sans trace | — | ❌ **Aucune journalisation d'audit** (GERM-018) |
+| Altération sans trace | `AuditLog` (append-only) sur création/suppression de la fiche (`RhEntityAuditListener`) | ⚠️ **GERM-018 corrigé partiellement** — les modifications de champs individuels ne sont pas tracées, seuls création et suppression le sont |
 
 ### 4.3 Cartes professionnelles
 
@@ -148,7 +148,7 @@ SSO prévue vers MIC-GAR a été abandonnée avant sa mise en service (décision
 | Export par un rôle non habilité | `#[IsGranted]` au niveau classe | ✅ |
 | Déni de service par exports répétés | 10 / heure / compte | ✅ *(GERM-010)* |
 | Épuisement mémoire sur gros volume | — | ⚠️ `findAll()` hydrate tout — reporté au lot performance |
-| Export non tracé | — | ❌ GERM-018 |
+| Export non tracé | `AuditLog` sur les 5 exports (`ActionAudit::EXPORT_CREE`) | ✅ GERM-018 |
 
 ### 4.7 QR codes du parc informatique
 
@@ -195,7 +195,7 @@ vérification de production du 14/09/2026.
 | 5 | **Forge d'une étiquette QR** par quiconque a accès au dépôt Git | ✅ **Corrigé** (GERM-006), **déployé** — clé retirée du dépôt, rotée en production le 15/09/2026 |
 | 6 | **Clickjacking ou injection sur la page réellement chargée par les utilisateurs** : le SPA ne portait aucun en-tête de sécurité, contrairement aux routes Symfony | ✅ **Corrigé** (GERM-023), **déployé** — vérifié en production le 15/09/2026 |
 | 7 | **Exfiltration de l'état civil par un compte informatique** légitime ou compromis | ✅ Corrigé (GERM-009), **déployé** — `1e8bd47` |
-| 8 | **Compromission indétectable** : sans journal d'audit, aucun des scénarios ci-dessus ne laisserait de trace exploitable | ❌ Ouvert (GERM-018) |
+| 8 | **Compromission indétectable** : sans journal d'audit, aucun des scénarios ci-dessus ne laisserait de trace exploitable | ⚠️ Corrigé partiellement (GERM-018) — connexions, accès refusés, exports, téléchargements sensibles et création/suppression des entités RH tracés ; pas encore les entités IT opérationnelles |
 
 > Le scénario 8 est transverse : il ne crée pas de vulnérabilité, il rend
 > toutes les autres invisibles. C'est ce qui justifie de placer la

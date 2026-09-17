@@ -175,26 +175,28 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/api/cartes-professionnelles/{id}/pdf', name: 'api_carte_professionnelle_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function pdf(CarteProfessionnelle $carte): StreamedResponse
+    public function pdf(CarteProfessionnelle $carte, AuditLogService $auditLog): StreamedResponse
     {
-        return $this->streamPdf($carte, ResponseHeaderBag::DISPOSITION_INLINE);
+        return $this->streamPdf($carte, ResponseHeaderBag::DISPOSITION_INLINE, $auditLog);
     }
 
     #[Route('/api/cartes-professionnelles/{id}/pdf/telecharger', name: 'api_carte_professionnelle_pdf_telecharger', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function pdfTelecharger(CarteProfessionnelle $carte): StreamedResponse
+    public function pdfTelecharger(CarteProfessionnelle $carte, AuditLogService $auditLog): StreamedResponse
     {
         if (!$carte->isValideeParAdminRh()) {
             throw new AccessDeniedHttpException("La carte doit d'abord être validée par le RH Admin pour être téléchargeable.");
         }
 
-        return $this->streamPdf($carte, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
+        return $this->streamPdf($carte, ResponseHeaderBag::DISPOSITION_ATTACHMENT, $auditLog);
     }
 
-    private function streamPdf(CarteProfessionnelle $carte, string $disposition): StreamedResponse
+    private function streamPdf(CarteProfessionnelle $carte, string $disposition, AuditLogService $auditLog): StreamedResponse
     {
         if (!$carte->getCheminFichier()) {
             throw $this->createNotFoundException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'CarteProfessionnelle', entiteId: $carte->getId(), details: $carte->getNumero());
 
         $response = new StreamedResponse(function () use ($carte) {
             fpassthru($this->fileStorage->readStream($carte->getCheminFichier()));

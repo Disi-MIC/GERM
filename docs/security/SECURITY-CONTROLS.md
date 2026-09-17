@@ -280,10 +280,14 @@ ressource distante n'est chargeable depuis un gabarit.
 
 À dire explicitement, pour que personne ne présume d'une protection absente :
 
-- **Aucune journalisation d'audit** : ni connexion, ni changement de rôle, ni
-  accès refusé, ni export, ni téléchargement (GERM-018).
+- **Journalisation d'audit partielle** (GERM-018) : couvre désormais les
+  connexions, changements de rôle, accès refusés, exports, téléchargements
+  de document sensibles et création/suppression des 14 entités RH — mais
+  pas les entités opérationnelles IT (tickets, maintenance, composants).
 - **Aucune usurpation d'identité** : `switch_user` n'est déclaré nulle part.
 - **Aucun MFA**, aucune politique de complexité de mot de passe.
-- **Aucune CI/CD** : le déploiement se fait par `git push` vers un hook
-  `post-receive`, sans test ni analyse de sécurité bloquante (GERM-017).
+- **CI/CD en place, pas encore bloquante sur le déploiement réel**
+  (GERM-017) : `.github/workflows/ci.yml` fait tourner tests et analyse de
+  dépendances sur `origin` (GitHub), mais le déploiement passe par un
+  second dépôt (`production`) totalement indépendant.
 - **Aucun Voter** : les contrôles d'appartenance sont manuels (GERM-020).

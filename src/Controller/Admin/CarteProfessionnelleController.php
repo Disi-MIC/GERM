@@ -4,9 +4,11 @@ namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
 use App\Entity\CarteProfessionnelle;
+use App\Entity\Enum\ActionAudit;
 use App\Entity\Personnel;
 use App\Form\CarteProfessionnelleType;
 use App\Repository\CarteProfessionnelleRepository;
+use App\Service\AuditLogService;
 use App\Service\CarteProfessionnellePdfStockageService;
 use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -187,11 +189,13 @@ class CarteProfessionnelleController extends AbstractController
     }
 
     #[Route('/admin/piece-justificative/carte/{id}/download', name: 'admin_piece_carte_download', requirements: ['id' => '\d+'])]
-    public function downloadPiece(CarteProfessionnelle $carte, FileStorage $uploader): StreamedResponse
+    public function downloadPiece(CarteProfessionnelle $carte, FileStorage $uploader, AuditLogService $auditLog): StreamedResponse
     {
         if (!$carte->getCheminFichier()) {
             throw $this->createNotFoundException();
         }
+
+        $auditLog->enregistrer(ActionAudit::DOCUMENT_TELECHARGE, entite: 'CarteProfessionnelle', entiteId: $carte->getId());
 
         $response = new StreamedResponse(function () use ($uploader, $carte) {
             fpassthru($uploader->readStream($carte->getCheminFichier()));
