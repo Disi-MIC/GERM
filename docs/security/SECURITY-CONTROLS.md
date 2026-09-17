@@ -205,7 +205,7 @@ Twig. Aucun `<script>` inline n'existe : `script-src` reste strict.
 | Jetons QR de matériel | libsodium `secretbox` (XSalsa20-Poly1305) — chiffrement **authentifié** : un jeton forgé échoue au déchiffrement | `src/Service/QrTokenService.php` |
 | Fichiers au repos (photos, pièces jointes, cartes) | libsodium `secretbox`, même primitive, clé dédiée (`FILE_ENCRYPTION_KEY`, distincte de `QR_SECRET_KEY`) — chiffré avant écriture sur le SFTP, déchiffré à la lecture (GERM-025) | `src/Service/FileEncryptionService.php`, `src/Service/FileStorage.php` |
 | Transport | TLS 1.2 / 1.3 confirmé en production ; SFTP (SSH) vers le stockage de fichiers | — |
-| Base de données MySQL | ❌ **Aucun** — ni en transit (`require_secure_transport=OFF`, connexion applicative en clair) ni au repos (`default_table_encryption=OFF`, disque système non chiffré) — GERM-026, évalué et ouvert | — |
+| Base de données MySQL | ⚠️ **Transit corrigé le 17/09/2026** (TLS forcé côté client, `PDO::MYSQL_ATTR_SSL_CIPHER`, sans vérification du certificat faute d'accès `sudo` à `ca.pem`) ; **repos toujours ouvert** (`default_table_encryption=OFF`, disque système non chiffré, `sudo` requis) — GERM-026 | `config/packages/doctrine.yaml` |
 | Sauvegardes de `germ_db` | libsodium `secretbox`, même primitive, clé dédiée (`DB_BACKUP_ENCRYPTION_KEY`, distincte de `QR_SECRET_KEY` et `FILE_ENCRYPTION_KEY`) — dump chiffré avant écriture, local et sur un second serveur (GERM-027) | `src/Service/DatabaseBackupService.php` |
 
 Le QR code encode `germ://materiel/<jeton chiffré>` : un scan avec un lecteur
@@ -227,16 +227,27 @@ fichiers historiques et continue de les servir normalement.
 mise en service — décision du 15/09/2026, voir OWASP-GERM-AUDIT.md. GERM
 n'émet ni ne consomme aucun jeton pour une application tierce.*
 
-**GERM-026 — accès MySQL, évalué le 15/09/2026.** Le risque réseau du défaut
-de chiffrement en transit est nul en pratique : MySQL n'écoute que sur
-`127.0.0.1` (`bind-address`), confirmé sans aucune interface externe exposée
-(seuls 22/80/443 sont ouverts). Le compte applicatif `germ_user@localhost`
-est lui-même correctement scopé — connexions locales uniquement, privilèges
-limités à `germ_db` (pas d'accès à `mysql.user` ni à une autre base). Mais le
-chiffrement au repos est totalement absent, à la fois côté moteur (InnoDB) et
-côté disque système (pas de LUKS/dm-crypt) : tout `germ_db` — état civil,
-mots de passe hachés — repose en clair sur disque. Non corrigé : suppose une
-décision sur la gestion des clés avant toute mise en œuvre.
+**GERM-026 — accès MySQL, évalué le 15/09/2026, transport corrigé le
+17/09/2026.** Le risque réseau du défaut de chiffrement en transit était
+nul en pratique : MySQL n'écoute que sur `127.0.0.1` (`bind-address`),
+confirmé sans aucune interface externe exposée (seuls 22/80/443 sont
+ouverts). Le compte applicatif `germ_user@localhost` est lui-même
+correctement scopé — connexions locales uniquement, privilèges limités à
+`germ_db` (pas d'accès à `mysql.user` ni à une autre base). **Décision du
+17/09/2026** : chiffrer quand même, en plus de la restriction réseau
+(défense en profondeur). MySQL générait déjà ses propres certificats TLS
+(`have_ssl=YES`) sans que l'application les utilise ; `doctrine.yaml`
+force désormais TLS côté client. Le certificat serveur n'est pas vérifié
+(`ca.pem` illisible sans `sudo`, dans un répertoire `700 mysql:mysql`) —
+canal chiffré, non authentifié, jugé suffisant vu le risque réseau nul.
+Voir `docs/security/deploiement/GERM-026-chiffrement-mysql.md`.
+
+Le chiffrement au repos reste totalement absent, à la fois côté moteur
+(InnoDB) et côté disque système (pas de LUKS/dm-crypt) : tout `germ_db` —
+état civil, mots de passe hachés — repose en clair sur disque. Procédure
+complète préparée (plugin keyring, `ALTER TABLE ... ENCRYPTION` sur les 34
+tables de `germ_db`) dans le même document, mais son exécution exige un
+privilège `sudo` que je n'ai pas.
 
 **GERM-027 — confirmé puis corrigé le 15/09/2026.** Aucune sauvegarde de
 `germ_db` n'existait, nulle part (confirmé directement par le

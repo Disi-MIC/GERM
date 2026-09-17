@@ -2,6 +2,22 @@ doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
         profiling_collect_backtrace: '%kernel.debug%'
+        # GERM-026 : chiffrement en transit. germ-appdbserver expose déjà les
+        # certificats auto-générés par MySQL 8 (have_ssl=YES, ssl_ca/ssl_cert/
+        # ssl_key définis) mais le client ne les utilisait pas
+        # (require_secure_transport=OFF côté serveur, non modifiable sans sudo
+        # — voir docs/security/deploiement/GERM-026-chiffrement-mysql.md).
+        # Sans accès en lecture à ca.pem (répertoire data 700 mysql:mysql,
+        # hors de portée sans sudo), la vérification du certificat serveur
+        # (VERIFY_CA/VERIFY_IDENTITY) n'est pas possible depuis l'application ;
+        # SSL_VERIFY_SERVER_CERT=false chiffre le canal sans l'authentifier —
+        # suffisant ici puisque MySQL n'écoute que sur 127.0.0.1 (risque
+        # d'usurpation du serveur nul en pratique) et strictement supérieur à
+        # une connexion en clair. Testé sur la base de développement
+        # tunnelée (même serveur) : Ssl_cipher=TLS_AES_256_GCM_SHA384.
+        options:
+            !php/const PDO::MYSQL_ATTR_SSL_CIPHER: 'AES256-GCM-SHA384:AES128-GCM-SHA256'
+            !php/const PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT: false
     orm:
         validate_xml_mapping: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware

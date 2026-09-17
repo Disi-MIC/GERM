@@ -86,7 +86,7 @@ HTTP seuls ne suffit pas à garantir qu'une page reste réellement utilisable.
 | ~~`QR_SECRET_KEY` de production = clé versionnée~~ | ✅ Corrigé (GERM-006) — rotée en production le 15/09/2026, retirée du dépôt |
 | ~~Aucun en-tête de sécurité sur le SPA~~ | ✅ Corrigé (GERM-023) — appliqué et vérifié en production le 15/09/2026 par un administrateur avec `sudo` ; effet de bord sur l'affichage corrigé le 16/09/2026 (GERM-028) |
 | ~~Aucune sauvegarde de `germ_db`~~ | ⚠️ **Corrigée pour l'essentiel (GERM-027)** — dump quotidien chiffré, copié vers 10.112.26.31 ; **confirmé par le commanditaire le 17/09/2026** : les deux serveurs sont des VM du **même hyperviseur** — voir §7 |
-| MySQL non chiffré (transit et repos) | ❌ Ouvert (GERM-026), évalué le 15/09/2026 |
+| MySQL non chiffré (transit et repos) | ⚠️ Transit corrigé le 17/09/2026 ; repos ouvert, `sudo` requis (GERM-026) |
 | Journalisation d'audit (A09) | Socle minimal déployé — couverture partielle (§26), voir GERM-018 |
 | Couverture de tests de sécurité | 24 tests de sécurité ajoutés, dont 6 inactifs faute de base de test |
 | Chaîne CI/CD | Aucune. Déploiement par `git push` sans barrière qualité |
@@ -192,7 +192,7 @@ leur contrôle d'accès.
 | | Catégorie | Verdict | Constats |
 |---|---|---|---|
 | **A01** | Broken Access Control | ⚠️ **Corrigé partiellement** | GERM-001, GERM-008, GERM-009 (résolu), GERM-013, GERM-024 (résolu) |
-| **A02** | Cryptographic Failures | ⚠️ **Corrigé partiellement** | GERM-006, GERM-025 (corrigés) ; GERM-026 (MySQL, ouvert) |
+| **A02** | Cryptographic Failures | ⚠️ **Corrigé partiellement** | GERM-006, GERM-025 (corrigés) ; GERM-026 (MySQL, transit corrigé, repos ouvert) |
 | **A03** | Injection | ⚠️ **Corrigé** | GERM-003 (CSV) — aucune injection SQL ni XSS |
 | **A04** | Insecure Design | ⚠️ **Corrigé partiellement** | GERM-008 |
 | **A05** | Security Misconfiguration | ⚠️ **Corrigé partiellement** | GERM-005 (résolu), GERM-015, GERM-016, GERM-023 (résolu), GERM-022 (ouvert) |
@@ -317,7 +317,7 @@ Sévérité inspirée de CVSS. « Statut » au 14/09/2026.
 | **GERM-013** | `access_control: ^/admin → ROLE_AGENT`. Aucune route n'était exposée (les 17 contrôleurs portent `ROLE_SUPERADMIN`), mais tout nouveau contrôleur déposé sans attribut l'aurait été. **Correction** : règle portée à `ROLE_SUPERADMIN`, exception explicite pour la page d'atterrissage. | A01 | ✅ `c70cd6f` |
 | **GERM-014** | Couverture de tests de sécurité quasi nulle avant l'audit : aucune garantie de non-régression sur un correctif. | §54-55 | 🔄 **En cours** |
 | **GERM-025** | Aucun chiffrement au repos des fichiers stockés (photos, pièces justificatives, cartes professionnelles) : SFTP protège le transport, pas le contenu une fois posé sur le disque distant — un accès direct à ce disque (hors périmètre du modèle de menaces, §7 de `THREAT-MODEL.md`, mais en défense en profondeur) exposait ces documents en clair. **Correction** : `App\Service\FileEncryptionService`, libsodium `secretbox` (même primitive que `QrTokenService`, clé dédiée `FILE_ENCRYPTION_KEY`), branché dans `FileStorage::store()/storeContent()/readStream()`. **Portée non rétroactive, assumée** : les fichiers déjà stockés avant ce correctif restent en clair jusqu'à leur remplacement — un format enveloppé versionné (en-tête `GRM1`) permet à `readStream()` de continuer à les servir sans erreur, plutôt que de les rendre illisibles. Vérifié en direct : nouveau fichier chiffré sur le disque (`GRM1...`), servi déchiffré via l'API ; fichier historique (sans en-tête) toujours lisible. | A02 · ASVS V8 | ✅ **Corrigé** — `f162578` |
-| **GERM-026** | **Aucun chiffrement des données MySQL, ni en transit ni au repos.** Évalué le 15/09/2026 depuis le serveur (`SHOW VARIABLES`) : `require_secure_transport=OFF`, et la connexion réelle de l'application à MySQL est en clair (`Ssl_cipher` vide sur la session active) — risque réseau nul puisque MySQL n'écoute que sur `127.0.0.1` (confirmé, aucune interface externe), mais non chiffré techniquement. Au repos : `default_table_encryption=OFF`, `innodb_redo_log_encrypt=OFF`, `binlog_encryption=OFF` — et le disque système lui-même n'est pas chiffré (`lsblk` : LVM simple sur `sda3`, aucun volume LUKS/dm-crypt détecté). L'intégralité de `germ_db` (état civil, mots de passe hachés, tout le reste) repose en clair sur disque. *Positif, vérifié dans la foulée* : `germ_user@localhost` est restreint aux connexions locales et scopé à `GRANT ALL PRIVILEGES ON germ_db.*` uniquement (pas de privilège global — il n'a même pas le droit de lire `mysql.user`). **Non corrigé** : activer le chiffrement nécessite une décision sur la gestion des clés et un test de compatibilité/performance, hors périmètre d'une simple évaluation. | A02 · ASVS V8 | ❌ **Ouvert, évalué** |
+| **GERM-026** | **Aucun chiffrement des données MySQL, ni en transit ni au repos.** Évalué le 15/09/2026 depuis le serveur (`SHOW VARIABLES`) : `require_secure_transport=OFF`, et la connexion réelle de l'application à MySQL est en clair (`Ssl_cipher` vide sur la session active) — risque réseau nul puisque MySQL n'écoute que sur `127.0.0.1` (confirmé, aucune interface externe), mais non chiffré techniquement. Au repos : `default_table_encryption=OFF`, `innodb_redo_log_encrypt=OFF`, `binlog_encryption=OFF` — et le disque système lui-même n'est pas chiffré (`lsblk` : LVM simple sur `sda3`, aucun volume LUKS/dm-crypt détecté). L'intégralité de `germ_db` (état civil, mots de passe hachés, tout le reste) repose en clair sur disque. *Positif, vérifié dans la foulée* : `germ_user@localhost` est restreint aux connexions locales et scopé à `GRANT ALL PRIVILEGES ON germ_db.*` uniquement (pas de privilège global — il n'a même pas le droit de lire `mysql.user`). **Décision du 17/09/2026** : chiffrer transport et repos. **Transport corrigé** : MySQL générait déjà ses propres certificats TLS auto-signés (`have_ssl=YES`) mais l'application ne les utilisait pas ; `config/packages/doctrine.yaml` force désormais TLS côté client (`PDO::MYSQL_ATTR_SSL_CIPHER` + `SSL_VERIFY_SERVER_CERT=false`, faute d'accès en lecture à `ca.pem` sans `sudo`) — testé sur la base tunnelée puis confirmé sur la connexion applicative réelle (`Ssl_cipher=TLS_AES_256_GCM_SHA384`), voir `docs/security/deploiement/GERM-026-chiffrement-mysql.md`. **Repos toujours ouvert** : le chiffrement InnoDB (plugin keyring, `ALTER TABLE ... ENCRYPTION`) et `require_secure_transport=ON` exigent tous deux un accès `sudo` que je n'ai pas — procédure complète préparée dans le même document, à exécuter par un administrateur. | A02 · ASVS V8 | ⚠️ **Corrigé partiellement (transport)** |
 
 ### Faible
 
@@ -439,7 +439,7 @@ Les deux constats de cette vérification ont été corrigés le 15/09/2026
 | `style-src 'unsafe-inline'` dans la CSP | Nécessaire aux attributs `style=` des templates Twig. Aucun `<script>` inline, `script-src` reste strict |
 | Contrôles d'appartenance sans Voter (GERM-020) | Corrects aujourd'hui, fragiles demain |
 | Cartes professionnelles en circulation | Le numéro imprimé reste la clé de vérification publique ; seule la limitation de débit protège l'annuaire |
-| MySQL non chiffré, ni en transit ni au repos (GERM-026) | Évalué le 15/09/2026 ; **décision prise le 17/09/2026** : chiffrer transport et repos — mise en œuvre en cours |
+| MySQL non chiffré au repos (GERM-026) | Volet transport corrigé le 17/09/2026 (voir §7) ; volet repos préparé, `sudo` requis pour l'exécuter |
 
 **GERM-027 — corrigé pour l'absence de sauvegarde, pas pour la résilience
 matérielle.** Le commanditaire a confirmé qu'aucun mécanisme de sauvegarde
@@ -471,9 +471,9 @@ résilience physique reste, elle, hors périmètre de cet audit.
 | ASVS L2 | INITIAL | **DEVELOPING** |
 | Authentification | DEVELOPING | **DEFINED** |
 | Autorisation | DEFINED | **DEFINED** |
-| Cryptographie | DEFINED | **DEVELOPING** (mécanismes applicatifs et gestion des secrets corrigés — GERM-006 ; MySQL non chiffré en transit ni au repos, GERM-026 ouvert) |
+| Cryptographie | DEFINED | **DEVELOPING** (mécanismes applicatifs et gestion des secrets corrigés — GERM-006 ; MySQL chiffré en transit depuis le 17/09/2026, repos toujours ouvert faute de `sudo`, GERM-026) |
 | Journalisation | INITIAL | **DEVELOPING** |
-| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, GERM-026 ; sauvegarde quotidienne chiffrée sur un second serveur, GERM-027 — colocalisation sur le même hyperviseur **confirmée par le commanditaire le 17/09/2026**, résilience matérielle non acquise, destination hors site restant à identifier ; configuration Apache/PHP au-delà reste non évaluée) |
+| Infrastructure | *non évalué* | **DEVELOPING** (en-têtes du SPA corrigés, GERM-023 ; exposition réseau et privilèges MySQL vérifiés conformes, transport chiffré depuis le 17/09/2026, GERM-026 ; sauvegarde quotidienne chiffrée sur un second serveur, GERM-027 — colocalisation sur le même hyperviseur **confirmée par le commanditaire le 17/09/2026**, résilience matérielle non acquise, destination hors site restant à identifier ; configuration Apache/PHP au-delà reste non évaluée) |
 | Dépendances | MANAGED | **MANAGED** |
 | Tests | INITIAL | **DEVELOPING** |
 | DevSecOps | **INITIAL** | **INITIAL** |
@@ -504,7 +504,7 @@ supervision/détection externe au périmètre applicatif.
 |---|---|---|
 | 1 | **Déployer les lots 1, 2 et le correctif GERM-002** — plus rien ne bloque | `c70cd6f`, `a2bd956`, `d13d17e` |
 | 2 | **Trouver une véritable destination hors site pour la sauvegarde** — 10.112.26.31 et germ-appdbserver **confirmés le 17/09/2026** comme deux VM du même hyperviseur par le commanditaire ; la copie actuelle ne protège donc pas contre un sinistre matériel de cet hyperviseur | GERM-027 |
-| 3 | **Chiffrer MySQL en transport et au repos** — décidé le 17/09/2026 ; mise en œuvre en cours (gestion des clés à finaliser pour le volet repos) | GERM-026 |
+| 3 | **Chiffrer MySQL au repos** — décidé le 17/09/2026 ; volet transport déjà corrigé, procédure du volet repos (plugin keyring, `ALTER TABLE ... ENCRYPTION`) préparée, à exécuter par un administrateur `sudo` | GERM-026 |
 | 4 | Étendre la journalisation d'audit à la couverture complète du §26 (application uniquement, sans volet SIEM) | §25-27, GERM-018 |
 | 5 | Base de test dédiée, activation des 6 tests inactifs, extension de la matrice §55 | §54-55, GERM-014 |
 | 6 | Chaîne CI/CD avec barrière de sécurité bloquante | §58, GERM-017 |

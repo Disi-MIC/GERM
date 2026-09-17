@@ -213,8 +213,12 @@ OWASP-GERM-AUDIT.md).
 Les sauvegardes et leur restauration (§59) étaient initialement hors
 périmètre, mais une évaluation de l'accès MySQL le 15/09/2026 a confirmé
 qu'aucun processus de sauvegarde n'existait pour `germ_db`, nulle part — et
-qu'aucun chiffrement n'est en place en transit ni au repos (GERM-026,
-GERM-027 — voir OWASP-GERM-AUDIT.md). Corrigé le jour même : dump quotidien
+qu'aucun chiffrement n'était en place en transit ni au repos (GERM-026,
+GERM-027 — voir OWASP-GERM-AUDIT.md). **Transport corrigé le 17/09/2026** :
+l'application impose désormais TLS à sa connexion MySQL ; le volet repos
+reste ouvert, un accès `sudo` étant nécessaire pour le plugin keyring et
+`ALTER TABLE ... ENCRYPTION`. Sauvegarde corrigée le jour même de
+l'évaluation : dump quotidien
 chiffré, conservé localement et copié vers un second serveur
 (10.112.26.31). **Confirmé par le commanditaire le 17/09/2026** : les deux
 serveurs sont en réalité deux VM du même hyperviseur physique (indices
