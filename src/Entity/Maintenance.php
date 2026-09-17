@@ -99,6 +99,19 @@ class Maintenance
     #[Groups(['api:read', 'api:write'])]
     private ?string $observations = null;
 
+    /**
+     * Pièce justificative facultative (facture, bon d'intervention, photo)
+     * — contrairement à DocumentAdministratif, un fichier n'est pas
+     * systématique pour une maintenance : le gestionnaire de stock peut
+     * continuer à consigner une intervention sans justificatif disponible.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cheminFichier = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['api:read'])]
+    private ?string $nomOriginal = null;
+
     #[ORM\Column]
     #[Groups(['api:read'])]
     private ?\DateTimeImmutable $createdAt = null;
@@ -205,6 +218,30 @@ class Maintenance
     public function setObservations(?string $observations): static
     {
         $this->observations = $observations;
+
+        return $this;
+    }
+
+    public function getCheminFichier(): ?string
+    {
+        return $this->cheminFichier;
+    }
+
+    public function setCheminFichier(?string $cheminFichier): static
+    {
+        $this->cheminFichier = $cheminFichier;
+
+        return $this;
+    }
+
+    public function getNomOriginal(): ?string
+    {
+        return $this->nomOriginal;
+    }
+
+    public function setNomOriginal(?string $nomOriginal): static
+    {
+        $this->nomOriginal = $nomOriginal;
 
         return $this;
     }

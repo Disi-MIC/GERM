@@ -18,6 +18,11 @@
     <ng-template appDataTableCell="realisePar" let-maintenance>{{ realiseParLabel(maintenance) }}</ng-template>
     <ng-template appDataTableCell="date" let-maintenance>{{ maintenance.dateRealisation | slice: 0 : 10 }}</ng-template>
     <ng-template appDataTableCell="actions" let-maintenance>
+      @if (maintenance.nomOriginal) {
+        <a [href]="pieceUrl(maintenance.id!)" target="_blank" class="btn btn-sm btn-outline-success" title="Télécharger la pièce justificative">
+          <i class="bi bi-download"></i>
+        </a>
+      }
       <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(maintenance)">
         <i class="bi bi-trash"></i>
       </button>

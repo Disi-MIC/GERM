@@ -12,5 +12,19 @@ export interface Maintenance {
   prestataireExterne?: string | null;
   ticketOrigine?: TicketIncident | string | null;
   observations?: string | null;
+  /** Nom du fichier d'origine de la pièce justificative — présent seulement si un fichier a été joint (voir MaintenanceController::piece()). */
+  nomOriginal?: string | null;
   createdAt?: string;
+}
+
+export interface MaintenancePayload {
+  materiel: number;
+  type: number;
+  description: string;
+  dateRealisation: string;
+  realisePar?: number | null;
+  prestataireExterne?: string | null;
+  ticketOrigine?: number | null;
+  observations?: string | null;
+  fichier?: File | null;
 }

@@ -75,6 +75,10 @@ export class MaintenanceInformatiqueListComponent implements OnInit {
     return typeof personnel === 'string' ? personnel : (personnel.nomComplet ?? `${personnel.prenom} ${personnel.nom}`);
   }
 
+  pieceUrl(id: number): string {
+    return this.api.pieceUrl(id);
+  }
+
   supprimer(maintenance: Maintenance): void {
     if (!maintenance.id) {
       return;

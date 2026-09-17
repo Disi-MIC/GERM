@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Maintenance } from '../../../core/models/maintenance.model';
+import { MaintenancePayload } from '../../../core/models/maintenance.model';
 import { MaterielInformatique } from '../../../core/models/materiel-informatique.model';
 import { ListeValeurRef, Personnel } from '../../../core/models/personnel.model';
 import { TicketIncident } from '../../../core/models/ticket-incident.model';
@@ -24,6 +24,7 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
   personnels: Personnel[] = [];
   tickets: TicketIncident[] = [];
   typesMaintenance: ListeValeurRef[] = [];
+  fichier: File | null = null;
   saving = false;
   error: string | null = null;
 
@@ -72,6 +73,11 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
     return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
   }
 
+  onFichierChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.fichier = input.files?.[0] ?? null;
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -79,15 +85,16 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
     }
 
     const raw = this.form.getRawValue();
-    const payload: Maintenance = {
-      materiel: `/api/materiels-informatiques/${raw.materiel}`,
-      type: `/api/liste_valeurs/${raw.type}`,
+    const payload: MaintenancePayload = {
+      materiel: raw.materiel!,
+      type: raw.type!,
       description: raw.description,
       dateRealisation: raw.dateRealisation,
-      realisePar: raw.realisePar ? `/api/personnels/${raw.realisePar}` : null,
+      realisePar: raw.realisePar,
       prestataireExterne: raw.prestataireExterne || null,
-      ticketOrigine: raw.ticketOrigine ? `/api/tickets-incident/${raw.ticketOrigine}` : null,
+      ticketOrigine: raw.ticketOrigine,
       observations: raw.observations || null,
+      fichier: this.fichier,
     };
 
     this.saving = true;

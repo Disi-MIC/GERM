@@ -54,6 +54,12 @@
       <label class="form-label">Observations</label>
       <textarea class="form-control" rows="2" formControlName="observations"></textarea>
     </div>
+
+    <div class="col-12">
+      <label class="form-label">Pièce justificative (facultatif)</label>
+      <input type="file" class="form-control" (change)="onFichierChange($event)" />
+      <div class="form-text">Facture, bon d'intervention ou photo, si disponible.</div>
+    </div>
   </div>
 
   <div class="mt-3 d-flex gap-2">
