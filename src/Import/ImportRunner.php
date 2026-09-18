@@ -17,6 +17,12 @@ class ImportRunner
 {
     private const FLUSH_EVERY = 100;
 
+    /** Réservé au superadmin, jamais rejoué automatiquement : limite large mais bornée (GERM-021). */
+    private const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    /** Borne le nombre de cellules réellement lues/évaluées (dont l'appel XLSX à getCalculatedValue()) par import (GERM-021). */
+    private const MAX_ROWS = 5000;
+
     /** @var FileParserInterface[] */
     private readonly array $parsers;
 
@@ -55,6 +61,14 @@ class ImportRunner
 
     public function run(TypeImport $type, UploadedFile $file): ImportReport
     {
+        if ($file->getSize() > self::MAX_FILE_SIZE) {
+            return new ImportReport(0, 0, 0, [], sprintf(
+                'Fichier trop volumineux (%.1f Mo) : la limite est de %d Mo.',
+                $file->getSize() / 1_000_000,
+                self::MAX_FILE_SIZE / 1_000_000,
+            ));
+        }
+
         $parser = null;
         foreach ($this->parsers as $candidat) {
             if ($candidat->supports($file)) {
@@ -67,7 +81,9 @@ class ImportRunner
         }
 
         try {
-            $rows = iterator_to_array($parser->parse($file));
+            $rows = $this->collecterLignes($parser->parse($file));
+        } catch (\OverflowException $e) {
+            return new ImportReport(0, 0, 0, [], 'Fichier trop volumineux : '.$e->getMessage().'. Scindez le fichier en plusieurs imports.');
         } catch (\Throwable $e) {
             return new ImportReport(0, 0, 0, [], 'Impossible de lire le fichier : '.$e->getMessage());
         }
@@ -114,12 +130,40 @@ class ImportRunner
         }
 
         try {
-            $rows = iterator_to_array($this->csvFileParser->parseContent($contenu, ','));
+            $rows = $this->collecterLignes($this->csvFileParser->parseContent($contenu, ','));
+        } catch (\OverflowException $e) {
+            return new ImportReport(0, 0, 0, [], 'Classeur trop volumineux : '.$e->getMessage().'.');
         } catch (\Throwable $e) {
             return new ImportReport(0, 0, 0, [], 'Impossible de lire le contenu du classeur : '.$e->getMessage());
         }
 
         return $this->traiterLignes($type, $rows);
+    }
+
+    /**
+     * Consomme le générateur du parseur ligne par ligne plutôt que d'un bloc
+     * (iterator_to_array()) : permet d'arrêter dès MAX_ROWS, avant que le coût
+     * de lecture par cellule (dont l'évaluation des formules XLSX,
+     * cf. XlsxFileParser::lireValeurCellule()) ne soit payé pour tout un
+     * fichier hors gabarit (GERM-021).
+     *
+     * @param iterable<int, array<string, ?string>> $parsedRows
+     *
+     * @return array<int, array<string, ?string>>
+     *
+     * @throws \OverflowException si le fichier dépasse MAX_ROWS lignes de données
+     */
+    private function collecterLignes(iterable $parsedRows): array
+    {
+        $rows = [];
+        foreach ($parsedRows as $lineNumber => $row) {
+            if (count($rows) >= self::MAX_ROWS) {
+                throw new \OverflowException(sprintf('plus de %d lignes de données', self::MAX_ROWS));
+            }
+            $rows[$lineNumber] = $row;
+        }
+
+        return $rows;
     }
 
     /**

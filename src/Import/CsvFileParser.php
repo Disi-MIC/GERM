@@ -11,7 +11,21 @@ class CsvFileParser implements FileParserInterface
 {
     public function supports(UploadedFile $file): bool
     {
-        return in_array(strtolower($file->getClientOriginalExtension()), ['csv', 'txt'], true);
+        if (!in_array(strtolower($file->getClientOriginalExtension()), ['csv', 'txt'], true)) {
+            return false;
+        }
+
+        // Extension déclarée par le client, donc falsifiable : recoupée avec le type
+        // deviné depuis le contenu réel du fichier (GERM-021). Volontairement large
+        // (un CSV est du texte brut, peu de types MIME candidats fiables) — le filtre
+        // essentiel contre les fichiers hors gabarit reste la limite de taille/lignes.
+        $mime = $file->getMimeType();
+
+        return null === $mime || str_starts_with($mime, 'text/') || in_array($mime, [
+            'application/csv',
+            'application/vnd.ms-excel',
+            'inode/x-empty',
+        ], true);
     }
 
     public function parse(UploadedFile $file): iterable

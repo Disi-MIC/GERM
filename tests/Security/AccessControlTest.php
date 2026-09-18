@@ -108,4 +108,27 @@ class AccessControlTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
     }
+
+    /**
+     * GERM-022 — la documentation interactive de l'API (mapping complet des
+     * ressources/opérations/champs) ne doit pas être accessible à un compte
+     * authentifié sans rôle superadmin, même si chaque opération reste par
+     * ailleurs protégée individuellement.
+     */
+    public function testDocumentationApiRefuseUnCompteNonSuperadmin(): void
+    {
+        $this->connecter('test.agent@germ.local');
+        $this->client->request('GET', '/api/docs');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+    }
+
+    /** GERM-022 — non-régression : le superadmin conserve l'accès à la documentation. */
+    public function testDocumentationApiResteAccessibleAuSuperadmin(): void
+    {
+        $this->connecter('superadmin@industriecommerce.gouv.sn');
+        $this->client->request('GET', '/api/docs');
+
+        self::assertResponseIsSuccessful();
+    }
 }

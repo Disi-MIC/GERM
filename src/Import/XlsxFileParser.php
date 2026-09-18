@@ -16,7 +16,21 @@ class XlsxFileParser implements FileParserInterface
 {
     public function supports(UploadedFile $file): bool
     {
-        return 'xlsx' === strtolower($file->getClientOriginalExtension());
+        if ('xlsx' !== strtolower($file->getClientOriginalExtension())) {
+            return false;
+        }
+
+        // Extension déclarée par le client, donc falsifiable : recoupée avec le type
+        // deviné depuis le contenu réel du fichier (GERM-021). Un .xlsx est une archive
+        // ZIP — 'application/zip' est ce que renvoie couramment finfo, faute de signature
+        // OOXML spécifique reconnue partout.
+        $mime = $file->getMimeType();
+
+        return null === $mime || in_array($mime, [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/zip',
+            'application/octet-stream',
+        ], true);
     }
 
     public function parse(UploadedFile $file): iterable

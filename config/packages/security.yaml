@@ -101,6 +101,12 @@ security:
         # elle n'affiche qu'un message, aucune donnée (voir
         # Admin\DashboardController::noAccess()).
         - { path: ^/admin/aucun-acces, roles: ROLE_AGENT }
+        # Avant la règle générale ^/api : la documentation interactive (API Platform)
+        # renvoyait 200 à tout compte authentifié, y compris sans rôle métier — pas un
+        # accès aux données (chaque opération reste protégée individuellement), mais la
+        # cartographie complète des ressources/opérations/champs offerte à un compte
+        # compromis de bas privilège (GERM-022).
+        - { path: ^/api/docs, roles: ROLE_SUPERADMIN }
         - { path: ^/api, roles: ROLE_AGENT }
         # ROLE_SUPERADMIN plutôt que ROLE_AGENT : le back-office Twig lui est
         # entièrement réservé (les 17 contrôleurs portent déjà
