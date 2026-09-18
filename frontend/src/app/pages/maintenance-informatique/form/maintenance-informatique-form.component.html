@@ -56,8 +56,7 @@
     </div>
 
     <div class="col-12">
-      <label class="form-label">Pièce justificative (facultatif)</label>
-      <input type="file" class="form-control" (change)="onFichierChange($event)" />
+      <app-file-piece-input label="Pièce justificative (facultatif)" accept=".pdf,.jpg,.jpeg,.png" [(fichier)]="fichier" />
       <div class="form-text">Facture, bon d'intervention ou photo, si disponible.</div>
     </div>
   </div>

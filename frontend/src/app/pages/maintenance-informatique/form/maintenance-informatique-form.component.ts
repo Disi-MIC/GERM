@@ -8,6 +8,7 @@ import { TicketIncident } from '../../../core/models/ticket-incident.model';
 import { MaterielInformatiqueApiService } from '../../materiel-informatique/materiel-informatique-api.service';
 import { PersonnelApiService } from '../../personnel/personnel-api.service';
 import { TicketsInformatiqueApiService } from '../../tickets-informatique/tickets-informatique-api.service';
+import { FilePieceInputComponent } from '../../../shared/file-piece-input/file-piece-input.component';
 import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
 import { PanelComponent } from '../../../shared/panel/panel.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/searchable-select/searchable-select.component';
@@ -16,7 +17,7 @@ import { MaintenanceInformatiqueApiService } from '../maintenance-informatique-a
 @Component({
   selector: 'app-maintenance-informatique-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, SearchableSelectComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, PanelComponent, SearchableSelectComponent, FilePieceInputComponent],
   templateUrl: './maintenance-informatique-form.component.html',
 })
 export class MaintenanceInformatiqueFormComponent implements OnInit {
@@ -90,11 +91,6 @@ export class MaintenanceInformatiqueFormComponent implements OnInit {
 
   get personnelOptions(): SearchableSelectOption[] {
     return this.personnels.map((p) => ({ value: p.id, label: p.nomComplet ?? p.matricule ?? '' }));
-  }
-
-  onFichierChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.fichier = input.files?.[0] ?? null;
   }
 
   submit(): void {
