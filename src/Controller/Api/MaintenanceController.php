@@ -35,6 +35,14 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[IsGranted('ROLE_IT_STOCK')]
 class MaintenanceController extends AbstractController
 {
+    /**
+     * Limite dédiée, plus large que FileStorage::TAILLE_MAX_OCTETS (10 Mo) :
+     * les pièces jointes ici sont typiquement des photos d'intervention ou
+     * des bons/factures scannés en haute résolution, plus volumineux que les
+     * documents administratifs habituels. Voir FileStorage::erreurValidation().
+     */
+    private const PIECE_TAILLE_MAX_OCTETS = 30 * 1024 * 1024;
+
     public function __construct(
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
@@ -66,7 +74,7 @@ class MaintenanceController extends AbstractController
         $ticketOrigine = $ticketOrigineId ? $this->ticketIncidentRepository->find((int) $ticketOrigineId) : null;
 
         $fichier = $request->files->get('fichier');
-        if ($fichier && ($erreur = $this->fileStorage->erreurValidation($fichier))) {
+        if ($fichier && ($erreur = $this->fileStorage->erreurValidation($fichier, self::PIECE_TAILLE_MAX_OCTETS))) {
             return $this->json(['errors' => ['fichier' => $erreur]], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 

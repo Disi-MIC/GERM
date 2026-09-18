@@ -94,9 +94,22 @@ class FileStorage
      * volumineux au sens de cette limite applicative. Centralisé ici pour que
      * chaque contrôleur d'upload applique la même règle avec le même message,
      * plutôt qu'un simple contrôle de présence dupliqué partout.
+     *
+     * `$tailleMaxOctets` permet à un appelant particulier de desserrer la
+     * limite par défaut (ex. MaintenanceController, pièces jusqu'à 30 Mo —
+     * factures/bons d'intervention scannés en haute résolution) sans changer
+     * la limite des autres endpoints (photos, cartes pro, documents RH), qui
+     * restent à TAILLE_MAX_OCTETS. Le message d'erreur reflète toujours la
+     * limite réellement appliquée par l'appelant, pas la constante par défaut.
+     * Le message UPLOAD_ERR_INI_SIZE/FORM_SIZE reste indicatif de la limite
+     * applicative demandée : si la limite serveur (php.ini) est en réalité
+     * plus basse, PHP rejette avant que ce message n'ait de sens — voir
+     * docs/security/deploiement/maintenance-taille-fichier-php-ini.md.
      */
-    public function erreurValidation(?UploadedFile $file): ?string
+    public function erreurValidation(?UploadedFile $file, ?int $tailleMaxOctets = null): ?string
     {
+        $tailleMaxOctets ??= self::TAILLE_MAX_OCTETS;
+
         if (!$file instanceof UploadedFile) {
             return 'Aucun fichier reçu.';
         }
@@ -105,14 +118,14 @@ class FileStorage
             return match ($file->getError()) {
                 \UPLOAD_ERR_INI_SIZE, \UPLOAD_ERR_FORM_SIZE => \sprintf(
                     'Le fichier dépasse la taille maximale autorisée par le serveur (%d Mo).',
-                    (int) (self::TAILLE_MAX_OCTETS / 1024 / 1024),
+                    (int) ($tailleMaxOctets / 1024 / 1024),
                 ),
                 default => "Le fichier n'a pas pu être reçu, merci de réessayer.",
             };
         }
 
-        if ($file->getSize() > self::TAILLE_MAX_OCTETS) {
-            return \sprintf('Le fichier dépasse la taille maximale autorisée (%d Mo).', (int) (self::TAILLE_MAX_OCTETS / 1024 / 1024));
+        if ($file->getSize() > $tailleMaxOctets) {
+            return \sprintf('Le fichier dépasse la taille maximale autorisée (%d Mo).', (int) ($tailleMaxOctets / 1024 / 1024));
         }
 
         if (!\in_array($file->getMimeType(), self::TYPES_MIME_AUTORISES, true)) {
