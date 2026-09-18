@@ -7,9 +7,10 @@ namespace App\Entity\Enum;
  * l'audit OWASP) : connexions, échecs d'accès, exports, validations
  * métier sensibles et gestion des comptes. Étendu le 17/09/2026 (GERM-018)
  * aux téléchargements de document et aux créations/suppressions sur les
- * entités RH (voir RhEntityAuditListener) — la couverture complète encore
- * ouverte (§25-27) concerne le volet SIEM, hors périmètre depuis la
- * décision du 15/09/2026 (voir OWASP-GERM-AUDIT.md).
+ * entités RH, puis le 18/09/2026 aux entités opérationnelles IT (voir
+ * EntiteAuditListener) — la couverture complète encore ouverte (§25-27)
+ * concerne le volet SIEM, hors périmètre depuis la décision du 15/09/2026
+ * (voir OWASP-GERM-AUDIT.md).
  */
 enum ActionAudit: string
 {

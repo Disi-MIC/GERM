@@ -3,6 +3,7 @@
 namespace App\EventListener;
 
 use App\Entity\CarteProfessionnelle;
+use App\Entity\ComposantMateriel;
 use App\Entity\Conge;
 use App\Entity\DecisionConge;
 use App\Entity\Delegation;
@@ -13,9 +14,11 @@ use App\Entity\Direction;
 use App\Entity\DocumentAdministratif;
 use App\Entity\Enum\ActionAudit;
 use App\Entity\LicenceLogiciel;
+use App\Entity\Maintenance;
 use App\Entity\MaterielInformatique;
 use App\Entity\Personnel;
 use App\Entity\Service;
+use App\Entity\TicketIncident;
 use App\Entity\Vehicule;
 use App\Service\AuditLogService;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
@@ -26,13 +29,16 @@ use Doctrine\ORM\Event\PreRemoveEventArgs;
 use Doctrine\ORM\Events;
 
 /**
- * GERM-018 : journalise la création et la suppression des entités RH
- * porteuses de données personnelles ou administratives — le cahier des
+ * GERM-018 : journalise la création et la suppression des entités métier
+ * porteuses de données personnelles ou administratives (RH) ainsi que les
+ * entités opérationnelles IT (tickets, maintenance, composants matériel,
+ * étendues le 18/09/2026 — §12 de OWASP-GERM-AUDIT.md) — le cahier des
  * charges (§25-26) les demande explicitement, contrairement aux entités
  * purement techniques ou déjà elles-mêmes des journaux (Historique*,
- * AuditLog). `User` en est aussi exclu : son cycle de vie est déjà tracé
- * plus finement par UserController (diff des rôles à la modification),
- * un doublon ici ferait perdre ce détail dans un intitulé générique.
+ * TicketEscalade, AuditLog). `User` en est aussi exclu : son cycle de vie
+ * est déjà tracé plus finement par UserController (diff des rôles à la
+ * modification), un doublon ici ferait perdre ce détail dans un intitulé
+ * générique.
  *
  * Passer par un event listener Doctrine plutôt que par un appel explicite
  * dans chacun des ~40 points de création/suppression répartis dans les
@@ -59,7 +65,7 @@ use Doctrine\ORM\Events;
 #[AsDoctrineListener(event: Events::postPersist)]
 #[AsDoctrineListener(event: Events::postRemove)]
 #[AsDoctrineListener(event: Events::postFlush)]
-class RhEntityAuditListener
+class EntiteAuditListener
 {
     private const ENTITES_AUDITEES = [
         Personnel::class => 'Personnel',
@@ -76,6 +82,9 @@ class RhEntityAuditListener
         Service::class => 'Service',
         Direction::class => 'Direction',
         DocumentAdministratif::class => 'DocumentAdministratif',
+        TicketIncident::class => 'TicketIncident',
+        Maintenance::class => 'Maintenance',
+        ComposantMateriel::class => 'ComposantMateriel',
     ];
 
     /** @var list<array{ActionAudit, string, ?int}> */

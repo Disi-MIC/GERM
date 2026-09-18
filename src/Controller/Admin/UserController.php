@@ -156,7 +156,7 @@ class UserController extends AbstractController
                 $this->addFlash('danger', 'Impossible de supprimer ce compte : il est impliqué dans une ou plusieurs délégations de rôle.');
             } else {
                 // Capturés avant remove() : getId() n'est plus fiable une fois
-                // l'entité supprimée (voir RhEntityAuditListener).
+                // l'entité supprimée (voir EntiteAuditListener).
                 $id = $user->getId();
                 $email = $user->getEmail();
                 $em->remove($user);
