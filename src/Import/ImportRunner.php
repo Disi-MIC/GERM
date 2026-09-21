@@ -40,6 +40,10 @@ class ImportRunner
         PersonnelImporter $personnelImporter,
         MaterielInformatiqueImporter $materielImporter,
         VehiculeImporter $vehiculeImporter,
+        CorpsImporter $corpsImporter,
+        HierarchieImporter $hierarchieImporter,
+        ProgrammeImporter $programmeImporter,
+        ChapitreImporter $chapitreImporter,
     ) {
         $this->parsers = [$this->csvFileParser, $xlsxFileParser];
         $this->importers = [
@@ -48,6 +52,10 @@ class ImportRunner
             TypeImport::PERSONNEL->value => $personnelImporter,
             TypeImport::MATERIEL->value => $materielImporter,
             TypeImport::VEHICULE->value => $vehiculeImporter,
+            TypeImport::CORPS->value => $corpsImporter,
+            TypeImport::HIERARCHIE->value => $hierarchieImporter,
+            TypeImport::PROGRAMME->value => $programmeImporter,
+            TypeImport::CHAPITRE->value => $chapitreImporter,
         ];
     }
 

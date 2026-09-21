@@ -235,6 +235,10 @@
                     <a href="{{ path('admin_import_upload', {type: 'personnel'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'personnel'}) ? 'active' }}">Personnel</a>
                     <a href="{{ path('admin_import_upload', {type: 'materiel'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'materiel'}) ? 'active' }}">Parc informatique</a>
                     <a href="{{ path('admin_import_upload', {type: 'vehicule'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'vehicule'}) ? 'active' }}">Parc automobile</a>
+                    <a href="{{ path('admin_import_upload', {type: 'corps'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'corps'}) ? 'active' }}">Corps</a>
+                    <a href="{{ path('admin_import_upload', {type: 'hierarchie'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'hierarchie'}) ? 'active' }}">Hiérarchie</a>
+                    <a href="{{ path('admin_import_upload', {type: 'programme'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'programme'}) ? 'active' }}">Programmes budgétaires</a>
+                    <a href="{{ path('admin_import_upload', {type: 'chapitre'}) }}" class="{{ app.request.pathinfo == path('admin_import_upload', {type: 'chapitre'}) ? 'active' }}">Chapitres budgétaires</a>
                 </div>
             {% endif %}
         </nav>
