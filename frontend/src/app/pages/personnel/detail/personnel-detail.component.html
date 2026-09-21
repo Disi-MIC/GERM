@@ -52,6 +52,10 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">CNI</label>
+        <input type="text" class="form-control" formControlName="cni" />
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Date de naissance</label>
         <input type="date" class="form-control" formControlName="dateNaissance" />
       </div>
@@ -73,6 +77,24 @@
         <label class="form-label">Grade</label>
         <input type="text" class="form-control" formControlName="grade" />
       </div>
+      <div class="col-md-6">
+        <label class="form-label">Corps</label>
+        <select class="form-select" formControlName="corps">
+          <option [ngValue]="null">Sélectionner...</option>
+          @for (option of corpsOptions; track option.id) {
+            <option [ngValue]="option.id">{{ option.libelle }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Hiérarchie</label>
+        <select class="form-select" formControlName="hierarchie">
+          <option [ngValue]="null">Sélectionner...</option>
+          @for (option of hierarchieOptions; track option.id) {
+            <option [ngValue]="option.id">{{ option.libelle }}</option>
+          }
+        </select>
+      </div>
 
       <div class="col-md-4">
         <label class="form-label">Type de contrat</label>
@@ -80,6 +102,24 @@
           <option [ngValue]="null">Sélectionner...</option>
           @for (type of typesContrat; track type.id) {
             <option [ngValue]="type.id">{{ type.libelle }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Programme budgétaire</label>
+        <select class="form-select" formControlName="programme">
+          <option [ngValue]="null">Sélectionner...</option>
+          @for (option of programmeOptions; track option.id) {
+            <option [ngValue]="option.id">{{ option.libelle }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Chapitre budgétaire</label>
+        <select class="form-select" formControlName="chapitre">
+          <option [ngValue]="null">Sélectionner...</option>
+          @for (option of chapitreOptions; track option.id) {
+            <option [ngValue]="option.id">{{ option.libelle }}</option>
           }
         </select>
       </div>

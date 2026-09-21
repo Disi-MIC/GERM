@@ -18,6 +18,10 @@ enum CategorieListeValeur: string
     case MOTIF_REJET_DECISION_CONGE = 'motif-rejet-decision-conge';
     case NIVEAU_VULNERABILITE = 'niveau-vulnerabilite';
     case TYPE_COMPOSANT = 'type-composant';
+    case CORPS = 'corps';
+    case HIERARCHIE = 'hierarchie';
+    case PROGRAMME = 'programme';
+    case CHAPITRE = 'chapitre';
 
     public function label(): string
     {
@@ -36,6 +40,10 @@ enum CategorieListeValeur: string
             self::MOTIF_REJET_DECISION_CONGE => 'Motifs de rejet — demande de décision de congé',
             self::NIVEAU_VULNERABILITE => 'Niveaux de vulnérabilité — matériel informatique',
             self::TYPE_COMPOSANT => 'Types de composant — matériel informatique',
+            self::CORPS => 'Corps — personnel',
+            self::HIERARCHIE => 'Hiérarchie — personnel',
+            self::PROGRAMME => 'Programme budgétaire — personnel',
+            self::CHAPITRE => 'Chapitre budgétaire — personnel',
         };
     }
 }

@@ -30,7 +30,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: PersonnelRepository::class)]
 #[ORM\Table(name: 'personnel')]
 #[ORM\UniqueConstraint(name: 'UNIQ_PERSONNEL_MATRICULE', columns: ['matricule'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_PERSONNEL_CNI', columns: ['cni'])]
 #[UniqueEntity(fields: ['matricule'], message: 'Ce matricule est déjà attribué à un autre agent.')]
+#[UniqueEntity(fields: ['cni'], message: 'Ce numéro de CNI est déjà attribué à un autre agent.')]
 #[ApiResource(
     operations: [
         // Liste accessible aussi à ROLE_RH_CARTE_PRO (sélection de l'agent
@@ -100,6 +102,14 @@ class Personnel
     #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?Sexe $sexe = null;
 
+    // Numéro de carte nationale d'identité — même niveau de sensibilité que
+    // le reste de l'état civil (GERM-009). Nullable + unique : même logique
+    // que $matricule, un agent peut être enregistré avant que son CNI ne
+    // soit renseigné.
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
+    private ?string $cni = null;
+
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?\DateTimeImmutable $dateNaissance = null;
@@ -113,11 +123,39 @@ class Personnel
     #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?string $grade = null;
 
+    // Corps de la fonction publique (ex. Administrateurs civils, Secrétaires
+    // d'administration...) — distinct de $grade (rang au sein du corps).
+    // Liste paramétrable comme $typeContrat : les valeurs possibles sont
+    // gérées par le superadmin (App\Controller\Admin\ListeValeurController),
+    // pas figées dans le code.
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
+    private ?ListeValeur $corps = null;
+
+    // Échelon hiérarchique de l'agent — champ RH à part entière, distinct des
+    // rôles ROLE_RESPONSABLE_SERVICE/ROLE_DIRECTION_MINISTERIELLE/
+    // ROLE_AUTORITE (security.yaml), qui régissent les droits d'accès et ne
+    // sont pas dérivés de ce champ.
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
+    private ?ListeValeur $hierarchie = null;
+
     #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Le type de contrat est obligatoire.')]
     #[Groups(['api:read:personnel-sensible', 'api:write'])]
     private ?ListeValeur $typeContrat = null;
+
+    // Nomenclature budgétaire (programme/chapitre) à laquelle l'agent est
+    // rattaché pour la paie — listes paramétrables, même mécanisme que
+    // $typeContrat/$corps ci-dessus.
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
+    private ?ListeValeur $programme = null;
+
+    #[ORM\ManyToOne(targetEntity: ListeValeur::class)]
+    #[Groups(['api:read:personnel-sensible', 'api:write'])]
+    private ?ListeValeur $chapitre = null;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[Groups(['api:read:personnel-sensible', 'api:write'])]
@@ -289,6 +327,18 @@ class Personnel
         return $this;
     }
 
+    public function getCni(): ?string
+    {
+        return $this->cni;
+    }
+
+    public function setCni(?string $cni): static
+    {
+        $this->cni = $cni;
+
+        return $this;
+    }
+
     public function getFonction(): ?string
     {
         return $this->fonction;
@@ -313,6 +363,30 @@ class Personnel
         return $this;
     }
 
+    public function getCorps(): ?ListeValeur
+    {
+        return $this->corps;
+    }
+
+    public function setCorps(?ListeValeur $corps): static
+    {
+        $this->corps = $corps;
+
+        return $this;
+    }
+
+    public function getHierarchie(): ?ListeValeur
+    {
+        return $this->hierarchie;
+    }
+
+    public function setHierarchie(?ListeValeur $hierarchie): static
+    {
+        $this->hierarchie = $hierarchie;
+
+        return $this;
+    }
+
     public function getTypeContrat(): ?ListeValeur
     {
         return $this->typeContrat;
@@ -321,6 +395,30 @@ class Personnel
     public function setTypeContrat(?ListeValeur $typeContrat): static
     {
         $this->typeContrat = $typeContrat;
+
+        return $this;
+    }
+
+    public function getProgramme(): ?ListeValeur
+    {
+        return $this->programme;
+    }
+
+    public function setProgramme(?ListeValeur $programme): static
+    {
+        $this->programme = $programme;
+
+        return $this;
+    }
+
+    public function getChapitre(): ?ListeValeur
+    {
+        return $this->chapitre;
+    }
+
+    public function setChapitre(?ListeValeur $chapitre): static
+    {
+        $this->chapitre = $chapitre;
 
         return $this;
     }

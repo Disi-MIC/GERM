@@ -36,6 +36,7 @@ class PersonnelType extends AbstractType
                 'choice_label' => fn (Sexe $s) => $s->label(),
                 'placeholder' => 'Sélectionner...',
             ])
+            ->add('cni', TextType::class, ['label' => 'CNI', 'required' => false])
             ->add('dateNaissance', DateType::class, [
                 'label' => 'Date de naissance',
                 'widget' => 'single_text',
@@ -43,6 +44,28 @@ class PersonnelType extends AbstractType
             ])
             ->add('fonction', TextType::class, ['label' => 'Fonction'])
             ->add('grade', TextType::class, ['label' => 'Grade', 'required' => false])
+            ->add('corps', EntityType::class, [
+                'label' => 'Corps',
+                'class' => ListeValeur::class,
+                'choice_label' => fn (ListeValeur $lv) => $lv->getLibelle().($lv->isActif() ? '' : ' (inactif)'),
+                'query_builder' => fn (ListeValeurRepository $r) => $r->createQueryBuilder('lv')
+                    ->andWhere('lv.categorie = :cat')
+                    ->setParameter('cat', CategorieListeValeur::CORPS)
+                    ->orderBy('lv.libelle', 'ASC'),
+                'placeholder' => 'Sélectionner...',
+                'required' => false,
+            ])
+            ->add('hierarchie', EntityType::class, [
+                'label' => 'Hiérarchie',
+                'class' => ListeValeur::class,
+                'choice_label' => fn (ListeValeur $lv) => $lv->getLibelle().($lv->isActif() ? '' : ' (inactif)'),
+                'query_builder' => fn (ListeValeurRepository $r) => $r->createQueryBuilder('lv')
+                    ->andWhere('lv.categorie = :cat')
+                    ->setParameter('cat', CategorieListeValeur::HIERARCHIE)
+                    ->orderBy('lv.libelle', 'ASC'),
+                'placeholder' => 'Sélectionner...',
+                'required' => false,
+            ])
             ->add('typeContrat', EntityType::class, [
                 'label' => 'Type de contrat',
                 'class' => ListeValeur::class,
@@ -52,6 +75,28 @@ class PersonnelType extends AbstractType
                     ->setParameter('cat', CategorieListeValeur::TYPE_CONTRAT)
                     ->orderBy('lv.libelle', 'ASC'),
                 'placeholder' => 'Sélectionner...',
+            ])
+            ->add('programme', EntityType::class, [
+                'label' => 'Programme budgétaire',
+                'class' => ListeValeur::class,
+                'choice_label' => fn (ListeValeur $lv) => $lv->getLibelle().($lv->isActif() ? '' : ' (inactif)'),
+                'query_builder' => fn (ListeValeurRepository $r) => $r->createQueryBuilder('lv')
+                    ->andWhere('lv.categorie = :cat')
+                    ->setParameter('cat', CategorieListeValeur::PROGRAMME)
+                    ->orderBy('lv.libelle', 'ASC'),
+                'placeholder' => 'Sélectionner...',
+                'required' => false,
+            ])
+            ->add('chapitre', EntityType::class, [
+                'label' => 'Chapitre budgétaire',
+                'class' => ListeValeur::class,
+                'choice_label' => fn (ListeValeur $lv) => $lv->getLibelle().($lv->isActif() ? '' : ' (inactif)'),
+                'query_builder' => fn (ListeValeurRepository $r) => $r->createQueryBuilder('lv')
+                    ->andWhere('lv.categorie = :cat')
+                    ->setParameter('cat', CategorieListeValeur::CHAPITRE)
+                    ->orderBy('lv.libelle', 'ASC'),
+                'placeholder' => 'Sélectionner...',
+                'required' => false,
             ])
             ->add('dateEmbauche', DateType::class, [
                 'label' => "Date d'embauche",

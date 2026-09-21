@@ -110,6 +110,10 @@ class ListeValeurController extends AbstractController
             CategorieListeValeur::TYPE_VEHICULE => [Vehicule::class, 'type'],
             CategorieListeValeur::ETAT_VEHICULE => [Vehicule::class, 'etat'],
             CategorieListeValeur::TYPE_CONTRAT => [Personnel::class, 'typeContrat'],
+            CategorieListeValeur::CORPS => [Personnel::class, 'corps'],
+            CategorieListeValeur::HIERARCHIE => [Personnel::class, 'hierarchie'],
+            CategorieListeValeur::PROGRAMME => [Personnel::class, 'programme'],
+            CategorieListeValeur::CHAPITRE => [Personnel::class, 'chapitre'],
         };
 
         $count = $em->createQuery("SELECT COUNT(e.id) FROM {$class} e WHERE e.{$field} = :lv")

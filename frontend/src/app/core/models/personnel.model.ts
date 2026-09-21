@@ -27,10 +27,15 @@ export interface Personnel {
   nom: string;
   prenom: string;
   sexe?: 'M' | 'F';
+  cni?: string | null;
   dateNaissance?: string | null;
   fonction?: string;
   grade?: string | null;
+  corps?: ListeValeurRef | string | null;
+  hierarchie?: ListeValeurRef | string | null;
   typeContrat?: ListeValeurRef | string;
+  programme?: ListeValeurRef | string | null;
+  chapitre?: ListeValeurRef | string | null;
   dateEmbauche?: string | null;
   statut?: string;
   telephone?: string | null;

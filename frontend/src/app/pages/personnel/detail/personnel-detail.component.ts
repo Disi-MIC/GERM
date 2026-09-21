@@ -15,6 +15,10 @@ export class PersonnelDetailComponent implements OnInit {
   personnelId: number | null = null;
   services: ServiceRef[] = [];
   typesContrat: ListeValeurRef[] = [];
+  corpsOptions: ListeValeurRef[] = [];
+  hierarchieOptions: ListeValeurRef[] = [];
+  programmeOptions: ListeValeurRef[] = [];
+  chapitreOptions: ListeValeurRef[] = [];
   loading = true;
   saving = false;
   error: string | null = null;
@@ -26,11 +30,16 @@ export class PersonnelDetailComponent implements OnInit {
     nom: ['', Validators.required],
     prenom: ['', Validators.required],
     sexe: ['M', Validators.required],
+    cni: [''],
     dateNaissance: [''],
     service: [null as number | null, Validators.required],
     fonction: ['', Validators.required],
     grade: [''],
+    corps: [null as number | null],
+    hierarchie: [null as number | null],
     typeContrat: [null as number | null, Validators.required],
+    programme: [null as number | null],
+    chapitre: [null as number | null],
     dateEmbauche: [''],
     statut: ['actif', Validators.required],
     telephone: [''],
@@ -53,6 +62,10 @@ export class PersonnelDetailComponent implements OnInit {
     this.api.getServices().subscribe((services) => (this.services = services));
     this.api.getTypesContrat().subscribe((valeurs) => {
       this.typesContrat = valeurs.filter((v) => v.categorie === 'type-contrat');
+      this.corpsOptions = valeurs.filter((v) => v.categorie === 'corps');
+      this.hierarchieOptions = valeurs.filter((v) => v.categorie === 'hierarchie');
+      this.programmeOptions = valeurs.filter((v) => v.categorie === 'programme');
+      this.chapitreOptions = valeurs.filter((v) => v.categorie === 'chapitre');
     });
 
     if (this.personnelId) {
@@ -63,12 +76,17 @@ export class PersonnelDetailComponent implements OnInit {
             nom: personnel.nom,
             prenom: personnel.prenom,
             sexe: personnel.sexe,
+            cni: personnel.cni ?? '',
             dateNaissance: personnel.dateNaissance?.substring(0, 10) ?? '',
             service: personnel.service && typeof personnel.service !== 'string' ? personnel.service.id : null,
             fonction: personnel.fonction,
             grade: personnel.grade ?? '',
+            corps: personnel.corps && typeof personnel.corps !== 'string' ? personnel.corps.id : null,
+            hierarchie: personnel.hierarchie && typeof personnel.hierarchie !== 'string' ? personnel.hierarchie.id : null,
             typeContrat:
               personnel.typeContrat && typeof personnel.typeContrat !== 'string' ? personnel.typeContrat.id : null,
+            programme: personnel.programme && typeof personnel.programme !== 'string' ? personnel.programme.id : null,
+            chapitre: personnel.chapitre && typeof personnel.chapitre !== 'string' ? personnel.chapitre.id : null,
             dateEmbauche: personnel.dateEmbauche?.substring(0, 10) ?? '',
             statut: personnel.statut,
             telephone: personnel.telephone ?? '',
@@ -101,11 +119,16 @@ export class PersonnelDetailComponent implements OnInit {
       nom: raw.nom,
       prenom: raw.prenom,
       sexe: raw.sexe as 'M' | 'F',
+      cni: raw.cni || null,
       dateNaissance: raw.dateNaissance || null,
       service: `/api/services/${raw.service}`,
       fonction: raw.fonction,
       grade: raw.grade || null,
+      corps: raw.corps ? `/api/liste_valeurs/${raw.corps}` : null,
+      hierarchie: raw.hierarchie ? `/api/liste_valeurs/${raw.hierarchie}` : null,
       typeContrat: `/api/liste_valeurs/${raw.typeContrat}`,
+      programme: raw.programme ? `/api/liste_valeurs/${raw.programme}` : null,
+      chapitre: raw.chapitre ? `/api/liste_valeurs/${raw.chapitre}` : null,
       dateEmbauche: raw.dateEmbauche || null,
       statut: raw.statut,
       telephone: raw.telephone || null,
