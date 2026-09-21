@@ -40,7 +40,17 @@ class AccessControlTest extends WebTestCase
      *   (puis charger des comptes de test : voir doctrine/doctrine-fixtures-bundle,
      *    déjà présent dans composer.json)
      */
-    private function connecter(string $email): User
+    /**
+     * `$firewall` doit correspondre au pare-feu qui protège l'URL visée
+     * ensuite (voir security.yaml) : "main" pour /admin/*, "api" pour
+     * /api/* — loginUser() authentifie pour un seul contexte de pare-feu à
+     * la fois (paramètre par défaut "main"), les deux pare-feux d'ici
+     * n'étant pas reliés par un `context:` partagé. S'y tromper ne fait pas
+     * échouer connecter() lui-même : la requête suivante reçoit simplement
+     * un 401 au lieu du code attendu par le test, un piège rencontré en
+     * activant ces tests pour la première fois (voir GERM-014).
+     */
+    private function connecter(string $email, string $firewall = 'main'): User
     {
         try {
             $user = $this->userRepository->findOneBy(['email' => $email]);
@@ -51,7 +61,7 @@ class AccessControlTest extends WebTestCase
         if (null === $user) {
             self::markTestSkipped(\sprintf('Compte de test "%s" absent de la base de test.', $email));
         }
-        $this->client->loginUser($user);
+        $this->client->loginUser($user, $firewall);
 
         return $user;
     }
@@ -117,7 +127,7 @@ class AccessControlTest extends WebTestCase
      */
     public function testDocumentationApiRefuseUnCompteNonSuperadmin(): void
     {
-        $this->connecter('test.agent@germ.local');
+        $this->connecter('test.agent@germ.local', 'api');
         $this->client->request('GET', '/api/docs');
 
         self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
@@ -126,7 +136,7 @@ class AccessControlTest extends WebTestCase
     /** GERM-022 — non-régression : le superadmin conserve l'accès à la documentation. */
     public function testDocumentationApiResteAccessibleAuSuperadmin(): void
     {
-        $this->connecter('superadmin@industriecommerce.gouv.sn');
+        $this->connecter('superadmin@industriecommerce.gouv.sn', 'api');
         $this->client->request('GET', '/api/docs');
 
         self::assertResponseIsSuccessful();

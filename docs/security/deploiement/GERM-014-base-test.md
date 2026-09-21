@@ -4,30 +4,32 @@
 push/PR fait tourner un conteneur MySQL 8 jetable, dédié, avec un accès
 `root` complet — `doctrine:schema:create` puis `doctrine:fixtures:load`
 (désormais peuplée, voir `src/DataFixtures/AppFixtures.php`) y créent
-`germ_db_test` à chaque exécution. Les 6 tests de
+`germ_db_test` à chaque exécution. Les tests de
 `tests/Security/AccessControlTest.php`, jusqu'ici systématiquement ignorés
 (`markTestSkipped`, faute de base), s'exécutent donc réellement en CI à
 chaque changement — c'est le point qui compte pour la sécurité : une
 régression sur `^/admin` ou sur l'état d'un compte désactivé fait
 désormais échouer le build, au lieu de passer inaperçue.
 
-**Volet local — toujours bloqué, `sudo`/accès root MySQL requis.**
-`germ_user` (le compte applicatif, volontairement restreint à
-`GRANT ALL ON germ_db.*` — voir GERM-026) ne peut pas créer de base ni se
-créer ses propres droits : `CREATE DATABASE` et `GRANT` exigent un accès
-administrateur MySQL que je n'ai pas sur `germ-appdbserver`. Pour activer
-ces mêmes tests en local (utile pour un développeur qui veut les rejouer
-avant de pousser, sans attendre la CI) :
+**Volet local ✅ activé le 21/09/2026.** Il ne s'agit jamais de
+`germ-appdbserver` (le serveur de production, où `germ_user` reste
+volontairement restreint à `GRANT ALL ON germ_db.*` — voir GERM-026) : la
+base de test locale vit sur MySQL local (MAMP, `127.0.0.1:8889` — voir
+`.env.local`), et un accès root y était disponible. Procédure suivie :
 
 ```sql
--- Exécuté par un administrateur disposant d'un accès root MySQL
+-- Exécuté avec un accès root MySQL local (MAMP)
 CREATE DATABASE germ_db_test;
 GRANT ALL PRIVILEGES ON germ_db_test.* TO 'germ_user'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON germ_db_test.* TO 'germ_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-Puis, côté développeur :
+Puis, côté développeur (`.env.test.local`, gitignoré, pointe déjà vers
+cette base — le nom de base à y écrire reste `germ_db`, **pas**
+`germ_db_test` : le suffixe `_test` est ajouté automatiquement par
+`dbname_suffix` dans `config/packages/doctrine.yaml`, l'écrire deux fois
+produit `germ_db_test_test`) :
 
 ```bash
 php bin/console doctrine:schema:create --env=test
@@ -35,8 +37,21 @@ php bin/console doctrine:fixtures:load --env=test --no-interaction
 php bin/phpunit
 ```
 
-Les 6 tests jusqu'ici ignorés doivent alors passer au vert (plus de
-`markTestSkipped`).
+**Piège rencontré en activant ces tests pour la première fois** : deux des
+neuf tests (`testDocumentationApiRefuseUnCompteNonSuperadmin`,
+`testDocumentationApiResteAccessibleAuSuperadmin`) échouaient en 401 plutôt
+que de donner le code attendu. Cause : `KernelBrowser::loginUser()`
+authentifie pour un seul contexte de pare-feu à la fois (paramètre par
+défaut `"main"`), mais `/api/docs` est derrière le pare-feu `api` (voir
+`security.yaml`) — les deux pare-feux ne partagent pas de `context:`
+commun. `connecter()` prend désormais un second paramètre `$firewall`,
+passé explicitement à `'api'` pour ces deux tests. Les 9 tests passent
+désormais réellement (voir `tests/Security/AccessControlTest.php`). Ce bug
+préexistait probablement (le fichier ne comptait que 6 tests à l'écriture
+de la section CI ci-dessus, ces deux-là ont été ajoutés depuis pour
+GERM-022) — non vérifié si la CI GitHub Actions les avait déjà fait
+échouer avant ce correctif, faute d'accès à son historique depuis cette
+session.
 
 ## Ce qui a été ajouté pour rendre ces tests exécutables
 
