@@ -48,6 +48,10 @@ export class DocumentsAdministratifsApiService {
     return this.http.post<DocumentAdministratif>(`${API_BASE}/documents-administratifs`, formData);
   }
 
+  resumeAvecIa(id: number): Observable<{ summary: string; documentId: number }> {
+    return this.http.post<{ summary: string; documentId: number }>(`${API_BASE}/documents-administratifs/${id}/resume-ia`, {});
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${API_BASE}/documents-administratifs/${id}`);
   }
