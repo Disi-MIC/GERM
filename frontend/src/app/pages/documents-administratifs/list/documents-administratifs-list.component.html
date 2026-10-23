@@ -7,6 +7,20 @@
   </a>
 </app-page-header>
 
+@if (erreurIa) {
+  <div class="alert alert-danger" role="alert">{{ erreurIa }}</div>
+}
+@if (resumeIa) {
+  <section class="card mb-3 border-success" aria-live="polite">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-stars"></i> Résumé IA — {{ resumeIaTitre }}</strong>
+      <button type="button" class="btn-close" aria-label="Fermer le résumé" (click)="fermerResumeIa()"></button>
+    </div>
+    <div class="card-body"><pre class="mb-0 text-wrap" style="white-space: pre-wrap">{{ resumeIa }}</pre></div>
+    <div class="card-footer text-muted small">Résumé généré automatiquement : vérifiez les informations dans le document original.</div>
+  </section>
+}
+
 @if (loading) {
   <p class="text-muted">Chargement...</p>
 } @else if (error) {
@@ -36,6 +50,13 @@
       <a [href]="fichierUrl(document.id!)" target="_blank" class="btn btn-sm btn-outline-success">
         <i class="bi bi-download"></i> Télécharger
       </a>
+      <button type="button" class="btn btn-sm btn-outline-primary" (click)="analyserAvecIa(document)" [disabled]="analyseEnCoursId !== null">
+        @if (analyseEnCoursId === document.id) {
+          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Analyse...
+        } @else {
+          <i class="bi bi-stars"></i> Analyser avec l'IA
+        }
+      </button>
       <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimer(document)">
         <i class="bi bi-trash"></i>
       </button>

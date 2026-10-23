@@ -21,6 +21,10 @@ export class DocumentsAdministratifsListComponent implements OnInit {
   documents: DocumentAdministratif[] = [];
   loading = true;
   error: string | null = null;
+  resumeIa: string | null = null;
+  resumeIaTitre: string | null = null;
+  analyseEnCoursId: number | null = null;
+  erreurIa: string | null = null;
 
   readonly columns: DataTableColumn<DocumentAdministratif>[] = [
     { key: 'agent', label: 'Agent', sortable: true, value: (d) => this.agentLabel(d) },
@@ -90,6 +94,32 @@ export class DocumentsAdministratifsListComponent implements OnInit {
       return { texte: 'Expire bientôt', classe: 'warning' };
     }
     return null;
+  }
+
+  analyserAvecIa(document: DocumentAdministratif): void {
+    if (!document.id || this.analyseEnCoursId !== null) {
+      return;
+    }
+    this.analyseEnCoursId = document.id;
+    this.erreurIa = null;
+    this.resumeIa = null;
+    this.resumeIaTitre = document.libelle;
+    this.api.resumeAvecIa(document.id).subscribe({
+      next: (resultat) => {
+        this.resumeIa = resultat.summary;
+        this.analyseEnCoursId = null;
+      },
+      error: (err) => {
+        this.erreurIa = err?.error?.message ?? "L'analyse IA a échoué. Vérifiez la configuration du service.";
+        this.analyseEnCoursId = null;
+      },
+    });
+  }
+
+  fermerResumeIa(): void {
+    this.resumeIa = null;
+    this.resumeIaTitre = null;
+    this.erreurIa = null;
   }
 
   supprimer(document: DocumentAdministratif): void {
